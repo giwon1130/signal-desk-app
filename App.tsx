@@ -9,8 +9,10 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
 } from 'react-native'
+import Svg, { Line, Path, Rect } from 'react-native-svg'
 
 type SummaryMetric = {
   label: string
@@ -27,6 +29,50 @@ type MarketSessionStatus = {
   isOpen: boolean
   localTime: string
   note: string
+}
+
+type ChartPoint = {
+  label: string
+  open: number
+  high: number
+  low: number
+  close: number
+  volume: number
+}
+
+type ChartStats = {
+  latest: number
+  high: number
+  low: number
+  changeRate: number
+  range: number
+  averageVolume: number
+}
+
+type ChartPeriodSnapshot = {
+  key: string
+  label: string
+  points: ChartPoint[]
+  stats: ChartStats
+}
+
+type IndexMetric = {
+  label: string
+  value: number
+  changeRate: number
+  periods: ChartPeriodSnapshot[]
+}
+
+type MarketSection = {
+  market: string
+  title: string
+  indices: IndexMetric[]
+}
+
+type MarketSectionsData = {
+  generatedAt: string
+  koreaMarket: MarketSection
+  usMarket: MarketSection
 }
 
 type RecommendationExecutionLog = {
@@ -62,14 +108,22 @@ type ApiResponse<T> = {
   data: T
 }
 
-type TabKey = 'home' | 'ai'
+type TabKey = 'home' | 'chart' | 'ai'
 type LogFilter = 'ALL' | 'RECOMMEND' | 'RESULT'
+type MarketKey = 'KR' | 'US'
+type PeriodKey = '1D' | '1M' | '1Y'
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:8091'
 
 function formatSignedRate(value?: number | null) {
   if (value == null) return '-'
   return `${value > 0 ? '+' : ''}${value.toFixed(2)}%`
+}
+
+function formatCompactNumber(value: number) {
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`
+  if (value >= 1_000) return `${(value / 1_000).toFixed(1)}K`
+  return value.toLocaleString('ko-KR')
 }
 
 function getMarketStatusTone(status?: string) {
@@ -84,29 +138,154 @@ function getLogReturnColor(value?: number | null) {
   return value >= 0 ? '#dc2626' : '#2563eb'
 }
 
+function buildMovingAverage(points: ChartPoint[], period: number) {
+  return points.map((_, index) => {
+    if (index + 1 < period) return null
+    const window = points.slice(index + 1 - period, index + 1)
+    return window.reduce((acc, item) => acc + item.close, 0) / period
+  })
+}
+
+function buildLinePath(values: Array<number | null>, xAt: (index: number) => number, yAt: (value: number) => number) {
+  let d = ''
+  values.forEach((value, index) => {
+    if (value == null) return
+    const x = xAt(index)
+    const y = yAt(value)
+    d += d ? ` L ${x} ${y}` : `M ${x} ${y}`
+  })
+  return d
+}
+
+function CandleVolumeChart({
+  points,
+  width,
+}: {
+  points: ChartPoint[]
+  width: number
+}) {
+  if (!points.length) {
+    return (
+      <View style={styles.emptyChart}>
+        <Text style={styles.metaText}>차트 데이터 없음</Text>
+      </View>
+    )
+  }
+
+  const outerPadding = 14
+  const topPadding = 8
+  const priceHeight = 180
+  const volumeHeight = 70
+  const totalHeight = priceHeight + volumeHeight + 28
+  const chartWidth = Math.max(120, width - outerPadding * 2)
+  const step = chartWidth / Math.max(1, points.length)
+  const candleWidth = Math.max(4, Math.min(14, step * 0.56))
+
+  const low = Math.min(...points.map((item) => item.low))
+  const high = Math.max(...points.map((item) => item.high))
+  const spread = Math.max(1, high - low)
+  const paddedLow = low - spread * 0.05
+  const paddedHigh = high + spread * 0.05
+
+  const maxVolume = Math.max(...points.map((item) => item.volume), 1)
+  const volumeTop = topPadding + priceHeight + 14
+  const xAt = (index: number) => outerPadding + step * index + step * 0.5
+  const yAt = (value: number) => topPadding + ((paddedHigh - value) / (paddedHigh - paddedLow)) * priceHeight
+
+  const ma5 = buildMovingAverage(points, 5)
+  const ma20 = buildMovingAverage(points, 20)
+  const ma60 = buildMovingAverage(points, 60)
+  const ma5Path = buildLinePath(ma5, xAt, yAt)
+  const ma20Path = buildLinePath(ma20, xAt, yAt)
+  const ma60Path = buildLinePath(ma60, xAt, yAt)
+
+  return (
+    <View style={styles.chartWrap}>
+      <Svg width={width} height={totalHeight}>
+        <Rect x={outerPadding} y={topPadding} width={chartWidth} height={priceHeight} fill="#f8fafc" rx={8} />
+        <Rect x={outerPadding} y={volumeTop} width={chartWidth} height={volumeHeight} fill="#f8fafc" rx={8} />
+
+        {points.map((item, index) => {
+          const x = xAt(index)
+          const openY = yAt(item.open)
+          const closeY = yAt(item.close)
+          const highY = yAt(item.high)
+          const lowY = yAt(item.low)
+          const up = item.close >= item.open
+          const bodyTop = Math.min(openY, closeY)
+          const bodyHeight = Math.max(1.5, Math.abs(closeY - openY))
+          const volumeBarHeight = (item.volume / maxVolume) * (volumeHeight - 8)
+          return (
+            <View key={`${item.label}-${index}`}>
+              <Line
+                x1={x}
+                x2={x}
+                y1={highY}
+                y2={lowY}
+                stroke={up ? '#dc2626' : '#2563eb'}
+                strokeWidth={1.2}
+              />
+              <Rect
+                x={x - candleWidth * 0.5}
+                y={bodyTop}
+                width={candleWidth}
+                height={bodyHeight}
+                fill={up ? '#dc2626' : '#2563eb'}
+                rx={1}
+              />
+              <Rect
+                x={x - candleWidth * 0.5}
+                y={volumeTop + volumeHeight - volumeBarHeight}
+                width={candleWidth}
+                height={volumeBarHeight}
+                fill={up ? 'rgba(220,38,38,0.55)' : 'rgba(37,99,235,0.55)'}
+                rx={1}
+              />
+            </View>
+          )
+        })}
+
+        {ma5Path ? <Path d={ma5Path} stroke="#f59e0b" fill="none" strokeWidth={1.8} /> : null}
+        {ma20Path ? <Path d={ma20Path} stroke="#6366f1" fill="none" strokeWidth={1.8} /> : null}
+        {ma60Path ? <Path d={ma60Path} stroke="#10b981" fill="none" strokeWidth={1.8} /> : null}
+      </Svg>
+    </View>
+  )
+}
+
 export default function App() {
+  const { width } = useWindowDimensions()
+
   const [activeTab, setActiveTab] = useState<TabKey>('home')
   const [summary, setSummary] = useState<MarketSummaryData | null>(null)
+  const [sections, setSections] = useState<MarketSectionsData | null>(null)
   const [aiRecommendation, setAiRecommendation] = useState<AiRecommendationData | null>(null)
   const [loading, setLoading] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState('')
   const [logFilter, setLogFilter] = useState<LogFilter>('ALL')
+  const [chartMarket, setChartMarket] = useState<MarketKey>('KR')
+  const [chartPeriod, setChartPeriod] = useState<PeriodKey>('1D')
+  const [selectedIndexLabel, setSelectedIndexLabel] = useState('')
 
   const loadData = useCallback(async () => {
     setError('')
     try {
-      const [summaryResponse, aiResponse] = await Promise.all([
+      const [summaryResponse, sectionsResponse, aiResponse] = await Promise.all([
         fetch(`${API_BASE_URL}/api/v1/market/summary`),
+        fetch(`${API_BASE_URL}/api/v1/market/sections`),
         fetch(`${API_BASE_URL}/api/v1/market/ai-recommendations`),
       ])
-      if (!summaryResponse.ok || !aiResponse.ok) {
+      if (!summaryResponse.ok || !sectionsResponse.ok || !aiResponse.ok) {
         throw new Error('fetch failed')
       }
 
       const summaryJson = (await summaryResponse.json()) as ApiResponse<MarketSummaryData>
+      const sectionsJson = (await sectionsResponse.json()) as ApiResponse<MarketSectionsData>
       const aiJson = (await aiResponse.json()) as ApiResponse<{ aiRecommendations: AiRecommendationData }>
+
       setSummary(summaryJson.data)
+      setSections(sectionsJson.data)
       setAiRecommendation(aiJson.data.aiRecommendations)
     } catch {
       setError(`API 연결 실패: ${API_BASE_URL}`)
@@ -137,6 +316,29 @@ export default function App() {
     return `${Math.round((successCount / resultLogs.length) * 100)}%`
   }, [aiRecommendation?.executionLogs])
 
+  const activeSection = useMemo(() => {
+    if (!sections) return null
+    return chartMarket === 'KR' ? sections.koreaMarket : sections.usMarket
+  }, [sections, chartMarket])
+
+  useEffect(() => {
+    if (!activeSection?.indices.length) return
+    if (activeSection.indices.some((item) => item.label === selectedIndexLabel)) return
+    setSelectedIndexLabel(activeSection.indices[0].label)
+  }, [activeSection, selectedIndexLabel])
+
+  const activeIndex = useMemo(() => {
+    if (!activeSection) return null
+    return activeSection.indices.find((item) => item.label === selectedIndexLabel) ?? activeSection.indices[0] ?? null
+  }, [activeSection, selectedIndexLabel])
+
+  const activePeriod = useMemo(() => {
+    if (!activeIndex) return null
+    return activeIndex.periods.find((item) => item.key === chartPeriod) ?? activeIndex.periods[0] ?? null
+  }, [activeIndex, chartPeriod])
+
+  const chartWidth = Math.max(300, Math.min(width - 28, 760))
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
@@ -145,18 +347,21 @@ export default function App() {
         <View style={styles.headerGradient}>
           <Text style={styles.brand}>SignalDesk</Text>
           <Text style={styles.headerTitle}>Mobile Dashboard</Text>
-          <Text style={styles.headerSubtitle}>시장/추천 로그를 한 화면에서 빠르게 확인</Text>
+          <Text style={styles.headerSubtitle}>시장/차트/추천 로그를 앱에서 빠르게 확인</Text>
           <Text style={styles.apiText}>API: {API_BASE_URL}</Text>
         </View>
       </View>
 
       <View style={styles.tabRow}>
-        <Pressable onPress={() => setActiveTab('home')} style={[styles.tabButton, activeTab === 'home' && styles.tabButtonActive]}>
-          <Text style={[styles.tabText, activeTab === 'home' && styles.tabTextActive]}>시장</Text>
-        </Pressable>
-        <Pressable onPress={() => setActiveTab('ai')} style={[styles.tabButton, activeTab === 'ai' && styles.tabButtonActive]}>
-          <Text style={[styles.tabText, activeTab === 'ai' && styles.tabTextActive]}>AI 로그</Text>
-        </Pressable>
+        {([
+          { key: 'home', label: '시장' },
+          { key: 'chart', label: '차트' },
+          { key: 'ai', label: 'AI 로그' },
+        ] as Array<{ key: TabKey; label: string }>).map((tab) => (
+          <Pressable key={tab.key} onPress={() => setActiveTab(tab.key)} style={[styles.tabButton, activeTab === tab.key && styles.tabButtonActive]}>
+            <Text style={[styles.tabText, activeTab === tab.key && styles.tabTextActive]}>{tab.label}</Text>
+          </Pressable>
+        ))}
       </View>
 
       {loading ? (
@@ -232,6 +437,82 @@ export default function App() {
                 <Text style={styles.metricNote}>{item.note}</Text>
               </View>
             ))}
+          </View>
+        </ScrollView>
+      ) : null}
+
+      {!loading && !error && activeTab === 'chart' ? (
+        <ScrollView
+          style={styles.scroll}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+          contentContainerStyle={styles.content}
+        >
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>지수 차트</Text>
+            <View style={styles.filterRow}>
+              {(['KR', 'US'] as const).map((market) => (
+                <Pressable key={market} onPress={() => setChartMarket(market)} style={[styles.filterChip, chartMarket === market && styles.filterChipActive]}>
+                  <Text style={[styles.filterText, chartMarket === market && styles.filterTextActive]}>
+                    {market === 'KR' ? '한국' : '미국'}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+            <View style={styles.filterRow}>
+              {(['1D', '1M', '1Y'] as const).map((period) => (
+                <Pressable key={period} onPress={() => setChartPeriod(period)} style={[styles.filterChip, chartPeriod === period && styles.filterChipActive]}>
+                  <Text style={[styles.filterText, chartPeriod === period && styles.filterTextActive]}>
+                    {period}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+
+            <View style={styles.indexChipRow}>
+              {(activeSection?.indices ?? []).map((item) => (
+                <Pressable
+                  key={item.label}
+                  onPress={() => setSelectedIndexLabel(item.label)}
+                  style={[styles.indexChip, selectedIndexLabel === item.label && styles.indexChipActive]}
+                >
+                  <Text style={[styles.indexChipText, selectedIndexLabel === item.label && styles.indexChipTextActive]}>
+                    {item.label}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          </View>
+
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>
+              {activeIndex?.label ?? '-'} · {activePeriod?.label ?? '-'}
+            </Text>
+            <CandleVolumeChart points={activePeriod?.points ?? []} width={chartWidth} />
+            <View style={styles.legendRow}>
+              <Text style={[styles.legendText, { color: '#f59e0b' }]}>MA5</Text>
+              <Text style={[styles.legendText, { color: '#6366f1' }]}>MA20</Text>
+              <Text style={[styles.legendText, { color: '#10b981' }]}>MA60</Text>
+            </View>
+            {activePeriod ? (
+              <View style={styles.chartStatsRow}>
+                <View style={styles.chartStat}>
+                  <Text style={styles.kpiLabel}>현재</Text>
+                  <Text style={styles.chartStatValue}>{activePeriod.stats.latest.toFixed(2)}</Text>
+                </View>
+                <View style={styles.chartStat}>
+                  <Text style={styles.kpiLabel}>고가</Text>
+                  <Text style={styles.chartStatValue}>{activePeriod.stats.high.toFixed(2)}</Text>
+                </View>
+                <View style={styles.chartStat}>
+                  <Text style={styles.kpiLabel}>저가</Text>
+                  <Text style={styles.chartStatValue}>{activePeriod.stats.low.toFixed(2)}</Text>
+                </View>
+                <View style={styles.chartStat}>
+                  <Text style={styles.kpiLabel}>거래량 평균</Text>
+                  <Text style={styles.chartStatValue}>{formatCompactNumber(activePeriod.stats.averageVolume)}</Text>
+                </View>
+              </View>
+            ) : null}
           </View>
         </ScrollView>
       ) : null}
@@ -519,8 +800,9 @@ const styles = StyleSheet.create({
   filterRow: {
     flexDirection: 'row',
     gap: 8,
-    marginTop: 10,
-    marginBottom: 10,
+    marginTop: 4,
+    marginBottom: 4,
+    flexWrap: 'wrap',
   },
   filterChip: {
     borderRadius: 999,
@@ -541,6 +823,76 @@ const styles = StyleSheet.create({
   },
   filterTextActive: {
     color: '#ffffff',
+  },
+  indexChipRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  indexChip: {
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#cbd5e1',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    backgroundColor: '#ffffff',
+  },
+  indexChipActive: {
+    borderColor: '#0369a1',
+    backgroundColor: '#e0f2fe',
+  },
+  indexChipText: {
+    color: '#334155',
+    fontWeight: '700',
+    fontSize: 12,
+  },
+  indexChipTextActive: {
+    color: '#0c4a6e',
+  },
+  chartWrap: {
+    borderRadius: 12,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    backgroundColor: '#f8fafc',
+  },
+  emptyChart: {
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    backgroundColor: '#f8fafc',
+    minHeight: 220,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  legendRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 4,
+  },
+  legendText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  chartStatsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 8,
+  },
+  chartStat: {
+    minWidth: '47%',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    backgroundColor: '#f8fafc',
+    padding: 8,
+  },
+  chartStatValue: {
+    marginTop: 2,
+    color: '#0f172a',
+    fontSize: 13,
+    fontWeight: '700',
   },
   logTop: {
     flexDirection: 'row',
