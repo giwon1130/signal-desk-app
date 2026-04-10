@@ -183,6 +183,18 @@ function getLogReturnColor(value?: number | null) {
   return value >= 0 ? '#dc2626' : '#2563eb'
 }
 
+function getSessionPalette(isOpen: boolean) {
+  return isOpen
+    ? { backgroundColor: '#dcfce7', textColor: '#166534' }
+    : { backgroundColor: '#e2e8f0', textColor: '#334155' }
+}
+
+function getMetricAccent(score: number) {
+  if (score >= 70) return '#0f766e'
+  if (score >= 40) return '#a16207'
+  return '#b91c1c'
+}
+
 function buildMovingAverage(points: ChartPoint[], period: number) {
   return points.map((_, index) => {
     if (index + 1 < period) return null
@@ -243,6 +255,7 @@ function CandleVolumeChart({
   const ma5Path = buildLinePath(ma5, xAt, yAt)
   const ma20Path = buildLinePath(ma20, xAt, yAt)
   const ma60Path = buildLinePath(ma60, xAt, yAt)
+  const tickIndices = Array.from(new Set([0, Math.floor((points.length - 1) / 2), Math.max(points.length - 1, 0)]))
 
   return (
     <View style={styles.chartWrap}>
@@ -294,6 +307,13 @@ function CandleVolumeChart({
         {ma20Path ? <Path d={ma20Path} stroke="#6366f1" fill="none" strokeWidth={1.8} /> : null}
         {ma60Path ? <Path d={ma60Path} stroke="#10b981" fill="none" strokeWidth={1.8} /> : null}
       </Svg>
+      <View style={styles.chartAxisRow}>
+        {tickIndices.map((index) => (
+          <Text key={`${points[index]?.label ?? index}-${index}`} style={styles.chartAxisLabel}>
+            {points[index]?.label ?? '-'}
+          </Text>
+        ))}
+      </View>
     </View>
   )
 }
@@ -371,6 +391,14 @@ export default function App() {
 
   const topWatchlist = useMemo(() => watchlist.slice(0, 4), [watchlist])
   const topPortfolioPositions = useMemo(() => (portfolio?.positions ?? []).slice(0, 4), [portfolio])
+  const recommendLogs = useMemo(
+    () => (aiRecommendation?.executionLogs ?? []).filter((item) => item.stage === 'RECOMMEND').length,
+    [aiRecommendation?.executionLogs],
+  )
+  const resultLogs = useMemo(
+    () => (aiRecommendation?.executionLogs ?? []).filter((item) => item.stage === 'RESULT').length,
+    [aiRecommendation?.executionLogs],
+  )
 
   const activeSection = useMemo(() => {
     if (!sections) return null
@@ -450,45 +478,44 @@ export default function App() {
             <Text style={styles.metaText}>업데이트: {summary?.generatedAt ?? '-'}</Text>
           </View>
 
-          <View style={styles.kpiRow}>
-            <View style={styles.kpiCard}>
-              <Text style={styles.kpiLabel}>세션</Text>
-              <Text style={styles.kpiValue}>{summary?.marketSessions.length ?? 0}</Text>
+          <View style={styles.heroMetricsRow}>
+            <View style={[styles.heroMetricCard, styles.heroMetricCardDark]}>
+              <Text style={[styles.heroMetricLabel, styles.heroMetricLabelOnDark]}>AI 성공률</Text>
+              <Text style={[styles.heroMetricValue, styles.heroMetricValueOnDark]}>{successRate}</Text>
+              <Text style={[styles.heroMetricFootnote, styles.heroMetricFootnoteOnDark]}>실현 수익률 기준</Text>
             </View>
-            <View style={styles.kpiCard}>
-              <Text style={styles.kpiLabel}>요약 지표</Text>
-              <Text style={styles.kpiValue}>{summary?.marketSummary.length ?? 0}</Text>
+            <View style={styles.heroMetricCard}>
+              <Text style={styles.heroMetricLabel}>관심종목</Text>
+              <Text style={styles.heroMetricValue}>{watchlist.length}</Text>
+              <Text style={styles.heroMetricFootnote}>포착 중인 시그널</Text>
             </View>
-            <View style={styles.kpiCard}>
-              <Text style={styles.kpiLabel}>AI 성공률</Text>
-              <Text style={styles.kpiValue}>{successRate}</Text>
-            </View>
-          </View>
-
-          <View style={styles.kpiRow}>
-            <View style={styles.kpiCard}>
-              <Text style={styles.kpiLabel}>관심종목</Text>
-              <Text style={styles.kpiValue}>{watchlist.length}</Text>
-            </View>
-            <View style={styles.kpiCard}>
-              <Text style={styles.kpiLabel}>보유종목</Text>
-              <Text style={styles.kpiValue}>{portfolio?.positions.length ?? 0}</Text>
-            </View>
-            <View style={styles.kpiCard}>
-              <Text style={styles.kpiLabel}>포트폴리오</Text>
-              <Text style={[styles.kpiValue, { color: (portfolio?.totalProfitRate ?? 0) >= 0 ? '#dc2626' : '#2563eb' }]}>
+            <View style={styles.heroMetricCard}>
+              <Text style={styles.heroMetricLabel}>포트폴리오</Text>
+              <Text style={[styles.heroMetricValue, { color: (portfolio?.totalProfitRate ?? 0) >= 0 ? '#dc2626' : '#2563eb' }]}>
                 {portfolio ? formatSignedRate(portfolio.totalProfitRate) : '-'}
               </Text>
+              <Text style={styles.heroMetricFootnote}>{portfolio?.positions.length ?? 0}개 종목 보유</Text>
             </View>
           </View>
 
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>장 세션</Text>
+            <View style={styles.sectionHeaderRow}>
+              <Text style={styles.cardTitle}>장 세션</Text>
+              <Text style={styles.metaText}>{summary?.marketSessions.length ?? 0}개 시장</Text>
+            </View>
             {(summary?.marketSessions ?? []).map((session) => (
               <View key={session.market} style={styles.sessionCard}>
                 <View style={styles.sessionTop}>
                   <Text style={styles.sessionName}>{session.label}</Text>
-                  <Text style={[styles.sessionBadge, { backgroundColor: session.isOpen ? '#dcfce7' : '#e2e8f0', color: session.isOpen ? '#166534' : '#334155' }]}>
+                  <Text
+                    style={[
+                      styles.sessionBadge,
+                      {
+                        backgroundColor: getSessionPalette(session.isOpen).backgroundColor,
+                        color: getSessionPalette(session.isOpen).textColor,
+                      },
+                    ]}
+                  >
                     {session.status}
                   </Text>
                 </View>
@@ -499,14 +526,17 @@ export default function App() {
           </View>
 
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>시장 요약 지표</Text>
+            <View style={styles.sectionHeaderRow}>
+              <Text style={styles.cardTitle}>시장 요약 지표</Text>
+              <Text style={styles.metaText}>{summary?.marketSummary.length ?? 0}개</Text>
+            </View>
             {(summary?.marketSummary ?? []).map((item) => (
               <View key={item.label} style={styles.metricRow}>
                 <View style={styles.metricLeft}>
                   <Text style={styles.metricName}>{item.label}</Text>
                   <Text style={styles.metricState}>{item.state}</Text>
                 </View>
-                <Text style={styles.metricScore}>{item.score.toFixed(1)}</Text>
+                <Text style={[styles.metricScore, { color: getMetricAccent(item.score) }]}>{item.score.toFixed(1)}</Text>
                 <Text style={styles.metricNote}>{item.note}</Text>
               </View>
             ))}
@@ -525,6 +555,7 @@ export default function App() {
                     <Text style={styles.metricState}>{item.market} · {item.ticker} · {item.sector}</Text>
                   </View>
                   <View style={styles.summaryValueBox}>
+                    <Text style={styles.summaryMeta}>{item.stance}</Text>
                     <Text style={styles.metricScore}>{formatCompactNumber(item.price)}</Text>
                     <Text style={[styles.summaryDelta, { color: item.changeRate >= 0 ? '#dc2626' : '#2563eb' }]}>
                       {formatSignedRate(item.changeRate)}
@@ -544,6 +575,20 @@ export default function App() {
                 {portfolio ? `손익 ${formatSignedRate(portfolio.totalProfitRate)}` : '-'}
               </Text>
             </View>
+            {portfolio ? (
+              <View style={styles.portfolioSummaryRow}>
+                <View style={styles.portfolioSummaryCard}>
+                  <Text style={styles.kpiLabel}>총 평가금액</Text>
+                  <Text style={styles.chartStatValue}>{formatCompactNumber(portfolio.totalValue)}</Text>
+                </View>
+                <View style={styles.portfolioSummaryCard}>
+                  <Text style={styles.kpiLabel}>총 손익</Text>
+                  <Text style={[styles.chartStatValue, { color: portfolio.totalProfit >= 0 ? '#dc2626' : '#2563eb' }]}>
+                    {formatCompactNumber(portfolio.totalProfit)}
+                  </Text>
+                </View>
+              </View>
+            ) : null}
             {topPortfolioPositions.length ? (
               topPortfolioPositions.map((item) => (
                 <View key={`${item.market}-${item.ticker}-${item.id || item.name}`} style={styles.summaryRow}>
@@ -636,6 +681,16 @@ export default function App() {
                   <Text style={styles.kpiLabel}>거래량 평균</Text>
                   <Text style={styles.chartStatValue}>{formatCompactNumber(activePeriod.stats.averageVolume)}</Text>
                 </View>
+                <View style={styles.chartStat}>
+                  <Text style={styles.kpiLabel}>등락률</Text>
+                  <Text style={[styles.chartStatValue, { color: activePeriod.stats.changeRate >= 0 ? '#dc2626' : '#2563eb' }]}>
+                    {formatSignedRate(activePeriod.stats.changeRate)}
+                  </Text>
+                </View>
+                <View style={styles.chartStat}>
+                  <Text style={styles.kpiLabel}>진폭</Text>
+                  <Text style={styles.chartStatValue}>{activePeriod.stats.range.toFixed(2)}</Text>
+                </View>
               </View>
             ) : null}
           </View>
@@ -655,6 +710,21 @@ export default function App() {
                 <Text style={styles.cardEyebrow}>AI BRIEF</Text>
                 <Text style={styles.primaryValue}>{aiRecommendation?.generatedDate ?? '-'}</Text>
                 <Text style={styles.cardNote}>{aiRecommendation?.summary ?? '-'}</Text>
+              </View>
+
+              <View style={styles.kpiRow}>
+                <View style={styles.kpiCard}>
+                  <Text style={styles.kpiLabel}>전체 로그</Text>
+                  <Text style={styles.kpiValue}>{aiRecommendation?.executionLogs.length ?? 0}</Text>
+                </View>
+                <View style={styles.kpiCard}>
+                  <Text style={styles.kpiLabel}>추천 로그</Text>
+                  <Text style={styles.kpiValue}>{recommendLogs}</Text>
+                </View>
+                <View style={styles.kpiCard}>
+                  <Text style={styles.kpiLabel}>성과 로그</Text>
+                  <Text style={styles.kpiValue}>{resultLogs}</Text>
+                </View>
               </View>
 
               <View style={styles.filterRow}>
@@ -835,6 +905,47 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 8,
   },
+  heroMetricsRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  heroMetricCard: {
+    flex: 1,
+    borderRadius: 16,
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#dbeafe',
+    padding: 12,
+    gap: 6,
+  },
+  heroMetricCardDark: {
+    backgroundColor: '#0f172a',
+    borderColor: '#0f172a',
+  },
+  heroMetricLabel: {
+    color: '#64748b',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  heroMetricLabelOnDark: {
+    color: '#93c5fd',
+  },
+  heroMetricValue: {
+    color: '#0f172a',
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  heroMetricValueOnDark: {
+    color: '#f8fafc',
+  },
+  heroMetricFootnote: {
+    color: '#64748b',
+    fontSize: 11,
+    lineHeight: 16,
+  },
+  heroMetricFootnoteOnDark: {
+    color: '#cbd5e1',
+  },
   kpiCard: {
     flex: 1,
     borderRadius: 12,
@@ -943,9 +1054,26 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     gap: 2,
   },
+  summaryMeta: {
+    color: '#64748b',
+    fontSize: 11,
+    fontWeight: '700',
+  },
   summaryDelta: {
     fontSize: 12,
     fontWeight: '700',
+  },
+  portfolioSummaryRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  portfolioSummaryCard: {
+    flex: 1,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    backgroundColor: '#f8fafc',
+    padding: 10,
   },
   filterRow: {
     flexDirection: 'row',
@@ -1005,6 +1133,17 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e2e8f0',
     backgroundColor: '#f8fafc',
+  },
+  chartAxisRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+    paddingBottom: 10,
+  },
+  chartAxisLabel: {
+    color: '#64748b',
+    fontSize: 11,
+    fontWeight: '600',
   },
   emptyChart: {
     borderRadius: 12,
