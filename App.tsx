@@ -69,6 +69,41 @@ type MarketSection = {
   indices: IndexMetric[]
 }
 
+type WatchItem = {
+  id: string
+  market: string
+  ticker: string
+  name: string
+  price: number
+  changeRate: number
+  sector: string
+  stance: string
+  note: string
+  source: string
+}
+
+type HoldingPosition = {
+  id: string
+  market: string
+  ticker: string
+  name: string
+  buyPrice: number
+  currentPrice: number
+  quantity: number
+  profitAmount: number
+  evaluationAmount: number
+  profitRate: number
+  source: string
+}
+
+type PortfolioSummary = {
+  totalCost: number
+  totalValue: number
+  totalProfit: number
+  totalProfitRate: number
+  positions: HoldingPosition[]
+}
+
 type MarketSectionsData = {
   generatedAt: string
   koreaMarket: MarketSection
@@ -101,6 +136,16 @@ type AiRecommendationData = {
   generatedDate: string
   summary: string
   executionLogs: RecommendationExecutionLog[]
+}
+
+type WatchlistResponse = {
+  generatedAt: string
+  watchlist: WatchItem[]
+}
+
+type PortfolioResponse = {
+  generatedAt: string
+  portfolio: PortfolioSummary
 }
 
 type ApiResponse<T> = {
@@ -260,6 +305,8 @@ export default function App() {
   const [summary, setSummary] = useState<MarketSummaryData | null>(null)
   const [sections, setSections] = useState<MarketSectionsData | null>(null)
   const [aiRecommendation, setAiRecommendation] = useState<AiRecommendationData | null>(null)
+  const [watchlist, setWatchlist] = useState<WatchItem[]>([])
+  const [portfolio, setPortfolio] = useState<PortfolioSummary | null>(null)
   const [loading, setLoading] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState('')
@@ -271,22 +318,28 @@ export default function App() {
   const loadData = useCallback(async () => {
     setError('')
     try {
-      const [summaryResponse, sectionsResponse, aiResponse] = await Promise.all([
+      const [summaryResponse, sectionsResponse, aiResponse, watchlistResponse, portfolioResponse] = await Promise.all([
         fetch(`${API_BASE_URL}/api/v1/market/summary`),
         fetch(`${API_BASE_URL}/api/v1/market/sections`),
         fetch(`${API_BASE_URL}/api/v1/market/ai-recommendations`),
+        fetch(`${API_BASE_URL}/api/v1/market/watchlist`),
+        fetch(`${API_BASE_URL}/api/v1/market/portfolio`),
       ])
-      if (!summaryResponse.ok || !sectionsResponse.ok || !aiResponse.ok) {
+      if (!summaryResponse.ok || !sectionsResponse.ok || !aiResponse.ok || !watchlistResponse.ok || !portfolioResponse.ok) {
         throw new Error('fetch failed')
       }
 
       const summaryJson = (await summaryResponse.json()) as ApiResponse<MarketSummaryData>
       const sectionsJson = (await sectionsResponse.json()) as ApiResponse<MarketSectionsData>
       const aiJson = (await aiResponse.json()) as ApiResponse<{ aiRecommendations: AiRecommendationData }>
+      const watchlistJson = (await watchlistResponse.json()) as ApiResponse<WatchlistResponse>
+      const portfolioJson = (await portfolioResponse.json()) as ApiResponse<PortfolioResponse>
 
       setSummary(summaryJson.data)
       setSections(sectionsJson.data)
       setAiRecommendation(aiJson.data.aiRecommendations)
+      setWatchlist(watchlistJson.data.watchlist)
+      setPortfolio(portfolioJson.data.portfolio)
     } catch {
       setError(`API 연결 실패: ${API_BASE_URL}`)
     }
@@ -315,6 +368,9 @@ export default function App() {
     const successCount = resultLogs.filter((item) => (item.realizedReturnRate ?? 0) >= 0).length
     return `${Math.round((successCount / resultLogs.length) * 100)}%`
   }, [aiRecommendation?.executionLogs])
+
+  const topWatchlist = useMemo(() => watchlist.slice(0, 4), [watchlist])
+  const topPortfolioPositions = useMemo(() => (portfolio?.positions ?? []).slice(0, 4), [portfolio])
 
   const activeSection = useMemo(() => {
     if (!sections) return null
@@ -409,6 +465,23 @@ export default function App() {
             </View>
           </View>
 
+          <View style={styles.kpiRow}>
+            <View style={styles.kpiCard}>
+              <Text style={styles.kpiLabel}>관심종목</Text>
+              <Text style={styles.kpiValue}>{watchlist.length}</Text>
+            </View>
+            <View style={styles.kpiCard}>
+              <Text style={styles.kpiLabel}>보유종목</Text>
+              <Text style={styles.kpiValue}>{portfolio?.positions.length ?? 0}</Text>
+            </View>
+            <View style={styles.kpiCard}>
+              <Text style={styles.kpiLabel}>포트폴리오</Text>
+              <Text style={[styles.kpiValue, { color: (portfolio?.totalProfitRate ?? 0) >= 0 ? '#dc2626' : '#2563eb' }]}>
+                {portfolio ? formatSignedRate(portfolio.totalProfitRate) : '-'}
+              </Text>
+            </View>
+          </View>
+
           <View style={styles.card}>
             <Text style={styles.cardTitle}>장 세션</Text>
             {(summary?.marketSessions ?? []).map((session) => (
@@ -437,6 +510,58 @@ export default function App() {
                 <Text style={styles.metricNote}>{item.note}</Text>
               </View>
             ))}
+          </View>
+
+          <View style={styles.card}>
+            <View style={styles.sectionHeaderRow}>
+              <Text style={styles.cardTitle}>관심종목 요약</Text>
+              <Text style={styles.metaText}>{watchlist.length}개</Text>
+            </View>
+            {topWatchlist.length ? (
+              topWatchlist.map((item) => (
+                <View key={`${item.market}-${item.ticker}-${item.id || item.name}`} style={styles.summaryRow}>
+                  <View style={styles.metricLeft}>
+                    <Text style={styles.metricName}>{item.name}</Text>
+                    <Text style={styles.metricState}>{item.market} · {item.ticker} · {item.sector}</Text>
+                  </View>
+                  <View style={styles.summaryValueBox}>
+                    <Text style={styles.metricScore}>{formatCompactNumber(item.price)}</Text>
+                    <Text style={[styles.summaryDelta, { color: item.changeRate >= 0 ? '#dc2626' : '#2563eb' }]}>
+                      {formatSignedRate(item.changeRate)}
+                    </Text>
+                  </View>
+                </View>
+              ))
+            ) : (
+              <Text style={styles.metaText}>아직 관심종목이 없어.</Text>
+            )}
+          </View>
+
+          <View style={styles.card}>
+            <View style={styles.sectionHeaderRow}>
+              <Text style={styles.cardTitle}>포트폴리오 요약</Text>
+              <Text style={styles.metaText}>
+                {portfolio ? `손익 ${formatSignedRate(portfolio.totalProfitRate)}` : '-'}
+              </Text>
+            </View>
+            {topPortfolioPositions.length ? (
+              topPortfolioPositions.map((item) => (
+                <View key={`${item.market}-${item.ticker}-${item.id || item.name}`} style={styles.summaryRow}>
+                  <View style={styles.metricLeft}>
+                    <Text style={styles.metricName}>{item.name}</Text>
+                    <Text style={styles.metricState}>{item.market} · {item.ticker} · {item.quantity}주</Text>
+                  </View>
+                  <View style={styles.summaryValueBox}>
+                    <Text style={styles.metricScore}>{formatCompactNumber(item.currentPrice)}</Text>
+                    <Text style={[styles.summaryDelta, { color: item.profitRate >= 0 ? '#dc2626' : '#2563eb' }]}>
+                      {formatSignedRate(item.profitRate)}
+                    </Text>
+                  </View>
+                </View>
+              ))
+            ) : (
+              <Text style={styles.metaText}>아직 보유 종목이 없어.</Text>
+            )}
           </View>
         </ScrollView>
       ) : null}
@@ -796,6 +921,31 @@ const styles = StyleSheet.create({
   metricNote: {
     color: '#64748b',
     fontSize: 12,
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 8,
+  },
+  summaryRow: {
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    padding: 10,
+    backgroundColor: '#f8fafc',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 10,
+  },
+  summaryValueBox: {
+    alignItems: 'flex-end',
+    gap: 2,
+  },
+  summaryDelta: {
+    fontSize: 12,
+    fontWeight: '700',
   },
   filterRow: {
     flexDirection: 'row',
