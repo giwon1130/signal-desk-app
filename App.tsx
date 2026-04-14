@@ -26,6 +26,7 @@ type AlternativeSignal = {
   score: number
   state: string
   note: string
+  highlights: string[]
   source: string
   url: string
   experimental: boolean
@@ -204,6 +205,31 @@ function getMetricAccent(score: number) {
   if (score >= 70) return '#0f766e'
   if (score >= 40) return '#a16207'
   return '#b91c1c'
+}
+
+function getAlternativeSignalPalette(score: number) {
+  if (score >= 75) {
+    return {
+      backgroundColor: '#fff1f2',
+      borderColor: '#fecdd3',
+      badgeBackgroundColor: '#ffe4e6',
+      badgeTextColor: '#be123c',
+    }
+  }
+  if (score >= 45) {
+    return {
+      backgroundColor: '#fff7ed',
+      borderColor: '#fed7aa',
+      badgeBackgroundColor: '#ffedd5',
+      badgeTextColor: '#c2410c',
+    }
+  }
+  return {
+    backgroundColor: '#ecfeff',
+    borderColor: '#bae6fd',
+    badgeBackgroundColor: '#cffafe',
+    badgeTextColor: '#0f766e',
+  }
 }
 
 function buildMovingAverage(points: ChartPoint[], period: number) {
@@ -559,12 +585,42 @@ export default function App() {
               <Text style={styles.metaText}>{summary?.alternativeSignals.length ?? 0}개</Text>
             </View>
             {(summary?.alternativeSignals ?? []).map((item) => (
-              <View key={item.label} style={styles.metricRow}>
+              <View
+                key={item.label}
+                style={[
+                  styles.metricRow,
+                  styles.alternativeMetricRow,
+                  {
+                    backgroundColor: getAlternativeSignalPalette(item.score).backgroundColor,
+                    borderColor: getAlternativeSignalPalette(item.score).borderColor,
+                  },
+                ]}
+              >
                 <View style={styles.metricLeft}>
                   <Text style={styles.metricName}>{item.label}</Text>
                   <Text style={styles.metricState}>{item.state}</Text>
                 </View>
-                <Text style={[styles.metricScore, { color: getMetricAccent(item.score) }]}>{item.score}</Text>
+                <View style={styles.alternativeMetricTopRow}>
+                  <Text style={[styles.metricScore, { color: getMetricAccent(item.score) }]}>{item.score}</Text>
+                  <Text
+                    style={[
+                      styles.alternativeScoreBadge,
+                      {
+                        backgroundColor: getAlternativeSignalPalette(item.score).badgeBackgroundColor,
+                        color: getAlternativeSignalPalette(item.score).badgeTextColor,
+                      },
+                    ]}
+                  >
+                    {item.state}
+                  </Text>
+                </View>
+                <View style={styles.alternativeHighlightsRow}>
+                  {item.highlights.map((highlight) => (
+                    <Text key={`${item.label}-${highlight}`} style={styles.alternativeHighlightChip}>
+                      {highlight}
+                    </Text>
+                  ))}
+                </View>
                 <Text style={styles.metricNote}>{item.note}</Text>
                 <Text style={styles.metricSource}>{item.source} · Experimental</Text>
               </View>
@@ -1066,6 +1122,38 @@ const styles = StyleSheet.create({
     color: '#0369a1',
     fontSize: 11,
     fontWeight: '700',
+  },
+  alternativeMetricRow: {
+    gap: 8,
+  },
+  alternativeMetricTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 10,
+  },
+  alternativeScoreBadge: {
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    fontSize: 11,
+    fontWeight: '800',
+    overflow: 'hidden',
+  },
+  alternativeHighlightsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  alternativeHighlightChip: {
+    borderRadius: 999,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    backgroundColor: 'rgba(15, 23, 42, 0.06)',
+    color: '#334155',
+    fontSize: 11,
+    fontWeight: '700',
+    overflow: 'hidden',
   },
   sectionHeaderRow: {
     flexDirection: 'row',
