@@ -21,6 +21,16 @@ type SummaryMetric = {
   note: string
 }
 
+type AlternativeSignal = {
+  label: string
+  score: number
+  state: string
+  note: string
+  source: string
+  url: string
+  experimental: boolean
+}
+
 type MarketSessionStatus = {
   market: string
   label: string
@@ -129,6 +139,7 @@ type MarketSummaryData = {
   marketStatus: string
   summary: string
   marketSummary: SummaryMetric[]
+  alternativeSignals: AlternativeSignal[]
   marketSessions: MarketSessionStatus[]
 }
 
@@ -538,6 +549,24 @@ export default function App() {
                 </View>
                 <Text style={[styles.metricScore, { color: getMetricAccent(item.score) }]}>{item.score.toFixed(1)}</Text>
                 <Text style={styles.metricNote}>{item.note}</Text>
+              </View>
+            ))}
+          </View>
+
+          <View style={styles.card}>
+            <View style={styles.sectionHeaderRow}>
+              <Text style={styles.cardTitle}>실험 지표</Text>
+              <Text style={styles.metaText}>{summary?.alternativeSignals.length ?? 0}개</Text>
+            </View>
+            {(summary?.alternativeSignals ?? []).map((item) => (
+              <View key={item.label} style={styles.metricRow}>
+                <View style={styles.metricLeft}>
+                  <Text style={styles.metricName}>{item.label}</Text>
+                  <Text style={styles.metricState}>{item.state}</Text>
+                </View>
+                <Text style={[styles.metricScore, { color: getMetricAccent(item.score) }]}>{item.score}</Text>
+                <Text style={styles.metricNote}>{item.note}</Text>
+                <Text style={styles.metricSource}>{item.source} · Experimental</Text>
               </View>
             ))}
           </View>
@@ -1032,6 +1061,11 @@ const styles = StyleSheet.create({
   metricNote: {
     color: '#64748b',
     fontSize: 12,
+  },
+  metricSource: {
+    color: '#0369a1',
+    fontSize: 11,
+    fontWeight: '700',
   },
   sectionHeaderRow: {
     flexDirection: 'row',
