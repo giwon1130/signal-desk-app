@@ -32,6 +32,18 @@ type AlternativeSignal = {
   experimental: boolean
 }
 
+type WatchAlert = {
+  severity: 'high' | 'medium' | 'low'
+  category: string
+  market: string
+  ticker: string
+  name: string
+  title: string
+  note: string
+  score: number
+  tags: string[]
+}
+
 type MarketSessionStatus = {
   market: string
   label: string
@@ -141,7 +153,13 @@ type MarketSummaryData = {
   summary: string
   marketSummary: SummaryMetric[]
   alternativeSignals: AlternativeSignal[]
+  watchAlerts: WatchAlert[]
   marketSessions: MarketSessionStatus[]
+  briefing?: {
+    headline: string
+    preMarket: string[]
+    afterMarket: string[]
+  }
 }
 
 type AiRecommendationData = {
@@ -230,6 +248,16 @@ function getAlternativeSignalPalette(score: number) {
     badgeBackgroundColor: '#cffafe',
     badgeTextColor: '#0f766e',
   }
+}
+
+function getAlertPalette(severity: WatchAlert['severity']) {
+  if (severity === 'high') {
+    return { backgroundColor: '#fff1f2', borderColor: '#fecdd3', badgeColor: '#be123c', badgeBackgroundColor: '#ffe4e6' }
+  }
+  if (severity === 'medium') {
+    return { backgroundColor: '#fff7ed', borderColor: '#fed7aa', badgeColor: '#c2410c', badgeBackgroundColor: '#ffedd5' }
+  }
+  return { backgroundColor: '#ecfeff', borderColor: '#bae6fd', badgeColor: '#0f766e', badgeBackgroundColor: '#cffafe' }
 }
 
 function buildMovingAverage(points: ChartPoint[], period: number) {
@@ -515,6 +543,24 @@ export default function App() {
             <Text style={styles.metaText}>업데이트: {summary?.generatedAt ?? '-'}</Text>
           </View>
 
+          {summary?.briefing ? (
+            <View style={styles.card}>
+              <View style={styles.sectionHeaderRow}>
+                <Text style={styles.cardTitle}>장전 브리핑</Text>
+                <Text style={styles.metaText}>{summary.briefing.preMarket.length}개 포인트</Text>
+              </View>
+              <Text style={styles.cardNote}>{summary.briefing.headline}</Text>
+              <View style={styles.briefingList}>
+                {summary.briefing.preMarket.slice(0, 3).map((item) => (
+                  <View key={item} style={styles.briefingBulletRow}>
+                    <Text style={styles.briefingBullet}>•</Text>
+                    <Text style={styles.briefingItem}>{item}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          ) : null}
+
           <View style={styles.heroMetricsRow}>
             <View style={[styles.heroMetricCard, styles.heroMetricCardDark]}>
               <Text style={[styles.heroMetricLabel, styles.heroMetricLabelOnDark]}>AI 성공률</Text>
@@ -625,6 +671,57 @@ export default function App() {
                 <Text style={styles.metricSource}>{item.source} · Experimental</Text>
               </View>
             ))}
+          </View>
+
+          <View style={styles.card}>
+            <View style={styles.sectionHeaderRow}>
+              <Text style={styles.cardTitle}>관심종목 이상징후</Text>
+              <Text style={styles.metaText}>{summary?.watchAlerts.length ?? 0}건</Text>
+            </View>
+            {(summary?.watchAlerts ?? []).length ? (
+              (summary?.watchAlerts ?? []).map((item) => (
+                <View
+                  key={`${item.category}-${item.market}-${item.ticker}`}
+                  style={[
+                    styles.metricRow,
+                    styles.alertMetricRow,
+                    {
+                      backgroundColor: getAlertPalette(item.severity).backgroundColor,
+                      borderColor: getAlertPalette(item.severity).borderColor,
+                    },
+                  ]}
+                >
+                  <View style={styles.metricLeft}>
+                    <Text style={styles.metricName}>{item.name}</Text>
+                    <Text style={styles.metricState}>{item.market} · {item.ticker} · {item.title}</Text>
+                  </View>
+                  <View style={styles.alternativeMetricTopRow}>
+                    <Text style={[styles.metricScore, { color: getMetricAccent(item.score) }]}>{item.score}</Text>
+                    <Text
+                      style={[
+                        styles.alternativeScoreBadge,
+                        {
+                          backgroundColor: getAlertPalette(item.severity).badgeBackgroundColor,
+                          color: getAlertPalette(item.severity).badgeColor,
+                        },
+                      ]}
+                    >
+                      {item.severity.toUpperCase()}
+                    </Text>
+                  </View>
+                  <View style={styles.alternativeHighlightsRow}>
+                    {item.tags.map((tag) => (
+                      <Text key={`${item.market}-${item.ticker}-${tag}`} style={styles.alternativeHighlightChip}>
+                        {tag}
+                      </Text>
+                    ))}
+                  </View>
+                  <Text style={styles.metricNote}>{item.note}</Text>
+                </View>
+              ))
+            ) : (
+              <Text style={styles.metaText}>지금 바로 볼 이상징후는 없어.</Text>
+            )}
           </View>
 
           <View style={styles.card}>
@@ -1126,6 +1223,9 @@ const styles = StyleSheet.create({
   alternativeMetricRow: {
     gap: 8,
   },
+  alertMetricRow: {
+    gap: 8,
+  },
   alternativeMetricTopRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -1196,6 +1296,27 @@ const styles = StyleSheet.create({
     borderColor: '#e2e8f0',
     backgroundColor: '#f8fafc',
     padding: 10,
+  },
+  briefingList: {
+    gap: 8,
+    marginTop: 10,
+  },
+  briefingBulletRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+  },
+  briefingBullet: {
+    color: '#0f766e',
+    fontSize: 13,
+    fontWeight: '800',
+    marginTop: 1,
+  },
+  briefingItem: {
+    flex: 1,
+    color: '#334155',
+    fontSize: 13,
+    lineHeight: 20,
   },
   filterRow: {
     flexDirection: 'row',
