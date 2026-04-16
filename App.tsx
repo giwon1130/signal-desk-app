@@ -9,6 +9,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   useWindowDimensions,
   View,
 } from 'react-native'
@@ -183,6 +184,12 @@ type ApiResponse<T> = {
   data: T
 }
 
+type HealthResponse = {
+  status: string
+  application: string
+  storeMode: string
+}
+
 type TabKey = 'home' | 'chart' | 'ai'
 type LogFilter = 'ALL' | 'RECOMMEND' | 'RESULT'
 type MarketKey = 'KR' | 'US'
@@ -259,6 +266,10 @@ function getAlertPalette(severity: WatchAlert['severity']) {
     return { backgroundColor: '#fff7ed', borderColor: '#fed7aa', badgeColor: '#c2410c', badgeBackgroundColor: '#ffedd5' }
   }
   return { backgroundColor: '#ecfeff', borderColor: '#bae6fd', badgeColor: '#0f766e', badgeBackgroundColor: '#cffafe' }
+}
+
+function normalizeText(value: string) {
+  return value.trim().toLowerCase()
 }
 
 function buildMovingAverage(points: ChartPoint[], period: number) {
@@ -396,6 +407,10 @@ export default function App() {
   const [loading, setLoading] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState('')
+  const [apiHealth, setApiHealth] = useState<HealthResponse | null>(null)
+  const [lastSyncedAt, setLastSyncedAt] = useState('')
+  const [homeQuery, setHomeQuery] = useState('')
+  const [logQuery, setLogQuery] = useState('')
   const [logFilter, setLogFilter] = useState<LogFilter>('ALL')
   const [chartMarket, setChartMarket] = useState<MarketKey>('KR')
   const [chartPeriod, setChartPeriod] = useState<PeriodKey>('1D')
@@ -404,29 +419,41 @@ export default function App() {
   const loadData = useCallback(async () => {
     setError('')
     try {
-      const [summaryResponse, sectionsResponse, aiResponse, watchlistResponse, portfolioResponse] = await Promise.all([
+      const [healthResponse, summaryResponse, sectionsResponse, aiResponse, watchlistResponse, portfolioResponse] = await Promise.all([
+        fetch(`${API_BASE_URL}/health`),
         fetch(`${API_BASE_URL}/api/v1/market/summary`),
         fetch(`${API_BASE_URL}/api/v1/market/sections`),
         fetch(`${API_BASE_URL}/api/v1/market/ai-recommendations`),
         fetch(`${API_BASE_URL}/api/v1/market/watchlist`),
         fetch(`${API_BASE_URL}/api/v1/market/portfolio`),
       ])
-      if (!summaryResponse.ok || !sectionsResponse.ok || !aiResponse.ok || !watchlistResponse.ok || !portfolioResponse.ok) {
+      if (
+        !healthResponse.ok ||
+        !summaryResponse.ok ||
+        !sectionsResponse.ok ||
+        !aiResponse.ok ||
+        !watchlistResponse.ok ||
+        !portfolioResponse.ok
+      ) {
         throw new Error('fetch failed')
       }
 
+      const healthJson = (await healthResponse.json()) as HealthResponse
       const summaryJson = (await summaryResponse.json()) as ApiResponse<MarketSummaryData>
       const sectionsJson = (await sectionsResponse.json()) as ApiResponse<MarketSectionsData>
       const aiJson = (await aiResponse.json()) as ApiResponse<{ aiRecommendations: AiRecommendationData }>
       const watchlistJson = (await watchlistResponse.json()) as ApiResponse<WatchlistResponse>
       const portfolioJson = (await portfolioResponse.json()) as ApiResponse<PortfolioResponse>
 
+      setApiHealth(healthJson)
       setSummary(summaryJson.data)
       setSections(sectionsJson.data)
       setAiRecommendation(aiJson.data.aiRecommendations)
       setWatchlist(watchlistJson.data.watchlist)
       setPortfolio(portfolioJson.data.portfolio)
+      setLastSyncedAt(new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }))
     } catch {
+      setApiHealth(null)
       setError(`API 연결 실패: ${API_BASE_URL}`)
     }
   }, [])
@@ -444,9 +471,17 @@ export default function App() {
 
   const filteredLogs = useMemo(() => {
     const logs = aiRecommendation?.executionLogs ?? []
-    if (logFilter === 'ALL') return logs.slice(0, 20)
-    return logs.filter((item) => item.stage === logFilter).slice(0, 20)
-  }, [aiRecommendation?.executionLogs, logFilter])
+    const stageFiltered = logFilter === 'ALL' ? logs : logs.filter((item) => item.stage === logFilter)
+    const query = normalizeText(logQuery)
+    if (!query) return stageFiltered.slice(0, 20)
+    return stageFiltered
+      .filter((item) =>
+        [item.name, item.ticker, item.market, item.status, item.rationale].some((value) =>
+          normalizeText(value).includes(query)
+        )
+      )
+      .slice(0, 20)
+  }, [aiRecommendation?.executionLogs, logFilter, logQuery])
 
   const successRate = useMemo(() => {
     const resultLogs = (aiRecommendation?.executionLogs ?? []).filter((item) => item.realizedReturnRate != null)
@@ -455,8 +490,25 @@ export default function App() {
     return `${Math.round((successCount / resultLogs.length) * 100)}%`
   }, [aiRecommendation?.executionLogs])
 
-  const topWatchlist = useMemo(() => watchlist.slice(0, 4), [watchlist])
-  const topPortfolioPositions = useMemo(() => (portfolio?.positions ?? []).slice(0, 4), [portfolio])
+  const filteredWatchlist = useMemo(() => {
+    const query = normalizeText(homeQuery)
+    if (!query) return watchlist
+    return watchlist.filter((item) =>
+      [item.name, item.ticker, item.market, item.sector, item.stance].some((value) =>
+        normalizeText(value).includes(query)
+      )
+    )
+  }, [homeQuery, watchlist])
+  const filteredPortfolioPositions = useMemo(() => {
+    const positions = portfolio?.positions ?? []
+    const query = normalizeText(homeQuery)
+    if (!query) return positions
+    return positions.filter((item) =>
+      [item.name, item.ticker, item.market].some((value) => normalizeText(value).includes(query))
+    )
+  }, [homeQuery, portfolio?.positions])
+  const topWatchlist = useMemo(() => filteredWatchlist.slice(0, 4), [filteredWatchlist])
+  const topPortfolioPositions = useMemo(() => filteredPortfolioPositions.slice(0, 4), [filteredPortfolioPositions])
   const recommendLogs = useMemo(
     () => (aiRecommendation?.executionLogs ?? []).filter((item) => item.stage === 'RECOMMEND').length,
     [aiRecommendation?.executionLogs],
@@ -499,6 +551,14 @@ export default function App() {
           <Text style={styles.headerTitle}>Mobile Dashboard</Text>
           <Text style={styles.headerSubtitle}>시장/차트/추천 로그를 앱에서 빠르게 확인</Text>
           <Text style={styles.apiText}>API: {API_BASE_URL}</Text>
+          <View style={styles.headerMetaRow}>
+            <Text style={[styles.headerStatusBadge, apiHealth?.status === 'UP' ? styles.headerStatusBadgeUp : styles.headerStatusBadgeDown]}>
+              {apiHealth?.status === 'UP' ? 'API 정상' : 'API 확인 필요'}
+            </Text>
+            <Text style={styles.headerMetaText}>
+              {lastSyncedAt ? `최근 동기화 ${lastSyncedAt}` : '동기화 대기 중'}
+            </Text>
+          </View>
         </View>
       </View>
 
@@ -525,7 +585,16 @@ export default function App() {
         <View style={styles.errorBox}>
           <Text style={styles.errorTitle}>연결 오류</Text>
           <Text style={styles.errorText}>{error}</Text>
-          <Text style={styles.errorText}>API(8091) 상태와 CORS 설정을 확인해.</Text>
+          <Text style={styles.errorText}>API 상태와 네트워크 설정을 확인해.</Text>
+          <Pressable
+            onPress={() => {
+              setLoading(true)
+              void loadData().finally(() => setLoading(false))
+            }}
+            style={styles.retryButton}
+          >
+            <Text style={styles.retryButtonText}>다시 시도</Text>
+          </Pressable>
         </View>
       ) : null}
 
@@ -542,6 +611,32 @@ export default function App() {
             </Text>
             <Text style={styles.cardNote}>{summary?.summary ?? '-'}</Text>
             <Text style={styles.metaText}>업데이트: {summary?.generatedAt ?? '-'}</Text>
+          </View>
+
+          <View style={styles.card}>
+            <View style={styles.sectionHeaderRow}>
+              <Text style={styles.cardTitle}>빠른 검색</Text>
+              <Text style={styles.metaText}>관심종목/포트폴리오</Text>
+            </View>
+            <TextInput
+              value={homeQuery}
+              onChangeText={setHomeQuery}
+              placeholder="종목명, 티커, 시장으로 검색"
+              placeholderTextColor="#94a3b8"
+              style={styles.searchInput}
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+            <View style={styles.quickStatsRow}>
+              <View style={styles.quickStatCard}>
+                <Text style={styles.kpiLabel}>검색 결과 관심종목</Text>
+                <Text style={styles.quickStatValue}>{filteredWatchlist.length}</Text>
+              </View>
+              <View style={styles.quickStatCard}>
+                <Text style={styles.kpiLabel}>검색 결과 보유종목</Text>
+                <Text style={styles.quickStatValue}>{filteredPortfolioPositions.length}</Text>
+              </View>
+            </View>
           </View>
 
           {summary?.briefing ? (
@@ -726,9 +821,9 @@ export default function App() {
           </View>
 
           <View style={styles.card}>
-            <View style={styles.sectionHeaderRow}>
-              <Text style={styles.cardTitle}>관심종목 요약</Text>
-              <Text style={styles.metaText}>{watchlist.length}개</Text>
+              <View style={styles.sectionHeaderRow}>
+                <Text style={styles.cardTitle}>관심종목 요약</Text>
+              <Text style={styles.metaText}>{filteredWatchlist.length}개</Text>
             </View>
             {topWatchlist.length ? (
               topWatchlist.map((item) => (
@@ -752,11 +847,11 @@ export default function App() {
           </View>
 
           <View style={styles.card}>
-            <View style={styles.sectionHeaderRow}>
-              <Text style={styles.cardTitle}>포트폴리오 요약</Text>
-              <Text style={styles.metaText}>
-                {portfolio ? `손익 ${formatSignedRate(portfolio.totalProfitRate)}` : '-'}
-              </Text>
+              <View style={styles.sectionHeaderRow}>
+                <Text style={styles.cardTitle}>포트폴리오 요약</Text>
+                <Text style={styles.metaText}>
+                  {portfolio ? `손익 ${formatSignedRate(portfolio.totalProfitRate)}` : '-'}
+                </Text>
             </View>
             {portfolio ? (
               <View style={styles.portfolioSummaryRow}>
@@ -923,6 +1018,16 @@ export default function App() {
                   </Pressable>
                 ))}
               </View>
+
+              <TextInput
+                value={logQuery}
+                onChangeText={setLogQuery}
+                placeholder="AI 로그 검색: 종목명, 티커, 상태"
+                placeholderTextColor="#94a3b8"
+                style={styles.searchInput}
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
             </View>
           )}
           renderItem={({ item }) => (
@@ -980,6 +1085,34 @@ const styles = StyleSheet.create({
     color: '#cbd5e1',
     fontSize: 13,
   },
+  headerMetaRow: {
+    marginTop: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flexWrap: 'wrap',
+  },
+  headerStatusBadge: {
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    fontSize: 11,
+    fontWeight: '800',
+    overflow: 'hidden',
+  },
+  headerStatusBadgeUp: {
+    backgroundColor: '#dcfce7',
+    color: '#166534',
+  },
+  headerStatusBadgeDown: {
+    backgroundColor: '#fee2e2',
+    color: '#b91c1c',
+  },
+  headerMetaText: {
+    color: '#cbd5e1',
+    fontSize: 12,
+    fontWeight: '600',
+  },
   apiText: {
     marginTop: 10,
     color: '#94a3b8',
@@ -1035,6 +1168,19 @@ const styles = StyleSheet.create({
     color: '#991b1b',
     fontSize: 12,
   },
+  retryButton: {
+    alignSelf: 'flex-start',
+    marginTop: 10,
+    borderRadius: 999,
+    backgroundColor: '#7f1d1d',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  retryButtonText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '800',
+  },
   scroll: {
     flex: 1,
   },
@@ -1068,6 +1214,35 @@ const styles = StyleSheet.create({
   cardTitle: {
     color: '#0f172a',
     fontSize: 15,
+    fontWeight: '800',
+  },
+  searchInput: {
+    marginTop: 2,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#cbd5e1',
+    backgroundColor: '#f8fafc',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    color: '#0f172a',
+    fontSize: 14,
+  },
+  quickStatsRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  quickStatCard: {
+    flex: 1,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    backgroundColor: '#f8fafc',
+    padding: 10,
+  },
+  quickStatValue: {
+    marginTop: 4,
+    color: '#0f172a',
+    fontSize: 22,
     fontWeight: '800',
   },
   primaryValue: {
