@@ -190,10 +190,33 @@ type HealthResponse = {
   storeMode: string
 }
 
-type TabKey = 'home' | 'chart' | 'ai'
+type StockSearchResult = {
+  ticker: string
+  name: string
+  market: string
+  sector: string
+  price: number
+  changeRate: number
+  stance: string
+}
+
+type SelectedStockSnapshot = {
+  base: StockSearchResult
+  watchItem?: WatchItem
+  portfolioPosition?: HoldingPosition
+  latestAiLog?: RecommendationExecutionLog
+}
+
+type FavoriteDraft = {
+  stance: string
+  note: string
+}
+
+type TabKey = 'home' | 'market' | 'stocks' | 'ai'
 type LogFilter = 'ALL' | 'RECOMMEND' | 'RESULT'
 type MarketKey = 'KR' | 'US'
 type PeriodKey = '1D' | '1M' | '1Y'
+type StockMarketFilter = 'ALL' | 'KR' | 'US'
 
 const API_BASE_URL =
   process.env.EXPO_PUBLIC_API_BASE_URL ?? 'https://signal-desk-api-production.up.railway.app'
@@ -415,6 +438,14 @@ export default function App() {
   const [chartMarket, setChartMarket] = useState<MarketKey>('KR')
   const [chartPeriod, setChartPeriod] = useState<PeriodKey>('1D')
   const [selectedIndexLabel, setSelectedIndexLabel] = useState('')
+  const [stockSearch, setStockSearch] = useState('')
+  const [stockMarketFilter, setStockMarketFilter] = useState<StockMarketFilter>('ALL')
+  const [stockResults, setStockResults] = useState<StockSearchResult[]>([])
+  const [stockSearchLoading, setStockSearchLoading] = useState(false)
+  const [selectedStockKey, setSelectedStockKey] = useState('')
+  const [favoriteDraft, setFavoriteDraft] = useState<FavoriteDraft>({ stance: '', note: '' })
+  const [favoriteSaving, setFavoriteSaving] = useState(false)
+  const [favoriteDeletingId, setFavoriteDeletingId] = useState('')
 
   const loadData = useCallback(async () => {
     setError('')
@@ -539,6 +570,123 @@ export default function App() {
     return activeIndex.periods.find((item) => item.key === chartPeriod) ?? activeIndex.periods[0] ?? null
   }, [activeIndex, chartPeriod])
 
+  useEffect(() => {
+    let cancelled = false
+    const timeoutId = setTimeout(() => {
+      const fetchStocks = async () => {
+        setStockSearchLoading(true)
+        try {
+          const marketParam = stockMarketFilter === 'ALL' ? '' : `&market=${stockMarketFilter}`
+          const response = await fetch(
+            `${API_BASE_URL}/api/v1/market/stocks/search?q=${encodeURIComponent(stockSearch)}${marketParam}&limit=20`
+          )
+          if (!response.ok) {
+            throw new Error('stock-search-failed')
+          }
+          const result = (await response.json()) as ApiResponse<StockSearchResult[]>
+          if (!cancelled) {
+            setStockResults(result.data)
+          }
+        } catch {
+          if (!cancelled) {
+            setStockResults([])
+          }
+        } finally {
+          if (!cancelled) {
+            setStockSearchLoading(false)
+          }
+        }
+      }
+
+      void fetchStocks()
+    }, 250)
+
+    return () => {
+      cancelled = true
+      clearTimeout(timeoutId)
+    }
+  }, [stockSearch, stockMarketFilter])
+
+  useEffect(() => {
+    if (!stockResults.length) {
+      setSelectedStockKey('')
+      return
+    }
+    if (stockResults.some((item) => `${item.market}:${item.ticker}` === selectedStockKey)) return
+    setSelectedStockKey(`${stockResults[0].market}:${stockResults[0].ticker}`)
+  }, [selectedStockKey, stockResults])
+
+  const selectedStock = useMemo<SelectedStockSnapshot | null>(() => {
+    const [market, ticker] = selectedStockKey.split(':')
+    if (!market || !ticker) return null
+    const base = stockResults.find((item) => item.market === market && item.ticker === ticker)
+    if (!base) return null
+    return {
+      base,
+      watchItem: watchlist.find((item) => item.market === market && item.ticker === ticker),
+      portfolioPosition: portfolio?.positions.find((item) => item.market === market && item.ticker === ticker),
+      latestAiLog: (aiRecommendation?.executionLogs ?? []).find((item) => item.market === market && item.ticker === ticker),
+    }
+  }, [aiRecommendation?.executionLogs, portfolio?.positions, selectedStockKey, stockResults, watchlist])
+
+  useEffect(() => {
+    if (!selectedStock) {
+      setFavoriteDraft({ stance: '', note: '' })
+      return
+    }
+    setFavoriteDraft({
+      stance: selectedStock.watchItem?.stance ?? selectedStock.base.stance,
+      note: selectedStock.watchItem?.note ?? '앱 즐겨찾기',
+    })
+  }, [selectedStock])
+
+  const saveFavorite = useCallback(async () => {
+    if (!selectedStock) return
+    setFavoriteSaving(true)
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/v1/workspace/watchlist`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: selectedStock.watchItem?.id ?? '',
+          market: selectedStock.base.market,
+          ticker: selectedStock.base.ticker,
+          name: selectedStock.base.name,
+          price: Math.round(selectedStock.base.price),
+          changeRate: selectedStock.base.changeRate,
+          sector: selectedStock.base.sector,
+          stance: favoriteDraft.stance.trim() || selectedStock.base.stance,
+          note: favoriteDraft.note.trim() || '앱 즐겨찾기',
+        }),
+      })
+      if (!response.ok) {
+        throw new Error('save-favorite-failed')
+      }
+      await loadData()
+    } catch {
+      setError('즐겨찾기 저장에 실패했어.')
+    } finally {
+      setFavoriteSaving(false)
+    }
+  }, [favoriteDraft.note, favoriteDraft.stance, loadData, selectedStock])
+
+  const deleteFavorite = useCallback(async (id: string) => {
+    setFavoriteDeletingId(id)
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/v1/workspace/watchlist/${id}`, {
+        method: 'DELETE',
+      })
+      if (!response.ok) {
+        throw new Error('delete-favorite-failed')
+      }
+      await loadData()
+    } catch {
+      setError('즐겨찾기 삭제에 실패했어.')
+    } finally {
+      setFavoriteDeletingId('')
+    }
+  }, [loadData])
+
   const chartWidth = Math.max(300, Math.min(width - 28, 760))
 
   return (
@@ -564,9 +712,10 @@ export default function App() {
 
       <View style={styles.tabRow}>
         {([
-          { key: 'home', label: '시장' },
-          { key: 'chart', label: '차트' },
-          { key: 'ai', label: 'AI 로그' },
+          { key: 'home', label: '홈' },
+          { key: 'market', label: '시장' },
+          { key: 'stocks', label: '종목' },
+          { key: 'ai', label: 'AI' },
         ] as Array<{ key: TabKey; label: string }>).map((tab) => (
           <Pressable key={tab.key} onPress={() => setActiveTab(tab.key)} style={[styles.tabButton, activeTab === tab.key && styles.tabButtonActive]}>
             <Text style={[styles.tabText, activeTab === tab.key && styles.tabTextActive]}>{tab.label}</Text>
@@ -889,7 +1038,7 @@ export default function App() {
         </ScrollView>
       ) : null}
 
-      {!loading && !error && activeTab === 'chart' ? (
+      {!loading && !error && activeTab === 'market' ? (
         <ScrollView
           style={styles.scroll}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
@@ -971,6 +1120,196 @@ export default function App() {
                 </View>
               </View>
             ) : null}
+          </View>
+        </ScrollView>
+      ) : null}
+
+      {!loading && !error && activeTab === 'stocks' ? (
+        <ScrollView
+          style={styles.scroll}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+          contentContainerStyle={styles.content}
+        >
+          <View style={styles.card}>
+            <View style={styles.sectionHeaderRow}>
+              <Text style={styles.cardTitle}>종목 탐색</Text>
+              <Text style={styles.metaText}>
+                {stockSearchLoading ? '검색 중...' : `${stockResults.length}개`}
+              </Text>
+            </View>
+            <TextInput
+              value={stockSearch}
+              onChangeText={setStockSearch}
+              placeholder="종목명, 티커, 섹터 검색"
+              placeholderTextColor="#94a3b8"
+              style={styles.searchInput}
+              autoCapitalize="characters"
+              autoCorrect={false}
+            />
+            <View style={styles.filterRow}>
+              {(['ALL', 'KR', 'US'] as const).map((filter) => (
+                <Pressable
+                  key={filter}
+                  onPress={() => setStockMarketFilter(filter)}
+                  style={[styles.filterChip, stockMarketFilter === filter && styles.filterChipActive]}
+                >
+                  <Text style={[styles.filterText, stockMarketFilter === filter && styles.filterTextActive]}>
+                    {filter === 'ALL' ? '전체' : filter === 'KR' ? '한국' : '미국'}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+            <View style={styles.stockResultRow}>
+              {stockResults.map((item) => {
+                const stockKey = `${item.market}:${item.ticker}`
+                const isSelected = selectedStockKey === stockKey
+                const isFavorite = watchlist.some((watchItem) => watchItem.market === item.market && watchItem.ticker === item.ticker)
+                return (
+                  <Pressable
+                    key={stockKey}
+                    onPress={() => setSelectedStockKey(stockKey)}
+                    style={[styles.stockResultCard, isSelected && styles.stockResultCardActive]}
+                  >
+                    <View style={styles.stockResultTop}>
+                      <Text style={styles.stockResultName}>{item.name}</Text>
+                      <Text style={[styles.stockMarketBadge, item.market === 'KR' ? styles.stockMarketBadgeKr : styles.stockMarketBadgeUs]}>
+                        {item.market}
+                      </Text>
+                    </View>
+                    <Text style={styles.stockResultMeta}>{item.ticker} · {item.sector}</Text>
+                    <View style={styles.stockResultBottom}>
+                      <Text style={styles.stockResultPrice}>{formatCompactNumber(item.price)}</Text>
+                      <Text style={[styles.stockResultDelta, { color: item.changeRate >= 0 ? '#dc2626' : '#2563eb' }]}>
+                        {formatSignedRate(item.changeRate)}
+                      </Text>
+                    </View>
+                    {isFavorite ? <Text style={styles.favoriteHint}>즐겨찾기 등록됨</Text> : null}
+                  </Pressable>
+                )
+              })}
+            </View>
+          </View>
+
+          {selectedStock ? (
+            <View style={styles.card}>
+              <View style={styles.sectionHeaderRow}>
+                <Text style={styles.cardTitle}>종목 상세</Text>
+                <Text style={styles.metaText}>{selectedStock.base.market} · {selectedStock.base.ticker}</Text>
+              </View>
+              <View style={styles.stockDetailHero}>
+                <View style={styles.metricLeft}>
+                  <Text style={styles.stockDetailName}>{selectedStock.base.name}</Text>
+                  <Text style={styles.metricState}>{selectedStock.base.sector}</Text>
+                </View>
+                <View style={styles.summaryValueBox}>
+                  <Text style={styles.stockDetailPrice}>{formatCompactNumber(selectedStock.base.price)}</Text>
+                  <Text style={[styles.summaryDelta, { color: selectedStock.base.changeRate >= 0 ? '#dc2626' : '#2563eb' }]}>
+                    {formatSignedRate(selectedStock.base.changeRate)}
+                  </Text>
+                </View>
+              </View>
+              <Text style={styles.cardNote}>{selectedStock.base.stance}</Text>
+
+              <View style={styles.quickStatsRow}>
+                <View style={styles.quickStatCard}>
+                  <Text style={styles.kpiLabel}>즐겨찾기</Text>
+                  <Text style={styles.quickStatValue}>{selectedStock.watchItem ? 'ON' : 'OFF'}</Text>
+                  <Text style={styles.metaText}>{selectedStock.watchItem?.note ?? '아직 등록 안 됨'}</Text>
+                </View>
+                <View style={styles.quickStatCard}>
+                  <Text style={styles.kpiLabel}>보유 상태</Text>
+                  <Text style={styles.quickStatValue}>{selectedStock.portfolioPosition ? '보유' : '미보유'}</Text>
+                  <Text style={styles.metaText}>
+                    {selectedStock.portfolioPosition
+                      ? `${selectedStock.portfolioPosition.quantity}주 · ${formatSignedRate(selectedStock.portfolioPosition.profitRate)}`
+                      : '포트폴리오 없음'}
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.cardSection}>
+                <Text style={styles.cardTitle}>즐겨찾기 편집</Text>
+                <TextInput
+                  value={favoriteDraft.stance}
+                  onChangeText={(value) => setFavoriteDraft((prev) => ({ ...prev, stance: value }))}
+                  placeholder="관점"
+                  placeholderTextColor="#94a3b8"
+                  style={styles.searchInput}
+                />
+                <TextInput
+                  value={favoriteDraft.note}
+                  onChangeText={(value) => setFavoriteDraft((prev) => ({ ...prev, note: value }))}
+                  placeholder="메모"
+                  placeholderTextColor="#94a3b8"
+                  style={[styles.searchInput, styles.noteInput]}
+                  multiline
+                />
+                <View style={styles.inlineButtonRow}>
+                  <Pressable onPress={() => void saveFavorite()} style={styles.primaryActionButton}>
+                    <Text style={styles.primaryActionButtonText}>
+                      {favoriteSaving ? '저장 중...' : selectedStock.watchItem ? '즐겨찾기 수정' : '즐겨찾기 추가'}
+                    </Text>
+                  </Pressable>
+                  {selectedStock.watchItem?.id ? (
+                    <Pressable
+                      onPress={() => void deleteFavorite(selectedStock.watchItem!.id)}
+                      style={styles.secondaryActionButton}
+                    >
+                      <Text style={styles.secondaryActionButtonText}>
+                        {favoriteDeletingId === selectedStock.watchItem.id ? '삭제 중...' : '삭제'}
+                      </Text>
+                    </Pressable>
+                  ) : null}
+                </View>
+              </View>
+
+              {selectedStock.latestAiLog ? (
+                <View style={styles.cardSection}>
+                  <Text style={styles.cardTitle}>최근 AI 로그</Text>
+                  <View style={styles.stockInsightCard}>
+                    <Text style={styles.logMeta}>
+                      {selectedStock.latestAiLog.date} · {selectedStock.latestAiLog.stage} · {selectedStock.latestAiLog.status}
+                    </Text>
+                    <Text style={styles.cardNote}>{selectedStock.latestAiLog.rationale}</Text>
+                  </View>
+                </View>
+              ) : null}
+            </View>
+          ) : null}
+
+          <View style={styles.card}>
+            <View style={styles.sectionHeaderRow}>
+              <Text style={styles.cardTitle}>내 즐겨찾기</Text>
+              <Text style={styles.metaText}>{watchlist.length}개</Text>
+            </View>
+            {watchlist.length ? (
+              watchlist.map((item) => (
+                <View key={`${item.market}-${item.ticker}-${item.id}`} style={styles.favoriteRow}>
+                  <Pressable
+                    onPress={() => {
+                      setStockMarketFilter(item.market as StockMarketFilter)
+                      setStockSearch(item.ticker)
+                      setSelectedStockKey(`${item.market}:${item.ticker}`)
+                    }}
+                    style={styles.metricLeft}
+                  >
+                    <Text style={styles.metricName}>{item.name}</Text>
+                    <Text style={styles.metricState}>{item.market} · {item.ticker} · {item.sector}</Text>
+                    <Text style={styles.cardNote}>{item.note}</Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => item.id && void deleteFavorite(item.id)}
+                    style={styles.favoriteDeleteButton}
+                  >
+                    <Text style={styles.favoriteDeleteText}>
+                      {favoriteDeletingId === item.id ? '...' : '삭제'}
+                    </Text>
+                  </Pressable>
+                </View>
+              ))
+            ) : (
+              <Text style={styles.metaText}>아직 즐겨찾기가 없어. 종목 탭에서 추가해.</Text>
+            )}
           </View>
         </ScrollView>
       ) : null}
@@ -1243,6 +1582,160 @@ const styles = StyleSheet.create({
     marginTop: 4,
     color: '#0f172a',
     fontSize: 22,
+    fontWeight: '800',
+  },
+  stockResultRow: {
+    gap: 8,
+  },
+  stockResultCard: {
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    backgroundColor: '#f8fafc',
+    padding: 12,
+    gap: 6,
+  },
+  stockResultCardActive: {
+    borderColor: '#0f766e',
+    backgroundColor: '#ecfdf5',
+  },
+  stockResultTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 8,
+  },
+  stockResultName: {
+    flex: 1,
+    color: '#0f172a',
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  stockMarketBadge: {
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    fontSize: 11,
+    fontWeight: '800',
+    overflow: 'hidden',
+  },
+  stockMarketBadgeKr: {
+    backgroundColor: '#dbeafe',
+    color: '#1d4ed8',
+  },
+  stockMarketBadgeUs: {
+    backgroundColor: '#ede9fe',
+    color: '#6d28d9',
+  },
+  stockResultMeta: {
+    color: '#64748b',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  stockResultBottom: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  stockResultPrice: {
+    color: '#0f172a',
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  stockResultDelta: {
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  favoriteHint: {
+    color: '#0f766e',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  stockDetailHero: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 10,
+  },
+  stockDetailName: {
+    color: '#0f172a',
+    fontSize: 20,
+    fontWeight: '800',
+  },
+  stockDetailPrice: {
+    color: '#0f172a',
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  cardSection: {
+    gap: 10,
+    marginTop: 6,
+  },
+  noteInput: {
+    minHeight: 88,
+    textAlignVertical: 'top',
+  },
+  inlineButtonRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  primaryActionButton: {
+    flex: 1,
+    borderRadius: 12,
+    backgroundColor: '#0f172a',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  primaryActionButtonText: {
+    color: '#ffffff',
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  secondaryActionButton: {
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#cbd5e1',
+    backgroundColor: '#ffffff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  secondaryActionButtonText: {
+    color: '#334155',
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  stockInsightCard: {
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    backgroundColor: '#f8fafc',
+    padding: 12,
+    gap: 6,
+  },
+  favoriteRow: {
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    backgroundColor: '#f8fafc',
+    padding: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 10,
+  },
+  favoriteDeleteButton: {
+    borderRadius: 999,
+    backgroundColor: '#fee2e2',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  favoriteDeleteText: {
+    color: '#b91c1c',
+    fontSize: 12,
     fontWeight: '800',
   },
   primaryValue: {
