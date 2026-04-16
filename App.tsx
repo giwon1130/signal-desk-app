@@ -188,7 +188,8 @@ type LogFilter = 'ALL' | 'RECOMMEND' | 'RESULT'
 type MarketKey = 'KR' | 'US'
 type PeriodKey = '1D' | '1M' | '1Y'
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:8091'
+const API_BASE_URL =
+  process.env.EXPO_PUBLIC_API_BASE_URL ?? 'https://signal-desk-api-production.up.railway.app'
 
 function formatSignedRate(value?: number | null) {
   if (value == null) return '-'

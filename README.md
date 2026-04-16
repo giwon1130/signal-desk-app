@@ -57,10 +57,16 @@ npm run web
 Expo public env 사용:
 
 ```bash
-EXPO_PUBLIC_API_BASE_URL=http://localhost:8091
+EXPO_PUBLIC_API_BASE_URL=https://signal-desk-api-production.up.railway.app
 ```
 
-기본값은 `http://localhost:8091`.
+기본값은 `https://signal-desk-api-production.up.railway.app`.
+
+로컬 API로 붙여야 하면 실행 시점에 덮어쓴다:
+
+```bash
+EXPO_PUBLIC_API_BASE_URL=http://localhost:8091 npm start
+```
 
 ## 참고
 - iOS 시뮬레이터/실기기에서는 `localhost`가 앱 디바이스 자신을 가리킬 수 있어, 같은 네트워크의 PC IP로 바꿔야 할 수 있음.
