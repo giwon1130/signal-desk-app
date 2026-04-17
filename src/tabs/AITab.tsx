@@ -96,9 +96,11 @@ export function AITab({
             {item.expectedReturnRate != null ? (
               <Text style={styles.badge}>예상 {formatSignedRate(item.expectedReturnRate)}</Text>
             ) : null}
-            <Text style={[styles.badge, { color: getLogReturnColor(item.realizedReturnRate) }]}>
-              실현 {formatSignedRate(item.realizedReturnRate)}
-            </Text>
+            {item.realizedReturnRate != null ? (
+              <Text style={[styles.badge, { color: getLogReturnColor(item.realizedReturnRate) }]}>
+                실현 {formatSignedRate(item.realizedReturnRate)}
+              </Text>
+            ) : null}
           </View>
         </View>
       )}
