@@ -1,210 +1,313 @@
 import { StyleSheet } from 'react-native'
 
+// ─── Design Tokens ─────────────────────────────────────────────────────────────
+const C = {
+  bg: '#f0f4f8',
+  surface: '#ffffff',
+  surfaceAlt: '#f8fafc',
+  border: '#e2e8f0',
+  borderLight: '#f1f5f9',
+  ink: '#0f172a',
+  inkSub: '#334155',
+  inkMuted: '#64748b',
+  inkFaint: '#94a3b8',
+  brand: '#1e3a5f',           // 헤더 다크 네이비
+  brandAccent: '#60a5fa',     // 밝은 블루 (헤더 강조)
+  blue: '#3b82f6',
+  blueSoft: '#dbeafe',
+  blueDark: '#1d4ed8',
+  teal: '#0d9488',
+  tealSoft: '#ccfbf1',
+  up: '#ef4444',              // 주가 상승 = 빨강
+  upSoft: '#fee2e2',
+  down: '#3b82f6',            // 주가 하락 = 파랑
+  downSoft: '#dbeafe',
+  green: '#16a34a',
+  greenSoft: '#dcfce7',
+  orange: '#f59e0b',
+  orangeSoft: '#fef3c7',
+  purple: '#7c3aed',
+  purpleSoft: '#ede9fe',
+  red: '#dc2626',
+  redSoft: '#fee2e2',
+}
+
+const shadow = {
+  sm: {
+    shadowColor: '#0f172a',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  md: {
+    shadowColor: '#0f172a',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  lg: {
+    shadowColor: '#0f172a',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    elevation: 6,
+  },
+}
+
 export const styles = StyleSheet.create({
+  // ── App Shell ───────────────────────────────────────────────────────────────
   container: {
     flex: 1,
-    backgroundColor: '#f1f5f9',
+    backgroundColor: C.bg,
   },
+
+  // ── Header ──────────────────────────────────────────────────────────────────
   headerWrap: {
-    paddingHorizontal: 16,
-    paddingTop: 8,
+    paddingHorizontal: 14,
+    paddingTop: 6,
+    paddingBottom: 2,
   },
   headerGradient: {
-    borderRadius: 18,
-    padding: 16,
-    backgroundColor: '#0f172a',
+    borderRadius: 20,
+    paddingHorizontal: 18,
+    paddingTop: 16,
+    paddingBottom: 14,
+    backgroundColor: C.brand,
+    ...shadow.lg,
+  },
+  headerTopRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    marginBottom: 6,
   },
   brand: {
-    color: '#93c5fd',
-    fontWeight: '700',
-    fontSize: 12,
-    letterSpacing: 1,
+    color: C.brandAccent,
+    fontWeight: '900',
+    fontSize: 11,
+    letterSpacing: 2.5,
+    marginBottom: 3,
   },
   headerTitle: {
-    marginTop: 4,
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: '800',
     color: '#f8fafc',
+    letterSpacing: -0.3,
   },
   headerSubtitle: {
-    marginTop: 4,
-    color: '#cbd5e1',
-    fontSize: 13,
+    color: '#93c5fd',
+    fontSize: 12,
+    fontWeight: '500',
+    marginTop: 2,
   },
-  headerMetaRow: {
-    marginTop: 10,
+  headerStatusPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    flexWrap: 'wrap',
-  },
-  headerStatusBadge: {
+    gap: 5,
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 5,
-    fontSize: 11,
-    fontWeight: '800',
-    overflow: 'hidden',
+    marginTop: 2,
   },
-  headerStatusBadgeUp: {
-    backgroundColor: '#dcfce7',
-    color: '#166534',
+  headerStatusPillUp: { backgroundColor: 'rgba(34,197,94,0.15)' },
+  headerStatusPillDown: { backgroundColor: 'rgba(239,68,68,0.15)' },
+  headerStatusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 999,
   },
-  headerStatusBadgeDown: {
-    backgroundColor: '#fee2e2',
-    color: '#b91c1c',
-  },
-  headerMetaText: {
-    color: '#cbd5e1',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  apiText: {
-    marginTop: 10,
-    color: '#94a3b8',
-    fontSize: 11,
-  },
-  tabRow: {
+  headerStatusDotUp: { backgroundColor: '#4ade80' },
+  headerStatusDotDown: { backgroundColor: '#f87171' },
+  headerStatusText: { fontSize: 11, fontWeight: '800', letterSpacing: 1 },
+  headerStatusTextUp: { color: '#4ade80' },
+  headerStatusTextDown: { color: '#f87171' },
+
+  // ── Tab Bar ─────────────────────────────────────────────────────────────────
+  tabBar: {
     flexDirection: 'row',
-    gap: 8,
-    paddingHorizontal: 16,
-    marginTop: 12,
-  },
-  tabButton: {
-    flex: 1,
-    borderRadius: 12,
+    backgroundColor: C.surface,
+    marginHorizontal: 14,
+    marginTop: 10,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#cbd5e1',
-    backgroundColor: '#ffffff',
-    paddingVertical: 10,
+    borderColor: C.border,
+    ...shadow.sm,
+    paddingVertical: 4,
+  },
+  tabItem: {
+    flex: 1,
     alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    gap: 3,
+    position: 'relative',
+    borderRadius: 12,
   },
-  tabButtonActive: {
-    backgroundColor: '#0f172a',
-    borderColor: '#0f172a',
+  tabItemActive: {
+    backgroundColor: '#eff6ff',
   },
-  tabText: {
-    color: '#334155',
-    fontSize: 14,
+  tabItemPressed: {
+    opacity: 0.7,
+  },
+  tabLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: C.inkFaint,
+  },
+  tabLabelActive: {
+    color: C.blue,
     fontWeight: '700',
   },
-  tabTextActive: {
-    color: '#ffffff',
+  tabActiveBar: {
+    position: 'absolute',
+    bottom: 0,
+    width: 20,
+    height: 2,
+    backgroundColor: C.blue,
+    borderRadius: 999,
   },
+
+  // ── Loading / Error ──────────────────────────────────────────────────────────
   loadingWrap: {
-    padding: 16,
+    flex: 1,
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+  },
+  loadingText: {
+    color: C.inkMuted,
+    fontSize: 14,
+    fontWeight: '600',
   },
   errorBox: {
-    marginHorizontal: 16,
-    marginTop: 12,
-    borderRadius: 12,
+    marginHorizontal: 14,
+    marginTop: 14,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: '#fecaca',
     backgroundColor: '#fef2f2',
-    padding: 12,
-    gap: 4,
+    padding: 16,
+    gap: 6,
+    ...shadow.sm,
   },
   errorTitle: {
-    color: '#b91c1c',
-    fontSize: 13,
+    color: C.red,
+    fontSize: 15,
     fontWeight: '800',
   },
   errorText: {
     color: '#991b1b',
-    fontSize: 12,
+    fontSize: 13,
+    lineHeight: 20,
   },
   retryButton: {
     alignSelf: 'flex-start',
-    marginTop: 10,
+    marginTop: 8,
     borderRadius: 999,
-    backgroundColor: '#7f1d1d',
-    paddingHorizontal: 14,
+    backgroundColor: C.red,
+    paddingHorizontal: 16,
     paddingVertical: 8,
   },
   retryButtonText: {
     color: '#ffffff',
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '800',
   },
-  scroll: {
-    flex: 1,
-  },
+
+  // ── Scroll / Content ────────────────────────────────────────────────────────
+  scroll: { flex: 1 },
   content: {
-    padding: 16,
-    gap: 10,
-    paddingBottom: 30,
-  },
-  primaryCard: {
-    borderRadius: 16,
-    backgroundColor: '#ffffff',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
     padding: 14,
-    gap: 6,
+    gap: 10,
+    paddingBottom: 32,
+  },
+
+  // ── Cards ───────────────────────────────────────────────────────────────────
+  primaryCard: {
+    borderRadius: 18,
+    backgroundColor: C.surface,
+    borderWidth: 1,
+    borderColor: C.border,
+    padding: 16,
+    gap: 8,
+    ...shadow.md,
   },
   card: {
     borderRadius: 16,
-    backgroundColor: '#ffffff',
+    backgroundColor: C.surface,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: C.border,
     padding: 14,
     gap: 10,
+    ...shadow.sm,
   },
   cardEyebrow: {
-    color: '#64748b',
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 0.8,
+    color: C.blue,
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
   },
   cardTitle: {
-    color: '#0f172a',
+    color: C.ink,
     fontSize: 15,
     fontWeight: '800',
+    letterSpacing: -0.2,
   },
+
+  // ── Inputs ──────────────────────────────────────────────────────────────────
   searchInput: {
-    marginTop: 2,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#cbd5e1',
-    backgroundColor: '#f8fafc',
+    borderColor: C.border,
+    backgroundColor: C.surfaceAlt,
     paddingHorizontal: 14,
-    paddingVertical: 12,
-    color: '#0f172a',
+    paddingVertical: 11,
+    color: C.ink,
     fontSize: 14,
   },
+  noteInput: {
+    minHeight: 88,
+    textAlignVertical: 'top',
+  },
+
+  // ── Quick Stats ──────────────────────────────────────────────────────────────
   quickStatsRow: {
     flexDirection: 'row',
     gap: 8,
   },
   quickStatCard: {
     flex: 1,
-    borderRadius: 12,
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
-    backgroundColor: '#f8fafc',
-    padding: 10,
+    borderColor: C.border,
+    backgroundColor: C.surfaceAlt,
+    padding: 12,
+    ...shadow.sm,
   },
   quickStatValue: {
     marginTop: 4,
-    color: '#0f172a',
+    color: C.ink,
     fontSize: 22,
     fontWeight: '800',
   },
-  stockResultRow: {
-    gap: 8,
-  },
+
+  // ── Stock Results ────────────────────────────────────────────────────────────
+  stockResultRow: { gap: 8 },
   stockResultCard: {
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
-    backgroundColor: '#f8fafc',
+    borderColor: C.border,
+    backgroundColor: C.surfaceAlt,
     padding: 12,
     gap: 6,
+    ...shadow.sm,
   },
   stockResultCardActive: {
-    borderColor: '#0f766e',
-    backgroundColor: '#ecfdf5',
+    borderColor: C.teal,
+    backgroundColor: '#f0fdf9',
   },
   stockResultTop: {
     flexDirection: 'row',
@@ -214,28 +317,29 @@ export const styles = StyleSheet.create({
   },
   stockResultName: {
     flex: 1,
-    color: '#0f172a',
+    color: C.ink,
     fontSize: 15,
     fontWeight: '800',
   },
   stockMarketBadge: {
-    borderRadius: 999,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    fontSize: 11,
+    borderRadius: 6,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    fontSize: 10,
     fontWeight: '800',
     overflow: 'hidden',
+    letterSpacing: 0.5,
   },
   stockMarketBadgeKr: {
-    backgroundColor: '#dbeafe',
-    color: '#1d4ed8',
+    backgroundColor: C.blueSoft,
+    color: C.blueDark,
   },
   stockMarketBadgeUs: {
-    backgroundColor: '#ede9fe',
-    color: '#6d28d9',
+    backgroundColor: C.purpleSoft,
+    color: C.purple,
   },
   stockResultMeta: {
-    color: '#64748b',
+    color: C.inkMuted,
     fontSize: 12,
     fontWeight: '600',
   },
@@ -245,7 +349,7 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
   },
   stockResultPrice: {
-    color: '#0f172a',
+    color: C.ink,
     fontSize: 16,
     fontWeight: '800',
   },
@@ -254,10 +358,12 @@ export const styles = StyleSheet.create({
     fontWeight: '800',
   },
   favoriteHint: {
-    color: '#0f766e',
+    color: C.teal,
     fontSize: 11,
     fontWeight: '700',
   },
+
+  // ── Stock Detail ─────────────────────────────────────────────────────────────
   stockDetailHero: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -265,12 +371,12 @@ export const styles = StyleSheet.create({
     gap: 10,
   },
   stockDetailName: {
-    color: '#0f172a',
+    color: C.ink,
     fontSize: 20,
     fontWeight: '800',
   },
   stockDetailPrice: {
-    color: '#0f172a',
+    color: C.ink,
     fontSize: 18,
     fontWeight: '800',
   },
@@ -278,10 +384,8 @@ export const styles = StyleSheet.create({
     gap: 10,
     marginTop: 6,
   },
-  noteInput: {
-    minHeight: 88,
-    textAlignVertical: 'top',
-  },
+
+  // ── Action Buttons ───────────────────────────────────────────────────────────
   inlineButtonRow: {
     flexDirection: 'row',
     gap: 8,
@@ -289,45 +393,47 @@ export const styles = StyleSheet.create({
   primaryActionButton: {
     flex: 1,
     borderRadius: 12,
-    backgroundColor: '#0f172a',
+    backgroundColor: C.ink,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 14,
-    paddingVertical: 12,
+    paddingVertical: 13,
   },
   primaryActionButtonText: {
     color: '#ffffff',
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '800',
   },
   secondaryActionButton: {
     borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#cbd5e1',
-    backgroundColor: '#ffffff',
+    borderWidth: 1.5,
+    borderColor: C.border,
+    backgroundColor: C.surface,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 14,
-    paddingVertical: 12,
+    paddingVertical: 13,
   },
   secondaryActionButtonText: {
-    color: '#334155',
-    fontSize: 13,
-    fontWeight: '800',
+    color: C.inkSub,
+    fontSize: 14,
+    fontWeight: '700',
   },
+
+  // ── Insight / Favorite Rows ──────────────────────────────────────────────────
   stockInsightCard: {
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
-    backgroundColor: '#f8fafc',
+    borderColor: C.border,
+    backgroundColor: C.surfaceAlt,
     padding: 12,
     gap: 6,
   },
   favoriteRow: {
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
-    backgroundColor: '#f8fafc',
+    borderColor: C.border,
+    backgroundColor: C.surfaceAlt,
     padding: 12,
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -335,34 +441,64 @@ export const styles = StyleSheet.create({
     gap: 10,
   },
   favoriteDeleteButton: {
-    borderRadius: 999,
-    backgroundColor: '#fee2e2',
+    borderRadius: 10,
+    backgroundColor: C.redSoft,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
   favoriteDeleteText: {
-    color: '#b91c1c',
+    color: C.red,
     fontSize: 12,
     fontWeight: '800',
   },
+
+  // ── Primary Value / Notes ────────────────────────────────────────────────────
   primaryValue: {
-    color: '#0f172a',
-    fontSize: 23,
+    color: C.ink,
+    fontSize: 24,
     fontWeight: '800',
+    letterSpacing: -0.5,
   },
   cardNote: {
-    color: '#475569',
+    color: C.inkSub,
     fontSize: 13,
-    lineHeight: 18,
+    lineHeight: 19,
   },
   metaText: {
-    color: '#64748b',
+    color: C.inkMuted,
     fontSize: 12,
+    fontWeight: '500',
   },
+
+  // ── KPI Row ─────────────────────────────────────────────────────────────────
   kpiRow: {
     flexDirection: 'row',
     gap: 8,
   },
+  kpiCard: {
+    flex: 1,
+    borderRadius: 14,
+    backgroundColor: C.surfaceAlt,
+    borderWidth: 1,
+    borderColor: C.border,
+    padding: 12,
+    alignItems: 'center',
+    gap: 4,
+    ...shadow.sm,
+  },
+  kpiLabel: {
+    color: C.inkMuted,
+    fontSize: 11,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  kpiValue: {
+    color: C.ink,
+    fontSize: 18,
+    fontWeight: '800',
+  },
+
+  // ── Hero Metrics ─────────────────────────────────────────────────────────────
   heroMetricsRow: {
     flexDirection: 'row',
     gap: 8,
@@ -370,18 +506,19 @@ export const styles = StyleSheet.create({
   heroMetricCard: {
     flex: 1,
     borderRadius: 16,
-    backgroundColor: '#ffffff',
+    backgroundColor: C.surface,
     borderWidth: 1,
-    borderColor: '#dbeafe',
-    padding: 12,
+    borderColor: C.border,
+    padding: 14,
     gap: 6,
+    ...shadow.sm,
   },
   heroMetricCardDark: {
-    backgroundColor: '#0f172a',
-    borderColor: '#0f172a',
+    backgroundColor: C.ink,
+    borderColor: C.ink,
   },
   heroMetricLabel: {
-    color: '#64748b',
+    color: C.inkMuted,
     fontSize: 11,
     fontWeight: '700',
   },
@@ -389,7 +526,7 @@ export const styles = StyleSheet.create({
     color: '#93c5fd',
   },
   heroMetricValue: {
-    color: '#0f172a',
+    color: C.ink,
     fontSize: 18,
     fontWeight: '800',
   },
@@ -397,40 +534,23 @@ export const styles = StyleSheet.create({
     color: '#f8fafc',
   },
   heroMetricFootnote: {
-    color: '#64748b',
+    color: C.inkMuted,
     fontSize: 11,
     lineHeight: 16,
   },
   heroMetricFootnoteOnDark: {
     color: '#cbd5e1',
   },
-  kpiCard: {
-    flex: 1,
-    borderRadius: 12,
-    backgroundColor: '#ffffff',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    padding: 10,
-    alignItems: 'center',
-  },
-  kpiLabel: {
-    color: '#64748b',
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  kpiValue: {
-    marginTop: 4,
-    color: '#0f172a',
-    fontSize: 17,
-    fontWeight: '800',
-  },
+
+  // ── Session Cards ─────────────────────────────────────────────────────────────
   sessionCard: {
-    borderRadius: 12,
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
-    padding: 10,
-    backgroundColor: '#f8fafc',
+    borderColor: C.border,
+    padding: 12,
+    backgroundColor: C.surfaceAlt,
     gap: 4,
+    ...shadow.sm,
   },
   sessionTop: {
     flexDirection: 'row',
@@ -438,12 +558,12 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
   },
   sessionName: {
-    color: '#0f172a',
+    color: C.ink,
     fontSize: 14,
     fontWeight: '700',
   },
   sessionBadge: {
-    borderRadius: 999,
+    borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 3,
     fontSize: 11,
@@ -451,21 +571,24 @@ export const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   sessionMeta: {
-    color: '#334155',
+    color: C.inkSub,
     fontSize: 12,
     fontWeight: '600',
   },
   sessionNote: {
-    color: '#64748b',
+    color: C.inkMuted,
     fontSize: 12,
   },
+
+  // ── Metric Rows ──────────────────────────────────────────────────────────────
   metricRow: {
-    borderRadius: 12,
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
-    padding: 10,
-    backgroundColor: '#f8fafc',
-    gap: 3,
+    borderColor: C.border,
+    padding: 12,
+    backgroundColor: C.surfaceAlt,
+    gap: 4,
+    ...shadow.sm,
   },
   metricLeft: {
     flexDirection: 'row',
@@ -473,35 +596,33 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
   },
   metricName: {
-    color: '#0f172a',
+    color: C.ink,
     fontSize: 13,
     fontWeight: '700',
   },
   metricState: {
-    color: '#475569',
+    color: C.inkSub,
     fontSize: 12,
     fontWeight: '600',
   },
   metricScore: {
-    color: '#0f766e',
+    color: C.teal,
     fontSize: 18,
     fontWeight: '800',
   },
   metricNote: {
-    color: '#64748b',
+    color: C.inkMuted,
     fontSize: 12,
   },
   metricSource: {
-    color: '#0369a1',
+    color: C.blue,
     fontSize: 11,
     fontWeight: '700',
   },
-  alternativeMetricRow: {
-    gap: 8,
-  },
-  alertMetricRow: {
-    gap: 8,
-  },
+
+  // ── Alternative / Alert Metric Rows ─────────────────────────────────────────
+  alternativeMetricRow: { gap: 8 },
+  alertMetricRow: { gap: 8 },
   alternativeMetricTopRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -509,7 +630,7 @@ export const styles = StyleSheet.create({
     gap: 10,
   },
   alternativeScoreBadge: {
-    borderRadius: 999,
+    borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 4,
     fontSize: 11,
@@ -522,27 +643,31 @@ export const styles = StyleSheet.create({
     gap: 6,
   },
   alternativeHighlightChip: {
-    borderRadius: 999,
+    borderRadius: 8,
     paddingHorizontal: 9,
     paddingVertical: 4,
-    backgroundColor: 'rgba(15, 23, 42, 0.06)',
-    color: '#334155',
+    backgroundColor: 'rgba(15,23,42,0.06)',
+    color: C.inkSub,
     fontSize: 11,
     fontWeight: '700',
     overflow: 'hidden',
   },
+
+  // ── Section Header ────────────────────────────────────────────────────────────
   sectionHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     gap: 8,
   },
+
+  // ── Summary Row / Portfolio ───────────────────────────────────────────────────
   summaryRow: {
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
-    padding: 10,
-    backgroundColor: '#f8fafc',
+    borderColor: C.border,
+    padding: 12,
+    backgroundColor: C.surfaceAlt,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -553,7 +678,7 @@ export const styles = StyleSheet.create({
     gap: 2,
   },
   summaryMeta: {
-    color: '#64748b',
+    color: C.inkMuted,
     fontSize: 11,
     fontWeight: '700',
   },
@@ -569,10 +694,12 @@ export const styles = StyleSheet.create({
     flex: 1,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
-    backgroundColor: '#f8fafc',
+    borderColor: C.border,
+    backgroundColor: C.surfaceAlt,
     padding: 10,
   },
+
+  // ── Briefing ─────────────────────────────────────────────────────────────────
   briefingList: {
     gap: 8,
     marginTop: 10,
@@ -580,47 +707,51 @@ export const styles = StyleSheet.create({
   briefingBulletRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 8,
+    gap: 10,
   },
   briefingBullet: {
-    color: '#0f766e',
-    fontSize: 13,
+    color: C.teal,
+    fontSize: 14,
     fontWeight: '800',
     marginTop: 1,
   },
   briefingItem: {
     flex: 1,
-    color: '#334155',
+    color: C.inkSub,
     fontSize: 13,
     lineHeight: 20,
   },
+
+  // ── Filter Chips ─────────────────────────────────────────────────────────────
   filterRow: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 6,
     marginTop: 4,
     marginBottom: 4,
     flexWrap: 'wrap',
   },
   filterChip: {
     borderRadius: 999,
-    borderWidth: 1,
-    borderColor: '#cbd5e1',
-    backgroundColor: '#ffffff',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    borderWidth: 1.5,
+    borderColor: C.border,
+    backgroundColor: C.surface,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
   },
   filterChipActive: {
-    borderColor: '#0f172a',
-    backgroundColor: '#0f172a',
+    borderColor: C.ink,
+    backgroundColor: C.ink,
   },
   filterText: {
-    color: '#334155',
+    color: C.inkSub,
     fontWeight: '700',
     fontSize: 12,
   },
   filterTextActive: {
     color: '#ffffff',
   },
+
+  // ── Index Chips ───────────────────────────────────────────────────────────────
   indexChipRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -628,30 +759,34 @@ export const styles = StyleSheet.create({
   },
   indexChip: {
     borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#cbd5e1',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    backgroundColor: '#ffffff',
+    borderWidth: 1.5,
+    borderColor: C.border,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    backgroundColor: C.surface,
   },
   indexChipActive: {
-    borderColor: '#0369a1',
-    backgroundColor: '#e0f2fe',
+    borderColor: C.blue,
+    backgroundColor: C.blueSoft,
   },
   indexChipText: {
-    color: '#334155',
+    color: C.inkSub,
     fontWeight: '700',
     fontSize: 12,
   },
   indexChipTextActive: {
-    color: '#0c4a6e',
+    color: C.blueDark,
+    fontWeight: '800',
   },
+
+  // ── Chart ────────────────────────────────────────────────────────────────────
   chartWrap: {
-    borderRadius: 12,
+    borderRadius: 14,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: '#e2e8f0',
-    backgroundColor: '#f8fafc',
+    borderColor: C.border,
+    backgroundColor: C.surfaceAlt,
+    ...shadow.sm,
   },
   chartAxisRow: {
     flexDirection: 'row',
@@ -660,23 +795,24 @@ export const styles = StyleSheet.create({
     paddingBottom: 10,
   },
   chartAxisLabel: {
-    color: '#64748b',
+    color: C.inkMuted,
     fontSize: 11,
     fontWeight: '600',
   },
   emptyChart: {
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
-    backgroundColor: '#f8fafc',
+    borderColor: C.border,
+    backgroundColor: C.surfaceAlt,
     minHeight: 220,
     alignItems: 'center',
     justifyContent: 'center',
   },
   legendRow: {
     flexDirection: 'row',
-    gap: 10,
-    marginTop: 4,
+    gap: 12,
+    marginTop: 2,
+    alignItems: 'center',
   },
   legendText: {
     fontSize: 12,
@@ -692,16 +828,18 @@ export const styles = StyleSheet.create({
     minWidth: '47%',
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
-    backgroundColor: '#f8fafc',
-    padding: 8,
+    borderColor: C.border,
+    backgroundColor: C.surfaceAlt,
+    padding: 10,
   },
   chartStatValue: {
     marginTop: 2,
-    color: '#0f172a',
+    color: C.ink,
     fontSize: 13,
     fontWeight: '700',
   },
+
+  // ── AI Log ────────────────────────────────────────────────────────────────────
   logTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -710,22 +848,23 @@ export const styles = StyleSheet.create({
   },
   logName: {
     flex: 1,
-    color: '#0f172a',
+    color: C.ink,
     fontSize: 14,
     fontWeight: '700',
   },
   logStage: {
-    color: '#475569',
-    fontSize: 11,
-    fontWeight: '700',
-    backgroundColor: '#e2e8f0',
-    borderRadius: 999,
+    color: C.inkSub,
+    fontSize: 10,
+    fontWeight: '800',
+    backgroundColor: C.border,
+    borderRadius: 6,
     paddingHorizontal: 8,
-    paddingVertical: 2,
+    paddingVertical: 3,
     overflow: 'hidden',
+    letterSpacing: 0.5,
   },
   logMeta: {
-    color: '#334155',
+    color: C.inkSub,
     fontSize: 12,
     fontWeight: '600',
   },
@@ -735,13 +874,28 @@ export const styles = StyleSheet.create({
     gap: 6,
   },
   badge: {
-    color: '#334155',
+    color: C.inkSub,
     fontSize: 11,
     fontWeight: '700',
-    backgroundColor: '#e2e8f0',
-    borderRadius: 999,
-    paddingHorizontal: 8,
+    backgroundColor: C.surfaceAlt,
+    borderWidth: 1,
+    borderColor: C.border,
+    borderRadius: 8,
+    paddingHorizontal: 9,
     paddingVertical: 4,
     overflow: 'hidden',
   },
+
+  // ── (unused but kept for compat) ─────────────────────────────────────────────
+  apiText: { display: 'none' },
+  tabRow: { display: 'none' },
+  tabButton: { display: 'none' },
+  tabButtonActive: { display: 'none' },
+  tabText: { display: 'none' },
+  tabTextActive: { display: 'none' },
+  headerMetaRow: { display: 'none' },
+  headerStatusBadge: { display: 'none' },
+  headerStatusBadgeUp: { display: 'none' },
+  headerStatusBadgeDown: { display: 'none' },
+  headerMetaText: { display: 'none' },
 })

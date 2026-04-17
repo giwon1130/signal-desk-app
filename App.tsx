@@ -8,6 +8,7 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native'
+import { BarChart3, Bot, Home, TrendingUp } from 'lucide-react-native'
 import { API_BASE_URL, deleteFavoriteItem, loadAllData, saveFavoriteItem, searchStocks } from './src/api'
 import { styles } from './src/styles'
 import { AITab } from './src/tabs/AITab'
@@ -32,6 +33,13 @@ import type {
   WatchItem,
 } from './src/types'
 import { normalizeText } from './src/utils'
+
+const TABS: Array<{ key: TabKey; label: string; Icon: typeof Home }> = [
+  { key: 'home',   label: '홈',   Icon: Home },
+  { key: 'market', label: '시장', Icon: TrendingUp },
+  { key: 'stocks', label: '종목', Icon: BarChart3 },
+  { key: 'ai',     label: 'AI',   Icon: Bot },
+]
 
 export default function App() {
   const { width } = useWindowDimensions()
@@ -75,7 +83,7 @@ export default function App() {
       setLastSyncedAt(new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }))
     } catch {
       setApiHealth(null)
-      setError(`API 연결 실패: ${API_BASE_URL}`)
+      setError(`서버에 연결할 수 없어요.\n${API_BASE_URL}`)
     }
   }, [])
 
@@ -219,7 +227,7 @@ export default function App() {
       await saveFavoriteItem(selectedStock, favoriteDraft)
       await fetchData()
     } catch {
-      setError('즐겨찾기 저장에 실패했어.')
+      setError('즐겨찾기 저장에 실패했어요.')
     } finally {
       setFavoriteSaving(false)
     }
@@ -231,76 +239,88 @@ export default function App() {
       await deleteFavoriteItem(id)
       await fetchData()
     } catch {
-      setError('즐겨찾기 삭제에 실패했어.')
+      setError('즐겨찾기 삭제에 실패했어요.')
     } finally {
       setFavoriteDeletingId('')
     }
   }, [fetchData])
 
   const chartWidth = Math.max(300, Math.min(width - 28, 760))
+  const isUp = apiHealth?.status === 'UP'
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar style="dark" />
+      <StatusBar style="light" />
 
+      {/* ── 헤더 ─────────────────────────────────────── */}
       <View style={styles.headerWrap}>
         <View style={styles.headerGradient}>
-          <Text style={styles.brand}>SignalDesk</Text>
-          <Text style={styles.headerTitle}>Mobile Dashboard</Text>
-          <Text style={styles.headerSubtitle}>시장/차트/추천 로그를 앱에서 빠르게 확인</Text>
-          <Text style={styles.apiText}>API: {API_BASE_URL}</Text>
-          <View style={styles.headerMetaRow}>
-            <Text style={[styles.headerStatusBadge, apiHealth?.status === 'UP' ? styles.headerStatusBadgeUp : styles.headerStatusBadgeDown]}>
-              {apiHealth?.status === 'UP' ? 'API 정상' : 'API 확인 필요'}
-            </Text>
-            <Text style={styles.headerMetaText}>
-              {lastSyncedAt ? `최근 동기화 ${lastSyncedAt}` : '동기화 대기 중'}
-            </Text>
+          <View style={styles.headerTopRow}>
+            <View>
+              <Text style={styles.brand}>SIGNAL DESK</Text>
+              <Text style={styles.headerTitle}>투자 대시보드</Text>
+            </View>
+            <View style={[styles.headerStatusPill, isUp ? styles.headerStatusPillUp : styles.headerStatusPillDown]}>
+              <View style={[styles.headerStatusDot, isUp ? styles.headerStatusDotUp : styles.headerStatusDotDown]} />
+              <Text style={[styles.headerStatusText, isUp ? styles.headerStatusTextUp : styles.headerStatusTextDown]}>
+                {isUp ? 'LIVE' : 'OFF'}
+              </Text>
+            </View>
           </View>
+          <Text style={styles.headerSubtitle}>
+            {lastSyncedAt ? `마지막 동기화 ${lastSyncedAt}` : '시장/차트/포트폴리오를 한눈에'}
+          </Text>
         </View>
       </View>
 
-      <View style={styles.tabRow}>
-        {([
-          { key: 'home', label: '홈' },
-          { key: 'market', label: '시장' },
-          { key: 'stocks', label: '종목' },
-          { key: 'ai', label: 'AI' },
-        ] as Array<{ key: TabKey; label: string }>).map((tab) => (
-          <Pressable
-            key={tab.key}
-            onPress={() => setActiveTab(tab.key)}
-            style={[styles.tabButton, activeTab === tab.key && styles.tabButtonActive]}
-          >
-            <Text style={[styles.tabText, activeTab === tab.key && styles.tabTextActive]}>{tab.label}</Text>
-          </Pressable>
-        ))}
+      {/* ── 탭 바 ────────────────────────────────────── */}
+      <View style={styles.tabBar}>
+        {TABS.map(({ key, label, Icon }) => {
+          const active = activeTab === key
+          return (
+            <Pressable
+              key={key}
+              onPress={() => setActiveTab(key)}
+              style={({ pressed }) => [styles.tabItem, active && styles.tabItemActive, pressed && styles.tabItemPressed]}
+            >
+              <Icon
+                size={20}
+                color={active ? '#3b82f6' : '#94a3b8'}
+                strokeWidth={active ? 2.5 : 1.8}
+              />
+              <Text style={[styles.tabLabel, active && styles.tabLabelActive]}>{label}</Text>
+              {active && <View style={styles.tabActiveBar} />}
+            </Pressable>
+          )
+        })}
       </View>
 
+      {/* ── 로딩 ─────────────────────────────────────── */}
       {loading ? (
         <View style={styles.loadingWrap}>
-          <ActivityIndicator />
-          <Text style={styles.metaText}>데이터 로딩 중...</Text>
+          <ActivityIndicator size="large" color="#3b82f6" />
+          <Text style={styles.loadingText}>데이터 불러오는 중...</Text>
         </View>
       ) : null}
 
+      {/* ── 에러 ─────────────────────────────────────── */}
       {error ? (
         <View style={styles.errorBox}>
-          <Text style={styles.errorTitle}>연결 오류</Text>
+          <Text style={styles.errorTitle}>연결 실패</Text>
           <Text style={styles.errorText}>{error}</Text>
-          <Text style={styles.errorText}>API 상태와 네트워크 설정을 확인해.</Text>
           <Pressable
             onPress={() => {
               setLoading(true)
               void fetchData().finally(() => setLoading(false))
             }}
-            style={styles.retryButton}
+            style={({ pressed }) => [styles.retryButton, pressed && { opacity: 0.8 }]}
           >
             <Text style={styles.retryButtonText}>다시 시도</Text>
           </Pressable>
         </View>
       ) : null}
 
+      {/* ── 탭 콘텐츠 ────────────────────────────────── */}
       {!loading && !error && activeTab === 'home' ? (
         <HomeTab
           summary={summary}
