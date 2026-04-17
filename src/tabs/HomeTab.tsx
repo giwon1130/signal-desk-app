@@ -1,4 +1,17 @@
 import { RefreshControl, ScrollView, Text, TextInput, View } from 'react-native'
+import {
+  Activity,
+  AlertTriangle,
+  Bell,
+  Briefcase,
+  CheckCircle,
+  Clock,
+  Eye,
+  Newspaper,
+  Search,
+  TrendingUp,
+  Zap,
+} from 'lucide-react-native'
 import { styles } from '../styles'
 import type { HoldingPosition, MarketSummaryData, PortfolioSummary, WatchItem } from '../types'
 import {
@@ -46,8 +59,12 @@ export function HomeTab({
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       contentContainerStyle={styles.content}
     >
+      {/* ── 마켓 상태 ── */}
       <View style={styles.primaryCard}>
-        <Text style={styles.cardEyebrow}>MARKET STATUS</Text>
+        <View style={styles.cardTitleRow}>
+          <Activity size={13} color="#3b82f6" strokeWidth={2.5} />
+          <Text style={styles.cardEyebrow}>MARKET STATUS</Text>
+        </View>
         <Text style={[styles.primaryValue, { color: getMarketStatusTone(summary?.marketStatus) }]}>
           {summary?.marketStatus ?? '-'}
         </Text>
@@ -55,9 +72,13 @@ export function HomeTab({
         <Text style={styles.metaText}>업데이트: {summary?.generatedAt ?? '-'}</Text>
       </View>
 
+      {/* ── 빠른 검색 ── */}
       <View style={styles.card}>
         <View style={styles.sectionHeaderRow}>
-          <Text style={styles.cardTitle}>빠른 검색</Text>
+          <View style={styles.cardTitleRow}>
+            <Search size={14} color="#3b82f6" strokeWidth={2.5} />
+            <Text style={styles.cardTitle}>빠른 검색</Text>
+          </View>
           <Text style={styles.metaText}>관심종목/포트폴리오</Text>
         </View>
         <TextInput
@@ -81,17 +102,21 @@ export function HomeTab({
         </View>
       </View>
 
+      {/* ── 장전 브리핑 ── */}
       {summary?.briefing ? (
         <View style={styles.card}>
           <View style={styles.sectionHeaderRow}>
-            <Text style={styles.cardTitle}>장전 브리핑</Text>
+            <View style={styles.cardTitleRow}>
+              <Newspaper size={14} color="#0d9488" strokeWidth={2.5} />
+              <Text style={styles.cardTitle}>장전 브리핑</Text>
+            </View>
             <Text style={styles.metaText}>{summary.briefing.preMarket.length}개 포인트</Text>
           </View>
           <Text style={styles.cardNote}>{summary.briefing.headline}</Text>
           <View style={styles.briefingList}>
             {summary.briefing.preMarket.slice(0, 3).map((item) => (
               <View key={item} style={styles.briefingBulletRow}>
-                <Text style={styles.briefingBullet}>•</Text>
+                <CheckCircle size={13} color="#0d9488" strokeWidth={2.5} style={{ marginTop: 3 }} />
                 <Text style={styles.briefingItem}>{item}</Text>
               </View>
             ))}
@@ -99,6 +124,7 @@ export function HomeTab({
         </View>
       ) : null}
 
+      {/* ── 히어로 KPI ── */}
       <View style={styles.heroMetricsRow}>
         <View style={[styles.heroMetricCard, styles.heroMetricCardDark]}>
           <Text style={[styles.heroMetricLabel, styles.heroMetricLabelOnDark]}>AI 성공률</Text>
@@ -119,9 +145,13 @@ export function HomeTab({
         </View>
       </View>
 
+      {/* ── 장 세션 ── */}
       <View style={styles.card}>
         <View style={styles.sectionHeaderRow}>
-          <Text style={styles.cardTitle}>장 세션</Text>
+          <View style={styles.cardTitleRow}>
+            <Clock size={14} color="#7c3aed" strokeWidth={2.5} />
+            <Text style={styles.cardTitle}>장 세션</Text>
+          </View>
           <Text style={styles.metaText}>{summary?.marketSessions.length ?? 0}개 시장</Text>
         </View>
         {(summary?.marketSessions ?? []).map((session) => (
@@ -146,9 +176,13 @@ export function HomeTab({
         ))}
       </View>
 
+      {/* ── 시장 요약 지표 ── */}
       <View style={styles.card}>
         <View style={styles.sectionHeaderRow}>
-          <Text style={styles.cardTitle}>시장 요약 지표</Text>
+          <View style={styles.cardTitleRow}>
+            <TrendingUp size={14} color="#3b82f6" strokeWidth={2.5} />
+            <Text style={styles.cardTitle}>시장 요약 지표</Text>
+          </View>
           <Text style={styles.metaText}>{summary?.marketSummary.length ?? 0}개</Text>
         </View>
         {(summary?.marketSummary ?? []).map((item) => (
@@ -163,9 +197,13 @@ export function HomeTab({
         ))}
       </View>
 
+      {/* ── 실험 지표 ── */}
       <View style={styles.card}>
         <View style={styles.sectionHeaderRow}>
-          <Text style={styles.cardTitle}>실험 지표</Text>
+          <View style={styles.cardTitleRow}>
+            <Zap size={14} color="#f59e0b" strokeWidth={2.5} />
+            <Text style={styles.cardTitle}>실험 지표</Text>
+          </View>
           <Text style={styles.metaText}>{summary?.alternativeSignals.length ?? 0}개</Text>
         </View>
         {(summary?.alternativeSignals ?? []).map((item) => (
@@ -211,9 +249,13 @@ export function HomeTab({
         ))}
       </View>
 
+      {/* ── 이상징후 ── */}
       <View style={styles.card}>
         <View style={styles.sectionHeaderRow}>
-          <Text style={styles.cardTitle}>관심종목 이상징후</Text>
+          <View style={styles.cardTitleRow}>
+            <Bell size={14} color="#dc2626" strokeWidth={2.5} />
+            <Text style={styles.cardTitle}>관심종목 이상징후</Text>
+          </View>
           <Text style={styles.metaText}>{summary?.watchAlerts.length ?? 0}건</Text>
         </View>
         {(summary?.watchAlerts ?? []).length ? (
@@ -258,13 +300,20 @@ export function HomeTab({
             </View>
           ))
         ) : (
-          <Text style={styles.metaText}>지금 바로 볼 이상징후는 없어.</Text>
+          <View style={styles.emptyStateRow}>
+            <AlertTriangle size={14} color="#94a3b8" strokeWidth={2} />
+            <Text style={styles.metaText}>지금 바로 볼 이상징후는 없어.</Text>
+          </View>
         )}
       </View>
 
+      {/* ── 관심종목 요약 ── */}
       <View style={styles.card}>
         <View style={styles.sectionHeaderRow}>
-          <Text style={styles.cardTitle}>관심종목 요약</Text>
+          <View style={styles.cardTitleRow}>
+            <Eye size={14} color="#0d9488" strokeWidth={2.5} />
+            <Text style={styles.cardTitle}>관심종목 요약</Text>
+          </View>
           <Text style={styles.metaText}>{filteredWatchlist.length}개</Text>
         </View>
         {topWatchlist.length ? (
@@ -288,9 +337,13 @@ export function HomeTab({
         )}
       </View>
 
+      {/* ── 포트폴리오 요약 ── */}
       <View style={styles.card}>
         <View style={styles.sectionHeaderRow}>
-          <Text style={styles.cardTitle}>포트폴리오 요약</Text>
+          <View style={styles.cardTitleRow}>
+            <Briefcase size={14} color="#3b82f6" strokeWidth={2.5} />
+            <Text style={styles.cardTitle}>포트폴리오 요약</Text>
+          </View>
           <Text style={styles.metaText}>
             {portfolio ? `손익 ${formatSignedRate(portfolio.totalProfitRate)}` : '-'}
           </Text>

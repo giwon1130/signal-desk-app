@@ -660,6 +660,17 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
+  cardTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  emptyStateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 4,
+  },
 
   // ── Summary Row / Portfolio ───────────────────────────────────────────────────
   summaryRow: {

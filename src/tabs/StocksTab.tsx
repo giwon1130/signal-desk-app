@@ -1,4 +1,5 @@
 import { Pressable, RefreshControl, ScrollView, Text, TextInput, View } from 'react-native'
+import { Bookmark, BookmarkCheck, Cpu, Info, Search, Star } from 'lucide-react-native'
 import { styles } from '../styles'
 import type {
   FavoriteDraft,
@@ -56,9 +57,13 @@ export function StocksTab({
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       contentContainerStyle={styles.content}
     >
+      {/* ── 종목 탐색 ── */}
       <View style={styles.card}>
         <View style={styles.sectionHeaderRow}>
-          <Text style={styles.cardTitle}>종목 탐색</Text>
+          <View style={styles.cardTitleRow}>
+            <Search size={14} color="#3b82f6" strokeWidth={2.5} />
+            <Text style={styles.cardTitle}>종목 탐색</Text>
+          </View>
           <Text style={styles.metaText}>
             {stockSearchLoading ? '검색 중...' : `${stockResults.length}개`}
           </Text>
@@ -80,7 +85,7 @@ export function StocksTab({
               style={[styles.filterChip, stockMarketFilter === filter && styles.filterChipActive]}
             >
               <Text style={[styles.filterText, stockMarketFilter === filter && styles.filterTextActive]}>
-                {filter === 'ALL' ? '전체' : filter === 'KR' ? '한국' : '미국'}
+                {filter === 'ALL' ? '전체' : filter === 'KR' ? '🇰🇷 한국' : '🇺🇸 미국'}
               </Text>
             </Pressable>
           ))}
@@ -100,14 +105,19 @@ export function StocksTab({
               >
                 <View style={styles.stockResultTop}>
                   <Text style={styles.stockResultName}>{item.name}</Text>
-                  <Text
-                    style={[
-                      styles.stockMarketBadge,
-                      item.market === 'KR' ? styles.stockMarketBadgeKr : styles.stockMarketBadgeUs,
-                    ]}
-                  >
-                    {item.market}
-                  </Text>
+                  <View style={styles.cardTitleRow}>
+                    {isFavorite ? (
+                      <Star size={12} color="#0d9488" strokeWidth={2.5} fill="#0d9488" />
+                    ) : null}
+                    <Text
+                      style={[
+                        styles.stockMarketBadge,
+                        item.market === 'KR' ? styles.stockMarketBadgeKr : styles.stockMarketBadgeUs,
+                      ]}
+                    >
+                      {item.market}
+                    </Text>
+                  </View>
                 </View>
                 <Text style={styles.stockResultMeta}>{item.ticker} · {item.sector}</Text>
                 <View style={styles.stockResultBottom}>
@@ -116,17 +126,26 @@ export function StocksTab({
                     {formatSignedRate(item.changeRate)}
                   </Text>
                 </View>
-                {isFavorite ? <Text style={styles.favoriteHint}>즐겨찾기 등록됨</Text> : null}
+                {isFavorite ? (
+                  <View style={styles.cardTitleRow}>
+                    <BookmarkCheck size={11} color="#0d9488" strokeWidth={2.5} />
+                    <Text style={styles.favoriteHint}>즐겨찾기 등록됨</Text>
+                  </View>
+                ) : null}
               </Pressable>
             )
           })}
         </View>
       </View>
 
+      {/* ── 종목 상세 ── */}
       {selectedStock ? (
         <View style={styles.card}>
           <View style={styles.sectionHeaderRow}>
-            <Text style={styles.cardTitle}>종목 상세</Text>
+            <View style={styles.cardTitleRow}>
+              <Info size={14} color="#6366f1" strokeWidth={2.5} />
+              <Text style={styles.cardTitle}>종목 상세</Text>
+            </View>
             <Text style={styles.metaText}>{selectedStock.base.market} · {selectedStock.base.ticker}</Text>
           </View>
           <View style={styles.stockDetailHero}>
@@ -151,12 +170,16 @@ export function StocksTab({
           <View style={styles.quickStatsRow}>
             <View style={styles.quickStatCard}>
               <Text style={styles.kpiLabel}>즐겨찾기</Text>
-              <Text style={styles.quickStatValue}>{selectedStock.watchItem ? 'ON' : 'OFF'}</Text>
+              <Text style={[styles.quickStatValue, { color: selectedStock.watchItem ? '#0d9488' : '#94a3b8' }]}>
+                {selectedStock.watchItem ? 'ON' : 'OFF'}
+              </Text>
               <Text style={styles.metaText}>{selectedStock.watchItem?.note ?? '아직 등록 안 됨'}</Text>
             </View>
             <View style={styles.quickStatCard}>
               <Text style={styles.kpiLabel}>보유 상태</Text>
-              <Text style={styles.quickStatValue}>{selectedStock.portfolioPosition ? '보유' : '미보유'}</Text>
+              <Text style={[styles.quickStatValue, { color: selectedStock.portfolioPosition ? '#dc2626' : '#94a3b8' }]}>
+                {selectedStock.portfolioPosition ? '보유' : '미보유'}
+              </Text>
               <Text style={styles.metaText}>
                 {selectedStock.portfolioPosition
                   ? `${selectedStock.portfolioPosition.quantity}주 · ${formatSignedRate(selectedStock.portfolioPosition.profitRate)}`
@@ -166,7 +189,10 @@ export function StocksTab({
           </View>
 
           <View style={styles.cardSection}>
-            <Text style={styles.cardTitle}>즐겨찾기 편집</Text>
+            <View style={styles.cardTitleRow}>
+              <Bookmark size={13} color="#3b82f6" strokeWidth={2.5} />
+              <Text style={styles.cardTitle}>즐겨찾기 편집</Text>
+            </View>
             <TextInput
               value={favoriteDraft.stance}
               onChangeText={(value) => onFavoriteDraftChange({ ...favoriteDraft, stance: value })}
@@ -203,7 +229,10 @@ export function StocksTab({
 
           {selectedStock.latestAiLog ? (
             <View style={styles.cardSection}>
-              <Text style={styles.cardTitle}>최근 AI 로그</Text>
+              <View style={styles.cardTitleRow}>
+                <Cpu size={13} color="#7c3aed" strokeWidth={2.5} />
+                <Text style={styles.cardTitle}>최근 AI 로그</Text>
+              </View>
               <View style={styles.stockInsightCard}>
                 <Text style={styles.logMeta}>
                   {selectedStock.latestAiLog.date} · {selectedStock.latestAiLog.stage} · {selectedStock.latestAiLog.status}
@@ -215,9 +244,13 @@ export function StocksTab({
         </View>
       ) : null}
 
+      {/* ── 내 즐겨찾기 ── */}
       <View style={styles.card}>
         <View style={styles.sectionHeaderRow}>
-          <Text style={styles.cardTitle}>내 즐겨찾기</Text>
+          <View style={styles.cardTitleRow}>
+            <Star size={14} color="#f59e0b" strokeWidth={2.5} fill={watchlist.length ? '#f59e0b' : 'none'} />
+            <Text style={styles.cardTitle}>내 즐겨찾기</Text>
+          </View>
           <Text style={styles.metaText}>{watchlist.length}개</Text>
         </View>
         {watchlist.length ? (
@@ -246,7 +279,10 @@ export function StocksTab({
             </View>
           ))
         ) : (
-          <Text style={styles.metaText}>아직 즐겨찾기가 없어. 종목 탭에서 추가해.</Text>
+          <View style={styles.emptyStateRow}>
+            <Star size={14} color="#94a3b8" strokeWidth={2} />
+            <Text style={styles.metaText}>아직 즐겨찾기가 없어. 위에서 종목을 검색해 추가해.</Text>
+          </View>
         )}
       </View>
     </ScrollView>

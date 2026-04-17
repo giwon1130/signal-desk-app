@@ -1,4 +1,5 @@
 import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native'
+import { BarChart2, Globe } from 'lucide-react-native'
 import { CandleVolumeChart } from '../components/CandleVolumeChart'
 import { styles } from '../styles'
 import type { ChartPeriodSnapshot, IndexMetric, MarketKey, MarketSection, PeriodKey } from '../types'
@@ -39,8 +40,15 @@ export function MarketTab({
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       contentContainerStyle={styles.content}
     >
+      {/* ── 지수 선택 ── */}
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>지수 차트</Text>
+        <View style={styles.sectionHeaderRow}>
+          <View style={styles.cardTitleRow}>
+            <Globe size={14} color="#3b82f6" strokeWidth={2.5} />
+            <Text style={styles.cardTitle}>지수 차트</Text>
+          </View>
+          <Text style={styles.metaText}>{activeSection?.title ?? '-'}</Text>
+        </View>
         <View style={styles.filterRow}>
           {(['KR', 'US'] as const).map((market) => (
             <Pressable
@@ -49,7 +57,7 @@ export function MarketTab({
               style={[styles.filterChip, chartMarket === market && styles.filterChipActive]}
             >
               <Text style={[styles.filterText, chartMarket === market && styles.filterTextActive]}>
-                {market === 'KR' ? '한국' : '미국'}
+                {market === 'KR' ? '🇰🇷 한국' : '🇺🇸 미국'}
               </Text>
             </Pressable>
           ))}
@@ -62,7 +70,7 @@ export function MarketTab({
               style={[styles.filterChip, chartPeriod === period && styles.filterChipActive]}
             >
               <Text style={[styles.filterText, chartPeriod === period && styles.filterTextActive]}>
-                {period}
+                {period === '1D' ? '1일' : period === '1M' ? '1개월' : '1년'}
               </Text>
             </Pressable>
           ))}
@@ -83,10 +91,21 @@ export function MarketTab({
         </View>
       </View>
 
+      {/* ── 차트 & 통계 ── */}
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>
-          {activeIndex?.label ?? '-'} · {activePeriod?.label ?? '-'}
-        </Text>
+        <View style={styles.sectionHeaderRow}>
+          <View style={styles.cardTitleRow}>
+            <BarChart2 size={14} color="#6366f1" strokeWidth={2.5} />
+            <Text style={styles.cardTitle}>
+              {activeIndex?.label ?? '-'} · {activePeriod?.label ?? '-'}
+            </Text>
+          </View>
+          {activeIndex ? (
+            <Text style={[styles.metaText, { color: activeIndex.changeRate >= 0 ? '#dc2626' : '#2563eb', fontWeight: '700' }]}>
+              {formatSignedRate(activeIndex.changeRate)}
+            </Text>
+          ) : null}
+        </View>
         <CandleVolumeChart points={activePeriod?.points ?? []} width={chartWidth} />
         <View style={styles.legendRow}>
           <Text style={[styles.legendText, { color: '#f59e0b' }]}>MA5</Text>
@@ -101,11 +120,11 @@ export function MarketTab({
             </View>
             <View style={styles.chartStat}>
               <Text style={styles.kpiLabel}>고가</Text>
-              <Text style={styles.chartStatValue}>{activePeriod.stats.high.toFixed(2)}</Text>
+              <Text style={[styles.chartStatValue, { color: '#dc2626' }]}>{activePeriod.stats.high.toFixed(2)}</Text>
             </View>
             <View style={styles.chartStat}>
               <Text style={styles.kpiLabel}>저가</Text>
-              <Text style={styles.chartStatValue}>{activePeriod.stats.low.toFixed(2)}</Text>
+              <Text style={[styles.chartStatValue, { color: '#2563eb' }]}>{activePeriod.stats.low.toFixed(2)}</Text>
             </View>
             <View style={styles.chartStat}>
               <Text style={styles.kpiLabel}>거래량 평균</Text>
