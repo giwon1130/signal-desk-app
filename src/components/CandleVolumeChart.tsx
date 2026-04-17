@@ -1,5 +1,5 @@
 import { Text, View } from 'react-native'
-import Svg, { Line, Path, Rect } from 'react-native-svg'
+import Svg, { G, Line, Path, Rect } from 'react-native-svg'
 import type { ChartPoint } from '../types'
 import { buildLinePath, buildMovingAverage } from '../utils'
 import { styles } from '../styles'
@@ -60,7 +60,7 @@ export function CandleVolumeChart({ points, width }: { points: ChartPoint[]; wid
           const bodyHeight = Math.max(1.5, Math.abs(closeY - openY))
           const volumeBarHeight = (item.volume / maxVolume) * (volumeHeight - 8)
           return (
-            <View key={`${item.label}-${index}`}>
+            <G key={`${item.label}-${index}`}>
               <Line
                 x1={x}
                 x2={x}
@@ -85,7 +85,7 @@ export function CandleVolumeChart({ points, width }: { points: ChartPoint[]; wid
                 fill={up ? 'rgba(220,38,38,0.55)' : 'rgba(37,99,235,0.55)'}
                 rx={1}
               />
-            </View>
+            </G>
           )
         })}
 
