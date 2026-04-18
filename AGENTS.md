@@ -43,6 +43,23 @@ AI   (AI)      → 추천·실행 로그
 - Today 탭 상단에 강조 배너 표시 (주말=노랑, 휴장=빨강).
 - 단타 픽/보유 모니터 카피가 "휴장 중 — 시나리오 점검" 모드로 자동 전환.
 
+## 알림 (로컬 알림 only)
+
+서버 푸시 인프라 없이 **디바이스 로컬 알림**으로만 동작. baby-log 패턴 차용.
+
+- 구현: `src/hooks/useMarketReminder.ts` + `src/components/ReminderSettingsModal.tsx`
+- 헤더의 종(🔔) 아이콘 → 모달에서 토글
+- 매일 반복 (`Notifications.SchedulableTriggerInputTypes.DAILY`):
+  - 🇰🇷 한국장: 09:00 KST
+  - 🇺🇸 미국장: 23:30 KST (EST/EDT 평균)
+  - "몇 분 전" 옵션: 5/10/15/30/60
+- AsyncStorage 키: `reminder.krOpen.enabled`, `reminder.usOpen.enabled`, `reminder.minutesBefore`
+- 부팅 시 `useMarketReminderBootstrap(!!user)`이 권한 확인 + 켜진 알림 재예약 (App.tsx)
+
+**한계 (의도된 단순화)**:
+- 시그널 발생/P&L 임계 돌파 같은 **이벤트 기반 푸시는 미지원**. APNs Key + 백엔드 `device_token` 테이블 + 발신 엔드포인트가 필요해서 유료 Apple Developer 계정 붙기 전엔 안 함.
+- expo-notifications **plugin은 app.json에서 제거**된 상태. Personal Team이 push entitlement(`aps-environment`)를 못 사인하기 때문. 모듈 자체는 autolink돼서 로컬 스케줄링은 정상.
+
 ## 차트 시맨틱
 
 각 캔들 = 1 단위.
@@ -155,12 +172,33 @@ xcrun xctrace list devices
 npx expo run:ios --device 00008150-0003452E0A28401C --configuration Release
 ```
 
+CocoaPods가 UTF-8 로케일 에러(`Encoding::CompatibilityError`)를 내면 `LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8` 환경변수로 다시 시도.
+
+### ⚠️ Personal Apple Developer Team 함정
+
+**Personal Team은 Push Notifications capability를 못 사인함**. 그런데 expo-notifications 모듈이 autolink되면서 매번 `ios/signaldeskapp/signaldeskapp.entitlements`에 `aps-environment` 키를 박아넣음 → 사인 실패.
+
+`ios/`는 gitignore라서 `expo prebuild --clean -p ios` 돌릴 때마다 entitlements가 재생성됨. 그래서 prebuild 후엔 매번 수동으로 비워야 함:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+  </dict>
+</plist>
+```
+
+유료 개발자 계정으로 옮기면 이 단계 불필요.
+
 스토어 배포 단계는 아직 정해두지 않음 — 추후 EAS Build 또는 Xcode Archive로 추가 예정.
 
 ## 최근 변경 (역순)
 
 | 커밋 | 요약 |
 |------|------|
+| `4af807d` | 장 시작 로컬 알림 (KR/US, 분 전 옵션) — 헤더 종 아이콘 → 모달 토글 |
+| `3b07e0c` | 종목 상세/포트폴리오 편집을 슬라이드업 모달로 통일 |
 | `feb5d4d` | 보유 종목 등록 인라인 폼 + 관심종목 해제 UX 명확화 |
 | `98bfe06` | 즐겨찾기→관심종목 통일 / 실험지표 모달 / 휴장 모드 / 홈 KPI 탭 이동 |
 | `0059703` | Today 탭 신설, Home 슬림화, 시장 탭 확장 |
