@@ -8,9 +8,22 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native'
-import { BarChart3, Bot, Home, TrendingUp } from 'lucide-react-native'
+import { BarChart3, Bot, Home, LogOut, Moon, Sun, TrendingUp } from 'lucide-react-native'
 import { API_BASE_URL, deleteFavoriteItem, loadAllData, saveFavoriteItem, searchStocks } from './src/api'
-import { styles } from './src/styles'
+import { useStyles } from './src/styles'
+import { ThemeProvider, useTheme } from './src/theme'
+import { Toast } from './src/components/Toast'
+import { AuthScreen } from './src/components/AuthScreen'
+import { useToast } from './src/hooks/useToast'
+import { hapticLight, hapticSuccess, hapticError } from './src/utils/haptics'
+import {
+  type AuthUser,
+  apiMe,
+  clearAuth,
+  loadStoredAuth,
+  saveAuth,
+  setMemoryToken,
+} from './src/api/auth'
 import { AITab } from './src/tabs/AITab'
 import { HomeTab } from './src/tabs/HomeTab'
 import { MarketTab } from './src/tabs/MarketTab'
@@ -41,8 +54,49 @@ const TABS: Array<{ key: TabKey; label: string; Icon: typeof Home }> = [
   { key: 'ai',     label: 'AI',   Icon: Bot },
 ]
 
-export default function App() {
+function AppShell() {
   const { width } = useWindowDimensions()
+  const styles = useStyles()
+  const { palette, toggle, mode } = useTheme()
+  const toast = useToast()
+
+  // ── 인증 상태 ─────────────────────────────────────
+  const [authChecked, setAuthChecked] = useState(false)
+  const [user, setUser] = useState<AuthUser | null>(null)
+
+  useEffect(() => {
+    void (async () => {
+      const stored = await loadStoredAuth()
+      if (stored) {
+        setMemoryToken(stored.token)
+        // 토큰 유효성 검증 (서버 me 호출)
+        try {
+          const fresh = await apiMe(stored.token)
+          setUser({ ...fresh, token: stored.token })
+          await saveAuth({ ...fresh, token: stored.token })
+        } catch {
+          // 만료된 토큰
+          await clearAuth()
+          setMemoryToken(null)
+          setUser(null)
+        }
+      }
+      setAuthChecked(true)
+    })()
+  }, [])
+
+  const handleAuthDone = useCallback(async (u: AuthUser) => {
+    setMemoryToken(u.token)
+    await saveAuth(u)
+    setUser(u)
+  }, [])
+
+  const handleLogout = useCallback(async () => {
+    void hapticLight()
+    await clearAuth()
+    setMemoryToken(null)
+    setUser(null)
+  }, [])
 
   const [activeTab, setActiveTab] = useState<TabKey>('home')
   const [summary, setSummary] = useState<MarketSummaryData | null>(null)
@@ -88,15 +142,23 @@ export default function App() {
   }, [])
 
   useEffect(() => {
+    if (!user) return
     setLoading(true)
     void fetchData().finally(() => setLoading(false))
-  }, [fetchData])
+  }, [fetchData, user])
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true)
+    void hapticLight()
     await fetchData()
     setRefreshing(false)
   }, [fetchData])
+
+  const handleTabChange = useCallback((key: TabKey) => {
+    if (key === activeTab) return
+    void hapticLight()
+    setActiveTab(key)
+  }, [activeTab])
 
   const filteredLogs = useMemo(() => {
     const logs = aiRecommendation?.executionLogs ?? []
@@ -226,31 +288,56 @@ export default function App() {
     try {
       await saveFavoriteItem(selectedStock, favoriteDraft)
       await fetchData()
+      void hapticSuccess()
+      toast.show('즐겨찾기에 저장됐어요', 'success')
     } catch {
-      setError('즐겨찾기 저장에 실패했어요.')
+      void hapticError()
+      toast.show('즐겨찾기 저장에 실패했어요', 'error')
     } finally {
       setFavoriteSaving(false)
     }
-  }, [favoriteDraft, fetchData, selectedStock])
+  }, [favoriteDraft, fetchData, selectedStock, toast])
 
   const handleDeleteFavorite = useCallback(async (id: string) => {
     setFavoriteDeletingId(id)
     try {
       await deleteFavoriteItem(id)
       await fetchData()
+      void hapticSuccess()
+      toast.show('삭제됐어요', 'info')
     } catch {
-      setError('즐겨찾기 삭제에 실패했어요.')
+      void hapticError()
+      toast.show('삭제에 실패했어요', 'error')
     } finally {
       setFavoriteDeletingId('')
     }
-  }, [fetchData])
+  }, [fetchData, toast])
 
   const chartWidth = Math.max(300, Math.min(width - 28, 760))
   const isUp = apiHealth?.status === 'UP'
+  const isDark = palette.scheme === 'dark'
+
+  // ── 인증 분기 ──
+  if (!authChecked) {
+    return (
+      <SafeAreaView style={[styles.container, { alignItems: 'center', justifyContent: 'center' }]}>
+        <ActivityIndicator size="large" color={palette.blue} />
+      </SafeAreaView>
+    )
+  }
+
+  if (!user) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar style={isDark ? 'light' : 'dark'} />
+        <AuthScreen onDone={(u) => void handleAuthDone(u)} />
+      </SafeAreaView>
+    )
+  }
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar style="light" />
+      <StatusBar style={isDark ? 'light' : 'light'} />
 
       {/* ── 헤더 ─────────────────────────────────────── */}
       <View style={styles.headerWrap}>
@@ -260,11 +347,27 @@ export default function App() {
               <Text style={styles.brand}>SIGNAL DESK</Text>
               <Text style={styles.headerTitle}>투자 대시보드</Text>
             </View>
-            <View style={[styles.headerStatusPill, isUp ? styles.headerStatusPillUp : styles.headerStatusPillDown]}>
-              <View style={[styles.headerStatusDot, isUp ? styles.headerStatusDotUp : styles.headerStatusDotDown]} />
-              <Text style={[styles.headerStatusText, isUp ? styles.headerStatusTextUp : styles.headerStatusTextDown]}>
-                {isUp ? 'LIVE' : 'OFF'}
-              </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <View style={[styles.headerStatusPill, isUp ? styles.headerStatusPillUp : styles.headerStatusPillDown]}>
+                <View style={[styles.headerStatusDot, isUp ? styles.headerStatusDotUp : styles.headerStatusDotDown]} />
+                <Text style={[styles.headerStatusText, isUp ? styles.headerStatusTextUp : styles.headerStatusTextDown]}>
+                  {isUp ? 'LIVE' : 'OFF'}
+                </Text>
+              </View>
+              <Pressable
+                onPress={() => { void hapticLight(); toggle() }}
+                style={({ pressed }) => [styles.themeToggleBtn, pressed && { opacity: 0.6 }]}
+                accessibilityLabel={isDark ? '라이트 모드로 전환' : '다크 모드로 전환'}
+              >
+                {isDark ? <Sun size={16} color="#fcd34d" /> : <Moon size={16} color="#cbd5e1" />}
+              </Pressable>
+              <Pressable
+                onPress={() => void handleLogout()}
+                style={({ pressed }) => [styles.themeToggleBtn, pressed && { opacity: 0.6 }]}
+                accessibilityLabel="로그아웃"
+              >
+                <LogOut size={16} color="#fca5a5" />
+              </Pressable>
             </View>
           </View>
           <Text style={styles.headerSubtitle}>
@@ -280,12 +383,12 @@ export default function App() {
           return (
             <Pressable
               key={key}
-              onPress={() => setActiveTab(key)}
+              onPress={() => handleTabChange(key)}
               style={({ pressed }) => [styles.tabItem, active && styles.tabItemActive, pressed && styles.tabItemPressed]}
             >
               <Icon
                 size={20}
-                color={active ? '#3b82f6' : '#94a3b8'}
+                color={active ? palette.blue : palette.inkFaint}
                 strokeWidth={active ? 2.5 : 1.8}
               />
               <Text style={[styles.tabLabel, active && styles.tabLabelActive]}>{label}</Text>
@@ -298,7 +401,7 @@ export default function App() {
       {/* ── 로딩 ─────────────────────────────────────── */}
       {loading ? (
         <View style={styles.loadingWrap}>
-          <ActivityIndicator size="large" color="#3b82f6" />
+          <ActivityIndicator size="large" color={palette.blue} />
           <Text style={styles.loadingText}>데이터 불러오는 중...</Text>
         </View>
       ) : null}
@@ -392,6 +495,16 @@ export default function App() {
           onLogQueryChange={setLogQuery}
         />
       ) : null}
+
+      <Toast visible={toast.visible} message={toast.message} type={toast.type} />
     </SafeAreaView>
+  )
+}
+
+export default function App() {
+  return (
+    <ThemeProvider>
+      <AppShell />
+    </ThemeProvider>
   )
 }

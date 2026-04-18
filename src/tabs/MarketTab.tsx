@@ -1,7 +1,7 @@
 import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native'
 import { BarChart2, Globe } from 'lucide-react-native'
 import { CandleVolumeChart } from '../components/CandleVolumeChart'
-import { styles } from '../styles'
+import { useStyles } from '../styles'
 import type { ChartPeriodSnapshot, IndexMetric, MarketKey, MarketSection, PeriodKey } from '../types'
 import { formatCompactNumber, formatSignedRate } from '../utils'
 
@@ -34,6 +34,7 @@ export function MarketTab({
   onChartPeriodChange,
   onSelectedIndexLabelChange,
 }: Props) {
+  const styles = useStyles()
   return (
     <ScrollView
       style={styles.scroll}

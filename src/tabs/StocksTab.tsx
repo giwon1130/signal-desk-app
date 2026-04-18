@@ -1,6 +1,7 @@
+import { useMemo } from 'react'
 import { Pressable, RefreshControl, ScrollView, Text, TextInput, View } from 'react-native'
-import { Bookmark, BookmarkCheck, Cpu, Info, Search, Star } from 'lucide-react-native'
-import { styles } from '../styles'
+import { Bookmark, BookmarkCheck, Cpu, Info, Radio, Search, Star } from 'lucide-react-native'
+import { useStyles } from '../styles'
 import type {
   FavoriteDraft,
   SelectedStockSnapshot,
@@ -9,6 +10,7 @@ import type {
   WatchItem,
 } from '../types'
 import { formatCompactNumber, formatSignedRate } from '../utils'
+import { useLivePrices } from '../hooks/useLivePrices'
 
 type Props = {
   watchlist: WatchItem[]
@@ -51,6 +53,25 @@ export function StocksTab({
   onSaveFavorite,
   onDeleteFavorite,
 }: Props) {
+  const styles = useStyles()
+
+  // 실시간 시세: 검색 결과 + 즐겨찾기의 KR 종목을 한 번에 구독
+  const liveTickers = useMemo(() => {
+    const set = new Set<string>()
+    for (const r of stockResults) if (r.market === 'KR') set.add(r.ticker)
+    for (const w of watchlist) if (w.market === 'KR') set.add(w.ticker)
+    if (selectedStock?.base.market === 'KR') set.add(selectedStock.base.ticker)
+    return Array.from(set)
+  }, [stockResults, watchlist, selectedStock])
+  const livePrices = useLivePrices(liveTickers)
+
+  const liveOf = (market: string, ticker: string, fallbackPrice: number, fallbackRate: number) => {
+    if (market !== 'KR') return { price: fallbackPrice, changeRate: fallbackRate, live: false }
+    const lp = livePrices[ticker]
+    return lp ? { price: lp.price, changeRate: lp.changeRate, live: true }
+              : { price: fallbackPrice, changeRate: fallbackRate, live: false }
+  }
+
   return (
     <ScrollView
       style={styles.scroll}
@@ -120,12 +141,20 @@ export function StocksTab({
                   </View>
                 </View>
                 <Text style={styles.stockResultMeta}>{item.ticker} · {item.sector}</Text>
-                <View style={styles.stockResultBottom}>
-                  <Text style={styles.stockResultPrice}>{formatCompactNumber(item.price)}</Text>
-                  <Text style={[styles.stockResultDelta, { color: item.changeRate >= 0 ? '#dc2626' : '#2563eb' }]}>
-                    {formatSignedRate(item.changeRate)}
-                  </Text>
-                </View>
+                {(() => {
+                  const live = liveOf(item.market, item.ticker, item.price, item.changeRate)
+                  return (
+                    <View style={styles.stockResultBottom}>
+                      <View style={styles.cardTitleRow}>
+                        <Text style={styles.stockResultPrice}>{formatCompactNumber(live.price)}</Text>
+                        {live.live ? <Radio size={10} color="#10b981" strokeWidth={2.5} /> : null}
+                      </View>
+                      <Text style={[styles.stockResultDelta, { color: live.changeRate >= 0 ? '#dc2626' : '#2563eb' }]}>
+                        {formatSignedRate(live.changeRate)}
+                      </Text>
+                    </View>
+                  )
+                })()}
                 {isFavorite ? (
                   <View style={styles.cardTitleRow}>
                     <BookmarkCheck size={11} color="#0d9488" strokeWidth={2.5} />
@@ -153,17 +182,25 @@ export function StocksTab({
               <Text style={styles.stockDetailName}>{selectedStock.base.name}</Text>
               <Text style={styles.metricState}>{selectedStock.base.sector}</Text>
             </View>
-            <View style={styles.summaryValueBox}>
-              <Text style={styles.stockDetailPrice}>{formatCompactNumber(selectedStock.base.price)}</Text>
-              <Text
-                style={[
-                  styles.summaryDelta,
-                  { color: selectedStock.base.changeRate >= 0 ? '#dc2626' : '#2563eb' },
-                ]}
-              >
-                {formatSignedRate(selectedStock.base.changeRate)}
-              </Text>
-            </View>
+            {(() => {
+              const live = liveOf(selectedStock.base.market, selectedStock.base.ticker, selectedStock.base.price, selectedStock.base.changeRate)
+              return (
+                <View style={styles.summaryValueBox}>
+                  <View style={styles.cardTitleRow}>
+                    <Text style={styles.stockDetailPrice}>{formatCompactNumber(live.price)}</Text>
+                    {live.live ? <Radio size={12} color="#10b981" strokeWidth={2.5} /> : null}
+                  </View>
+                  <Text
+                    style={[
+                      styles.summaryDelta,
+                      { color: live.changeRate >= 0 ? '#dc2626' : '#2563eb' },
+                    ]}
+                  >
+                    {formatSignedRate(live.changeRate)}
+                  </Text>
+                </View>
+              )
+            })()}
           </View>
           <Text style={styles.cardNote}>{selectedStock.base.stance}</Text>
 

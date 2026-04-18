@@ -26,6 +26,16 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "scheme": "signaldesk",
+    "extra": {
+      "googleClientIdIos": "",
+      "googleClientIdAndroid": "",
+      "googleClientIdWeb": "",
+      "kakaoRestApiKey": ""
+    },
+    "plugins": [
+      "expo-web-browser"
+    ]
   }
 }

@@ -12,7 +12,7 @@ import {
   TrendingUp,
   Zap,
 } from 'lucide-react-native'
-import { styles } from '../styles'
+import { useStyles } from '../styles'
 import type { HoldingPosition, MarketSummaryData, PortfolioSummary, WatchItem } from '../types'
 import {
   formatCompactNumber,
@@ -53,6 +53,7 @@ export function HomeTab({
   topPortfolioPositions,
   successRate,
 }: Props) {
+  const styles = useStyles()
   return (
     <ScrollView
       style={styles.scroll}

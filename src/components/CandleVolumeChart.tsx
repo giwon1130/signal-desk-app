@@ -2,9 +2,10 @@ import { Text, View } from 'react-native'
 import Svg, { G, Line, Path, Rect } from 'react-native-svg'
 import type { ChartPoint } from '../types'
 import { buildLinePath, buildMovingAverage } from '../utils'
-import { styles } from '../styles'
+import { useStyles } from '../styles'
 
 export function CandleVolumeChart({ points, width }: { points: ChartPoint[]; width: number }) {
+  const styles = useStyles()
   if (!points.length) {
     return (
       <View style={styles.emptyChart}>

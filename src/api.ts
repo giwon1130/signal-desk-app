@@ -10,9 +10,20 @@ import type {
   WatchItem,
   WatchlistResponse,
 } from './types'
+import { getMemoryToken } from './api/auth'
 
 export const API_BASE_URL =
   process.env.EXPO_PUBLIC_API_BASE_URL ?? 'https://signal-desk-api-production.up.railway.app'
+
+/** JWT 토큰이 있으면 Authorization 헤더를 자동 주입한 fetch */
+export function authedFetch(input: string, init: RequestInit = {}): Promise<Response> {
+  const token = getMemoryToken()
+  const headers: Record<string, string> = {
+    ...(init.headers as Record<string, string> | undefined),
+  }
+  if (token) headers.Authorization = `Bearer ${token}`
+  return fetch(input, { ...init, headers })
+}
 
 export type LoadAllDataResult = {
   health: HealthResponse
@@ -26,12 +37,12 @@ export type LoadAllDataResult = {
 export async function loadAllData(): Promise<LoadAllDataResult> {
   const [healthResponse, summaryResponse, sectionsResponse, aiResponse, watchlistResponse, portfolioResponse] =
     await Promise.all([
-      fetch(`${API_BASE_URL}/health`),
-      fetch(`${API_BASE_URL}/api/v1/market/summary`),
-      fetch(`${API_BASE_URL}/api/v1/market/sections`),
-      fetch(`${API_BASE_URL}/api/v1/market/ai-recommendations`),
-      fetch(`${API_BASE_URL}/api/v1/market/watchlist`),
-      fetch(`${API_BASE_URL}/api/v1/market/portfolio`),
+      authedFetch(`${API_BASE_URL}/health`),
+      authedFetch(`${API_BASE_URL}/api/v1/market/summary`),
+      authedFetch(`${API_BASE_URL}/api/v1/market/sections`),
+      authedFetch(`${API_BASE_URL}/api/v1/market/ai-recommendations`),
+      authedFetch(`${API_BASE_URL}/api/v1/market/watchlist`),
+      authedFetch(`${API_BASE_URL}/api/v1/market/portfolio`),
     ])
 
   if (
@@ -64,7 +75,7 @@ export async function loadAllData(): Promise<LoadAllDataResult> {
 
 export async function searchStocks(query: string, market: string): Promise<StockSearchResult[]> {
   const marketParam = market === 'ALL' ? '' : `&market=${market}`
-  const response = await fetch(
+  const response = await authedFetch(
     `${API_BASE_URL}/api/v1/market/stocks/search?q=${encodeURIComponent(query)}${marketParam}&limit=20`,
   )
   if (!response.ok) {
@@ -81,7 +92,7 @@ export async function saveFavoriteItem(
   },
   draft: FavoriteDraft,
 ): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/api/v1/workspace/watchlist`, {
+  const response = await authedFetch(`${API_BASE_URL}/api/v1/workspace/watchlist`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -102,7 +113,7 @@ export async function saveFavoriteItem(
 }
 
 export async function deleteFavoriteItem(id: string): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/api/v1/workspace/watchlist/${id}`, {
+  const response = await authedFetch(`${API_BASE_URL}/api/v1/workspace/watchlist/${id}`, {
     method: 'DELETE',
   })
   if (!response.ok) {

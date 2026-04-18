@@ -1,6 +1,6 @@
 import { FlatList, Pressable, RefreshControl, Text, TextInput, View } from 'react-native'
 import { BarChart2, Bot, List, Target } from 'lucide-react-native'
-import { styles } from '../styles'
+import { useStyles } from '../styles'
 import type { AiRecommendationData, LogFilter, RecommendationExecutionLog } from '../types'
 import { formatSignedRate, getLogReturnColor } from '../utils'
 
@@ -35,6 +35,7 @@ export function AITab({
   onLogFilterChange,
   onLogQueryChange,
 }: Props) {
+  const styles = useStyles()
   return (
     <FlatList
       style={styles.scroll}
