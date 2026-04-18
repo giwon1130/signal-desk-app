@@ -400,6 +400,51 @@ export function makeStyles(C: Palette) {
       paddingVertical: 4, overflow: 'hidden',
     },
 
+    // ── Signal modal ─────────────────────────────────────────────────────────────
+    signalModalBackdrop: {
+      flex: 1, backgroundColor: 'rgba(15,23,42,0.55)',
+      alignItems: 'center', justifyContent: 'center', paddingHorizontal: 20,
+    },
+    signalModalCard: {
+      width: '100%', maxWidth: 520, backgroundColor: C.surface,
+      borderRadius: 16, padding: 18, ...shadow.lg,
+    },
+    signalModalHeader: {
+      flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginBottom: 12,
+    },
+    signalModalTitle:    { color: C.ink, fontSize: 18, fontWeight: '900' },
+    signalModalSubtitle: { color: C.inkMuted, fontSize: 12, fontWeight: '700', marginTop: 2 },
+    signalModalSection:  { marginTop: 12, gap: 4 },
+    signalModalSectionTitle: {
+      color: C.blue, fontSize: 11, fontWeight: '900', letterSpacing: 1, textTransform: 'uppercase',
+    },
+    signalModalBody:     { color: C.ink, fontSize: 13, lineHeight: 19, fontWeight: '500' },
+    signalModalLink:     { color: C.blue, fontSize: 12, fontWeight: '700', marginTop: 4 },
+    signalModalDisclaimer: {
+      color: C.inkMuted, fontSize: 11, fontWeight: '600',
+      marginTop: 16, paddingTop: 12, borderTopWidth: 1, borderTopColor: C.border,
+      lineHeight: 17,
+    },
+
+    // ── Trading day banner ──────────────────────────────────────────────────────
+    tradingDayBanner: {
+      borderRadius: 14, padding: 14, marginBottom: 12, gap: 6,
+      backgroundColor: C.surfaceAlt, borderWidth: 1, borderColor: C.border,
+    },
+    tradingDayBannerHeadline: { color: C.ink, fontSize: 14, fontWeight: '900' },
+    tradingDayBannerAdvice:   { color: C.inkSub, fontSize: 12, fontWeight: '600', lineHeight: 18 },
+    tradingDayBannerNext:     { color: C.inkMuted, fontSize: 11, fontWeight: '700' },
+
+    // ── Quick add (one-tap watchlist toggle) ────────────────────────────────────
+    quickAddPill: {
+      flexDirection: 'row', alignItems: 'center', gap: 4,
+      borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5,
+      backgroundColor: C.blue, alignSelf: 'flex-start', marginTop: 6,
+    },
+    quickAddPillActive: { backgroundColor: C.tealSoft, borderWidth: 1, borderColor: C.teal },
+    quickAddPillText:   { color: '#ffffff', fontSize: 11, fontWeight: '800' },
+    quickAddPillTextActive: { color: C.teal, fontSize: 11, fontWeight: '800' },
+
     // ── (unused but kept for compat) ─────────────────────────────────────────────
     apiText: { display: 'none' },
     tabRow: { display: 'none' },

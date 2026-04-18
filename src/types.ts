@@ -14,6 +14,18 @@ export type AlternativeSignal = {
   source: string
   url: string
   experimental: boolean
+  description?: string
+  methodology?: string
+}
+
+export type TradingDayStatus = {
+  krOpen: boolean
+  usOpen: boolean
+  isWeekend: boolean
+  isHoliday: boolean
+  headline: string
+  nextTradingDay: string
+  advice: string
 }
 
 export type WatchAlert = {
@@ -158,6 +170,7 @@ export type MarketSummaryData = {
   watchAlerts: WatchAlert[]
   marketSessions: MarketSessionStatus[]
   newsSentiments?: NewsSentiment[]
+  tradingDayStatus?: TradingDayStatus
   briefing?: {
     headline: string
     preMarket: string[]

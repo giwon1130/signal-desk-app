@@ -95,12 +95,32 @@ export function TodayTab({
     .filter((p) => Math.abs(p.profitRate) <= 8)
     .slice(0, 5)
 
+  const tradingDay = summary?.tradingDayStatus
+  const marketClosedToday = !!tradingDay && !tradingDay.krOpen && !tradingDay.usOpen
+
   return (
     <ScrollView
       style={styles.scroll}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       contentContainerStyle={styles.content}
     >
+      {/* ── 거래일 상태 배너 (휴장 시 강조) ── */}
+      {tradingDay ? (
+        <View style={[
+          styles.tradingDayBanner,
+          marketClosedToday && {
+            backgroundColor: tradingDay.isWeekend ? '#fef3c7' : '#fee2e2',
+            borderColor: tradingDay.isWeekend ? '#fcd34d' : '#fecaca',
+          },
+        ]}>
+          <Text style={styles.tradingDayBannerHeadline}>{tradingDay.headline}</Text>
+          <Text style={styles.tradingDayBannerAdvice}>{tradingDay.advice}</Text>
+          {marketClosedToday ? (
+            <Text style={styles.tradingDayBannerNext}>다음 거래일: {tradingDay.nextTradingDay}</Text>
+          ) : null}
+        </View>
+      ) : null}
+
       {/* ── 마켓 상태 (한 줄 요약) ── */}
       <View style={styles.todayHeroCard}>
         <View style={styles.cardTitleRow}>
@@ -175,6 +195,11 @@ export function TodayTab({
           </View>
           <Text style={styles.metaText}>{picks.length}개 후보</Text>
         </View>
+        {marketClosedToday ? (
+          <Text style={styles.metaText}>
+            지금은 휴장이라 단타 진입은 의미 없어. 다음 거래일 후보 미리 봐두는 용도로만 활용해.
+          </Text>
+        ) : null}
         {picks.length === 0 ? (
           <Text style={styles.metaText}>오늘은 추천 후보가 없어. 무리해서 진입하지 말 것.</Text>
         ) : picks.map((p, i) => (
@@ -212,10 +237,14 @@ export function TodayTab({
           const Icon = isProfit ? TrendingUp : TrendingDown
           const color = isProfit ? '#dc2626' : '#2563eb'
           // 휴리스틱 가이드: +3%↑ 익절 고려, -3%↓ 손절 고려
-          const advice =
-            p.profitRate >= 3 ? '익절 구간 — 분할 매도 고려' :
-            p.profitRate <= -3 ? '손절 구간 — 손절 라인 점검' :
-            '관찰 구간 — 다음 시그널 기다리기'
+          // 휴장 중에는 어차피 체결 안 되니까 시나리오만 점검
+          const advice = marketClosedToday
+            ? (p.profitRate >= 3 ? '휴장 중 — 다음 개장 후 분할 매도 시나리오 점검'
+              : p.profitRate <= -3 ? '휴장 중 — 다음 개장 후 손절 라인 재확인'
+              : '휴장 중 — 별도 액션 없음')
+            : (p.profitRate >= 3 ? '익절 구간 — 분할 매도 고려' :
+               p.profitRate <= -3 ? '손절 구간 — 손절 라인 점검' :
+               '관찰 구간 — 다음 시그널 기다리기')
           return (
             <View key={`${p.market}-${p.ticker}-${p.id || p.name}`} style={styles.todayMonitorRow}>
               <View style={styles.todayMonitorLeft}>

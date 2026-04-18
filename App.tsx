@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native'
 import { BarChart3, Bot, Home, LogOut, Moon, Sun, Sunrise, TrendingUp } from 'lucide-react-native'
-import { API_BASE_URL, deleteFavoriteItem, loadAllData, saveFavoriteItem, searchStocks } from './src/api'
+import { API_BASE_URL, deleteFavoriteItem, loadAllData, quickAddWatchItem, searchStocks } from './src/api'
 import { useStyles } from './src/styles'
 import { ThemeProvider, useTheme } from './src/theme'
 import { Toast } from './src/components/Toast'
@@ -31,7 +31,6 @@ import { StocksTab } from './src/tabs/StocksTab'
 import { TodayTab } from './src/tabs/TodayTab'
 import type {
   AiRecommendationData,
-  FavoriteDraft,
   HealthResponse,
   HoldingPosition,
   LogFilter,
@@ -122,8 +121,6 @@ function AppShell() {
   const [stockResults, setStockResults] = useState<StockSearchResult[]>([])
   const [stockSearchLoading, setStockSearchLoading] = useState(false)
   const [selectedStockKey, setSelectedStockKey] = useState('')
-  const [favoriteDraft, setFavoriteDraft] = useState<FavoriteDraft>({ stance: '', note: '' })
-  const [favoriteSaving, setFavoriteSaving] = useState(false)
   const [favoriteDeletingId, setFavoriteDeletingId] = useState('')
 
   const fetchData = useCallback(async () => {
@@ -273,32 +270,18 @@ function AppShell() {
     }
   }, [aiRecommendation?.executionLogs, portfolio?.positions, selectedStockKey, stockResults, watchlist])
 
-  useEffect(() => {
-    if (!selectedStock) {
-      setFavoriteDraft({ stance: '', note: '' })
-      return
-    }
-    setFavoriteDraft({
-      stance: selectedStock.watchItem?.stance ?? selectedStock.base.stance,
-      note: selectedStock.watchItem?.note ?? '앱 즐겨찾기',
-    })
-  }, [selectedStock])
-
-  const handleSaveFavorite = useCallback(async () => {
-    if (!selectedStock) return
-    setFavoriteSaving(true)
+  const handleQuickAddWatch = useCallback(async (stock: StockSearchResult) => {
     try {
-      await saveFavoriteItem(selectedStock, favoriteDraft)
+      await quickAddWatchItem(stock)
       await fetchData()
       void hapticSuccess()
-      toast.show('즐겨찾기에 저장됐어요', 'success')
+      toast.show('관심종목에 담았어요', 'success')
     } catch {
       void hapticError()
-      toast.show('즐겨찾기 저장에 실패했어요', 'error')
-    } finally {
-      setFavoriteSaving(false)
+      toast.show('관심종목 추가에 실패했어요', 'error')
+      throw new Error('quick-add-failed')
     }
-  }, [favoriteDraft, fetchData, selectedStock, toast])
+  }, [fetchData, toast])
 
   const handleDeleteFavorite = useCallback(async (id: string) => {
     setFavoriteDeletingId(id)
@@ -306,10 +289,10 @@ function AppShell() {
       await deleteFavoriteItem(id)
       await fetchData()
       void hapticSuccess()
-      toast.show('삭제됐어요', 'info')
+      toast.show('관심종목에서 해제했어요', 'info')
     } catch {
       void hapticError()
-      toast.show('삭제에 실패했어요', 'error')
+      toast.show('해제에 실패했어요', 'error')
     } finally {
       setFavoriteDeletingId('')
     }
@@ -449,6 +432,7 @@ function AppShell() {
           topWatchlist={topWatchlist}
           topPortfolioPositions={topPortfolioPositions}
           successRate={successRate}
+          onTabChange={handleTabChange}
         />
       ) : null}
 
@@ -479,16 +463,13 @@ function AppShell() {
           stockSearchLoading={stockSearchLoading}
           selectedStockKey={selectedStockKey}
           selectedStock={selectedStock}
-          favoriteDraft={favoriteDraft}
-          favoriteSaving={favoriteSaving}
           favoriteDeletingId={favoriteDeletingId}
           refreshing={refreshing}
           onRefresh={onRefresh}
           onStockSearchChange={setStockSearch}
           onStockMarketFilterChange={setStockMarketFilter}
           onSelectedStockKeyChange={setSelectedStockKey}
-          onFavoriteDraftChange={setFavoriteDraft}
-          onSaveFavorite={() => void handleSaveFavorite()}
+          onQuickAddWatch={handleQuickAddWatch}
           onDeleteFavorite={(id) => void handleDeleteFavorite(id)}
         />
       ) : null}

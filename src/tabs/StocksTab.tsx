@@ -1,10 +1,9 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Pressable, RefreshControl, ScrollView, Text, TextInput, View } from 'react-native'
-import { Bookmark, BookmarkCheck, Cpu, Info, Radio, Search, Sparkles, Star } from 'lucide-react-native'
+import { Check, Cpu, Info, Plus, Radio, Search, Sparkles, Star } from 'lucide-react-native'
 import { useStyles } from '../styles'
 import { marketColor, useTheme } from '../theme'
 import type {
-  FavoriteDraft,
   SelectedStockSnapshot,
   StockMarketFilter,
   StockSearchResult,
@@ -21,16 +20,13 @@ type Props = {
   stockSearchLoading: boolean
   selectedStockKey: string
   selectedStock: SelectedStockSnapshot | null
-  favoriteDraft: FavoriteDraft
-  favoriteSaving: boolean
   favoriteDeletingId: string
   refreshing: boolean
   onRefresh: () => Promise<void>
   onStockSearchChange: (value: string) => void
   onStockMarketFilterChange: (filter: StockMarketFilter) => void
   onSelectedStockKeyChange: (key: string) => void
-  onFavoriteDraftChange: (draft: FavoriteDraft) => void
-  onSaveFavorite: () => void
+  onQuickAddWatch: (stock: StockSearchResult) => Promise<void>
   onDeleteFavorite: (id: string) => void
 }
 
@@ -42,22 +38,19 @@ export function StocksTab({
   stockSearchLoading,
   selectedStockKey,
   selectedStock,
-  favoriteDraft,
-  favoriteSaving,
   favoriteDeletingId,
   refreshing,
   onRefresh,
   onStockSearchChange,
   onStockMarketFilterChange,
   onSelectedStockKeyChange,
-  onFavoriteDraftChange,
-  onSaveFavorite,
+  onQuickAddWatch,
   onDeleteFavorite,
 }: Props) {
   const styles = useStyles()
   const { palette } = useTheme()
+  const [togglingKey, setTogglingKey] = useState('')
 
-  // 실시간 시세: 검색 결과 + 즐겨찾기의 KR 종목을 한 번에 구독
   const liveTickers = useMemo(() => {
     const set = new Set<string>()
     for (const r of stockResults) if (r.market === 'KR') set.add(r.ticker)
@@ -72,6 +65,25 @@ export function StocksTab({
     const lp = livePrices[ticker]
     return lp ? { price: lp.price, changeRate: lp.changeRate, live: true }
               : { price: fallbackPrice, changeRate: fallbackRate, live: false }
+  }
+
+  const findWatchItem = (market: string, ticker: string) =>
+    watchlist.find((w) => w.market === market && w.ticker === ticker)
+
+  const handleToggleWatch = async (stock: StockSearchResult) => {
+    const key = `${stock.market}:${stock.ticker}`
+    if (togglingKey) return
+    setTogglingKey(key)
+    try {
+      const existing = findWatchItem(stock.market, stock.ticker)
+      if (existing?.id) {
+        onDeleteFavorite(existing.id)
+      } else {
+        await onQuickAddWatch(stock)
+      }
+    } finally {
+      setTogglingKey('')
+    }
   }
 
   return (
@@ -113,13 +125,14 @@ export function StocksTab({
             </Pressable>
           ))}
         </View>
+        <Text style={[styles.metaText, { marginTop: 4 }]}>
+          카드를 탭하면 상세, 우측 + 버튼은 한 번에 관심종목에 담기
+        </Text>
         <View style={styles.stockResultRow}>
           {stockResults.map((item) => {
             const stockKey = `${item.market}:${item.ticker}`
             const isSelected = selectedStockKey === stockKey
-            const isFavorite = watchlist.some(
-              (watchItem) => watchItem.market === item.market && watchItem.ticker === item.ticker,
-            )
+            const isInWatch = !!findWatchItem(item.market, item.ticker)
             return (
               <Pressable
                 key={stockKey}
@@ -128,19 +141,14 @@ export function StocksTab({
               >
                 <View style={styles.stockResultTop}>
                   <Text style={styles.stockResultName}>{item.name}</Text>
-                  <View style={styles.cardTitleRow}>
-                    {isFavorite ? (
-                      <Star size={12} color="#0d9488" strokeWidth={2.5} fill="#0d9488" />
-                    ) : null}
-                    <Text
-                      style={[
-                        styles.stockMarketBadge,
-                        item.market === 'KR' ? styles.stockMarketBadgeKr : styles.stockMarketBadgeUs,
-                      ]}
-                    >
-                      {item.market}
-                    </Text>
-                  </View>
+                  <Text
+                    style={[
+                      styles.stockMarketBadge,
+                      item.market === 'KR' ? styles.stockMarketBadgeKr : styles.stockMarketBadgeUs,
+                    ]}
+                  >
+                    {item.market}
+                  </Text>
                 </View>
                 <Text style={styles.stockResultMeta}>{item.ticker} · {item.sector}</Text>
                 {(() => {
@@ -157,12 +165,23 @@ export function StocksTab({
                     </View>
                   )
                 })()}
-                {isFavorite ? (
-                  <View style={styles.cardTitleRow}>
-                    <BookmarkCheck size={11} color="#0d9488" strokeWidth={2.5} />
-                    <Text style={styles.favoriteHint}>즐겨찾기 등록됨</Text>
-                  </View>
-                ) : null}
+                <Pressable
+                  onPress={() => void handleToggleWatch(item)}
+                  hitSlop={8}
+                  style={[styles.quickAddPill, isInWatch && styles.quickAddPillActive]}
+                >
+                  {isInWatch ? (
+                    <>
+                      <Check size={11} color={palette.teal} strokeWidth={3} />
+                      <Text style={styles.quickAddPillTextActive}>관심종목</Text>
+                    </>
+                  ) : (
+                    <>
+                      <Plus size={11} color="#ffffff" strokeWidth={3} />
+                      <Text style={styles.quickAddPillText}>관심종목</Text>
+                    </>
+                  )}
+                </Pressable>
               </Pressable>
             )
           })}
@@ -208,63 +227,44 @@ export function StocksTab({
 
           <View style={styles.quickStatsRow}>
             <View style={styles.quickStatCard}>
-              <Text style={styles.kpiLabel}>즐겨찾기</Text>
+              <Text style={styles.kpiLabel}>관심종목</Text>
               <Text style={[styles.quickStatValue, { color: selectedStock.watchItem ? '#0d9488' : '#94a3b8' }]}>
-                {selectedStock.watchItem ? 'ON' : 'OFF'}
+                {selectedStock.watchItem ? '담김' : '미등록'}
               </Text>
-              <Text style={styles.metaText}>{selectedStock.watchItem?.note ?? '아직 등록 안 됨'}</Text>
+              <Text style={styles.metaText}>{selectedStock.watchItem ? '추적 중' : '아래 버튼으로 추가'}</Text>
             </View>
             <View style={styles.quickStatCard}>
-              <Text style={styles.kpiLabel}>보유 상태</Text>
+              <Text style={styles.kpiLabel}>실제 보유 (포트폴리오)</Text>
               <Text style={[styles.quickStatValue, { color: selectedStock.portfolioPosition ? '#dc2626' : '#94a3b8' }]}>
                 {selectedStock.portfolioPosition ? '보유' : '미보유'}
               </Text>
               <Text style={styles.metaText}>
                 {selectedStock.portfolioPosition
                   ? `${selectedStock.portfolioPosition.quantity}주 · ${formatSignedRate(selectedStock.portfolioPosition.profitRate)}`
-                  : '포트폴리오 없음'}
+                  : '실제 보유한 종목만 여기 잡혀'}
               </Text>
             </View>
           </View>
 
-          <View style={styles.cardSection}>
-            <View style={styles.cardTitleRow}>
-              <Bookmark size={13} color="#3b82f6" strokeWidth={2.5} />
-              <Text style={styles.cardTitle}>즐겨찾기 편집</Text>
-            </View>
-            <TextInput
-              value={favoriteDraft.stance}
-              onChangeText={(value) => onFavoriteDraftChange({ ...favoriteDraft, stance: value })}
-              placeholder="관점"
-              placeholderTextColor="#94a3b8"
-              style={styles.searchInput}
-            />
-            <TextInput
-              value={favoriteDraft.note}
-              onChangeText={(value) => onFavoriteDraftChange({ ...favoriteDraft, note: value })}
-              placeholder="메모"
-              placeholderTextColor="#94a3b8"
-              style={[styles.searchInput, styles.noteInput]}
-              multiline
-            />
-            <View style={styles.inlineButtonRow}>
-              <Pressable onPress={onSaveFavorite} style={styles.primaryActionButton}>
-                <Text style={styles.primaryActionButtonText}>
-                  {favoriteSaving ? '저장 중...' : selectedStock.watchItem ? '즐겨찾기 수정' : '즐겨찾기 추가'}
+          {/* 한 탭으로 관심종목 토글 */}
+          <Pressable
+            onPress={() => void handleToggleWatch(selectedStock.base)}
+            style={[styles.quickAddPill, !!selectedStock.watchItem && styles.quickAddPillActive, { alignSelf: 'stretch', justifyContent: 'center', paddingVertical: 12, marginTop: 8 }]}
+          >
+            {selectedStock.watchItem ? (
+              <>
+                <Check size={14} color={palette.teal} strokeWidth={3} />
+                <Text style={[styles.quickAddPillTextActive, { fontSize: 13 }]}>
+                  관심종목에 담겨 있어 — 한 번 더 누르면 해제
                 </Text>
-              </Pressable>
-              {selectedStock.watchItem?.id ? (
-                <Pressable
-                  onPress={() => onDeleteFavorite(selectedStock.watchItem!.id)}
-                  style={styles.secondaryActionButton}
-                >
-                  <Text style={styles.secondaryActionButtonText}>
-                    {favoriteDeletingId === selectedStock.watchItem.id ? '삭제 중...' : '삭제'}
-                  </Text>
-                </Pressable>
-              ) : null}
-            </View>
-          </View>
+              </>
+            ) : (
+              <>
+                <Plus size={14} color="#ffffff" strokeWidth={3} />
+                <Text style={[styles.quickAddPillText, { fontSize: 13 }]}>관심종목에 담기</Text>
+              </>
+            )}
+          </Pressable>
 
           {selectedStock.latestAiLog ? (
             <View style={styles.cardSection}>
@@ -283,12 +283,12 @@ export function StocksTab({
         </View>
       ) : null}
 
-      {/* ── 내 즐겨찾기 ── */}
+      {/* ── 내 관심종목 ── */}
       <View style={styles.card}>
         <View style={styles.sectionHeaderRow}>
           <View style={styles.cardTitleRow}>
             <Star size={14} color="#f59e0b" strokeWidth={2.5} fill={watchlist.length ? '#f59e0b' : 'none'} />
-            <Text style={styles.cardTitle}>내 즐겨찾기</Text>
+            <Text style={styles.cardTitle}>내 관심종목</Text>
           </View>
           <Text style={styles.metaText}>{watchlist.length}개</Text>
         </View>
@@ -305,14 +305,14 @@ export function StocksTab({
               >
                 <Text style={styles.metricName}>{item.name}</Text>
                 <Text style={styles.metricState}>{item.market} · {item.ticker} · {item.sector}</Text>
-                <Text style={styles.cardNote}>{item.note}</Text>
+                <Text style={styles.cardNote}>{item.stance}</Text>
               </Pressable>
               <Pressable
                 onPress={() => item.id && onDeleteFavorite(item.id)}
                 style={styles.favoriteDeleteButton}
               >
                 <Text style={styles.favoriteDeleteText}>
-                  {favoriteDeletingId === item.id ? '...' : '삭제'}
+                  {favoriteDeletingId === item.id ? '...' : '해제'}
                 </Text>
               </Pressable>
             </View>
@@ -327,10 +327,10 @@ export function StocksTab({
               <Sparkles size={26} color={palette.orange} strokeWidth={2.2} />
             </View>
             <Text style={{ color: palette.ink, fontSize: 14, fontWeight: '800' }}>
-              아직 즐겨찾기가 비어있어
+              아직 관심종목이 없어
             </Text>
             <Text style={{ color: palette.inkMuted, fontSize: 12, textAlign: 'center', lineHeight: 18 }}>
-              관심 가는 종목을 검색해서{'\n'}별표로 저장해두면 한눈에 추적할 수 있어.
+              위에서 종목 검색 후 + 버튼을 한 번 누르면{'\n'}바로 관심종목으로 담겨.
             </Text>
             <Pressable
               onPress={() => onStockSearchChange('')}
