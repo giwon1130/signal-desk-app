@@ -300,6 +300,23 @@ export function makeStyles(C: Palette) {
     },
     chartStatValue: { marginTop: 2, color: C.ink, fontSize: 13, fontWeight: '700', ...num },
 
+    // ── Candle tooltip (탭 시 표시) ──
+    candleTip: {
+      paddingHorizontal: 12, paddingVertical: 10, gap: 8,
+      borderTopWidth: 1, borderTopColor: C.border, backgroundColor: C.surface,
+    },
+    candleTipHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    candleTipLabel:  { color: C.ink, fontSize: 12, fontWeight: '800', letterSpacing: 0.3 },
+    candleTipChange: { fontSize: 12, fontWeight: '800', ...num },
+    candleTipRow:    { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+    candleTipCell:   {
+      flexBasis: '18%', flexGrow: 1, minWidth: 60,
+      borderRadius: 8, backgroundColor: C.surfaceAlt,
+      paddingHorizontal: 8, paddingVertical: 6,
+    },
+    candleTipKey:    { color: C.inkMuted, fontSize: 10, fontWeight: '700' },
+    candleTipVal:    { color: C.ink, fontSize: 12, fontWeight: '800', marginTop: 1, ...num },
+
     // ── AI Log ────────────────────────────────────────────────────────────────────
     logTop:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
     logName:  { flex: 1, color: C.ink, fontSize: 14, fontWeight: '700' },
