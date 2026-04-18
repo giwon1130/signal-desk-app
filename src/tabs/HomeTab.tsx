@@ -1,5 +1,5 @@
 import { Pressable, RefreshControl, ScrollView, Text, TextInput, View } from 'react-native'
-import { Briefcase, Eye, Search } from 'lucide-react-native'
+import { Briefcase, Eye, Search, X } from 'lucide-react-native'
 import { useStyles } from '../styles'
 import type { HoldingPosition, PortfolioSummary, TabKey, WatchItem } from '../types'
 import { formatCompactNumber, formatSignedRate } from '../utils'
@@ -17,6 +17,7 @@ type Props = {
   topPortfolioPositions: HoldingPosition[]
   successRate: string
   onTabChange: (tab: TabKey) => void
+  onRemoveWatch: (id: string) => void
 }
 
 export function HomeTab({
@@ -32,6 +33,7 @@ export function HomeTab({
   topPortfolioPositions,
   successRate,
   onTabChange,
+  onRemoveWatch,
 }: Props) {
   const styles = useStyles()
   return (
@@ -127,6 +129,19 @@ export function HomeTab({
                   {formatSignedRate(item.changeRate)}
                 </Text>
               </View>
+              {item.id ? (
+                <Pressable
+                  onPress={() => onRemoveWatch(item.id)}
+                  hitSlop={10}
+                  style={({ pressed }) => [{
+                    padding: 6, marginLeft: 4, borderRadius: 999,
+                    backgroundColor: pressed ? '#fee2e2' : 'transparent',
+                  }]}
+                  accessibilityLabel="관심종목 해제"
+                >
+                  <X size={14} color="#94a3b8" strokeWidth={2.5} />
+                </Pressable>
+              ) : null}
             </View>
           ))
         ) : (

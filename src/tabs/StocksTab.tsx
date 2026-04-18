@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Pressable, RefreshControl, ScrollView, Text, TextInput, View } from 'react-native'
-import { Check, Cpu, Info, Plus, Radio, Search, Sparkles, Star } from 'lucide-react-native'
+import { Briefcase, Check, Cpu, Info, Plus, Radio, Search, Sparkles, Star, X } from 'lucide-react-native'
 import { useStyles } from '../styles'
 import { marketColor, useTheme } from '../theme'
 import type {
@@ -28,6 +28,16 @@ type Props = {
   onSelectedStockKeyChange: (key: string) => void
   onQuickAddWatch: (stock: StockSearchResult) => Promise<void>
   onDeleteFavorite: (id: string) => void
+  onSavePortfolio: (payload: {
+    id?: string
+    market: string
+    ticker: string
+    name: string
+    buyPrice: number
+    currentPrice: number
+    quantity: number
+  }) => Promise<void>
+  onDeletePortfolio: (id: string) => void
 }
 
 export function StocksTab({
@@ -46,10 +56,22 @@ export function StocksTab({
   onSelectedStockKeyChange,
   onQuickAddWatch,
   onDeleteFavorite,
+  onSavePortfolio,
+  onDeletePortfolio,
 }: Props) {
   const styles = useStyles()
   const { palette } = useTheme()
   const [togglingKey, setTogglingKey] = useState('')
+  const [buyPriceInput, setBuyPriceInput] = useState('')
+  const [quantityInput, setQuantityInput] = useState('')
+  const [portfolioSaving, setPortfolioSaving] = useState(false)
+
+  // 종목 변경 시 폼을 기존 보유 데이터로 채움 (없으면 비움)
+  useEffect(() => {
+    const pos = selectedStock?.portfolioPosition
+    setBuyPriceInput(pos ? String(pos.buyPrice) : '')
+    setQuantityInput(pos ? String(pos.quantity) : '')
+  }, [selectedStock?.portfolioPosition?.id, selectedStockKey])
 
   const liveTickers = useMemo(() => {
     const set = new Set<string>()
@@ -172,8 +194,8 @@ export function StocksTab({
                 >
                   {isInWatch ? (
                     <>
-                      <Check size={11} color={palette.teal} strokeWidth={3} />
-                      <Text style={styles.quickAddPillTextActive}>관심종목</Text>
+                      <X size={11} color={palette.teal} strokeWidth={3} />
+                      <Text style={styles.quickAddPillTextActive}>해제</Text>
                     </>
                   ) : (
                     <>
@@ -253,9 +275,9 @@ export function StocksTab({
           >
             {selectedStock.watchItem ? (
               <>
-                <Check size={14} color={palette.teal} strokeWidth={3} />
+                <X size={14} color={palette.teal} strokeWidth={3} />
                 <Text style={[styles.quickAddPillTextActive, { fontSize: 13 }]}>
-                  관심종목에 담겨 있어 — 한 번 더 누르면 해제
+                  관심종목에서 해제
                 </Text>
               </>
             ) : (
@@ -265,6 +287,90 @@ export function StocksTab({
               </>
             )}
           </Pressable>
+
+          {/* ── 실제 보유(포트폴리오) 등록/수정 ── */}
+          <View style={styles.cardSection}>
+            <View style={styles.cardTitleRow}>
+              <Briefcase size={13} color="#3b82f6" strokeWidth={2.5} />
+              <Text style={styles.cardTitle}>
+                {selectedStock.portfolioPosition ? '실제 보유 종목 수정' : '실제 보유 종목으로 등록'}
+              </Text>
+            </View>
+            <Text style={styles.metaText}>
+              매수가와 수량만 입력하면 손익률·평가금액 자동 계산
+            </Text>
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.kpiLabel}>매수가</Text>
+                <TextInput
+                  value={buyPriceInput}
+                  onChangeText={setBuyPriceInput}
+                  placeholder="예: 84200"
+                  placeholderTextColor="#94a3b8"
+                  style={styles.searchInput}
+                  keyboardType="number-pad"
+                />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.kpiLabel}>수량</Text>
+                <TextInput
+                  value={quantityInput}
+                  onChangeText={setQuantityInput}
+                  placeholder="예: 10"
+                  placeholderTextColor="#94a3b8"
+                  style={styles.searchInput}
+                  keyboardType="number-pad"
+                />
+              </View>
+            </View>
+            <View style={styles.inlineButtonRow}>
+              <Pressable
+                onPress={async () => {
+                  const buy = Number(buyPriceInput.replace(/[^0-9]/g, ''))
+                  const qty = Number(quantityInput.replace(/[^0-9]/g, ''))
+                  if (!buy || !qty) return
+                  setPortfolioSaving(true)
+                  try {
+                    const live = liveOf(selectedStock.base.market, selectedStock.base.ticker, selectedStock.base.price, selectedStock.base.changeRate)
+                    await onSavePortfolio({
+                      id: selectedStock.portfolioPosition?.id,
+                      market: selectedStock.base.market,
+                      ticker: selectedStock.base.ticker,
+                      name: selectedStock.base.name,
+                      buyPrice: buy,
+                      currentPrice: Math.round(live.price || selectedStock.base.price),
+                      quantity: qty,
+                    })
+                  } catch {} finally {
+                    setPortfolioSaving(false)
+                  }
+                }}
+                style={styles.primaryActionButton}
+              >
+                <Text style={styles.primaryActionButtonText}>
+                  {portfolioSaving
+                    ? '저장 중...'
+                    : selectedStock.portfolioPosition
+                      ? '수정 저장'
+                      : '보유 등록'}
+                </Text>
+              </Pressable>
+              {selectedStock.portfolioPosition?.id ? (
+                <Pressable
+                  onPress={() => onDeletePortfolio(selectedStock.portfolioPosition!.id)}
+                  style={styles.secondaryActionButton}
+                >
+                  <Text style={styles.secondaryActionButtonText}>삭제</Text>
+                </Pressable>
+              ) : null}
+            </View>
+            {selectedStock.portfolioPosition ? (
+              <Text style={styles.metaText}>
+                현재 평가금액 {formatCompactNumber(selectedStock.portfolioPosition.evaluationAmount)} ·
+                손익 {formatSignedRate(selectedStock.portfolioPosition.profitRate)}
+              </Text>
+            ) : null}
+          </View>
 
           {selectedStock.latestAiLog ? (
             <View style={styles.cardSection}>

@@ -121,6 +121,42 @@ export async function deleteFavoriteItem(id: string): Promise<void> {
   }
 }
 
+export async function savePortfolioPosition(payload: {
+  id?: string
+  market: string
+  ticker: string
+  name: string
+  buyPrice: number
+  currentPrice: number
+  quantity: number
+}): Promise<void> {
+  const response = await authedFetch(`${API_BASE_URL}/api/v1/workspace/portfolio`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      id: payload.id ?? '',
+      market: payload.market,
+      ticker: payload.ticker,
+      name: payload.name,
+      buyPrice: Math.round(payload.buyPrice),
+      currentPrice: Math.round(payload.currentPrice),
+      quantity: Math.max(1, Math.round(payload.quantity)),
+    }),
+  })
+  if (!response.ok) {
+    throw new Error('save-portfolio-failed')
+  }
+}
+
+export async function deletePortfolioPosition(id: string): Promise<void> {
+  const response = await authedFetch(`${API_BASE_URL}/api/v1/workspace/portfolio/${id}`, {
+    method: 'DELETE',
+  })
+  if (!response.ok) {
+    throw new Error('delete-portfolio-failed')
+  }
+}
+
 // 한 탭으로 관심종목에 추가하는 단순 버전 (stance/note 자동 채움)
 export async function quickAddWatchItem(stock: {
   market: string

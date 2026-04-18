@@ -9,7 +9,15 @@ import {
   View,
 } from 'react-native'
 import { BarChart3, Bot, Home, LogOut, Moon, Sun, Sunrise, TrendingUp } from 'lucide-react-native'
-import { API_BASE_URL, deleteFavoriteItem, loadAllData, quickAddWatchItem, searchStocks } from './src/api'
+import {
+  API_BASE_URL,
+  deleteFavoriteItem,
+  deletePortfolioPosition,
+  loadAllData,
+  quickAddWatchItem,
+  savePortfolioPosition,
+  searchStocks,
+} from './src/api'
 import { useStyles } from './src/styles'
 import { ThemeProvider, useTheme } from './src/theme'
 import { Toast } from './src/components/Toast'
@@ -270,6 +278,39 @@ function AppShell() {
     }
   }, [aiRecommendation?.executionLogs, portfolio?.positions, selectedStockKey, stockResults, watchlist])
 
+  const handleSavePortfolio = useCallback(async (payload: {
+    id?: string
+    market: string
+    ticker: string
+    name: string
+    buyPrice: number
+    currentPrice: number
+    quantity: number
+  }) => {
+    try {
+      await savePortfolioPosition(payload)
+      await fetchData()
+      void hapticSuccess()
+      toast.show(payload.id ? '보유 종목을 수정했어요' : '보유 종목으로 등록했어요', 'success')
+    } catch {
+      void hapticError()
+      toast.show('저장에 실패했어요. 입력값을 확인해줘', 'error')
+      throw new Error('save-portfolio-failed')
+    }
+  }, [fetchData, toast])
+
+  const handleDeletePortfolio = useCallback(async (id: string) => {
+    try {
+      await deletePortfolioPosition(id)
+      await fetchData()
+      void hapticSuccess()
+      toast.show('보유 종목을 삭제했어요', 'info')
+    } catch {
+      void hapticError()
+      toast.show('삭제에 실패했어요', 'error')
+    }
+  }, [fetchData, toast])
+
   const handleQuickAddWatch = useCallback(async (stock: StockSearchResult) => {
     try {
       await quickAddWatchItem(stock)
@@ -433,6 +474,7 @@ function AppShell() {
           topPortfolioPositions={topPortfolioPositions}
           successRate={successRate}
           onTabChange={handleTabChange}
+          onRemoveWatch={(id) => void handleDeleteFavorite(id)}
         />
       ) : null}
 
@@ -471,6 +513,8 @@ function AppShell() {
           onSelectedStockKeyChange={setSelectedStockKey}
           onQuickAddWatch={handleQuickAddWatch}
           onDeleteFavorite={(id) => void handleDeleteFavorite(id)}
+          onSavePortfolio={handleSavePortfolio}
+          onDeletePortfolio={(id) => void handleDeletePortfolio(id)}
         />
       ) : null}
 
