@@ -1,11 +1,25 @@
 import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native'
-import { BarChart2, Globe } from 'lucide-react-native'
+import { AlertTriangle, BarChart2, Bell, Globe, TrendingUp, Zap } from 'lucide-react-native'
 import { CandleVolumeChart } from '../components/CandleVolumeChart'
 import { useStyles } from '../styles'
-import type { ChartPeriodSnapshot, IndexMetric, MarketKey, MarketSection, PeriodKey } from '../types'
-import { formatCompactNumber, formatSignedRate } from '../utils'
+import type {
+  ChartPeriodSnapshot,
+  IndexMetric,
+  MarketKey,
+  MarketSection,
+  MarketSummaryData,
+  PeriodKey,
+} from '../types'
+import {
+  formatCompactNumber,
+  formatSignedRate,
+  getAlertPalette,
+  getAlternativeSignalPalette,
+  getMetricAccent,
+} from '../utils'
 
 type Props = {
+  summary: MarketSummaryData | null
   activeSection: MarketSection | null
   activeIndex: IndexMetric | null
   activePeriod: ChartPeriodSnapshot | null
@@ -21,6 +35,7 @@ type Props = {
 }
 
 export function MarketTab({
+  summary,
   activeSection,
   activeIndex,
   activePeriod,
@@ -64,14 +79,14 @@ export function MarketTab({
           ))}
         </View>
         <View style={styles.filterRow}>
-          {(['1D', '1M', '1Y'] as const).map((period) => (
+          {(['D', 'W', 'M'] as const).map((period) => (
             <Pressable
               key={period}
               onPress={() => onChartPeriodChange(period)}
               style={[styles.filterChip, chartPeriod === period && styles.filterChipActive]}
             >
               <Text style={[styles.filterText, chartPeriod === period && styles.filterTextActive]}>
-                {period === '1D' ? '1일' : period === '1M' ? '1개월' : '1년'}
+                {period === 'D' ? '일봉' : period === 'W' ? '주봉' : '월봉'}
               </Text>
             </Pressable>
           ))}
@@ -148,6 +163,137 @@ export function MarketTab({
             </View>
           </View>
         ) : null}
+      </View>
+
+      {/* ── 시장 요약 지표 (Home 에서 이동) ── */}
+      <View style={styles.card}>
+        <View style={styles.sectionHeaderRow}>
+          <View style={styles.cardTitleRow}>
+            <TrendingUp size={14} color="#3b82f6" strokeWidth={2.5} />
+            <Text style={styles.cardTitle}>시장 요약 지표</Text>
+          </View>
+          <Text style={styles.metaText}>{summary?.marketSummary.length ?? 0}개</Text>
+        </View>
+        {(summary?.marketSummary ?? []).map((item) => (
+          <View key={item.label} style={styles.metricRow}>
+            <View style={styles.metricLeft}>
+              <Text style={styles.metricName}>{item.label}</Text>
+              <Text style={styles.metricState}>{item.state}</Text>
+            </View>
+            <Text style={[styles.metricScore, { color: getMetricAccent(item.score) }]}>{item.score.toFixed(1)}</Text>
+            <Text style={styles.metricNote}>{item.note}</Text>
+          </View>
+        ))}
+      </View>
+
+      {/* ── 실험 지표 ── */}
+      <View style={styles.card}>
+        <View style={styles.sectionHeaderRow}>
+          <View style={styles.cardTitleRow}>
+            <Zap size={14} color="#f59e0b" strokeWidth={2.5} />
+            <Text style={styles.cardTitle}>실험 지표</Text>
+          </View>
+          <Text style={styles.metaText}>{summary?.alternativeSignals.length ?? 0}개</Text>
+        </View>
+        {(summary?.alternativeSignals ?? []).map((item) => (
+          <View
+            key={item.label}
+            style={[
+              styles.metricRow,
+              styles.alternativeMetricRow,
+              {
+                backgroundColor: getAlternativeSignalPalette(item.score).backgroundColor,
+                borderColor: getAlternativeSignalPalette(item.score).borderColor,
+              },
+            ]}
+          >
+            <View style={styles.metricLeft}>
+              <Text style={styles.metricName}>{item.label}</Text>
+              <Text style={styles.metricState}>{item.state}</Text>
+            </View>
+            <View style={styles.alternativeMetricTopRow}>
+              <Text style={[styles.metricScore, { color: getMetricAccent(item.score) }]}>{item.score}</Text>
+              <Text
+                style={[
+                  styles.alternativeScoreBadge,
+                  {
+                    backgroundColor: getAlternativeSignalPalette(item.score).badgeBackgroundColor,
+                    color: getAlternativeSignalPalette(item.score).badgeTextColor,
+                  },
+                ]}
+              >
+                {item.state}
+              </Text>
+            </View>
+            <View style={styles.alternativeHighlightsRow}>
+              {item.highlights.map((highlight) => (
+                <Text key={`${item.label}-${highlight}`} style={styles.alternativeHighlightChip}>
+                  {highlight}
+                </Text>
+              ))}
+            </View>
+            <Text style={styles.metricNote}>{item.note}</Text>
+            <Text style={styles.metricSource}>{item.source} · Experimental</Text>
+          </View>
+        ))}
+      </View>
+
+      {/* ── 이상징후 ── */}
+      <View style={styles.card}>
+        <View style={styles.sectionHeaderRow}>
+          <View style={styles.cardTitleRow}>
+            <Bell size={14} color="#dc2626" strokeWidth={2.5} />
+            <Text style={styles.cardTitle}>관심종목 이상징후</Text>
+          </View>
+          <Text style={styles.metaText}>{summary?.watchAlerts.length ?? 0}건</Text>
+        </View>
+        {(summary?.watchAlerts ?? []).length ? (
+          (summary?.watchAlerts ?? []).map((item) => (
+            <View
+              key={`${item.category}-${item.market}-${item.ticker}`}
+              style={[
+                styles.metricRow,
+                styles.alertMetricRow,
+                {
+                  backgroundColor: getAlertPalette(item.severity).backgroundColor,
+                  borderColor: getAlertPalette(item.severity).borderColor,
+                },
+              ]}
+            >
+              <View style={styles.metricLeft}>
+                <Text style={styles.metricName}>{item.name}</Text>
+                <Text style={styles.metricState}>{item.market} · {item.ticker} · {item.title}</Text>
+              </View>
+              <View style={styles.alternativeMetricTopRow}>
+                <Text style={[styles.metricScore, { color: getMetricAccent(item.score) }]}>{item.score}</Text>
+                <Text
+                  style={[
+                    styles.alternativeScoreBadge,
+                    {
+                      backgroundColor: getAlertPalette(item.severity).badgeBackgroundColor,
+                      color: getAlertPalette(item.severity).badgeColor,
+                    },
+                  ]}
+                >
+                  {item.severity.toUpperCase()}
+                </Text>
+              </View>
+              <View style={styles.alternativeHighlightsRow}>
+                {item.tags.map((tag) => (
+                  <Text key={`${item.market}-${item.ticker}-${tag}`} style={styles.alternativeHighlightChip}>
+                    {tag}
+                  </Text>
+                ))}
+              </View>
+              <Text style={styles.metricNote}>{item.note}</Text>
+            </View>
+          ))
+        ) : (
+          <View style={styles.emptyStateRow}>
+            <AlertTriangle size={14} color="#94a3b8" strokeWidth={2} />
+            <Text style={styles.metaText}>지금 바로 볼 이상징후는 없어.</Text>
+          </View>
+        )}
       </View>
     </ScrollView>
   )

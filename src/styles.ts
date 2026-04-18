@@ -317,6 +317,74 @@ export function makeStyles(C: Palette) {
     candleTipKey:    { color: C.inkMuted, fontSize: 10, fontWeight: '700' },
     candleTipVal:    { color: C.ink, fontSize: 12, fontWeight: '800', marginTop: 1, ...num },
 
+    // ── Today Tab ────────────────────────────────────────────────────────────────
+    todayHeroCard: {
+      borderRadius: 16, padding: 14, gap: 4, borderWidth: 1, borderColor: C.border,
+      backgroundColor: C.surface, ...shadow.sm,
+    },
+    todayHeroValue: { fontSize: 20, fontWeight: '900', letterSpacing: -0.3, marginTop: 2 },
+
+    todaySessionRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+    todaySessionPill: {
+      flexDirection: 'row', alignItems: 'center', gap: 6,
+      paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999,
+    },
+    todaySessionLabel:  { fontSize: 11, fontWeight: '800' },
+    todaySessionStatus: { fontSize: 10, fontWeight: '700', opacity: 0.85 },
+
+    // sentiment 카드
+    todaySentimentCard: {
+      borderRadius: 12, padding: 12, gap: 6, marginTop: 4,
+      borderWidth: 1, borderColor: C.border, backgroundColor: C.surfaceAlt,
+    },
+    todaySentimentHead:  { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    todaySentimentMarket:{ flex: 1, color: C.ink, fontSize: 13, fontWeight: '800' },
+    todaySentimentLabel: { fontSize: 12, fontWeight: '800' },
+    todaySentimentScore: { fontSize: 22, fontWeight: '900', ...num, marginLeft: 4 },
+    todaySentimentBarTrack: {
+      height: 6, borderRadius: 999, backgroundColor: C.border, overflow: 'hidden', marginTop: 2,
+    },
+    todaySentimentBarFill: { height: 6, borderRadius: 999 },
+    todaySentimentMetaRow: { flexDirection: 'row', gap: 12, marginTop: 4 },
+    todaySentimentMeta:    { color: C.inkMuted, fontSize: 11, fontWeight: '700', ...num },
+    todaySentimentRationale: { color: C.inkSub, fontSize: 12, fontWeight: '600', lineHeight: 18 },
+
+    todayHeadlineRow: {
+      flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 6,
+      borderTopWidth: 1, borderTopColor: C.border,
+    },
+    todayHeadlineDot:    { width: 6, height: 6, borderRadius: 999 },
+    todayHeadlineText:   { flex: 1, color: C.ink, fontSize: 12, fontWeight: '600', lineHeight: 17 },
+    todayHeadlineSource: { color: C.inkFaint, fontSize: 10, fontWeight: '700' },
+
+    // 단타 픽
+    todayPickRow: {
+      borderRadius: 12, padding: 12, gap: 4, marginTop: 6,
+      borderWidth: 1, borderColor: C.border, backgroundColor: C.surfaceAlt,
+    },
+    todayPickTopLine:  { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    todayPickName:     { color: C.ink, fontSize: 14, fontWeight: '800', flex: 1 },
+    todayPickStanceBadge: {
+      backgroundColor: C.brand, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 2,
+    },
+    todayPickStanceBadgeText: { color: C.brandAccent, fontSize: 10, fontWeight: '900', letterSpacing: 0.5 },
+    todayPickMeta:      { color: C.inkMuted, fontSize: 11, fontWeight: '600', ...num },
+    todayPickRationale: { color: C.inkSub, fontSize: 12, fontWeight: '500', lineHeight: 17 },
+    todayPickReturn:    { fontSize: 12, fontWeight: '800', ...num, marginTop: 2 },
+
+    // 모니터
+    todayMonitorRow: {
+      flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10,
+      borderTopWidth: 1, borderTopColor: C.border,
+    },
+    todayMonitorLeft:  { flex: 1, gap: 2 },
+    todayMonitorRight: { alignItems: 'flex-end', gap: 2 },
+    todayMonitorName:  { color: C.ink, fontSize: 13, fontWeight: '800' },
+    todayMonitorMeta:  { color: C.inkMuted, fontSize: 11, fontWeight: '600', ...num },
+    todayMonitorAdvice:{ color: C.inkSub, fontSize: 11, fontWeight: '700', marginTop: 2 },
+    todayMonitorRate:  { fontSize: 14, fontWeight: '900', ...num },
+    todayMonitorPrice: { color: C.inkMuted, fontSize: 11, fontWeight: '700', ...num },
+
     // ── AI Log ────────────────────────────────────────────────────────────────────
     logTop:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
     logName:  { flex: 1, color: C.ink, fontSize: 14, fontWeight: '700' },

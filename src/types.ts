@@ -131,6 +131,24 @@ export type RecommendationExecutionLog = {
   source: string
 }
 
+export type NewsHighlight = {
+  title: string
+  source: string
+  url: string
+  tone: string             // 긍정 / 중립 / 부정
+}
+
+export type NewsSentiment = {
+  market: string           // KR / US
+  score: number            // 0~100, 50=중립
+  label: string            // 긍정 / 중립 / 부정
+  rationale: string
+  positiveCount: number
+  negativeCount: number
+  neutralCount: number
+  highlights: NewsHighlight[]
+}
+
 export type MarketSummaryData = {
   generatedAt: string
   marketStatus: string
@@ -139,6 +157,7 @@ export type MarketSummaryData = {
   alternativeSignals: AlternativeSignal[]
   watchAlerts: WatchAlert[]
   marketSessions: MarketSessionStatus[]
+  newsSentiments?: NewsSentiment[]
   briefing?: {
     headline: string
     preMarket: string[]
@@ -195,8 +214,8 @@ export type FavoriteDraft = {
   note: string
 }
 
-export type TabKey = 'home' | 'market' | 'stocks' | 'ai'
+export type TabKey = 'today' | 'home' | 'market' | 'stocks' | 'ai'
 export type LogFilter = 'ALL' | 'RECOMMEND' | 'RESULT'
 export type MarketKey = 'KR' | 'US'
-export type PeriodKey = '1D' | '1M' | '1Y'
+export type PeriodKey = 'D' | 'W' | 'M'
 export type StockMarketFilter = 'ALL' | 'KR' | 'US'

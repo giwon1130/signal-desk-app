@@ -8,7 +8,7 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native'
-import { BarChart3, Bot, Home, LogOut, Moon, Sun, TrendingUp } from 'lucide-react-native'
+import { BarChart3, Bot, Home, LogOut, Moon, Sun, Sunrise, TrendingUp } from 'lucide-react-native'
 import { API_BASE_URL, deleteFavoriteItem, loadAllData, saveFavoriteItem, searchStocks } from './src/api'
 import { useStyles } from './src/styles'
 import { ThemeProvider, useTheme } from './src/theme'
@@ -28,6 +28,7 @@ import { AITab } from './src/tabs/AITab'
 import { HomeTab } from './src/tabs/HomeTab'
 import { MarketTab } from './src/tabs/MarketTab'
 import { StocksTab } from './src/tabs/StocksTab'
+import { TodayTab } from './src/tabs/TodayTab'
 import type {
   AiRecommendationData,
   FavoriteDraft,
@@ -48,6 +49,7 @@ import type {
 import { normalizeText } from './src/utils'
 
 const TABS: Array<{ key: TabKey; label: string; Icon: typeof Home }> = [
+  { key: 'today',  label: '오늘', Icon: Sunrise },
   { key: 'home',   label: '홈',   Icon: Home },
   { key: 'market', label: '시장', Icon: TrendingUp },
   { key: 'stocks', label: '종목', Icon: BarChart3 },
@@ -98,7 +100,7 @@ function AppShell() {
     setUser(null)
   }, [])
 
-  const [activeTab, setActiveTab] = useState<TabKey>('home')
+  const [activeTab, setActiveTab] = useState<TabKey>('today')
   const [summary, setSummary] = useState<MarketSummaryData | null>(null)
   const [sections, setSections] = useState<MarketSectionsData | null>(null)
   const [aiRecommendation, setAiRecommendation] = useState<AiRecommendationData | null>(null)
@@ -113,7 +115,7 @@ function AppShell() {
   const [logQuery, setLogQuery] = useState('')
   const [logFilter, setLogFilter] = useState<LogFilter>('ALL')
   const [chartMarket, setChartMarket] = useState<MarketKey>('KR')
-  const [chartPeriod, setChartPeriod] = useState<PeriodKey>('1D')
+  const [chartPeriod, setChartPeriod] = useState<PeriodKey>('D')
   const [selectedIndexLabel, setSelectedIndexLabel] = useState('')
   const [stockSearch, setStockSearch] = useState('')
   const [stockMarketFilter, setStockMarketFilter] = useState<StockMarketFilter>('ALL')
@@ -424,9 +426,18 @@ function AppShell() {
       ) : null}
 
       {/* ── 탭 콘텐츠 ────────────────────────────────── */}
+      {!loading && !error && activeTab === 'today' ? (
+        <TodayTab
+          summary={summary}
+          aiRecommendation={aiRecommendation}
+          positions={portfolio?.positions ?? []}
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+        />
+      ) : null}
+
       {!loading && !error && activeTab === 'home' ? (
         <HomeTab
-          summary={summary}
           watchlist={watchlist}
           portfolio={portfolio}
           refreshing={refreshing}
@@ -443,6 +454,7 @@ function AppShell() {
 
       {!loading && !error && activeTab === 'market' ? (
         <MarketTab
+          summary={summary}
           activeSection={activeSection}
           activeIndex={activeIndex}
           activePeriod={activePeriod}
