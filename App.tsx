@@ -8,7 +8,7 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native'
-import { BarChart3, Bot, Home, LogOut, Moon, Sun, Sunrise, TrendingUp } from 'lucide-react-native'
+import { BarChart3, Bell, Bot, Home, LogOut, Moon, Sun, Sunrise, TrendingUp } from 'lucide-react-native'
 import {
   API_BASE_URL,
   deleteFavoriteItem,
@@ -38,6 +38,8 @@ import { MarketTab } from './src/tabs/MarketTab'
 import { StocksTab } from './src/tabs/StocksTab'
 import { TodayTab } from './src/tabs/TodayTab'
 import { StockDetailModal, type StockDetailContext } from './src/components/StockDetailModal'
+import { ReminderSettingsModal } from './src/components/ReminderSettingsModal'
+import { useMarketReminderBootstrap } from './src/hooks/useMarketReminder'
 import type {
   AiRecommendationData,
   HealthResponse,
@@ -133,6 +135,12 @@ function AppShell() {
   // ── 종목 상세 모달 (어느 탭에서든 같은 모달) ──────
   const [detailKey, setDetailKey] = useState('')        // 'MARKET:TICKER' or ''
   const [detailFallbackName, setDetailFallbackName] = useState('')
+
+  // ── 알림 설정 모달 ──────
+  const [reminderOpen, setReminderOpen] = useState(false)
+
+  // 로그인 후 1회: 권한 요청 + 켜진 알림 다시 예약
+  useMarketReminderBootstrap(!!user)
 
   const fetchData = useCallback(async () => {
     setError('')
@@ -404,6 +412,13 @@ function AppShell() {
                 </Text>
               </View>
               <Pressable
+                onPress={() => { void hapticLight(); setReminderOpen(true) }}
+                style={({ pressed }) => [styles.themeToggleBtn, pressed && { opacity: 0.6 }]}
+                accessibilityLabel="알림 설정"
+              >
+                <Bell size={16} color="#cbd5e1" />
+              </Pressable>
+              <Pressable
                 onPress={() => { void hapticLight(); toggle() }}
                 style={({ pressed }) => [styles.themeToggleBtn, pressed && { opacity: 0.6 }]}
                 accessibilityLabel={isDark ? '라이트 모드로 전환' : '다크 모드로 전환'}
@@ -562,6 +577,12 @@ function AppShell() {
         onToggleWatch={handleToggleWatchInDetail}
         onSavePortfolio={handleSavePortfolio}
         onDeletePortfolio={(id) => void handleDeletePortfolio(id)}
+      />
+
+      {/* ── 알림 설정 모달 ── */}
+      <ReminderSettingsModal
+        visible={reminderOpen}
+        onClose={() => setReminderOpen(false)}
       />
     </SafeAreaView>
   )
