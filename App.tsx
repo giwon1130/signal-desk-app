@@ -37,6 +37,7 @@ import { HomeTab } from './src/tabs/HomeTab'
 import { MarketTab } from './src/tabs/MarketTab'
 import { StocksTab } from './src/tabs/StocksTab'
 import { TodayTab } from './src/tabs/TodayTab'
+import { StockDetailModal, type StockDetailContext } from './src/components/StockDetailModal'
 import type {
   AiRecommendationData,
   HealthResponse,
@@ -47,7 +48,6 @@ import type {
   MarketSummaryData,
   PeriodKey,
   PortfolioSummary,
-  SelectedStockSnapshot,
   StockMarketFilter,
   StockSearchResult,
   TabKey,
@@ -128,8 +128,11 @@ function AppShell() {
   const [stockMarketFilter, setStockMarketFilter] = useState<StockMarketFilter>('ALL')
   const [stockResults, setStockResults] = useState<StockSearchResult[]>([])
   const [stockSearchLoading, setStockSearchLoading] = useState(false)
-  const [selectedStockKey, setSelectedStockKey] = useState('')
   const [favoriteDeletingId, setFavoriteDeletingId] = useState('')
+
+  // ── 종목 상세 모달 (어느 탭에서든 같은 모달) ──────
+  const [detailKey, setDetailKey] = useState('')        // 'MARKET:TICKER' or ''
+  const [detailFallbackName, setDetailFallbackName] = useState('')
 
   const fetchData = useCallback(async () => {
     setError('')
@@ -254,29 +257,39 @@ function AppShell() {
     }
   }, [stockSearch, stockMarketFilter])
 
-  useEffect(() => {
-    if (!stockResults.length) {
-      setSelectedStockKey('')
-      return
-    }
-    if (stockResults.some((item) => `${item.market}:${item.ticker}` === selectedStockKey)) return
-    setSelectedStockKey(`${stockResults[0].market}:${stockResults[0].ticker}`)
-  }, [selectedStockKey, stockResults])
+  // 어느 탭에서든 호출 가능한 "종목 상세 열기"
+  const handleOpenDetail = useCallback((market: string, ticker: string, name?: string) => {
+    if (!market || !ticker) return
+    void hapticLight()
+    setDetailKey(`${market}:${ticker}`)
+    setDetailFallbackName(name ?? '')
+  }, [])
+  const handleCloseDetail = useCallback(() => {
+    setDetailKey('')
+    setDetailFallbackName('')
+  }, [])
 
-  const selectedStock = useMemo<SelectedStockSnapshot | null>(() => {
-    const [market, ticker] = selectedStockKey.split(':')
+  // detailKey → 표준 스냅샷. 검색결과/관심종목/보유 어디서든 만들 수 있음.
+  const detailContext = useMemo<StockDetailContext | null>(() => {
+    const [market, ticker] = detailKey.split(':')
     if (!market || !ticker) return null
-    const base = stockResults.find((item) => item.market === market && item.ticker === ticker)
-    if (!base) return null
-    return {
-      base,
-      watchItem: watchlist.find((item) => item.market === market && item.ticker === ticker),
-      portfolioPosition: portfolio?.positions.find((item) => item.market === market && item.ticker === ticker),
-      latestAiLog: (aiRecommendation?.executionLogs ?? []).find(
-        (item) => item.market === market && item.ticker === ticker,
-      ),
+    const fromSearch    = stockResults.find((r) => r.market === market && r.ticker === ticker)
+    const watchItem     = watchlist.find((w) => w.market === market && w.ticker === ticker)
+    const portfolioPos  = portfolio?.positions.find((p) => p.market === market && p.ticker === ticker)
+    const latestAiLog   = (aiRecommendation?.executionLogs ?? []).find(
+      (item) => item.market === market && item.ticker === ticker,
+    )
+    const base: StockSearchResult = fromSearch ?? {
+      market,
+      ticker,
+      name:       watchItem?.name ?? portfolioPos?.name ?? detailFallbackName ?? ticker,
+      sector:     watchItem?.sector ?? '—',
+      price:      watchItem?.price ?? portfolioPos?.currentPrice ?? 0,
+      changeRate: watchItem?.changeRate ?? 0,
+      stance:     watchItem?.stance ?? '관찰 대상',
     }
-  }, [aiRecommendation?.executionLogs, portfolio?.positions, selectedStockKey, stockResults, watchlist])
+    return { base, watchItem, portfolioPosition: portfolioPos, latestAiLog }
+  }, [detailKey, detailFallbackName, stockResults, watchlist, portfolio?.positions, aiRecommendation?.executionLogs])
 
   const handleSavePortfolio = useCallback(async (payload: {
     id?: string
@@ -338,6 +351,16 @@ function AppShell() {
       setFavoriteDeletingId('')
     }
   }, [fetchData, toast])
+
+  // 모달용: 현재 관심 여부에 따라 자동으로 추가/해제 토글
+  const handleToggleWatchInDetail = useCallback(async (stock: StockSearchResult) => {
+    const existing = watchlist.find((w) => w.market === stock.market && w.ticker === stock.ticker)
+    if (existing?.id) {
+      await handleDeleteFavorite(existing.id)
+    } else {
+      await handleQuickAddWatch(stock)
+    }
+  }, [watchlist, handleDeleteFavorite, handleQuickAddWatch])
 
   const chartWidth = Math.max(300, Math.min(width - 28, 760))
   const isUp = apiHealth?.status === 'UP'
@@ -473,7 +496,7 @@ function AppShell() {
           topWatchlist={topWatchlist}
           topPortfolioPositions={topPortfolioPositions}
           successRate={successRate}
-          onTabChange={handleTabChange}
+          onOpenDetail={handleOpenDetail}
           onRemoveWatch={(id) => void handleDeleteFavorite(id)}
         />
       ) : null}
@@ -503,18 +526,14 @@ function AppShell() {
           stockMarketFilter={stockMarketFilter}
           stockResults={stockResults}
           stockSearchLoading={stockSearchLoading}
-          selectedStockKey={selectedStockKey}
-          selectedStock={selectedStock}
           favoriteDeletingId={favoriteDeletingId}
           refreshing={refreshing}
           onRefresh={onRefresh}
           onStockSearchChange={setStockSearch}
           onStockMarketFilterChange={setStockMarketFilter}
-          onSelectedStockKeyChange={setSelectedStockKey}
+          onOpenDetail={handleOpenDetail}
           onQuickAddWatch={handleQuickAddWatch}
           onDeleteFavorite={(id) => void handleDeleteFavorite(id)}
-          onSavePortfolio={handleSavePortfolio}
-          onDeletePortfolio={(id) => void handleDeletePortfolio(id)}
         />
       ) : null}
 
@@ -534,6 +553,16 @@ function AppShell() {
       ) : null}
 
       <Toast visible={toast.visible} message={toast.message} type={toast.type} />
+
+      {/* ── 종목 상세 모달 (어느 탭에서든 호출) ── */}
+      <StockDetailModal
+        visible={!!detailKey}
+        onClose={handleCloseDetail}
+        context={detailContext}
+        onToggleWatch={handleToggleWatchInDetail}
+        onSavePortfolio={handleSavePortfolio}
+        onDeletePortfolio={(id) => void handleDeletePortfolio(id)}
+      />
     </SafeAreaView>
   )
 }

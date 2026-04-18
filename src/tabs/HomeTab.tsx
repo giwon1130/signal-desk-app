@@ -1,7 +1,7 @@
 import { Pressable, RefreshControl, ScrollView, Text, TextInput, View } from 'react-native'
 import { Briefcase, Eye, Search, X } from 'lucide-react-native'
 import { useStyles } from '../styles'
-import type { HoldingPosition, PortfolioSummary, TabKey, WatchItem } from '../types'
+import type { HoldingPosition, PortfolioSummary, WatchItem } from '../types'
 import { formatCompactNumber, formatSignedRate } from '../utils'
 
 type Props = {
@@ -16,7 +16,7 @@ type Props = {
   topWatchlist: WatchItem[]
   topPortfolioPositions: HoldingPosition[]
   successRate: string
-  onTabChange: (tab: TabKey) => void
+  onOpenDetail: (market: string, ticker: string, name?: string) => void
   onRemoveWatch: (id: string) => void
 }
 
@@ -32,7 +32,7 @@ export function HomeTab({
   topWatchlist,
   topPortfolioPositions,
   successRate,
-  onTabChange,
+  onOpenDetail,
   onRemoveWatch,
 }: Props) {
   const styles = useStyles()
@@ -42,34 +42,25 @@ export function HomeTab({
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       contentContainerStyle={styles.content}
     >
-      {/* ── 히어로 KPI (탭하면 해당 영역으로 이동) ── */}
+      {/* ── 히어로 KPI (정보용 — 탭 안 됨) ── */}
       <View style={styles.heroMetricsRow}>
-        <Pressable
-          onPress={() => onTabChange('ai')}
-          style={({ pressed }) => [styles.heroMetricCard, styles.heroMetricCardDark, pressed && { opacity: 0.7 }]}
-        >
+        <View style={[styles.heroMetricCard, styles.heroMetricCardDark]}>
           <Text style={[styles.heroMetricLabel, styles.heroMetricLabelOnDark]}>AI 성공률</Text>
           <Text style={[styles.heroMetricValue, styles.heroMetricValueOnDark]}>{successRate}</Text>
-          <Text style={[styles.heroMetricFootnote, styles.heroMetricFootnoteOnDark]}>탭 → AI 로그 보기</Text>
-        </Pressable>
-        <Pressable
-          onPress={() => onTabChange('stocks')}
-          style={({ pressed }) => [styles.heroMetricCard, pressed && { opacity: 0.7 }]}
-        >
+          <Text style={[styles.heroMetricFootnote, styles.heroMetricFootnoteOnDark]}>최근 추천 적중률</Text>
+        </View>
+        <View style={styles.heroMetricCard}>
           <Text style={styles.heroMetricLabel}>관심종목</Text>
           <Text style={styles.heroMetricValue}>{watchlist.length}</Text>
-          <Text style={styles.heroMetricFootnote}>탭 → 종목 탐색/등록</Text>
-        </Pressable>
-        <Pressable
-          onPress={() => onTabChange('today')}
-          style={({ pressed }) => [styles.heroMetricCard, pressed && { opacity: 0.7 }]}
-        >
+          <Text style={styles.heroMetricFootnote}>추적 중인 종목 수</Text>
+        </View>
+        <View style={styles.heroMetricCard}>
           <Text style={styles.heroMetricLabel}>실제 보유</Text>
           <Text style={[styles.heroMetricValue, { color: (portfolio?.totalProfitRate ?? 0) >= 0 ? '#dc2626' : '#2563eb' }]}>
             {portfolio ? formatSignedRate(portfolio.totalProfitRate) : '-'}
           </Text>
-          <Text style={styles.heroMetricFootnote}>{portfolio?.positions.length ?? 0}개 보유 · 탭 → 모니터</Text>
-        </Pressable>
+          <Text style={styles.heroMetricFootnote}>{portfolio?.positions.length ?? 0}개 보유 · 누적 손익</Text>
+        </View>
       </View>
 
       {/* ── 빠른 검색 ── */}
@@ -109,26 +100,28 @@ export function HomeTab({
             <Eye size={14} color="#0d9488" strokeWidth={2.5} />
             <Text style={styles.cardTitle}>관심종목 요약</Text>
           </View>
-          <Pressable onPress={() => onTabChange('stocks')}>
-            <Text style={[styles.metaText, { color: '#3b82f6', fontWeight: '700' }]}>
-              {filteredWatchlist.length}개 · 더 보기
-            </Text>
-          </Pressable>
+          <Text style={styles.metaText}>{filteredWatchlist.length}개 · 탭하면 상세</Text>
         </View>
         {topWatchlist.length ? (
           topWatchlist.map((item) => (
             <View key={`${item.market}-${item.ticker}-${item.id || item.name}`} style={styles.summaryRow}>
-              <View style={styles.metricLeft}>
+              <Pressable
+                onPress={() => onOpenDetail(item.market, item.ticker, item.name)}
+                style={({ pressed }) => [styles.metricLeft, pressed && { opacity: 0.6 }]}
+              >
                 <Text style={styles.metricName}>{item.name}</Text>
                 <Text style={styles.metricState}>{item.market} · {item.ticker} · {item.sector}</Text>
-              </View>
-              <View style={styles.summaryValueBox}>
+              </Pressable>
+              <Pressable
+                onPress={() => onOpenDetail(item.market, item.ticker, item.name)}
+                style={({ pressed }) => [styles.summaryValueBox, pressed && { opacity: 0.6 }]}
+              >
                 <Text style={styles.summaryMeta}>{item.stance}</Text>
                 <Text style={styles.metricScore}>{formatCompactNumber(item.price)}</Text>
                 <Text style={[styles.summaryDelta, { color: item.changeRate >= 0 ? '#dc2626' : '#2563eb' }]}>
                   {formatSignedRate(item.changeRate)}
                 </Text>
-              </View>
+              </Pressable>
               {item.id ? (
                 <Pressable
                   onPress={() => onRemoveWatch(item.id)}
@@ -176,7 +169,11 @@ export function HomeTab({
         ) : null}
         {topPortfolioPositions.length ? (
           topPortfolioPositions.map((item) => (
-            <View key={`${item.market}-${item.ticker}-${item.id || item.name}`} style={styles.summaryRow}>
+            <Pressable
+              key={`${item.market}-${item.ticker}-${item.id || item.name}`}
+              onPress={() => onOpenDetail(item.market, item.ticker, item.name)}
+              style={({ pressed }) => [styles.summaryRow, pressed && { opacity: 0.6 }]}
+            >
               <View style={styles.metricLeft}>
                 <Text style={styles.metricName}>{item.name}</Text>
                 <Text style={styles.metricState}>{item.market} · {item.ticker} · {item.quantity}주</Text>
@@ -187,7 +184,7 @@ export function HomeTab({
                   {formatSignedRate(item.profitRate)}
                 </Text>
               </View>
-            </View>
+            </Pressable>
           ))
         ) : (
           <Text style={styles.metaText}>실제 보유 중인 종목이 없어.</Text>
