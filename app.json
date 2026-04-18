@@ -34,7 +34,13 @@
       "googleClientIdWeb": "496073748220-oavb78f6holdrlhlvqa6b1fcljih1g4u.apps.googleusercontent.com"
     },
     "plugins": [
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.496073748220-f8me1jt6oiedqq6a7lfmvhjhnu2lh2j1"
+        }
+      ]
     ]
   }
 }
