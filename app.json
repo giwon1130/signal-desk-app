@@ -29,10 +29,9 @@
     },
     "scheme": "signaldesk",
     "extra": {
-      "googleClientIdIos": "",
+      "googleClientIdIos": "496073748220-f8me1jt6oiedqq6a7lfmvhjhnu2lh2j1.apps.googleusercontent.com",
       "googleClientIdAndroid": "",
-      "googleClientIdWeb": "",
-      "kakaoRestApiKey": ""
+      "googleClientIdWeb": "496073748220-oavb78f6holdrlhlvqa6b1fcljih1g4u.apps.googleusercontent.com"
     },
     "plugins": [
       "expo-web-browser"

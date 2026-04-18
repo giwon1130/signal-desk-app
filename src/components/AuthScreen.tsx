@@ -9,9 +9,9 @@ import {
   TextInput,
   View,
 } from 'react-native'
-import { LogIn, MessageCircle, TrendingUp, UserPlus } from 'lucide-react-native'
+import { LogIn, TrendingUp, UserPlus } from 'lucide-react-native'
 import { apiLogin, apiSignup, type AuthUser } from '../api/auth'
-import { signInWithKakao, useGoogleSignIn } from '../api/socialAuth'
+import { useGoogleSignIn } from '../api/socialAuth'
 import { useStyles } from '../styles'
 import { useTheme } from '../theme'
 import { hapticError, hapticSuccess } from '../utils/haptics'
@@ -189,22 +189,6 @@ export function AuthScreen({ onDone }: Props) {
         >
           <Text style={{ fontSize: 16, fontWeight: '900', color: '#4285F4' }}>G</Text>
           <Text style={[styles.secondaryActionButtonText, { color: '#1f2937' }]}>Google 로 계속하기</Text>
-        </Pressable>
-
-        <Pressable
-          onPress={() => void handleSocial(() => signInWithKakao(onDone))}
-          disabled={loading}
-          style={({ pressed }) => [
-            styles.secondaryActionButton,
-            {
-              flexDirection: 'row', gap: 8, justifyContent: 'center',
-              backgroundColor: '#FEE500', borderWidth: 0,
-              opacity: loading || pressed ? 0.7 : 1,
-            },
-          ]}
-        >
-          <MessageCircle size={16} color="#191919" strokeWidth={2.5} />
-          <Text style={[styles.secondaryActionButtonText, { color: '#191919' }]}>카카오로 계속하기</Text>
         </Pressable>
 
         {/* ── 모드 전환 ── */}
