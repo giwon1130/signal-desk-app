@@ -343,9 +343,9 @@ function AppShell() {
       <View style={styles.headerWrap}>
         <View style={styles.headerGradient}>
           <View style={styles.headerTopRow}>
-            <View>
-              <Text style={styles.brand}>SIGNAL DESK</Text>
-              <Text style={styles.headerTitle}>투자 대시보드</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8, flexShrink: 1 }}>
+              <Text style={styles.headerTitle} numberOfLines={1}>투자 대시보드</Text>
+              <Text style={styles.brand}>SIGNAL</Text>
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               <View style={[styles.headerStatusPill, isUp ? styles.headerStatusPillUp : styles.headerStatusPillDown]}>

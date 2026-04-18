@@ -1,7 +1,8 @@
 import { useMemo } from 'react'
 import { Pressable, RefreshControl, ScrollView, Text, TextInput, View } from 'react-native'
-import { Bookmark, BookmarkCheck, Cpu, Info, Radio, Search, Star } from 'lucide-react-native'
+import { Bookmark, BookmarkCheck, Cpu, Info, Radio, Search, Sparkles, Star } from 'lucide-react-native'
 import { useStyles } from '../styles'
+import { marketColor, useTheme } from '../theme'
 import type {
   FavoriteDraft,
   SelectedStockSnapshot,
@@ -54,6 +55,7 @@ export function StocksTab({
   onDeleteFavorite,
 }: Props) {
   const styles = useStyles()
+  const { palette } = useTheme()
 
   // 실시간 시세: 검색 결과 + 즐겨찾기의 KR 종목을 한 번에 구독
   const liveTickers = useMemo(() => {
@@ -149,7 +151,7 @@ export function StocksTab({
                         <Text style={styles.stockResultPrice}>{formatCompactNumber(live.price)}</Text>
                         {live.live ? <Radio size={10} color="#10b981" strokeWidth={2.5} /> : null}
                       </View>
-                      <Text style={[styles.stockResultDelta, { color: live.changeRate >= 0 ? '#dc2626' : '#2563eb' }]}>
+                      <Text style={[styles.stockResultDelta, { color: marketColor(palette, item.market, live.changeRate) }]}>
                         {formatSignedRate(live.changeRate)}
                       </Text>
                     </View>
@@ -193,7 +195,7 @@ export function StocksTab({
                   <Text
                     style={[
                       styles.summaryDelta,
-                      { color: live.changeRate >= 0 ? '#dc2626' : '#2563eb' },
+                      { color: marketColor(palette, selectedStock.base.market, live.changeRate) },
                     ]}
                   >
                     {formatSignedRate(live.changeRate)}
@@ -316,9 +318,35 @@ export function StocksTab({
             </View>
           ))
         ) : (
-          <View style={styles.emptyStateRow}>
-            <Star size={14} color="#94a3b8" strokeWidth={2} />
-            <Text style={styles.metaText}>아직 즐겨찾기가 없어. 위에서 종목을 검색해 추가해.</Text>
+          <View style={{ alignItems: 'center', gap: 10, paddingVertical: 24 }}>
+            <View style={{
+              width: 56, height: 56, borderRadius: 28,
+              backgroundColor: palette.orangeSoft,
+              alignItems: 'center', justifyContent: 'center',
+            }}>
+              <Sparkles size={26} color={palette.orange} strokeWidth={2.2} />
+            </View>
+            <Text style={{ color: palette.ink, fontSize: 14, fontWeight: '800' }}>
+              아직 즐겨찾기가 비어있어
+            </Text>
+            <Text style={{ color: palette.inkMuted, fontSize: 12, textAlign: 'center', lineHeight: 18 }}>
+              관심 가는 종목을 검색해서{'\n'}별표로 저장해두면 한눈에 추적할 수 있어.
+            </Text>
+            <Pressable
+              onPress={() => onStockSearchChange('')}
+              style={({ pressed }) => [
+                {
+                  marginTop: 6, borderRadius: 999,
+                  backgroundColor: palette.blue,
+                  paddingHorizontal: 18, paddingVertical: 9,
+                  flexDirection: 'row', gap: 6, alignItems: 'center',
+                  opacity: pressed ? 0.7 : 1,
+                },
+              ]}
+            >
+              <Search size={13} color="#ffffff" strokeWidth={2.5} />
+              <Text style={{ color: '#ffffff', fontSize: 12, fontWeight: '800' }}>종목 탐색하기</Text>
+            </Pressable>
           </View>
         )}
       </View>

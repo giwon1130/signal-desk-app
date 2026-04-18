@@ -11,21 +11,23 @@ const makeShadow = (color: string) => ({
 
 export function makeStyles(C: Palette) {
   const shadow = makeShadow(C.shadowColor)
+  // 숫자 정렬용 — 모든 숫자 표기에 동일 폭 글리프를 강제해서 가격이 흔들리지 않도록.
+  const num = { fontVariant: ['tabular-nums' as const] }
 
   return StyleSheet.create({
     // ── App Shell ───────────────────────────────────────────────────────────────
     container: { flex: 1, backgroundColor: C.bg },
 
-    // ── Header ──────────────────────────────────────────────────────────────────
-    headerWrap: { paddingHorizontal: 14, paddingTop: 6, paddingBottom: 2 },
+    // ── Header (compact: 헤더는 짧게, 콘텐츠 영역은 넓게) ──────────────────────
+    headerWrap: { paddingHorizontal: 14, paddingTop: 4, paddingBottom: 2 },
     headerGradient: {
-      borderRadius: 20, paddingHorizontal: 18, paddingTop: 16, paddingBottom: 14,
-      backgroundColor: C.brand, ...shadow.lg,
+      borderRadius: 16, paddingHorizontal: 16, paddingTop: 10, paddingBottom: 10,
+      backgroundColor: C.brand, ...shadow.md,
     },
-    headerTopRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 6 },
-    brand: { color: C.brandAccent, fontWeight: '900', fontSize: 11, letterSpacing: 2.5, marginBottom: 3 },
-    headerTitle: { fontSize: 22, fontWeight: '800', color: C.headerOnDark, letterSpacing: -0.3 },
-    headerSubtitle: { color: C.headerSubtitle, fontSize: 12, fontWeight: '500', marginTop: 2 },
+    headerTopRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    brand: { color: C.brandAccent, fontWeight: '900', fontSize: 10, letterSpacing: 2 },
+    headerTitle: { fontSize: 17, fontWeight: '800', color: C.headerOnDark, letterSpacing: -0.3 },
+    headerSubtitle: { color: C.headerSubtitle, fontSize: 11, fontWeight: '500', marginTop: 4 },
     headerStatusPill: {
       flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 999,
       paddingHorizontal: 10, paddingVertical: 5, marginTop: 2,
@@ -45,8 +47,8 @@ export function makeStyles(C: Palette) {
 
     // ── Tab Bar ─────────────────────────────────────────────────────────────────
     tabBar: {
-      flexDirection: 'row', backgroundColor: C.surface, marginHorizontal: 14, marginTop: 10,
-      borderRadius: 16, borderWidth: 1, borderColor: C.border, ...shadow.sm, paddingVertical: 4,
+      flexDirection: 'row', backgroundColor: C.surface, marginHorizontal: 14, marginTop: 6,
+      borderRadius: 14, borderWidth: 1, borderColor: C.border, ...shadow.sm, paddingVertical: 3,
     },
     tabItem: {
       flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 8, gap: 3,
@@ -104,7 +106,7 @@ export function makeStyles(C: Palette) {
       flex: 1, borderRadius: 14, borderWidth: 1, borderColor: C.border,
       backgroundColor: C.surfaceAlt, padding: 12, ...shadow.sm,
     },
-    quickStatValue: { marginTop: 4, color: C.ink, fontSize: 22, fontWeight: '800' },
+    quickStatValue: { marginTop: 4, color: C.ink, fontSize: 22, fontWeight: '800', ...num },
 
     // ── Stock Results ────────────────────────────────────────────────────────────
     stockResultRow: { gap: 8 },
@@ -126,14 +128,14 @@ export function makeStyles(C: Palette) {
     stockMarketBadgeUs: { backgroundColor: C.purpleSoft, color: C.purple },
     stockResultMeta:    { color: C.inkMuted, fontSize: 12, fontWeight: '600' },
     stockResultBottom:  { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-    stockResultPrice:   { color: C.ink, fontSize: 16, fontWeight: '800' },
-    stockResultDelta:   { fontSize: 13, fontWeight: '800' },
+    stockResultPrice:   { color: C.ink, fontSize: 16, fontWeight: '800', ...num },
+    stockResultDelta:   { fontSize: 13, fontWeight: '800', ...num },
     favoriteHint:       { color: C.teal, fontSize: 11, fontWeight: '700' },
 
     // ── Stock Detail ─────────────────────────────────────────────────────────────
     stockDetailHero:  { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 10 },
     stockDetailName:  { color: C.ink, fontSize: 20, fontWeight: '800' },
-    stockDetailPrice: { color: C.ink, fontSize: 18, fontWeight: '800' },
+    stockDetailPrice: { color: C.ink, fontSize: 18, fontWeight: '800', ...num },
     cardSection:      { gap: 10, marginTop: 6 },
 
     // ── Action Buttons ───────────────────────────────────────────────────────────
@@ -164,7 +166,7 @@ export function makeStyles(C: Palette) {
     favoriteDeleteText: { color: C.red, fontSize: 12, fontWeight: '800' },
 
     // ── Primary Value / Notes ────────────────────────────────────────────────────
-    primaryValue: { color: C.ink, fontSize: 24, fontWeight: '800', letterSpacing: -0.5 },
+    primaryValue: { color: C.ink, fontSize: 24, fontWeight: '800', letterSpacing: -0.5, ...num },
     cardNote:     { color: C.inkSub, fontSize: 13, lineHeight: 19 },
     metaText:     { color: C.inkMuted, fontSize: 12, fontWeight: '500' },
 
@@ -175,7 +177,7 @@ export function makeStyles(C: Palette) {
       padding: 12, alignItems: 'center', gap: 4, ...shadow.sm,
     },
     kpiLabel:  { color: C.inkMuted, fontSize: 11, fontWeight: '700', textAlign: 'center' },
-    kpiValue:  { color: C.ink, fontSize: 18, fontWeight: '800' },
+    kpiValue:  { color: C.ink, fontSize: 18, fontWeight: '800', ...num },
 
     // ── Hero Metrics ─────────────────────────────────────────────────────────────
     heroMetricsRow: { flexDirection: 'row', gap: 8 },
@@ -186,7 +188,7 @@ export function makeStyles(C: Palette) {
     heroMetricCardDark:       { backgroundColor: C.ink, borderColor: C.ink },
     heroMetricLabel:          { color: C.inkMuted, fontSize: 11, fontWeight: '700' },
     heroMetricLabelOnDark:    { color: '#93c5fd' },
-    heroMetricValue:          { color: C.ink, fontSize: 18, fontWeight: '800' },
+    heroMetricValue:          { color: C.ink, fontSize: 18, fontWeight: '800', ...num },
     heroMetricValueOnDark:    { color: '#f8fafc' },
     heroMetricFootnote:       { color: C.inkMuted, fontSize: 11, lineHeight: 16 },
     heroMetricFootnoteOnDark: { color: '#cbd5e1' },
@@ -213,7 +215,7 @@ export function makeStyles(C: Palette) {
     metricLeft:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
     metricName:   { color: C.ink, fontSize: 13, fontWeight: '700' },
     metricState:  { color: C.inkSub, fontSize: 12, fontWeight: '600' },
-    metricScore:  { color: C.teal, fontSize: 18, fontWeight: '800' },
+    metricScore:  { color: C.teal, fontSize: 18, fontWeight: '800', ...num },
     metricNote:   { color: C.inkMuted, fontSize: 12 },
     metricSource: { color: C.blue, fontSize: 11, fontWeight: '700' },
 
@@ -245,7 +247,7 @@ export function makeStyles(C: Palette) {
     },
     summaryValueBox:      { alignItems: 'flex-end', gap: 2 },
     summaryMeta:          { color: C.inkMuted, fontSize: 11, fontWeight: '700' },
-    summaryDelta:         { fontSize: 12, fontWeight: '700' },
+    summaryDelta:         { fontSize: 12, fontWeight: '700', ...num },
     portfolioSummaryRow:  { flexDirection: 'row', gap: 8 },
     portfolioSummaryCard: {
       flex: 1, borderRadius: 12, borderWidth: 1, borderColor: C.border,
@@ -296,7 +298,7 @@ export function makeStyles(C: Palette) {
       minWidth: '47%', borderRadius: 10, borderWidth: 1, borderColor: C.border,
       backgroundColor: C.surfaceAlt, padding: 10,
     },
-    chartStatValue: { marginTop: 2, color: C.ink, fontSize: 13, fontWeight: '700' },
+    chartStatValue: { marginTop: 2, color: C.ink, fontSize: 13, fontWeight: '700', ...num },
 
     // ── AI Log ────────────────────────────────────────────────────────────────────
     logTop:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },

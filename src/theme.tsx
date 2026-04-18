@@ -87,15 +87,16 @@ const light: Palette = {
 
 const dark: Palette = {
   scheme: 'dark',
-  bg: '#0a0e1a',
-  surface: '#111827',
-  surfaceAlt: '#1f2937',
-  border: '#1f2937',
-  borderLight: '#374151',
+  // toss-style soft dark — 코어 배경이 너무 검지 않도록 톤 다운
+  bg: '#17181c',
+  surface: '#1f2024',
+  surfaceAlt: '#26272d',
+  border: '#2c2d33',
+  borderLight: '#33343a',
   ink: '#f1f5f9',
-  inkSub: '#cbd5e1',
-  inkMuted: '#94a3b8',
-  inkFaint: '#64748b',
+  inkSub: '#d4d4d8',
+  inkMuted: '#a1a1aa',
+  inkFaint: '#71717a',
   brand: '#0f172a',
   brandAccent: '#60a5fa',
   blue: '#3b82f6',
@@ -115,16 +116,41 @@ const dark: Palette = {
   purpleSoft: '#2d1b69',
   red: '#f87171',
   redSoft: '#3a0e0e',
-  skeleton: '#1f2937',
+  skeleton: '#2c2d33',
   toastSuccessBg: '#0f3520',
   toastErrorBg: '#3a0e0e',
-  toastInfoBg: '#1f2937',
+  toastInfoBg: '#26272d',
   shadowColor: '#000000',
   headerSubtitle: '#93c5fd',
   headerOnDark: '#f8fafc',
 }
 
 export const PALETTES = { light, dark }
+
+// ─── Market-aware up/down colors ────────────────────────────────────────────
+//
+// 한국 시장: 빨강 = 상승, 파랑 = 하락 (전통)
+// 미국 시장: 초록 = 상승, 빨강 = 하락 (글로벌 표준)
+// changeRate >= 0 일 때의 색을, 시장에 맞춰 돌려준다.
+export type Market = 'KR' | 'US' | string
+
+export function marketColor(palette: Palette, market: Market | undefined, changeRate: number): string {
+  const isUp = changeRate >= 0
+  if (market === 'US') {
+    // 미국식: 상승 = green, 하락 = red
+    return isUp ? palette.green : palette.red
+  }
+  // 한국식 (기본): 상승 = up(빨강), 하락 = down(파랑)
+  return isUp ? palette.up : palette.down
+}
+
+export function marketColorSoft(palette: Palette, market: Market | undefined, changeRate: number): string {
+  const isUp = changeRate >= 0
+  if (market === 'US') {
+    return isUp ? palette.greenSoft : palette.redSoft
+  }
+  return isUp ? palette.upSoft : palette.downSoft
+}
 
 // ─── Context ─────────────────────────────────────────────────────────────────
 
