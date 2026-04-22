@@ -596,6 +596,7 @@ function AppShell() {
       {/* ── 알림 설정 모달 ── */}
       <ReminderSettingsModal
         visible={reminderOpen}
+        authToken={user?.token ?? null}
         onClose={() => setReminderOpen(false)}
       />
     </SafeAreaView>

@@ -11,18 +11,21 @@ import {
   setMinutesBefore,
   setUsOpenEnabled,
 } from '../hooks/useMarketReminder'
+import { getPushAlertsEnabled, setPushAlertsEnabled } from '../api/pushDevice'
 
 type Props = {
   visible: boolean
+  authToken: string | null
   onClose: () => void
 }
 
 const MINUTES_OPTIONS = [5, 10, 15, 30, 60]
 
-export function ReminderSettingsModal({ visible, onClose }: Props) {
+export function ReminderSettingsModal({ visible, authToken, onClose }: Props) {
   const styles = useStyles()
   const { palette } = useTheme()
 
+  const [pushOn, setPushOn] = useState(true)
   const [krOn, setKrOn] = useState(true)
   const [usOn, setUsOn] = useState(true)
   const [minutes, setMinutes] = useState(10)
@@ -32,11 +35,13 @@ export function ReminderSettingsModal({ visible, onClose }: Props) {
   useEffect(() => {
     if (!visible) return
     void (async () => {
-      const [a, b, c] = await Promise.all([
+      const [p, a, b, c] = await Promise.all([
+        getPushAlertsEnabled(),
         getKrOpenEnabled(),
         getUsOpenEnabled(),
         getMinutesBefore(),
       ])
+      setPushOn(p)
       setKrOn(a)
       setUsOn(b)
       setMinutes(c)
@@ -44,6 +49,10 @@ export function ReminderSettingsModal({ visible, onClose }: Props) {
     })()
   }, [visible])
 
+  const handlePush = async (v: boolean) => {
+    setPushOn(v)
+    if (authToken) await setPushAlertsEnabled(authToken, v)
+  }
   const handleKr = async (v: boolean) => { setKrOn(v); await setKrOpenEnabled(v) }
   const handleUs = async (v: boolean) => { setUsOn(v); await setUsOpenEnabled(v) }
   const handleMinutes = async (m: number) => { setMinutes(m); await setMinutesBefore(m) }
@@ -64,8 +73,21 @@ export function ReminderSettingsModal({ visible, onClose }: Props) {
             </View>
 
             <Text style={[styles.signalModalSubtitle, { marginBottom: 12 }]}>
-              디바이스에 직접 예약되는 로컬 알림이라 서버 푸시 없이도 동작해.
+              장 시작은 로컬 알림, 급등락은 서버 푸시로 보내준다.
             </Text>
+
+            {/* ── 급등락 푸시 ── */}
+            <View style={[styles.summaryRow, { paddingHorizontal: 0 }]}>
+              <View style={styles.metricLeft}>
+                <Text style={styles.metricName}>📈 관심종목 급등락 알림</Text>
+                <Text style={styles.metricState}>±5% 감지 시 푸시 (서버 발송)</Text>
+              </View>
+              <Switch
+                value={pushOn}
+                onValueChange={(v) => void handlePush(v)}
+                disabled={!hydrated || !authToken}
+              />
+            </View>
 
             {/* ── 한국장 ── */}
             <View style={[styles.summaryRow, { paddingHorizontal: 0 }]}>
@@ -104,8 +126,8 @@ export function ReminderSettingsModal({ visible, onClose }: Props) {
             </View>
 
             <Text style={styles.signalModalDisclaimer}>
-              로컬 알림은 앱이 닫혀 있어도 OS가 띄워줘. 시그널 발생 같은 이벤트 기반 알림은
-              아직 지원하지 않아 (서버 푸시 인프라가 필요해).
+              장 시작 알림은 디바이스 로컬 예약, 급등락 알림은 서버에서 Expo 푸시로 발송한다.
+              알림을 끄면 서버에서 이 기기 토큰을 제거해서 더 이상 푸시가 안 온다.
             </Text>
           </ScrollView>
         </Pressable>
