@@ -32,6 +32,7 @@ import {
   saveAuth,
   setMemoryToken,
 } from './src/api/auth'
+import { registerPushToken } from './src/api/pushDevice'
 import { AITab } from './src/tabs/AITab'
 import { HomeTab } from './src/tabs/HomeTab'
 import { MarketTab } from './src/tabs/MarketTab'
@@ -85,6 +86,7 @@ function AppShell() {
           const fresh = await apiMe(stored.token)
           setUser({ ...fresh, token: stored.token })
           await saveAuth({ ...fresh, token: stored.token })
+          void registerPushToken(stored.token)
         } catch {
           // 만료된 토큰
           await clearAuth()
@@ -100,6 +102,7 @@ function AppShell() {
     setMemoryToken(u.token)
     await saveAuth(u)
     setUser(u)
+    void registerPushToken(u.token)
   }, [])
 
   const handleLogout = useCallback(async () => {
