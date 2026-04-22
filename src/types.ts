@@ -241,6 +241,16 @@ export type ApiResponse<T> = {
   data: T
 }
 
+export type AlertHistoryItem = {
+  market: string
+  ticker: string
+  name: string
+  direction: 'UP' | 'DOWN'
+  changeRate: number
+  alertDate: string
+  sentAt: string
+}
+
 export type HealthResponse = {
   status: string
   application: string

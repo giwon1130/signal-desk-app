@@ -2,6 +2,7 @@ import { Platform } from 'react-native'
 import * as Device from 'expo-device'
 import * as Notifications from 'expo-notifications'
 import { API_BASE_URL } from '../api'
+import type { AlertHistoryItem, ApiResponse } from '../types'
 
 /**
  * Expo 푸시 토큰을 발급받고 서버에 등록한다.
@@ -41,4 +42,19 @@ export async function registerPushToken(authToken: string): Promise<string | nul
     // 서버 등록 실패해도 앱 구동은 영향 없음
   }
   return expoToken
+}
+
+export async function fetchAlertHistory(authToken: string, limit = 30): Promise<AlertHistoryItem[]> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/push/alerts?limit=${limit}`, {
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${authToken}`,
+      },
+    })
+    const json = (await res.json()) as ApiResponse<AlertHistoryItem[]>
+    return json.success ? json.data ?? [] : []
+  } catch {
+    return []
+  }
 }

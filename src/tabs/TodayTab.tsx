@@ -1,6 +1,7 @@
 import { Linking, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native'
 import {
   Activity,
+  Bell,
   Brain,
   Clock,
   Newspaper,
@@ -13,6 +14,7 @@ import { useStyles } from '../styles'
 import { useTheme } from '../theme'
 import type {
   AiRecommendationData,
+  AlertHistoryItem,
   HoldingPosition,
   MarketSummaryData,
   NewsSentiment,
@@ -29,6 +31,8 @@ type Props = {
   summary: MarketSummaryData | null
   aiRecommendation: AiRecommendationData | null
   positions: HoldingPosition[]
+  alertHistory: AlertHistoryItem[]
+  onOpenDetail: (market: string, ticker: string, name?: string) => void
   refreshing: boolean
   onRefresh: () => Promise<void>
 }
@@ -104,6 +108,8 @@ export function TodayTab({
   summary,
   aiRecommendation,
   positions,
+  alertHistory,
+  onOpenDetail,
   refreshing,
   onRefresh,
 }: Props) {
@@ -284,6 +290,40 @@ export function TodayTab({
               </Text>
             </View>
           </View>
+        </View>
+      ) : null}
+
+      {/* ── 최근 받은 알림 ── */}
+      {alertHistory.length > 0 ? (
+        <View style={styles.card}>
+          <View style={styles.sectionHeaderRow}>
+            <View style={styles.cardTitleRow}>
+              <Bell size={14} color="#ea580c" strokeWidth={2.5} />
+              <Text style={styles.cardTitle}>최근 받은 알림</Text>
+            </View>
+            <Text style={styles.metaText}>{alertHistory.length}건</Text>
+          </View>
+          {alertHistory.slice(0, 5).map((a, i) => {
+            const isUp = a.direction === 'UP'
+            const color = isUp ? '#dc2626' : '#2563eb'
+            return (
+              <Pressable
+                key={`${a.ticker}-${a.sentAt}-${i}`}
+                onPress={() => onOpenDetail(a.market, a.ticker, a.name)}
+                style={styles.todayMonitorRow}
+              >
+                <View style={styles.todayMonitorLeft}>
+                  <Text style={styles.todayMonitorName}>{a.name}</Text>
+                  <Text style={styles.todayMonitorMeta}>{a.market} · {a.ticker} · {a.alertDate}</Text>
+                </View>
+                <View style={styles.todayMonitorRight}>
+                  <Text style={[styles.todayMonitorRate, { color }]}>
+                    {isUp ? '↑' : '↓'} {formatSignedRate(a.changeRate)}
+                  </Text>
+                </View>
+              </Pressable>
+            )
+          })}
         </View>
       ) : null}
 

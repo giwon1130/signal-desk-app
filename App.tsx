@@ -32,7 +32,7 @@ import {
   saveAuth,
   setMemoryToken,
 } from './src/api/auth'
-import { registerPushToken } from './src/api/pushDevice'
+import { fetchAlertHistory, registerPushToken } from './src/api/pushDevice'
 import { AITab } from './src/tabs/AITab'
 import { HomeTab } from './src/tabs/HomeTab'
 import { MarketTab } from './src/tabs/MarketTab'
@@ -44,6 +44,7 @@ import { useMarketReminderBootstrap } from './src/hooks/useMarketReminder'
 import { usePushDeepLink } from './src/hooks/usePushDeepLink'
 import type {
   AiRecommendationData,
+  AlertHistoryItem,
   HealthResponse,
   HoldingPosition,
   LogFilter,
@@ -119,6 +120,7 @@ function AppShell() {
   const [aiRecommendation, setAiRecommendation] = useState<AiRecommendationData | null>(null)
   const [watchlist, setWatchlist] = useState<WatchItem[]>([])
   const [portfolio, setPortfolio] = useState<PortfolioSummary | null>(null)
+  const [alertHistory, setAlertHistory] = useState<AlertHistoryItem[]>([])
   const [loading, setLoading] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState('')
@@ -157,11 +159,15 @@ function AppShell() {
       setWatchlist(result.watchlist)
       setPortfolio(result.portfolio)
       setLastSyncedAt(new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }))
+      const token = user?.token
+      if (token) {
+        void fetchAlertHistory(token, 10).then(setAlertHistory)
+      }
     } catch {
       setApiHealth(null)
       setError(`서버에 연결할 수 없어요.\n${API_BASE_URL}`)
     }
-  }, [])
+  }, [user?.token])
 
   useEffect(() => {
     if (!user) return
@@ -499,6 +505,8 @@ function AppShell() {
           summary={summary}
           aiRecommendation={aiRecommendation}
           positions={portfolio?.positions ?? []}
+          alertHistory={alertHistory}
+          onOpenDetail={handleOpenDetail}
           refreshing={refreshing}
           onRefresh={onRefresh}
         />
