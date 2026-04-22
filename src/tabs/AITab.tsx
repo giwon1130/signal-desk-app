@@ -1,5 +1,5 @@
-import { FlatList, Pressable, RefreshControl, Text, TextInput, View } from 'react-native'
-import { BarChart2, Bot, List, Target } from 'lucide-react-native'
+import { FlatList, Linking, Pressable, RefreshControl, Text, TextInput, View } from 'react-native'
+import { BarChart2, Bot, ExternalLink, List, Target, TrendingUp } from 'lucide-react-native'
 import { useStyles } from '../styles'
 import type { AiRecommendationData, LogFilter, RecommendationExecutionLog } from '../types'
 import { formatSignedRate, getLogReturnColor } from '../utils'
@@ -60,6 +60,34 @@ export function AITab({
             <Text style={styles.primaryValue}>{aiRecommendation?.generatedDate ?? '-'}</Text>
             <Text style={styles.cardNote}>{aiRecommendation?.summary ?? '-'}</Text>
           </View>
+
+          {/* ── 메타 신뢰도 카드 ── */}
+          {aiRecommendation?.metrics ? (
+            <View style={styles.card}>
+              <View style={styles.cardTitleRow}>
+                <TrendingUp size={13} color="#15803d" strokeWidth={2.5} />
+                <Text style={styles.cardEyebrow}>최근 {aiRecommendation.metrics.windowDays}일 실적</Text>
+              </View>
+              <View style={styles.metricsRow}>
+                <View style={styles.metricsCell}>
+                  <Text style={styles.metricsLabel}>적중률</Text>
+                  <Text style={[styles.metricsValue, { color: aiRecommendation.metrics.hitRate >= 0.5 ? '#15803d' : '#b91c1c' }]}>
+                    {Math.round(aiRecommendation.metrics.hitRate * 100)}%
+                  </Text>
+                  <Text style={styles.metricsSub}>{aiRecommendation.metrics.successCount}/{aiRecommendation.metrics.totalCount}건</Text>
+                </View>
+                <View style={styles.metricsCell}>
+                  <Text style={styles.metricsLabel}>평균 수익률</Text>
+                  <Text style={[styles.metricsValue, { color: aiRecommendation.metrics.averageReturnRate >= 0 ? '#dc2626' : '#2563eb' }]}>
+                    {formatSignedRate(aiRecommendation.metrics.averageReturnRate)}
+                  </Text>
+                  <Text style={styles.metricsSub}>
+                    최고 {formatSignedRate(aiRecommendation.metrics.bestReturnRate)} · 최저 {formatSignedRate(aiRecommendation.metrics.worstReturnRate)}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          ) : null}
 
           {/* ── KPI ── */}
           <View style={styles.kpiRow}>
@@ -135,6 +163,17 @@ export function AITab({
                 </Text>
               ) : null}
             </View>
+            {item.newsUrl ? (
+              <Pressable
+                onPress={() => item.newsUrl && void Linking.openURL(item.newsUrl)}
+                style={styles.logNewsLink}
+              >
+                <ExternalLink size={11} color="#3b82f6" strokeWidth={2.5} />
+                <Text style={styles.logNewsLinkText} numberOfLines={1}>
+                  {item.newsTitle ?? '관련 뉴스 열기'}
+                </Text>
+              </Pressable>
+            ) : null}
           </View>
         )
       }}

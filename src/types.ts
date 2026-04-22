@@ -145,6 +145,18 @@ export type RecommendationExecutionLog = {
   realizedReturnRate: number | null
   source: string
   userStatus?: UserPickStatus
+  newsUrl?: string | null
+  newsTitle?: string | null
+}
+
+export type RecommendationMetrics = {
+  windowDays: number
+  totalCount: number
+  successCount: number
+  hitRate: number            // 0.0~1.0
+  averageReturnRate: number
+  bestReturnRate: number
+  worstReturnRate: number
 }
 
 export type NewsHighlight = {
@@ -211,6 +223,7 @@ export type AiRecommendationData = {
   generatedDate: string
   summary: string
   executionLogs: RecommendationExecutionLog[]
+  metrics?: RecommendationMetrics | null
 }
 
 export type WatchlistResponse = {
