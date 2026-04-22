@@ -41,6 +41,7 @@ import { TodayTab } from './src/tabs/TodayTab'
 import { StockDetailModal, type StockDetailContext } from './src/components/StockDetailModal'
 import { ReminderSettingsModal } from './src/components/ReminderSettingsModal'
 import { useMarketReminderBootstrap } from './src/hooks/useMarketReminder'
+import { usePushDeepLink } from './src/hooks/usePushDeepLink'
 import type {
   AiRecommendationData,
   HealthResponse,
@@ -279,6 +280,8 @@ function AppShell() {
     setDetailKey('')
     setDetailFallbackName('')
   }, [])
+
+  usePushDeepLink(handleOpenDetail)
 
   // detailKey → 표준 스냅샷. 검색결과/관심종목/보유 어디서든 만들 수 있음.
   const detailContext = useMemo<StockDetailContext | null>(() => {
