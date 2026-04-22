@@ -259,6 +259,34 @@ export function TodayTab({
         </View>
       ) : null}
 
+      {/* ── AI 최근 실적 (신뢰도) ── */}
+      {aiRecommendation?.metrics ? (
+        <View style={styles.card}>
+          <View style={styles.cardTitleRow}>
+            <TrendingUp size={13} color="#15803d" strokeWidth={2.5} />
+            <Text style={styles.cardEyebrow}>AI 최근 {aiRecommendation.metrics.windowDays}일 실적</Text>
+          </View>
+          <View style={styles.metricsRow}>
+            <View style={styles.metricsCell}>
+              <Text style={styles.metricsLabel}>적중률</Text>
+              <Text style={[styles.metricsValue, { color: aiRecommendation.metrics.hitRate >= 0.5 ? '#15803d' : '#b91c1c' }]}>
+                {Math.round(aiRecommendation.metrics.hitRate * 100)}%
+              </Text>
+              <Text style={styles.metricsSub}>{aiRecommendation.metrics.successCount}/{aiRecommendation.metrics.totalCount}건</Text>
+            </View>
+            <View style={styles.metricsCell}>
+              <Text style={styles.metricsLabel}>평균 수익률</Text>
+              <Text style={[styles.metricsValue, { color: aiRecommendation.metrics.averageReturnRate >= 0 ? '#dc2626' : '#2563eb' }]}>
+                {formatSignedRate(aiRecommendation.metrics.averageReturnRate)}
+              </Text>
+              <Text style={styles.metricsSub}>
+                최고 {formatSignedRate(aiRecommendation.metrics.bestReturnRate)} · 최저 {formatSignedRate(aiRecommendation.metrics.worstReturnRate)}
+              </Text>
+            </View>
+          </View>
+        </View>
+      ) : null}
+
       {/* ── 오늘의 단타 픽 ── */}
       <View style={styles.card}>
         <View style={styles.sectionHeaderRow}>
