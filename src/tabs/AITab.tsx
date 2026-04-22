@@ -23,6 +23,12 @@ function stageBadgeStyle(stage: string): { backgroundColor: string; color: strin
   return { backgroundColor: '#f1f5f9', color: '#475569' }
 }
 
+function userStatusBadgeStyle(status: string | undefined): { backgroundColor: string; color: string; label: string } | null {
+  if (status === 'HELD')    return { backgroundColor: '#fee2e2', color: '#b91c1c', label: '보유' }
+  if (status === 'WATCHED') return { backgroundColor: '#dbeafe', color: '#1d4ed8', label: '관심' }
+  return null
+}
+
 export function AITab({
   aiRecommendation,
   filteredLogs,
@@ -102,11 +108,17 @@ export function AITab({
       )}
       renderItem={({ item }) => {
         const stageSt = stageBadgeStyle(item.stage)
+        const userSt = userStatusBadgeStyle(item.userStatus)
         return (
           <View style={[styles.card, { marginTop: 10 }]}>
             <View style={styles.logTop}>
               <Text style={styles.logName}>{item.name} <Text style={styles.logMeta}>({item.market} {item.ticker})</Text></Text>
-              <Text style={[styles.logStage, stageSt]}>{item.stage}</Text>
+              <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
+                {userSt ? (
+                  <Text style={[styles.logStage, { backgroundColor: userSt.backgroundColor, color: userSt.color }]}>{userSt.label}</Text>
+                ) : null}
+                <Text style={[styles.logStage, stageSt]}>{item.stage}</Text>
+              </View>
             </View>
             <Text style={styles.logMeta}>{item.date} · {item.status}</Text>
             <Text style={styles.cardNote}>{item.rationale}</Text>

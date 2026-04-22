@@ -16,6 +16,7 @@ export type AlternativeSignal = {
   experimental: boolean
   description?: string
   methodology?: string
+  personalImpact?: string | null
 }
 
 export type TradingDayStatus = {
@@ -129,6 +130,8 @@ export type MarketSectionsData = {
   usMarket: MarketSection
 }
 
+export type UserPickStatus = 'HELD' | 'WATCHED' | 'NEW'
+
 export type RecommendationExecutionLog = {
   date: string
   market: string
@@ -141,6 +144,7 @@ export type RecommendationExecutionLog = {
   expectedReturnRate: number | null
   realizedReturnRate: number | null
   source: string
+  userStatus?: UserPickStatus
 }
 
 export type NewsHighlight = {

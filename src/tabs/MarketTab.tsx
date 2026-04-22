@@ -243,6 +243,9 @@ export function MarketTab({
                 ))}
               </View>
               <Text style={styles.metricNote}>{item.note}</Text>
+              {item.personalImpact ? (
+                <Text style={styles.alternativePersonalImpact}>{item.personalImpact}</Text>
+              ) : null}
               <Text style={styles.metricSource}>{item.source} · Experimental</Text>
             </Pressable>
           )

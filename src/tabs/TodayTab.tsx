@@ -16,6 +16,7 @@ import type {
   HoldingPosition,
   MarketSummaryData,
   NewsSentiment,
+  UserPickStatus,
 } from '../types'
 import {
   formatCompactNumber,
@@ -43,6 +44,14 @@ const slotLabel = (slot: string | undefined) => {
     case 'WEEKEND':    return '주말'
     case 'HOLIDAY':    return '휴장'
     default:           return '오늘'
+  }
+}
+
+const userStatusLabel = (status: UserPickStatus | undefined) => {
+  switch (status) {
+    case 'HELD':    return '보유'
+    case 'WATCHED': return '관심'
+    default:        return '신규'
   }
 }
 
@@ -270,8 +279,24 @@ export function TodayTab({
           <View key={`${p.ticker}-${i}`} style={styles.todayPickRow}>
             <View style={styles.todayPickTopLine}>
               <Text style={styles.todayPickName}>{p.name}</Text>
-              <View style={styles.todayPickStanceBadge}>
-                <Text style={styles.todayPickStanceBadgeText}>{p.stage}</Text>
+              <View style={styles.todayPickHeaderBadges}>
+                <View style={[
+                  styles.pickUserStatusBadge,
+                  p.userStatus === 'HELD'    && styles.pickUserStatusBadgeHeld,
+                  p.userStatus === 'WATCHED' && styles.pickUserStatusBadgeWatched,
+                  (!p.userStatus || p.userStatus === 'NEW') && styles.pickUserStatusBadgeNew,
+                ]}>
+                  <Text style={[
+                    styles.pickUserStatusBadgeText,
+                    p.userStatus === 'HELD'    && styles.pickUserStatusBadgeTextHeld,
+                    p.userStatus === 'WATCHED' && styles.pickUserStatusBadgeTextWatched,
+                  ]}>
+                    {userStatusLabel(p.userStatus)}
+                  </Text>
+                </View>
+                <View style={styles.todayPickStanceBadge}>
+                  <Text style={styles.todayPickStanceBadgeText}>{p.stage}</Text>
+                </View>
               </View>
             </View>
             <Text style={styles.todayPickMeta}>{p.market} · {p.ticker}{p.confidence ? ` · 확신 ${p.confidence}%` : ''}</Text>

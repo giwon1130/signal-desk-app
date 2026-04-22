@@ -233,6 +233,10 @@ export function makeStyles(C: Palette) {
       backgroundColor: C.scheme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.06)',
       color: C.inkSub, fontSize: 11, fontWeight: '700', overflow: 'hidden',
     },
+    alternativePersonalImpact: {
+      color: C.blue, fontSize: 12, fontWeight: '800', lineHeight: 17,
+      paddingTop: 6, borderTopWidth: 1, borderTopColor: C.border, marginTop: 4,
+    },
 
     // ── Section Header ────────────────────────────────────────────────────────────
     sectionHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
@@ -393,6 +397,17 @@ export function makeStyles(C: Palette) {
       backgroundColor: C.brand, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 2,
     },
     todayPickStanceBadgeText: { color: C.brandAccent, fontSize: 10, fontWeight: '900', letterSpacing: 0.5 },
+    pickUserStatusBadge: {
+      borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2,
+      borderWidth: 1, borderColor: C.border, backgroundColor: C.surface,
+    },
+    pickUserStatusBadgeHeld:    { borderColor: C.red,  backgroundColor: C.redSoft },
+    pickUserStatusBadgeWatched: { borderColor: C.blue, backgroundColor: C.blueSoft },
+    pickUserStatusBadgeNew:     { borderColor: C.border, backgroundColor: C.surfaceAlt },
+    pickUserStatusBadgeText:         { fontSize: 9, fontWeight: '900', letterSpacing: 0.5, color: C.inkMuted },
+    pickUserStatusBadgeTextHeld:     { color: C.red },
+    pickUserStatusBadgeTextWatched:  { color: C.blue },
+    todayPickHeaderBadges: { flexDirection: 'row', alignItems: 'center', gap: 6 },
     todayPickMeta:      { color: C.inkMuted, fontSize: 11, fontWeight: '600', ...num },
     todayPickRationale: { color: C.inkSub, fontSize: 12, fontWeight: '500', lineHeight: 17 },
     todayPickReturn:    { fontSize: 12, fontWeight: '800', ...num, marginTop: 2 },
