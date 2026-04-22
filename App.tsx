@@ -8,15 +8,40 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native'
-import { API_BASE_URL, deleteFavoriteItem, deletePortfolioPosition, loadAllData, saveFavoriteItem, savePortfolioPosition, searchStocks } from './src/api'
-import { styles } from './src/styles'
+import { BarChart3, Bell, Bot, Home, LogOut, Moon, Sun, Sunrise, TrendingUp } from 'lucide-react-native'
+import {
+  API_BASE_URL,
+  deleteFavoriteItem,
+  deletePortfolioPosition,
+  loadAllData,
+  quickAddWatchItem,
+  savePortfolioPosition,
+  searchStocks,
+} from './src/api'
+import { useStyles } from './src/styles'
+import { ThemeProvider, useTheme } from './src/theme'
+import { Toast } from './src/components/Toast'
+import { AuthScreen } from './src/components/AuthScreen'
+import { useToast } from './src/hooks/useToast'
+import { hapticLight, hapticSuccess, hapticError } from './src/utils/haptics'
+import {
+  type AuthUser,
+  apiMe,
+  clearAuth,
+  loadStoredAuth,
+  saveAuth,
+  setMemoryToken,
+} from './src/api/auth'
+import { AITab } from './src/tabs/AITab'
 import { HomeTab } from './src/tabs/HomeTab'
 import { MarketTab } from './src/tabs/MarketTab'
 import { StocksTab } from './src/tabs/StocksTab'
+import { TodayTab } from './src/tabs/TodayTab'
+import { StockDetailModal, type StockDetailContext } from './src/components/StockDetailModal'
+import { ReminderSettingsModal } from './src/components/ReminderSettingsModal'
+import { useMarketReminderBootstrap } from './src/hooks/useMarketReminder'
 import type {
   AiRecommendationData,
-  BuyDraft,
-  FavoriteDraft,
   HealthResponse,
   HoldingPosition,
   LogFilter,
@@ -25,7 +50,6 @@ import type {
   MarketSummaryData,
   PeriodKey,
   PortfolioSummary,
-  SelectedStockSnapshot,
   StockMarketFilter,
   StockSearchResult,
   TabKey,
@@ -33,10 +57,59 @@ import type {
 } from './src/types'
 import { normalizeText } from './src/utils'
 
-export default function App() {
-  const { width } = useWindowDimensions()
+const TABS: Array<{ key: TabKey; label: string; Icon: typeof Home }> = [
+  { key: 'today',  label: '오늘', Icon: Sunrise },
+  { key: 'home',   label: '홈',   Icon: Home },
+  { key: 'market', label: '시장', Icon: TrendingUp },
+  { key: 'stocks', label: '종목', Icon: BarChart3 },
+  { key: 'ai',     label: 'AI',   Icon: Bot },
+]
 
-  const [activeTab, setActiveTab] = useState<TabKey>('home')
+function AppShell() {
+  const { width } = useWindowDimensions()
+  const styles = useStyles()
+  const { palette, toggle, mode } = useTheme()
+  const toast = useToast()
+
+  // ── 인증 상태 ─────────────────────────────────────
+  const [authChecked, setAuthChecked] = useState(false)
+  const [user, setUser] = useState<AuthUser | null>(null)
+
+  useEffect(() => {
+    void (async () => {
+      const stored = await loadStoredAuth()
+      if (stored) {
+        setMemoryToken(stored.token)
+        // 토큰 유효성 검증 (서버 me 호출)
+        try {
+          const fresh = await apiMe(stored.token)
+          setUser({ ...fresh, token: stored.token })
+          await saveAuth({ ...fresh, token: stored.token })
+        } catch {
+          // 만료된 토큰
+          await clearAuth()
+          setMemoryToken(null)
+          setUser(null)
+        }
+      }
+      setAuthChecked(true)
+    })()
+  }, [])
+
+  const handleAuthDone = useCallback(async (u: AuthUser) => {
+    setMemoryToken(u.token)
+    await saveAuth(u)
+    setUser(u)
+  }, [])
+
+  const handleLogout = useCallback(async () => {
+    void hapticLight()
+    await clearAuth()
+    setMemoryToken(null)
+    setUser(null)
+  }, [])
+
+  const [activeTab, setActiveTab] = useState<TabKey>('today')
   const [summary, setSummary] = useState<MarketSummaryData | null>(null)
   const [sections, setSections] = useState<MarketSectionsData | null>(null)
   const [aiRecommendation, setAiRecommendation] = useState<AiRecommendationData | null>(null)
@@ -51,19 +124,23 @@ export default function App() {
   const [logQuery, setLogQuery] = useState('')
   const [logFilter, setLogFilter] = useState<LogFilter>('ALL')
   const [chartMarket, setChartMarket] = useState<MarketKey>('KR')
-  const [chartPeriod, setChartPeriod] = useState<PeriodKey>('1D')
+  const [chartPeriod, setChartPeriod] = useState<PeriodKey>('D')
   const [selectedIndexLabel, setSelectedIndexLabel] = useState('')
   const [stockSearch, setStockSearch] = useState('')
   const [stockMarketFilter, setStockMarketFilter] = useState<StockMarketFilter>('ALL')
   const [stockResults, setStockResults] = useState<StockSearchResult[]>([])
   const [stockSearchLoading, setStockSearchLoading] = useState(false)
-  const [selectedStockKey, setSelectedStockKey] = useState('')
-  const [favoriteDraft, setFavoriteDraft] = useState<FavoriteDraft>({ stance: '', note: '' })
-  const [favoriteSaving, setFavoriteSaving] = useState(false)
   const [favoriteDeletingId, setFavoriteDeletingId] = useState('')
-  const [buyDraft, setBuyDraft] = useState<BuyDraft>({ buyPrice: '', quantity: '' })
-  const [portfolioSaving, setPortfolioSaving] = useState(false)
-  const [portfolioDeletingId, setPortfolioDeletingId] = useState('')
+
+  // ── 종목 상세 모달 (어느 탭에서든 같은 모달) ──────
+  const [detailKey, setDetailKey] = useState('')        // 'MARKET:TICKER' or ''
+  const [detailFallbackName, setDetailFallbackName] = useState('')
+
+  // ── 알림 설정 모달 ──────
+  const [reminderOpen, setReminderOpen] = useState(false)
+
+  // 로그인 후 1회: 권한 요청 + 켜진 알림 다시 예약
+  useMarketReminderBootstrap(!!user)
 
   const fetchData = useCallback(async () => {
     setError('')
@@ -78,20 +155,28 @@ export default function App() {
       setLastSyncedAt(new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }))
     } catch {
       setApiHealth(null)
-      setError(`API 연결 실패: ${API_BASE_URL}`)
+      setError(`서버에 연결할 수 없어요.\n${API_BASE_URL}`)
     }
   }, [])
 
   useEffect(() => {
+    if (!user) return
     setLoading(true)
     void fetchData().finally(() => setLoading(false))
-  }, [fetchData])
+  }, [fetchData, user])
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true)
+    void hapticLight()
     await fetchData()
     setRefreshing(false)
   }, [fetchData])
+
+  const handleTabChange = useCallback((key: TabKey) => {
+    if (key === activeTab) return
+    void hapticLight()
+    setActiveTab(key)
+  }, [activeTab])
 
   const filteredLogs = useMemo(() => {
     const logs = aiRecommendation?.executionLogs ?? []
@@ -180,180 +265,241 @@ export default function App() {
     }
   }, [stockSearch, stockMarketFilter])
 
-  useEffect(() => {
-    if (!stockResults.length) {
-      setSelectedStockKey('')
-      return
-    }
-    if (stockResults.some((item) => `${item.market}:${item.ticker}` === selectedStockKey)) return
-    setSelectedStockKey(`${stockResults[0].market}:${stockResults[0].ticker}`)
-  }, [selectedStockKey, stockResults])
+  // 어느 탭에서든 호출 가능한 "종목 상세 열기"
+  const handleOpenDetail = useCallback((market: string, ticker: string, name?: string) => {
+    if (!market || !ticker) return
+    void hapticLight()
+    setDetailKey(`${market}:${ticker}`)
+    setDetailFallbackName(name ?? '')
+  }, [])
+  const handleCloseDetail = useCallback(() => {
+    setDetailKey('')
+    setDetailFallbackName('')
+  }, [])
 
-  const selectedStock = useMemo<SelectedStockSnapshot | null>(() => {
-    const [market, ticker] = selectedStockKey.split(':')
+  // detailKey → 표준 스냅샷. 검색결과/관심종목/보유 어디서든 만들 수 있음.
+  const detailContext = useMemo<StockDetailContext | null>(() => {
+    const [market, ticker] = detailKey.split(':')
     if (!market || !ticker) return null
-    const base = stockResults.find((item) => item.market === market && item.ticker === ticker)
-    if (!base) return null
-    return {
-      base,
-      watchItem: watchlist.find((item) => item.market === market && item.ticker === ticker),
-      portfolioPosition: portfolio?.positions.find((item) => item.market === market && item.ticker === ticker),
-      latestAiLog: (aiRecommendation?.executionLogs ?? []).find(
-        (item) => item.market === market && item.ticker === ticker,
-      ),
+    const fromSearch    = stockResults.find((r) => r.market === market && r.ticker === ticker)
+    const watchItem     = watchlist.find((w) => w.market === market && w.ticker === ticker)
+    const portfolioPos  = portfolio?.positions.find((p) => p.market === market && p.ticker === ticker)
+    const latestAiLog   = (aiRecommendation?.executionLogs ?? []).find(
+      (item) => item.market === market && item.ticker === ticker,
+    )
+    const base: StockSearchResult = fromSearch ?? {
+      market,
+      ticker,
+      name:       watchItem?.name ?? portfolioPos?.name ?? detailFallbackName ?? ticker,
+      sector:     watchItem?.sector ?? '—',
+      price:      watchItem?.price ?? portfolioPos?.currentPrice ?? 0,
+      changeRate: watchItem?.changeRate ?? 0,
+      stance:     watchItem?.stance ?? '관찰 대상',
     }
-  }, [aiRecommendation?.executionLogs, portfolio?.positions, selectedStockKey, stockResults, watchlist])
+    return { base, watchItem, portfolioPosition: portfolioPos, latestAiLog }
+  }, [detailKey, detailFallbackName, stockResults, watchlist, portfolio?.positions, aiRecommendation?.executionLogs])
 
-  useEffect(() => {
-    if (!selectedStock) {
-      setFavoriteDraft({ stance: '', note: '' })
-      setBuyDraft({ buyPrice: '', quantity: '' })
-      return
-    }
-    setFavoriteDraft({
-      stance: selectedStock.watchItem?.stance ?? selectedStock.base.stance,
-      note: selectedStock.watchItem?.note ?? '앱 즐겨찾기',
-    })
-    setBuyDraft({
-      buyPrice: selectedStock.portfolioPosition
-        ? String(selectedStock.portfolioPosition.buyPrice)
-        : String(Math.round(selectedStock.base.price)),
-      quantity: selectedStock.portfolioPosition
-        ? String(selectedStock.portfolioPosition.quantity)
-        : '1',
-    })
-  }, [selectedStock])
-
-  const handleSaveFavorite = useCallback(async () => {
-    if (!selectedStock) return
-    setFavoriteSaving(true)
+  const handleSavePortfolio = useCallback(async (payload: {
+    id?: string
+    market: string
+    ticker: string
+    name: string
+    buyPrice: number
+    currentPrice: number
+    quantity: number
+  }) => {
     try {
-      await saveFavoriteItem(selectedStock, favoriteDraft)
+      await savePortfolioPosition(payload)
       await fetchData()
+      void hapticSuccess()
+      toast.show(payload.id ? '보유 종목을 수정했어요' : '보유 종목으로 등록했어요', 'success')
     } catch {
-      setError('즐겨찾기 저장에 실패했어.')
-    } finally {
-      setFavoriteSaving(false)
+      void hapticError()
+      toast.show('저장에 실패했어요. 입력값을 확인해줘', 'error')
+      throw new Error('save-portfolio-failed')
     }
-  }, [favoriteDraft, fetchData, selectedStock])
+  }, [fetchData, toast])
+
+  const handleDeletePortfolio = useCallback(async (id: string) => {
+    try {
+      await deletePortfolioPosition(id)
+      await fetchData()
+      void hapticSuccess()
+      toast.show('보유 종목을 삭제했어요', 'info')
+    } catch {
+      void hapticError()
+      toast.show('삭제에 실패했어요', 'error')
+    }
+  }, [fetchData, toast])
+
+  const handleQuickAddWatch = useCallback(async (stock: StockSearchResult) => {
+    try {
+      await quickAddWatchItem(stock)
+      await fetchData()
+      void hapticSuccess()
+      toast.show('관심종목에 담았어요', 'success')
+    } catch {
+      void hapticError()
+      toast.show('관심종목 추가에 실패했어요', 'error')
+      throw new Error('quick-add-failed')
+    }
+  }, [fetchData, toast])
 
   const handleDeleteFavorite = useCallback(async (id: string) => {
     setFavoriteDeletingId(id)
     try {
       await deleteFavoriteItem(id)
       await fetchData()
+      void hapticSuccess()
+      toast.show('관심종목에서 해제했어요', 'info')
     } catch {
-      setError('즐겨찾기 삭제에 실패했어.')
+      void hapticError()
+      toast.show('해제에 실패했어요', 'error')
     } finally {
       setFavoriteDeletingId('')
     }
-  }, [fetchData])
+  }, [fetchData, toast])
 
-  const handleSavePortfolio = useCallback(async () => {
-    if (!selectedStock) return
-    const price = parseInt(buyDraft.buyPrice.replace(/,/g, ''), 10)
-    const qty = parseInt(buyDraft.quantity, 10)
-    if (!price || price <= 0 || !qty || qty <= 0) {
-      setError('매수가와 수량을 올바르게 입력해줘.')
-      return
+  // 모달용: 현재 관심 여부에 따라 자동으로 추가/해제 토글
+  const handleToggleWatchInDetail = useCallback(async (stock: StockSearchResult) => {
+    const existing = watchlist.find((w) => w.market === stock.market && w.ticker === stock.ticker)
+    if (existing?.id) {
+      await handleDeleteFavorite(existing.id)
+    } else {
+      await handleQuickAddWatch(stock)
     }
-    setPortfolioSaving(true)
-    try {
-      await savePortfolioPosition({
-        id: selectedStock.portfolioPosition?.id ?? '',
-        market: selectedStock.base.market,
-        ticker: selectedStock.base.ticker,
-        name: selectedStock.base.name,
-        buyPrice: price,
-        currentPrice: Math.round(selectedStock.base.price),
-        quantity: qty,
-      })
-      await fetchData()
-    } catch {
-      setError('매수 기록 저장에 실패했어.')
-    } finally {
-      setPortfolioSaving(false)
-    }
-  }, [buyDraft, fetchData, selectedStock])
-
-  const handleDeletePortfolio = useCallback(async (id: string) => {
-    setPortfolioDeletingId(id)
-    try {
-      await deletePortfolioPosition(id)
-      await fetchData()
-    } catch {
-      setError('매수 기록 삭제에 실패했어.')
-    } finally {
-      setPortfolioDeletingId('')
-    }
-  }, [fetchData])
+  }, [watchlist, handleDeleteFavorite, handleQuickAddWatch])
 
   const chartWidth = Math.max(300, Math.min(width - 28, 760))
+  const isUp = apiHealth?.status === 'UP'
+  const isDark = palette.scheme === 'dark'
+
+  // ── 인증 분기 ──
+  if (!authChecked) {
+    return (
+      <SafeAreaView style={[styles.container, { alignItems: 'center', justifyContent: 'center' }]}>
+        <ActivityIndicator size="large" color={palette.blue} />
+      </SafeAreaView>
+    )
+  }
+
+  if (!user) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar style={isDark ? 'light' : 'dark'} />
+        <AuthScreen onDone={(u) => void handleAuthDone(u)} />
+      </SafeAreaView>
+    )
+  }
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar style="dark" />
+      <StatusBar style={isDark ? 'light' : 'light'} />
 
+      {/* ── 헤더 ─────────────────────────────────────── */}
       <View style={styles.headerWrap}>
         <View style={styles.headerGradient}>
-          <Text style={styles.brand}>SignalDesk</Text>
-          <Text style={styles.headerTitle}>Mobile Dashboard</Text>
-          <Text style={styles.headerSubtitle}>시장/차트/추천 로그를 앱에서 빠르게 확인</Text>
-          <Text style={styles.apiText}>API: {API_BASE_URL}</Text>
-          <View style={styles.headerMetaRow}>
-            <Text style={[styles.headerStatusBadge, apiHealth?.status === 'UP' ? styles.headerStatusBadgeUp : styles.headerStatusBadgeDown]}>
-              {apiHealth?.status === 'UP' ? 'API 정상' : 'API 확인 필요'}
-            </Text>
-            <Text style={styles.headerMetaText}>
-              {lastSyncedAt ? `최근 동기화 ${lastSyncedAt}` : '동기화 대기 중'}
-            </Text>
+          <View style={styles.headerTopRow}>
+            <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8, flexShrink: 1 }}>
+              <Text style={styles.headerTitle} numberOfLines={1}>투자 대시보드</Text>
+              <Text style={styles.brand}>SIGNAL</Text>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <View style={[styles.headerStatusPill, isUp ? styles.headerStatusPillUp : styles.headerStatusPillDown]}>
+                <View style={[styles.headerStatusDot, isUp ? styles.headerStatusDotUp : styles.headerStatusDotDown]} />
+                <Text style={[styles.headerStatusText, isUp ? styles.headerStatusTextUp : styles.headerStatusTextDown]}>
+                  {isUp ? 'LIVE' : 'OFF'}
+                </Text>
+              </View>
+              <Pressable
+                onPress={() => { void hapticLight(); setReminderOpen(true) }}
+                style={({ pressed }) => [styles.themeToggleBtn, pressed && { opacity: 0.6 }]}
+                accessibilityLabel="알림 설정"
+              >
+                <Bell size={16} color="#cbd5e1" />
+              </Pressable>
+              <Pressable
+                onPress={() => { void hapticLight(); toggle() }}
+                style={({ pressed }) => [styles.themeToggleBtn, pressed && { opacity: 0.6 }]}
+                accessibilityLabel={isDark ? '라이트 모드로 전환' : '다크 모드로 전환'}
+              >
+                {isDark ? <Sun size={16} color="#fcd34d" /> : <Moon size={16} color="#cbd5e1" />}
+              </Pressable>
+              <Pressable
+                onPress={() => void handleLogout()}
+                style={({ pressed }) => [styles.themeToggleBtn, pressed && { opacity: 0.6 }]}
+                accessibilityLabel="로그아웃"
+              >
+                <LogOut size={16} color="#fca5a5" />
+              </Pressable>
+            </View>
           </View>
+          <Text style={styles.headerSubtitle}>
+            {lastSyncedAt ? `마지막 동기화 ${lastSyncedAt}` : '시장/차트/포트폴리오를 한눈에'}
+          </Text>
         </View>
       </View>
 
-      <View style={styles.tabRow}>
-        {([
-          { key: 'home', label: '홈' },
-          { key: 'market', label: '시장' },
-          { key: 'stocks', label: '종목' },
-        ] as Array<{ key: TabKey; label: string }>).map((tab) => (
-          <Pressable
-            key={tab.key}
-            onPress={() => setActiveTab(tab.key)}
-            style={[styles.tabButton, activeTab === tab.key && styles.tabButtonActive]}
-          >
-            <Text style={[styles.tabText, activeTab === tab.key && styles.tabTextActive]}>{tab.label}</Text>
-          </Pressable>
-        ))}
+      {/* ── 탭 바 ────────────────────────────────────── */}
+      <View style={styles.tabBar}>
+        {TABS.map(({ key, label, Icon }) => {
+          const active = activeTab === key
+          return (
+            <Pressable
+              key={key}
+              onPress={() => handleTabChange(key)}
+              style={({ pressed }) => [styles.tabItem, active && styles.tabItemActive, pressed && styles.tabItemPressed]}
+            >
+              <Icon
+                size={20}
+                color={active ? palette.blue : palette.inkFaint}
+                strokeWidth={active ? 2.5 : 1.8}
+              />
+              <Text style={[styles.tabLabel, active && styles.tabLabelActive]}>{label}</Text>
+              {active && <View style={styles.tabActiveBar} />}
+            </Pressable>
+          )
+        })}
       </View>
 
+      {/* ── 로딩 ─────────────────────────────────────── */}
       {loading ? (
         <View style={styles.loadingWrap}>
-          <ActivityIndicator />
-          <Text style={styles.metaText}>데이터 로딩 중...</Text>
+          <ActivityIndicator size="large" color={palette.blue} />
+          <Text style={styles.loadingText}>데이터 불러오는 중...</Text>
         </View>
       ) : null}
 
+      {/* ── 에러 ─────────────────────────────────────── */}
       {error ? (
         <View style={styles.errorBox}>
-          <Text style={styles.errorTitle}>연결 오류</Text>
+          <Text style={styles.errorTitle}>연결 실패</Text>
           <Text style={styles.errorText}>{error}</Text>
-          <Text style={styles.errorText}>API 상태와 네트워크 설정을 확인해.</Text>
           <Pressable
             onPress={() => {
               setLoading(true)
               void fetchData().finally(() => setLoading(false))
             }}
-            style={styles.retryButton}
+            style={({ pressed }) => [styles.retryButton, pressed && { opacity: 0.8 }]}
           >
             <Text style={styles.retryButtonText}>다시 시도</Text>
           </Pressable>
         </View>
       ) : null}
 
+      {/* ── 탭 콘텐츠 ────────────────────────────────── */}
+      {!loading && !error && activeTab === 'today' ? (
+        <TodayTab
+          summary={summary}
+          aiRecommendation={aiRecommendation}
+          positions={portfolio?.positions ?? []}
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+        />
+      ) : null}
+
       {!loading && !error && activeTab === 'home' ? (
         <HomeTab
-          summary={summary}
           watchlist={watchlist}
           portfolio={portfolio}
           refreshing={refreshing}
@@ -365,11 +511,14 @@ export default function App() {
           topWatchlist={topWatchlist}
           topPortfolioPositions={topPortfolioPositions}
           successRate={successRate}
+          onOpenDetail={handleOpenDetail}
+          onRemoveWatch={(id) => void handleDeleteFavorite(id)}
         />
       ) : null}
 
       {!loading && !error && activeTab === 'market' ? (
         <MarketTab
+          summary={summary}
           activeSection={activeSection}
           activeIndex={activeIndex}
           activePeriod={activePeriod}
@@ -392,14 +541,19 @@ export default function App() {
           stockMarketFilter={stockMarketFilter}
           stockResults={stockResults}
           stockSearchLoading={stockSearchLoading}
-          selectedStockKey={selectedStockKey}
-          selectedStock={selectedStock}
-          favoriteDraft={favoriteDraft}
-          favoriteSaving={favoriteSaving}
           favoriteDeletingId={favoriteDeletingId}
-          buyDraft={buyDraft}
-          portfolioSaving={portfolioSaving}
-          portfolioDeletingId={portfolioDeletingId}
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          onStockSearchChange={setStockSearch}
+          onStockMarketFilterChange={setStockMarketFilter}
+          onOpenDetail={handleOpenDetail}
+          onQuickAddWatch={handleQuickAddWatch}
+          onDeleteFavorite={(id) => void handleDeleteFavorite(id)}
+        />
+      ) : null}
+
+      {!loading && !error && activeTab === 'ai' ? (
+        <AITab
           aiRecommendation={aiRecommendation}
           filteredLogs={filteredLogs}
           logFilter={logFilter}
@@ -408,19 +562,36 @@ export default function App() {
           resultLogs={resultLogs}
           refreshing={refreshing}
           onRefresh={onRefresh}
-          onStockSearchChange={setStockSearch}
-          onStockMarketFilterChange={setStockMarketFilter}
-          onSelectedStockKeyChange={setSelectedStockKey}
-          onFavoriteDraftChange={setFavoriteDraft}
-          onSaveFavorite={() => void handleSaveFavorite()}
-          onDeleteFavorite={(id) => void handleDeleteFavorite(id)}
-          onBuyDraftChange={setBuyDraft}
-          onSavePortfolio={() => void handleSavePortfolio()}
-          onDeletePortfolio={(id) => void handleDeletePortfolio(id)}
           onLogFilterChange={setLogFilter}
           onLogQueryChange={setLogQuery}
         />
       ) : null}
+
+      <Toast visible={toast.visible} message={toast.message} type={toast.type} />
+
+      {/* ── 종목 상세 모달 (어느 탭에서든 호출) ── */}
+      <StockDetailModal
+        visible={!!detailKey}
+        onClose={handleCloseDetail}
+        context={detailContext}
+        onToggleWatch={handleToggleWatchInDetail}
+        onSavePortfolio={handleSavePortfolio}
+        onDeletePortfolio={(id) => void handleDeletePortfolio(id)}
+      />
+
+      {/* ── 알림 설정 모달 ── */}
+      <ReminderSettingsModal
+        visible={reminderOpen}
+        onClose={() => setReminderOpen(false)}
+      />
     </SafeAreaView>
+  )
+}
+
+export default function App() {
+  return (
+    <ThemeProvider>
+      <AppShell />
+    </ThemeProvider>
   )
 }

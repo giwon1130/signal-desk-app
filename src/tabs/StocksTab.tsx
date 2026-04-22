@@ -1,27 +1,15 @@
+import { useMemo, useState } from 'react'
 import { Pressable, RefreshControl, ScrollView, Text, TextInput, View } from 'react-native'
-import { styles } from '../styles'
+import { Plus, Radio, Search, Sparkles, Star, X } from 'lucide-react-native'
+import { useStyles } from '../styles'
+import { marketColor, useTheme } from '../theme'
 import type {
-  AiRecommendationData,
-  BuyDraft,
-  FavoriteDraft,
-  LogFilter,
-  RecommendationExecutionLog,
-  SelectedStockSnapshot,
   StockMarketFilter,
   StockSearchResult,
   WatchItem,
 } from '../types'
-import { formatCompactNumber, formatSignedRate, getLogReturnColor } from '../utils'
-
-type SellSignalLevel = 'STRONG_SELL' | 'CAUTION' | 'TAKE_PROFIT' | 'HOLD'
-
-function classifySellSignal(profitRate: number): { level: SellSignalLevel; emoji: string; label: string } {
-  if (profitRate <= -8.0) return { level: 'STRONG_SELL', emoji: '🔴', label: `손실 ${formatSignedRate(profitRate)} — 손절 기준 초과` }
-  if (profitRate <= -5.0) return { level: 'CAUTION', emoji: '🟡', label: `손실 ${formatSignedRate(profitRate)} — 손절 검토 필요` }
-  if (profitRate >= 10.0) return { level: 'TAKE_PROFIT', emoji: '💰', label: `수익 ${formatSignedRate(profitRate)} — 목표 수익 달성` }
-  if (profitRate >= 5.0) return { level: 'TAKE_PROFIT', emoji: '💰', label: `수익 ${formatSignedRate(profitRate)} — 익절 검토 구간` }
-  return { level: 'HOLD', emoji: '🟢', label: `이상 없음 (${formatSignedRate(profitRate)})` }
-}
+import { formatCompactNumber, formatSignedRate } from '../utils'
+import { useLivePrices } from '../hooks/useLivePrices'
 
 type Props = {
   watchlist: WatchItem[]
@@ -29,33 +17,14 @@ type Props = {
   stockMarketFilter: StockMarketFilter
   stockResults: StockSearchResult[]
   stockSearchLoading: boolean
-  selectedStockKey: string
-  selectedStock: SelectedStockSnapshot | null
-  favoriteDraft: FavoriteDraft
-  favoriteSaving: boolean
   favoriteDeletingId: string
-  buyDraft: BuyDraft
-  portfolioSaving: boolean
-  portfolioDeletingId: string
-  aiRecommendation: AiRecommendationData | null
-  filteredLogs: RecommendationExecutionLog[]
-  logFilter: LogFilter
-  logQuery: string
-  recommendLogs: number
-  resultLogs: number
   refreshing: boolean
   onRefresh: () => Promise<void>
   onStockSearchChange: (value: string) => void
   onStockMarketFilterChange: (filter: StockMarketFilter) => void
-  onSelectedStockKeyChange: (key: string) => void
-  onFavoriteDraftChange: (draft: FavoriteDraft) => void
-  onSaveFavorite: () => void
+  onOpenDetail: (market: string, ticker: string, name?: string) => void
+  onQuickAddWatch: (stock: StockSearchResult) => Promise<void>
   onDeleteFavorite: (id: string) => void
-  onBuyDraftChange: (draft: BuyDraft) => void
-  onSavePortfolio: () => void
-  onDeletePortfolio: (id: string) => void
-  onLogFilterChange: (filter: LogFilter) => void
-  onLogQueryChange: (value: string) => void
 }
 
 export function StocksTab({
@@ -64,43 +33,66 @@ export function StocksTab({
   stockMarketFilter,
   stockResults,
   stockSearchLoading,
-  selectedStockKey,
-  selectedStock,
-  favoriteDraft,
-  favoriteSaving,
   favoriteDeletingId,
-  buyDraft,
-  portfolioSaving,
-  portfolioDeletingId,
-  aiRecommendation,
-  filteredLogs,
-  logFilter,
-  logQuery,
-  recommendLogs,
-  resultLogs,
   refreshing,
   onRefresh,
   onStockSearchChange,
   onStockMarketFilterChange,
-  onSelectedStockKeyChange,
-  onFavoriteDraftChange,
-  onSaveFavorite,
+  onOpenDetail,
+  onQuickAddWatch,
   onDeleteFavorite,
-  onBuyDraftChange,
-  onSavePortfolio,
-  onDeletePortfolio,
-  onLogFilterChange,
-  onLogQueryChange,
 }: Props) {
+  const styles = useStyles()
+  const { palette } = useTheme()
+  const [togglingKey, setTogglingKey] = useState('')
+
+  const liveTickers = useMemo(() => {
+    const set = new Set<string>()
+    for (const r of stockResults) if (r.market === 'KR') set.add(r.ticker)
+    for (const w of watchlist) if (w.market === 'KR') set.add(w.ticker)
+    return Array.from(set)
+  }, [stockResults, watchlist])
+  const livePrices = useLivePrices(liveTickers)
+
+  const liveOf = (market: string, ticker: string, fallbackPrice: number, fallbackRate: number) => {
+    if (market !== 'KR') return { price: fallbackPrice, changeRate: fallbackRate, live: false }
+    const lp = livePrices[ticker]
+    return lp ? { price: lp.price, changeRate: lp.changeRate, live: true }
+              : { price: fallbackPrice, changeRate: fallbackRate, live: false }
+  }
+
+  const findWatchItem = (market: string, ticker: string) =>
+    watchlist.find((w) => w.market === market && w.ticker === ticker)
+
+  const handleToggleWatch = async (stock: StockSearchResult) => {
+    const key = `${stock.market}:${stock.ticker}`
+    if (togglingKey) return
+    setTogglingKey(key)
+    try {
+      const existing = findWatchItem(stock.market, stock.ticker)
+      if (existing?.id) {
+        onDeleteFavorite(existing.id)
+      } else {
+        await onQuickAddWatch(stock)
+      }
+    } finally {
+      setTogglingKey('')
+    }
+  }
+
   return (
     <ScrollView
       style={styles.scroll}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       contentContainerStyle={styles.content}
     >
+      {/* ── 종목 탐색 ── */}
       <View style={styles.card}>
         <View style={styles.sectionHeaderRow}>
-          <Text style={styles.cardTitle}>종목 탐색</Text>
+          <View style={styles.cardTitleRow}>
+            <Search size={14} color="#3b82f6" strokeWidth={2.5} />
+            <Text style={styles.cardTitle}>종목 탐색</Text>
+          </View>
           <Text style={styles.metaText}>
             {stockSearchLoading ? '검색 중...' : `${stockResults.length}개`}
           </Text>
@@ -122,23 +114,22 @@ export function StocksTab({
               style={[styles.filterChip, stockMarketFilter === filter && styles.filterChipActive]}
             >
               <Text style={[styles.filterText, stockMarketFilter === filter && styles.filterTextActive]}>
-                {filter === 'ALL' ? '전체' : filter === 'KR' ? '한국' : '미국'}
+                {filter === 'ALL' ? '전체' : filter === 'KR' ? '🇰🇷 한국' : '🇺🇸 미국'}
               </Text>
             </Pressable>
           ))}
         </View>
+        <Text style={[styles.metaText, { marginTop: 4 }]}>
+          카드를 탭하면 상세 모달, 우측 + 버튼은 한 번에 관심종목에 담기
+        </Text>
         <View style={styles.stockResultRow}>
           {stockResults.map((item) => {
-            const stockKey = `${item.market}:${item.ticker}`
-            const isSelected = selectedStockKey === stockKey
-            const isFavorite = watchlist.some(
-              (watchItem) => watchItem.market === item.market && watchItem.ticker === item.ticker,
-            )
+            const isInWatch = !!findWatchItem(item.market, item.ticker)
             return (
               <Pressable
-                key={stockKey}
-                onPress={() => onSelectedStockKeyChange(stockKey)}
-                style={[styles.stockResultCard, isSelected && styles.stockResultCardActive]}
+                key={`${item.market}:${item.ticker}`}
+                onPress={() => onOpenDetail(item.market, item.ticker, item.name)}
+                style={styles.stockResultCard}
               >
                 <View style={styles.stockResultTop}>
                   <Text style={styles.stockResultName}>{item.name}</Text>
@@ -152,260 +143,104 @@ export function StocksTab({
                   </Text>
                 </View>
                 <Text style={styles.stockResultMeta}>{item.ticker} · {item.sector}</Text>
-                <View style={styles.stockResultBottom}>
-                  <Text style={styles.stockResultPrice}>{formatCompactNumber(item.price)}</Text>
-                  <Text style={[styles.stockResultDelta, { color: item.changeRate >= 0 ? '#dc2626' : '#2563eb' }]}>
-                    {formatSignedRate(item.changeRate)}
-                  </Text>
-                </View>
-                {isFavorite ? <Text style={styles.favoriteHint}>즐겨찾기 등록됨</Text> : null}
+                {(() => {
+                  const live = liveOf(item.market, item.ticker, item.price, item.changeRate)
+                  return (
+                    <View style={styles.stockResultBottom}>
+                      <View style={styles.cardTitleRow}>
+                        <Text style={styles.stockResultPrice}>{formatCompactNumber(live.price)}</Text>
+                        {live.live ? <Radio size={10} color="#10b981" strokeWidth={2.5} /> : null}
+                      </View>
+                      <Text style={[styles.stockResultDelta, { color: marketColor(palette, item.market, live.changeRate) }]}>
+                        {formatSignedRate(live.changeRate)}
+                      </Text>
+                    </View>
+                  )
+                })()}
+                <Pressable
+                  onPress={() => void handleToggleWatch(item)}
+                  hitSlop={8}
+                  style={[styles.quickAddPill, isInWatch && styles.quickAddPillActive]}
+                >
+                  {isInWatch ? (
+                    <>
+                      <X size={11} color={palette.teal} strokeWidth={3} />
+                      <Text style={styles.quickAddPillTextActive}>해제</Text>
+                    </>
+                  ) : (
+                    <>
+                      <Plus size={11} color="#ffffff" strokeWidth={3} />
+                      <Text style={styles.quickAddPillText}>관심종목</Text>
+                    </>
+                  )}
+                </Pressable>
               </Pressable>
             )
           })}
         </View>
       </View>
 
-      {selectedStock ? (
-        <View style={styles.card}>
-          <View style={styles.sectionHeaderRow}>
-            <Text style={styles.cardTitle}>종목 상세</Text>
-            <Text style={styles.metaText}>{selectedStock.base.market} · {selectedStock.base.ticker}</Text>
-          </View>
-          <View style={styles.stockDetailHero}>
-            <View style={styles.metricLeft}>
-              <Text style={styles.stockDetailName}>{selectedStock.base.name}</Text>
-              <Text style={styles.metricState}>{selectedStock.base.sector}</Text>
-            </View>
-            <View style={styles.summaryValueBox}>
-              <Text style={styles.stockDetailPrice}>{formatCompactNumber(selectedStock.base.price)}</Text>
-              <Text
-                style={[
-                  styles.summaryDelta,
-                  { color: selectedStock.base.changeRate >= 0 ? '#dc2626' : '#2563eb' },
-                ]}
-              >
-                {formatSignedRate(selectedStock.base.changeRate)}
-              </Text>
-            </View>
-          </View>
-          <Text style={styles.cardNote}>{selectedStock.base.stance}</Text>
-
-          <View style={styles.quickStatsRow}>
-            <View style={styles.quickStatCard}>
-              <Text style={styles.kpiLabel}>즐겨찾기</Text>
-              <Text style={styles.quickStatValue}>{selectedStock.watchItem ? 'ON' : 'OFF'}</Text>
-              <Text style={styles.metaText}>{selectedStock.watchItem?.note ?? '아직 등록 안 됨'}</Text>
-            </View>
-            <View style={styles.quickStatCard}>
-              <Text style={styles.kpiLabel}>보유 상태</Text>
-              <Text style={styles.quickStatValue}>{selectedStock.portfolioPosition ? '보유' : '미보유'}</Text>
-              <Text style={styles.metaText}>
-                {selectedStock.portfolioPosition
-                  ? `${selectedStock.portfolioPosition.quantity}주 · ${formatSignedRate(selectedStock.portfolioPosition.profitRate)}`
-                  : '포트폴리오 없음'}
-              </Text>
-            </View>
-          </View>
-
-          {selectedStock.portfolioPosition ? (() => {
-            const sig = classifySellSignal(selectedStock.portfolioPosition.profitRate)
-            const pos = selectedStock.portfolioPosition
-            return (
-              <View style={[styles.cardSection, { borderLeftWidth: 3, borderLeftColor: sig.level === 'STRONG_SELL' ? '#dc2626' : sig.level === 'CAUTION' ? '#d97706' : sig.level === 'TAKE_PROFIT' ? '#16a34a' : '#2563eb', paddingLeft: 10 }]}>
-                <Text style={styles.cardTitle}>매도 분석</Text>
-                <Text style={[styles.quickStatValue, { marginBottom: 4 }]}>{sig.emoji} {sig.label}</Text>
-                <Text style={styles.metaText}>
-                  매수가 {formatCompactNumber(pos.buyPrice)} → 현재 {formatCompactNumber(pos.currentPrice)} · {pos.quantity}주 · 평가손익 {pos.profitAmount >= 0 ? '+' : ''}{formatCompactNumber(pos.profitAmount)}원
-                </Text>
-                <Pressable
-                  onPress={() => onDeletePortfolio(pos.id)}
-                  style={[styles.secondaryActionButton, { marginTop: 8, alignSelf: 'flex-start' }]}
-                >
-                  <Text style={styles.secondaryActionButtonText}>
-                    {portfolioDeletingId === pos.id ? '삭제 중...' : '기록 삭제'}
-                  </Text>
-                </Pressable>
-              </View>
-            )
-          })() : null}
-
-          <View style={styles.cardSection}>
-            <Text style={styles.cardTitle}>매수 기록</Text>
-            <Text style={styles.metaText}>현재가 {formatCompactNumber(selectedStock.base.price)}</Text>
-            <TextInput
-              value={buyDraft.buyPrice}
-              onChangeText={(value) => onBuyDraftChange({ ...buyDraft, buyPrice: value })}
-              placeholder="매수가 (원)"
-              placeholderTextColor="#94a3b8"
-              style={styles.searchInput}
-              keyboardType="numeric"
-            />
-            <TextInput
-              value={buyDraft.quantity}
-              onChangeText={(value) => onBuyDraftChange({ ...buyDraft, quantity: value })}
-              placeholder="수량 (주)"
-              placeholderTextColor="#94a3b8"
-              style={styles.searchInput}
-              keyboardType="numeric"
-            />
-            <Pressable onPress={onSavePortfolio} style={styles.primaryActionButton}>
-              <Text style={styles.primaryActionButtonText}>
-                {portfolioSaving ? '저장 중...' : selectedStock.portfolioPosition ? '매수 기록 수정' : '매수 기록'}
-              </Text>
-            </Pressable>
-          </View>
-
-          <View style={styles.cardSection}>
-            <Text style={styles.cardTitle}>즐겨찾기 편집</Text>
-            <TextInput
-              value={favoriteDraft.stance}
-              onChangeText={(value) => onFavoriteDraftChange({ ...favoriteDraft, stance: value })}
-              placeholder="관점"
-              placeholderTextColor="#94a3b8"
-              style={styles.searchInput}
-            />
-            <TextInput
-              value={favoriteDraft.note}
-              onChangeText={(value) => onFavoriteDraftChange({ ...favoriteDraft, note: value })}
-              placeholder="메모"
-              placeholderTextColor="#94a3b8"
-              style={[styles.searchInput, styles.noteInput]}
-              multiline
-            />
-            <View style={styles.inlineButtonRow}>
-              <Pressable onPress={onSaveFavorite} style={styles.primaryActionButton}>
-                <Text style={styles.primaryActionButtonText}>
-                  {favoriteSaving ? '저장 중...' : selectedStock.watchItem ? '즐겨찾기 수정' : '즐겨찾기 추가'}
-                </Text>
-              </Pressable>
-              {selectedStock.watchItem?.id ? (
-                <Pressable
-                  onPress={() => onDeleteFavorite(selectedStock.watchItem!.id)}
-                  style={styles.secondaryActionButton}
-                >
-                  <Text style={styles.secondaryActionButtonText}>
-                    {favoriteDeletingId === selectedStock.watchItem.id ? '삭제 중...' : '삭제'}
-                  </Text>
-                </Pressable>
-              ) : null}
-            </View>
-          </View>
-
-          {selectedStock.latestAiLog ? (
-            <View style={styles.cardSection}>
-              <Text style={styles.cardTitle}>최근 AI 로그</Text>
-              <View style={styles.stockInsightCard}>
-                <Text style={styles.logMeta}>
-                  {selectedStock.latestAiLog.date} · {selectedStock.latestAiLog.stage} · {selectedStock.latestAiLog.status}
-                </Text>
-                <Text style={styles.cardNote}>{selectedStock.latestAiLog.rationale}</Text>
-              </View>
-            </View>
-          ) : null}
-        </View>
-      ) : null}
-
+      {/* ── 내 관심종목 ── */}
       <View style={styles.card}>
         <View style={styles.sectionHeaderRow}>
-          <Text style={styles.cardTitle}>내 즐겨찾기</Text>
+          <View style={styles.cardTitleRow}>
+            <Star size={14} color="#f59e0b" strokeWidth={2.5} fill={watchlist.length ? '#f59e0b' : 'none'} />
+            <Text style={styles.cardTitle}>내 관심종목</Text>
+          </View>
           <Text style={styles.metaText}>{watchlist.length}개</Text>
         </View>
         {watchlist.length ? (
           watchlist.map((item) => (
             <View key={`${item.market}-${item.ticker}-${item.id}`} style={styles.favoriteRow}>
               <Pressable
-                onPress={() => {
-                  onStockMarketFilterChange(item.market as StockMarketFilter)
-                  onStockSearchChange(item.ticker)
-                  onSelectedStockKeyChange(`${item.market}:${item.ticker}`)
-                }}
+                onPress={() => onOpenDetail(item.market, item.ticker, item.name)}
                 style={styles.metricLeft}
               >
                 <Text style={styles.metricName}>{item.name}</Text>
                 <Text style={styles.metricState}>{item.market} · {item.ticker} · {item.sector}</Text>
-                <Text style={styles.cardNote}>{item.note}</Text>
+                <Text style={styles.cardNote}>{item.stance}</Text>
               </Pressable>
               <Pressable
                 onPress={() => item.id && onDeleteFavorite(item.id)}
                 style={styles.favoriteDeleteButton}
               >
                 <Text style={styles.favoriteDeleteText}>
-                  {favoriteDeletingId === item.id ? '...' : '삭제'}
+                  {favoriteDeletingId === item.id ? '...' : '해제'}
                 </Text>
               </Pressable>
             </View>
           ))
         ) : (
-          <Text style={styles.metaText}>아직 즐겨찾기가 없어. 종목 탭에서 추가해.</Text>
-        )}
-      </View>
-
-      <View style={styles.primaryCard}>
-        <Text style={styles.cardEyebrow}>AI BRIEF</Text>
-        <Text style={styles.primaryValue}>{aiRecommendation?.generatedDate ?? '-'}</Text>
-        <Text style={styles.cardNote}>{aiRecommendation?.summary ?? '-'}</Text>
-      </View>
-
-      <View style={styles.kpiRow}>
-        <View style={styles.kpiCard}>
-          <Text style={styles.kpiLabel}>전체 로그</Text>
-          <Text style={styles.kpiValue}>{aiRecommendation?.executionLogs.length ?? 0}</Text>
-        </View>
-        <View style={styles.kpiCard}>
-          <Text style={styles.kpiLabel}>추천 로그</Text>
-          <Text style={styles.kpiValue}>{recommendLogs}</Text>
-        </View>
-        <View style={styles.kpiCard}>
-          <Text style={styles.kpiLabel}>성과 로그</Text>
-          <Text style={styles.kpiValue}>{resultLogs}</Text>
-        </View>
-      </View>
-
-      <View style={styles.card}>
-        <View style={styles.filterRow}>
-          {(['ALL', 'RECOMMEND', 'RESULT'] as const).map((filter) => (
-            <Pressable
-              key={filter}
-              onPress={() => onLogFilterChange(filter)}
-              style={[styles.filterChip, logFilter === filter && styles.filterChipActive]}
-            >
-              <Text style={[styles.filterText, logFilter === filter && styles.filterTextActive]}>
-                {filter === 'ALL' ? '전체' : filter === 'RECOMMEND' ? '추천' : '성과'}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
-        <TextInput
-          value={logQuery}
-          onChangeText={onLogQueryChange}
-          placeholder="AI 로그 검색: 종목명, 티커, 상태"
-          placeholderTextColor="#94a3b8"
-          style={styles.searchInput}
-          autoCapitalize="none"
-          autoCorrect={false}
-        />
-        {filteredLogs.length ? (
-          filteredLogs.map((item) => (
-            <View key={`${item.date}-${item.market}-${item.ticker}-${item.stage}`} style={styles.cardSection}>
-              <View style={styles.logTop}>
-                <Text style={styles.logName}>{item.name} ({item.market} {item.ticker})</Text>
-                <Text style={styles.logStage}>{item.stage}</Text>
-              </View>
-              <Text style={styles.logMeta}>{item.date} · {item.status}</Text>
-              <Text style={styles.cardNote}>{item.rationale}</Text>
-              <View style={styles.logBadges}>
-                {item.confidence != null ? <Text style={styles.badge}>신뢰도 {item.confidence}</Text> : null}
-                {item.expectedReturnRate != null ? (
-                  <Text style={styles.badge}>예상 {formatSignedRate(item.expectedReturnRate)}</Text>
-                ) : null}
-                <Text style={[styles.badge, { color: getLogReturnColor(item.realizedReturnRate) }]}>
-                  실현 {formatSignedRate(item.realizedReturnRate)}
-                </Text>
-              </View>
+          <View style={{ alignItems: 'center', gap: 10, paddingVertical: 24 }}>
+            <View style={{
+              width: 56, height: 56, borderRadius: 28,
+              backgroundColor: palette.orangeSoft,
+              alignItems: 'center', justifyContent: 'center',
+            }}>
+              <Sparkles size={26} color={palette.orange} strokeWidth={2.2} />
             </View>
-          ))
-        ) : (
-          <Text style={styles.metaText}>표시할 로그가 없어.</Text>
+            <Text style={{ color: palette.ink, fontSize: 14, fontWeight: '800' }}>
+              아직 관심종목이 없어
+            </Text>
+            <Text style={{ color: palette.inkMuted, fontSize: 12, textAlign: 'center', lineHeight: 18 }}>
+              위에서 종목 검색 후 + 버튼을 한 번 누르면{'\n'}바로 관심종목으로 담겨.
+            </Text>
+            <Pressable
+              onPress={() => onStockSearchChange('')}
+              style={({ pressed }) => [
+                {
+                  marginTop: 6, borderRadius: 999,
+                  backgroundColor: palette.blue,
+                  paddingHorizontal: 18, paddingVertical: 9,
+                  flexDirection: 'row', gap: 6, alignItems: 'center',
+                  opacity: pressed ? 0.7 : 1,
+                },
+              ]}
+            >
+              <Search size={13} color="#ffffff" strokeWidth={2.5} />
+              <Text style={{ color: '#ffffff', fontSize: 12, fontWeight: '800' }}>종목 탐색하기</Text>
+            </Pressable>
+          </View>
         )}
       </View>
     </ScrollView>
