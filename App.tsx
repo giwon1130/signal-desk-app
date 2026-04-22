@@ -8,14 +8,14 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native'
-import { API_BASE_URL, deleteFavoriteItem, loadAllData, saveFavoriteItem, searchStocks } from './src/api'
+import { API_BASE_URL, deleteFavoriteItem, deletePortfolioPosition, loadAllData, saveFavoriteItem, savePortfolioPosition, searchStocks } from './src/api'
 import { styles } from './src/styles'
-import { AITab } from './src/tabs/AITab'
 import { HomeTab } from './src/tabs/HomeTab'
 import { MarketTab } from './src/tabs/MarketTab'
 import { StocksTab } from './src/tabs/StocksTab'
 import type {
   AiRecommendationData,
+  BuyDraft,
   FavoriteDraft,
   HealthResponse,
   HoldingPosition,
@@ -61,6 +61,9 @@ export default function App() {
   const [favoriteDraft, setFavoriteDraft] = useState<FavoriteDraft>({ stance: '', note: '' })
   const [favoriteSaving, setFavoriteSaving] = useState(false)
   const [favoriteDeletingId, setFavoriteDeletingId] = useState('')
+  const [buyDraft, setBuyDraft] = useState<BuyDraft>({ buyPrice: '', quantity: '' })
+  const [portfolioSaving, setPortfolioSaving] = useState(false)
+  const [portfolioDeletingId, setPortfolioDeletingId] = useState('')
 
   const fetchData = useCallback(async () => {
     setError('')
@@ -204,11 +207,20 @@ export default function App() {
   useEffect(() => {
     if (!selectedStock) {
       setFavoriteDraft({ stance: '', note: '' })
+      setBuyDraft({ buyPrice: '', quantity: '' })
       return
     }
     setFavoriteDraft({
       stance: selectedStock.watchItem?.stance ?? selectedStock.base.stance,
       note: selectedStock.watchItem?.note ?? '앱 즐겨찾기',
+    })
+    setBuyDraft({
+      buyPrice: selectedStock.portfolioPosition
+        ? String(selectedStock.portfolioPosition.buyPrice)
+        : String(Math.round(selectedStock.base.price)),
+      quantity: selectedStock.portfolioPosition
+        ? String(selectedStock.portfolioPosition.quantity)
+        : '1',
     })
   }, [selectedStock])
 
@@ -234,6 +246,45 @@ export default function App() {
       setError('즐겨찾기 삭제에 실패했어.')
     } finally {
       setFavoriteDeletingId('')
+    }
+  }, [fetchData])
+
+  const handleSavePortfolio = useCallback(async () => {
+    if (!selectedStock) return
+    const price = parseInt(buyDraft.buyPrice.replace(/,/g, ''), 10)
+    const qty = parseInt(buyDraft.quantity, 10)
+    if (!price || price <= 0 || !qty || qty <= 0) {
+      setError('매수가와 수량을 올바르게 입력해줘.')
+      return
+    }
+    setPortfolioSaving(true)
+    try {
+      await savePortfolioPosition({
+        id: selectedStock.portfolioPosition?.id ?? '',
+        market: selectedStock.base.market,
+        ticker: selectedStock.base.ticker,
+        name: selectedStock.base.name,
+        buyPrice: price,
+        currentPrice: Math.round(selectedStock.base.price),
+        quantity: qty,
+      })
+      await fetchData()
+    } catch {
+      setError('매수 기록 저장에 실패했어.')
+    } finally {
+      setPortfolioSaving(false)
+    }
+  }, [buyDraft, fetchData, selectedStock])
+
+  const handleDeletePortfolio = useCallback(async (id: string) => {
+    setPortfolioDeletingId(id)
+    try {
+      await deletePortfolioPosition(id)
+      await fetchData()
+    } catch {
+      setError('매수 기록 삭제에 실패했어.')
+    } finally {
+      setPortfolioDeletingId('')
     }
   }, [fetchData])
 
@@ -265,7 +316,6 @@ export default function App() {
           { key: 'home', label: '홈' },
           { key: 'market', label: '시장' },
           { key: 'stocks', label: '종목' },
-          { key: 'ai', label: 'AI' },
         ] as Array<{ key: TabKey; label: string }>).map((tab) => (
           <Pressable
             key={tab.key}
@@ -347,19 +397,9 @@ export default function App() {
           favoriteDraft={favoriteDraft}
           favoriteSaving={favoriteSaving}
           favoriteDeletingId={favoriteDeletingId}
-          refreshing={refreshing}
-          onRefresh={onRefresh}
-          onStockSearchChange={setStockSearch}
-          onStockMarketFilterChange={setStockMarketFilter}
-          onSelectedStockKeyChange={setSelectedStockKey}
-          onFavoriteDraftChange={setFavoriteDraft}
-          onSaveFavorite={() => void handleSaveFavorite()}
-          onDeleteFavorite={(id) => void handleDeleteFavorite(id)}
-        />
-      ) : null}
-
-      {!loading && !error && activeTab === 'ai' ? (
-        <AITab
+          buyDraft={buyDraft}
+          portfolioSaving={portfolioSaving}
+          portfolioDeletingId={portfolioDeletingId}
           aiRecommendation={aiRecommendation}
           filteredLogs={filteredLogs}
           logFilter={logFilter}
@@ -368,6 +408,15 @@ export default function App() {
           resultLogs={resultLogs}
           refreshing={refreshing}
           onRefresh={onRefresh}
+          onStockSearchChange={setStockSearch}
+          onStockMarketFilterChange={setStockMarketFilter}
+          onSelectedStockKeyChange={setSelectedStockKey}
+          onFavoriteDraftChange={setFavoriteDraft}
+          onSaveFavorite={() => void handleSaveFavorite()}
+          onDeleteFavorite={(id) => void handleDeleteFavorite(id)}
+          onBuyDraftChange={setBuyDraft}
+          onSavePortfolio={() => void handleSavePortfolio()}
+          onDeletePortfolio={(id) => void handleDeletePortfolio(id)}
           onLogFilterChange={setLogFilter}
           onLogQueryChange={setLogQuery}
         />

@@ -109,3 +109,31 @@ export async function deleteFavoriteItem(id: string): Promise<void> {
     throw new Error('delete-favorite-failed')
   }
 }
+
+export async function savePortfolioPosition(params: {
+  id: string
+  market: string
+  ticker: string
+  name: string
+  buyPrice: number
+  currentPrice: number
+  quantity: number
+}): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/workspace/portfolio`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
+  })
+  if (!response.ok) {
+    throw new Error('save-portfolio-failed')
+  }
+}
+
+export async function deletePortfolioPosition(id: string): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/workspace/portfolio/${id}`, {
+    method: 'DELETE',
+  })
+  if (!response.ok) {
+    throw new Error('delete-portfolio-failed')
+  }
+}

@@ -195,7 +195,12 @@ export type FavoriteDraft = {
   note: string
 }
 
-export type TabKey = 'home' | 'market' | 'stocks' | 'ai'
+export type BuyDraft = {
+  buyPrice: string
+  quantity: string
+}
+
+export type TabKey = 'home' | 'market' | 'stocks'
 export type LogFilter = 'ALL' | 'RECOMMEND' | 'RESULT'
 export type MarketKey = 'KR' | 'US'
 export type PeriodKey = '1D' | '1M' | '1Y'

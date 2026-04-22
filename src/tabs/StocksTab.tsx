@@ -1,13 +1,27 @@
 import { Pressable, RefreshControl, ScrollView, Text, TextInput, View } from 'react-native'
 import { styles } from '../styles'
 import type {
+  AiRecommendationData,
+  BuyDraft,
   FavoriteDraft,
+  LogFilter,
+  RecommendationExecutionLog,
   SelectedStockSnapshot,
   StockMarketFilter,
   StockSearchResult,
   WatchItem,
 } from '../types'
-import { formatCompactNumber, formatSignedRate } from '../utils'
+import { formatCompactNumber, formatSignedRate, getLogReturnColor } from '../utils'
+
+type SellSignalLevel = 'STRONG_SELL' | 'CAUTION' | 'TAKE_PROFIT' | 'HOLD'
+
+function classifySellSignal(profitRate: number): { level: SellSignalLevel; emoji: string; label: string } {
+  if (profitRate <= -8.0) return { level: 'STRONG_SELL', emoji: '🔴', label: `손실 ${formatSignedRate(profitRate)} — 손절 기준 초과` }
+  if (profitRate <= -5.0) return { level: 'CAUTION', emoji: '🟡', label: `손실 ${formatSignedRate(profitRate)} — 손절 검토 필요` }
+  if (profitRate >= 10.0) return { level: 'TAKE_PROFIT', emoji: '💰', label: `수익 ${formatSignedRate(profitRate)} — 목표 수익 달성` }
+  if (profitRate >= 5.0) return { level: 'TAKE_PROFIT', emoji: '💰', label: `수익 ${formatSignedRate(profitRate)} — 익절 검토 구간` }
+  return { level: 'HOLD', emoji: '🟢', label: `이상 없음 (${formatSignedRate(profitRate)})` }
+}
 
 type Props = {
   watchlist: WatchItem[]
@@ -20,6 +34,15 @@ type Props = {
   favoriteDraft: FavoriteDraft
   favoriteSaving: boolean
   favoriteDeletingId: string
+  buyDraft: BuyDraft
+  portfolioSaving: boolean
+  portfolioDeletingId: string
+  aiRecommendation: AiRecommendationData | null
+  filteredLogs: RecommendationExecutionLog[]
+  logFilter: LogFilter
+  logQuery: string
+  recommendLogs: number
+  resultLogs: number
   refreshing: boolean
   onRefresh: () => Promise<void>
   onStockSearchChange: (value: string) => void
@@ -28,6 +51,11 @@ type Props = {
   onFavoriteDraftChange: (draft: FavoriteDraft) => void
   onSaveFavorite: () => void
   onDeleteFavorite: (id: string) => void
+  onBuyDraftChange: (draft: BuyDraft) => void
+  onSavePortfolio: () => void
+  onDeletePortfolio: (id: string) => void
+  onLogFilterChange: (filter: LogFilter) => void
+  onLogQueryChange: (value: string) => void
 }
 
 export function StocksTab({
@@ -41,6 +69,15 @@ export function StocksTab({
   favoriteDraft,
   favoriteSaving,
   favoriteDeletingId,
+  buyDraft,
+  portfolioSaving,
+  portfolioDeletingId,
+  aiRecommendation,
+  filteredLogs,
+  logFilter,
+  logQuery,
+  recommendLogs,
+  resultLogs,
   refreshing,
   onRefresh,
   onStockSearchChange,
@@ -49,6 +86,11 @@ export function StocksTab({
   onFavoriteDraftChange,
   onSaveFavorite,
   onDeleteFavorite,
+  onBuyDraftChange,
+  onSavePortfolio,
+  onDeletePortfolio,
+  onLogFilterChange,
+  onLogQueryChange,
 }: Props) {
   return (
     <ScrollView
@@ -165,6 +207,54 @@ export function StocksTab({
             </View>
           </View>
 
+          {selectedStock.portfolioPosition ? (() => {
+            const sig = classifySellSignal(selectedStock.portfolioPosition.profitRate)
+            const pos = selectedStock.portfolioPosition
+            return (
+              <View style={[styles.cardSection, { borderLeftWidth: 3, borderLeftColor: sig.level === 'STRONG_SELL' ? '#dc2626' : sig.level === 'CAUTION' ? '#d97706' : sig.level === 'TAKE_PROFIT' ? '#16a34a' : '#2563eb', paddingLeft: 10 }]}>
+                <Text style={styles.cardTitle}>매도 분석</Text>
+                <Text style={[styles.quickStatValue, { marginBottom: 4 }]}>{sig.emoji} {sig.label}</Text>
+                <Text style={styles.metaText}>
+                  매수가 {formatCompactNumber(pos.buyPrice)} → 현재 {formatCompactNumber(pos.currentPrice)} · {pos.quantity}주 · 평가손익 {pos.profitAmount >= 0 ? '+' : ''}{formatCompactNumber(pos.profitAmount)}원
+                </Text>
+                <Pressable
+                  onPress={() => onDeletePortfolio(pos.id)}
+                  style={[styles.secondaryActionButton, { marginTop: 8, alignSelf: 'flex-start' }]}
+                >
+                  <Text style={styles.secondaryActionButtonText}>
+                    {portfolioDeletingId === pos.id ? '삭제 중...' : '기록 삭제'}
+                  </Text>
+                </Pressable>
+              </View>
+            )
+          })() : null}
+
+          <View style={styles.cardSection}>
+            <Text style={styles.cardTitle}>매수 기록</Text>
+            <Text style={styles.metaText}>현재가 {formatCompactNumber(selectedStock.base.price)}</Text>
+            <TextInput
+              value={buyDraft.buyPrice}
+              onChangeText={(value) => onBuyDraftChange({ ...buyDraft, buyPrice: value })}
+              placeholder="매수가 (원)"
+              placeholderTextColor="#94a3b8"
+              style={styles.searchInput}
+              keyboardType="numeric"
+            />
+            <TextInput
+              value={buyDraft.quantity}
+              onChangeText={(value) => onBuyDraftChange({ ...buyDraft, quantity: value })}
+              placeholder="수량 (주)"
+              placeholderTextColor="#94a3b8"
+              style={styles.searchInput}
+              keyboardType="numeric"
+            />
+            <Pressable onPress={onSavePortfolio} style={styles.primaryActionButton}>
+              <Text style={styles.primaryActionButtonText}>
+                {portfolioSaving ? '저장 중...' : selectedStock.portfolioPosition ? '매수 기록 수정' : '매수 기록'}
+              </Text>
+            </Pressable>
+          </View>
+
           <View style={styles.cardSection}>
             <Text style={styles.cardTitle}>즐겨찾기 편집</Text>
             <TextInput
@@ -247,6 +337,75 @@ export function StocksTab({
           ))
         ) : (
           <Text style={styles.metaText}>아직 즐겨찾기가 없어. 종목 탭에서 추가해.</Text>
+        )}
+      </View>
+
+      <View style={styles.primaryCard}>
+        <Text style={styles.cardEyebrow}>AI BRIEF</Text>
+        <Text style={styles.primaryValue}>{aiRecommendation?.generatedDate ?? '-'}</Text>
+        <Text style={styles.cardNote}>{aiRecommendation?.summary ?? '-'}</Text>
+      </View>
+
+      <View style={styles.kpiRow}>
+        <View style={styles.kpiCard}>
+          <Text style={styles.kpiLabel}>전체 로그</Text>
+          <Text style={styles.kpiValue}>{aiRecommendation?.executionLogs.length ?? 0}</Text>
+        </View>
+        <View style={styles.kpiCard}>
+          <Text style={styles.kpiLabel}>추천 로그</Text>
+          <Text style={styles.kpiValue}>{recommendLogs}</Text>
+        </View>
+        <View style={styles.kpiCard}>
+          <Text style={styles.kpiLabel}>성과 로그</Text>
+          <Text style={styles.kpiValue}>{resultLogs}</Text>
+        </View>
+      </View>
+
+      <View style={styles.card}>
+        <View style={styles.filterRow}>
+          {(['ALL', 'RECOMMEND', 'RESULT'] as const).map((filter) => (
+            <Pressable
+              key={filter}
+              onPress={() => onLogFilterChange(filter)}
+              style={[styles.filterChip, logFilter === filter && styles.filterChipActive]}
+            >
+              <Text style={[styles.filterText, logFilter === filter && styles.filterTextActive]}>
+                {filter === 'ALL' ? '전체' : filter === 'RECOMMEND' ? '추천' : '성과'}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+        <TextInput
+          value={logQuery}
+          onChangeText={onLogQueryChange}
+          placeholder="AI 로그 검색: 종목명, 티커, 상태"
+          placeholderTextColor="#94a3b8"
+          style={styles.searchInput}
+          autoCapitalize="none"
+          autoCorrect={false}
+        />
+        {filteredLogs.length ? (
+          filteredLogs.map((item) => (
+            <View key={`${item.date}-${item.market}-${item.ticker}-${item.stage}`} style={styles.cardSection}>
+              <View style={styles.logTop}>
+                <Text style={styles.logName}>{item.name} ({item.market} {item.ticker})</Text>
+                <Text style={styles.logStage}>{item.stage}</Text>
+              </View>
+              <Text style={styles.logMeta}>{item.date} · {item.status}</Text>
+              <Text style={styles.cardNote}>{item.rationale}</Text>
+              <View style={styles.logBadges}>
+                {item.confidence != null ? <Text style={styles.badge}>신뢰도 {item.confidence}</Text> : null}
+                {item.expectedReturnRate != null ? (
+                  <Text style={styles.badge}>예상 {formatSignedRate(item.expectedReturnRate)}</Text>
+                ) : null}
+                <Text style={[styles.badge, { color: getLogReturnColor(item.realizedReturnRate) }]}>
+                  실현 {formatSignedRate(item.realizedReturnRate)}
+                </Text>
+              </View>
+            </View>
+          ))
+        ) : (
+          <Text style={styles.metaText}>표시할 로그가 없어.</Text>
         )}
       </View>
     </ScrollView>
