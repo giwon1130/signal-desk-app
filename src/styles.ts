@@ -260,6 +260,31 @@ export function makeStyles(C: Palette) {
     briefingBullet:    { color: C.teal, fontSize: 14, fontWeight: '800', marginTop: 1 },
     briefingItem:      { flex: 1, color: C.inkSub, fontSize: 13, lineHeight: 20 },
 
+    briefingSlotBadge: {
+      alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6,
+      backgroundColor: C.blueSoft,
+    },
+    briefingSlotBadgeText: { color: C.blue, fontSize: 10, fontWeight: '900', letterSpacing: 0.6 },
+    briefingNarrative: { color: C.ink, fontSize: 15, fontWeight: '700', lineHeight: 22, marginTop: 8 },
+    briefingContextRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 },
+    briefingContextChip: {
+      flexDirection: 'row', alignItems: 'center', gap: 4,
+      paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6,
+      backgroundColor: C.surfaceAlt, borderWidth: 1, borderColor: C.border,
+    },
+    briefingContextChipLabel: { color: C.inkMuted, fontSize: 10, fontWeight: '700' },
+    briefingContextChipValue: { color: C.ink, fontSize: 11, fontWeight: '800', ...num },
+    briefingActionList: { gap: 8, marginTop: 12 },
+    briefingActionRow: {
+      flexDirection: 'row', gap: 10, padding: 10, borderRadius: 8,
+      backgroundColor: C.surfaceAlt,
+    },
+    briefingActionBar: { width: 3, borderRadius: 2, alignSelf: 'stretch' },
+    briefingActionBody: { flex: 1, gap: 2 },
+    briefingActionTitle: { color: C.ink, fontSize: 13, fontWeight: '800' },
+    briefingActionDetail: { color: C.inkSub, fontSize: 12, fontWeight: '500', lineHeight: 17 },
+    briefingActionMeta: { color: C.inkMuted, fontSize: 10, fontWeight: '700', ...num, marginTop: 2 },
+
     // ── Filter Chips ─────────────────────────────────────────────────────────────
     filterRow:        { flexDirection: 'row', gap: 6, marginTop: 4, marginBottom: 4, flexWrap: 'wrap' },
     filterChip: {

@@ -2,10 +2,9 @@ import { Linking, Pressable, RefreshControl, ScrollView, Text, View } from 'reac
 import {
   Activity,
   Brain,
-  CheckCircle,
   Clock,
   Newspaper,
-  Sunrise,
+  Sparkles,
   Target,
   TrendingDown,
   TrendingUp,
@@ -35,6 +34,25 @@ type Props = {
 
 const toneColor = (tone: string) =>
   tone === '긍정' ? '#dc2626' : tone === '부정' ? '#2563eb' : '#94a3b8'
+
+const slotLabel = (slot: string | undefined) => {
+  switch (slot) {
+    case 'PRE_MARKET': return '장 전'
+    case 'INTRADAY':   return '장 중'
+    case 'POST_MARKET': return '마감 후'
+    case 'WEEKEND':    return '주말'
+    case 'HOLIDAY':    return '휴장'
+    default:           return '오늘'
+  }
+}
+
+const priorityColor = (priority: string) => {
+  switch (priority) {
+    case 'high':   return '#dc2626'
+    case 'medium': return '#f59e0b'
+    default:       return '#94a3b8'
+  }
+}
 
 function SentimentCard({ sentiment }: { sentiment: NewsSentiment }) {
   const styles = useStyles()
@@ -164,25 +182,71 @@ export function TodayTab({
         </View>
       ) : null}
 
-      {/* ── 장전 브리핑 ── */}
+      {/* ── 개인화 브리핑 ── */}
       {summary?.briefing ? (
         <View style={styles.card}>
           <View style={styles.sectionHeaderRow}>
             <View style={styles.cardTitleRow}>
-              <Sunrise size={14} color="#f59e0b" strokeWidth={2.5} />
-              <Text style={styles.cardTitle}>장전 브리핑</Text>
+              <Sparkles size={14} color={palette.blue} strokeWidth={2.5} />
+              <Text style={styles.cardTitle}>오늘의 브리핑</Text>
             </View>
-            <Text style={styles.metaText}>{summary.briefing.preMarket.length}개 포인트</Text>
+            <View style={styles.briefingSlotBadge}>
+              <Text style={styles.briefingSlotBadgeText}>{slotLabel(summary.briefing.slot)}</Text>
+            </View>
           </View>
-          <Text style={styles.cardNote}>{summary.briefing.headline}</Text>
-          <View style={styles.briefingList}>
-            {summary.briefing.preMarket.slice(0, 4).map((item) => (
-              <View key={item} style={styles.briefingBulletRow}>
-                <CheckCircle size={13} color="#0d9488" strokeWidth={2.5} style={{ marginTop: 3 }} />
-                <Text style={styles.briefingItem}>{item}</Text>
+
+          <Text style={styles.briefingNarrative}>{summary.briefing.narrative || summary.briefing.headline}</Text>
+
+          {summary.briefing.context ? (
+            <View style={styles.briefingContextRow}>
+              {summary.briefing.context.holdingPnlLabel ? (
+                <View style={styles.briefingContextChip}>
+                  <Text style={styles.briefingContextChipLabel}>보유</Text>
+                  <Text style={[
+                    styles.briefingContextChipValue,
+                    (summary.briefing.context.holdingPnlRate ?? 0) >= 0
+                      ? { color: '#dc2626' }
+                      : { color: '#2563eb' },
+                  ]}>
+                    {summary.briefing.context.holdingPnlLabel}
+                  </Text>
+                </View>
+              ) : null}
+              <View style={styles.briefingContextChip}>
+                <Text style={styles.briefingContextChipLabel}>관심 신호</Text>
+                <Text style={styles.briefingContextChipValue}>{summary.briefing.context.watchlistAlertCount}</Text>
               </View>
-            ))}
-          </View>
+              <View style={styles.briefingContextChip}>
+                <Text style={styles.briefingContextChipLabel}>분위기</Text>
+                <Text style={styles.briefingContextChipValue}>{summary.briefing.context.marketMood}</Text>
+              </View>
+              {summary.briefing.context.keyEvent ? (
+                <View style={styles.briefingContextChip}>
+                  <Text style={styles.briefingContextChipLabel}>이벤트</Text>
+                  <Text style={styles.briefingContextChipValue}>{summary.briefing.context.keyEvent}</Text>
+                </View>
+              ) : null}
+            </View>
+          ) : null}
+
+          {summary.briefing.actionItems?.length ? (
+            <View style={styles.briefingActionList}>
+              {summary.briefing.actionItems.map((action, idx) => (
+                <View key={`${action.ticker ?? 'noticker'}-${idx}`} style={styles.briefingActionRow}>
+                  <View style={[styles.briefingActionBar, { backgroundColor: priorityColor(action.priority) }]} />
+                  <View style={styles.briefingActionBody}>
+                    <Text style={styles.briefingActionTitle}>{action.title}</Text>
+                    <Text style={styles.briefingActionDetail} numberOfLines={2}>{action.detail}</Text>
+                    {action.ticker ? (
+                      <Text style={styles.briefingActionMeta}>
+                        {action.market ?? ''}{action.market && action.ticker ? ' · ' : ''}{action.ticker}
+                      </Text>
+                    ) : null}
+                  </View>
+                </View>
+              ))}
+            </View>
+          ) : null}
         </View>
       ) : null}
 

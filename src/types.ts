@@ -171,11 +171,36 @@ export type MarketSummaryData = {
   marketSessions: MarketSessionStatus[]
   newsSentiments?: NewsSentiment[]
   tradingDayStatus?: TradingDayStatus
-  briefing?: {
-    headline: string
-    preMarket: string[]
-    afterMarket: string[]
-  }
+  briefing?: DailyBriefing
+}
+
+export type BriefingSlot = 'PRE_MARKET' | 'INTRADAY' | 'POST_MARKET' | 'WEEKEND' | 'HOLIDAY'
+
+export type BriefingContext = {
+  holdingPnlLabel: string | null
+  holdingPnlRate: number | null
+  watchlistAlertCount: number
+  marketMood: string
+  keyEvent: string | null
+}
+
+export type BriefingAction = {
+  priority: 'high' | 'medium' | 'low'
+  category: string
+  title: string
+  detail: string
+  ticker: string | null
+  market: string | null
+}
+
+export type DailyBriefing = {
+  headline: string
+  preMarket: string[]
+  afterMarket: string[]
+  narrative: string
+  slot: BriefingSlot
+  context: BriefingContext | null
+  actionItems: BriefingAction[]
 }
 
 export type AiRecommendationData = {
