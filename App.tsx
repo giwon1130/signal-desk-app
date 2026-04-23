@@ -13,6 +13,7 @@ import {
   API_BASE_URL,
   deleteFavoriteItem,
   deletePortfolioPosition,
+  fetchDailyFortune,
   loadAllData,
   quickAddWatchItem,
   savePortfolioPosition,
@@ -45,6 +46,7 @@ import { usePushDeepLink } from './src/hooks/usePushDeepLink'
 import type {
   AiRecommendationData,
   AlertHistoryItem,
+  DailyFortune,
   HealthResponse,
   HoldingPosition,
   LogFilter,
@@ -121,6 +123,7 @@ function AppShell() {
   const [watchlist, setWatchlist] = useState<WatchItem[]>([])
   const [portfolio, setPortfolio] = useState<PortfolioSummary | null>(null)
   const [alertHistory, setAlertHistory] = useState<AlertHistoryItem[]>([])
+  const [fortune, setFortune] = useState<DailyFortune | null>(null)
   const [loading, setLoading] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState('')
@@ -163,6 +166,7 @@ function AppShell() {
       if (token) {
         void fetchAlertHistory(token, 10).then(setAlertHistory)
       }
+      void fetchDailyFortune().then(setFortune)
     } catch {
       setApiHealth(null)
       setError(`서버에 연결할 수 없어요.\n${API_BASE_URL}`)
@@ -506,6 +510,7 @@ function AppShell() {
           aiRecommendation={aiRecommendation}
           positions={portfolio?.positions ?? []}
           alertHistory={alertHistory}
+          fortune={fortune}
           onOpenDetail={handleOpenDetail}
           refreshing={refreshing}
           onRefresh={onRefresh}

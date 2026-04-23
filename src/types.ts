@@ -241,6 +241,25 @@ export type ApiResponse<T> = {
   data: T
 }
 
+export type DailyFortune = {
+  date: string              // YYYY-MM-DD
+  overallScore: number      // 0~100
+  overallLabel: string      // 대길 / 길 / 평 / 주의 / 흉
+  overallTone: 'good' | 'neutral' | 'bad'
+  headline: string
+  message: string
+  wealthScore: number
+  tradeScore: number
+  patienceScore: number
+  luckyHour: string
+  luckyColor: string
+  luckyNumber: number
+  luckyTheme: string
+  caution: string
+  mantra: string
+  disclaimer: string
+}
+
 export type AlertHistoryItem = {
   market: string
   ticker: string
