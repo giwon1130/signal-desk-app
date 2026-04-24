@@ -63,10 +63,9 @@ if ! $build; then
   exit 0
 fi
 
+# 연결 확인: xctrace 출력이 타이밍에 따라 비어있을 때가 있어서 참고용 경고만.
 if ! xcrun xctrace list devices 2>&1 | grep -q "$device_udid"; then
-  echo "⚠️  기기 UDID $device_udid 가 연결되지 않은 것 같아." >&2
-  echo "    핸드폰 연결 후 다시 실행하거나, 머지만 필요했으면 --no-build 로 호출해." >&2
-  exit 2
+  echo "⚠️  UDID $device_udid 가 xctrace 목록에 안 보여. 연결 체크해두고 계속 진행할게." >&2
 fi
 
 echo "▶ 실기 Release 빌드/설치 ($device_udid)"
