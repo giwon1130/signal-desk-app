@@ -18,6 +18,36 @@ export function getMarketStatusTone(status?: string) {
   return '#475569'
 }
 
+/**
+ * 서버가 내려주는 raw enum (`KR_REGULAR_OPEN`, `US_PRE_MARKET` 등)을
+ * 사용자에게 보여줄 한국어 라벨로 변환.
+ * 매핑 없는 값은 관용적으로 lowercase → 공백 치환 → title-case 정도만 해서 그대로 노출.
+ */
+export function formatMarketStatus(status?: string): string {
+  if (!status) return '-'
+  const map: Record<string, string> = {
+    KR_PRE_MARKET:       '한국 장 전',
+    KR_REGULAR_OPEN:     '한국 정규장',
+    KR_REGULAR_CLOSE:    '한국 마감',
+    KR_AFTER_MARKET:     '한국 장 후',
+    KR_CLOSED:           '한국 휴장',
+    US_PRE_MARKET:       '미국 프리마켓',
+    US_REGULAR_OPEN:     '미국 정규장',
+    US_REGULAR_CLOSE:    '미국 마감',
+    US_AFTER_MARKET:     '미국 애프터마켓',
+    US_CLOSED:           '미국 휴장',
+    ALL_OPEN:            '전 시장 개장',
+    ALL_CLOSED:          '전 시장 휴장',
+  }
+  if (map[status]) return map[status]
+  // unknown enum fallback — "KR_SOMETHING_NEW" → "Kr Something New"
+  return status
+    .toLowerCase()
+    .split('_')
+    .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : w))
+    .join(' ')
+}
+
 export function getLogReturnColor(value?: number | null) {
   if (value == null) return '#64748b'
   return value >= 0 ? '#dc2626' : '#2563eb'
