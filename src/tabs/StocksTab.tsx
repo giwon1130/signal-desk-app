@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
-import { Pressable, RefreshControl, ScrollView, Text, TextInput, View } from 'react-native'
-import { Plus, Radio, Search, Sparkles, Star, X } from 'lucide-react-native'
+import { Alert, Pressable, RefreshControl, ScrollView, Text, TextInput, View } from 'react-native'
+import { Plus, Radio, Search, Sparkles, Star, Trash2, X } from 'lucide-react-native'
 import { useStyles } from '../styles'
 import { marketColor, useTheme } from '../theme'
 import type {
@@ -18,6 +18,7 @@ type Props = {
   stockResults: StockSearchResult[]
   stockSearchLoading: boolean
   favoriteDeletingId: string
+  bulkDeleting: boolean
   refreshing: boolean
   onRefresh: () => Promise<void>
   onStockSearchChange: (value: string) => void
@@ -25,6 +26,7 @@ type Props = {
   onOpenDetail: (market: string, ticker: string, name?: string) => void
   onQuickAddWatch: (stock: StockSearchResult) => Promise<void>
   onDeleteFavorite: (id: string) => void
+  onDeleteAllFavorites: () => void
 }
 
 export function StocksTab({
@@ -34,6 +36,7 @@ export function StocksTab({
   stockResults,
   stockSearchLoading,
   favoriteDeletingId,
+  bulkDeleting,
   refreshing,
   onRefresh,
   onStockSearchChange,
@@ -41,6 +44,7 @@ export function StocksTab({
   onOpenDetail,
   onQuickAddWatch,
   onDeleteFavorite,
+  onDeleteAllFavorites,
 }: Props) {
   const styles = useStyles()
   const { palette } = useTheme()
@@ -189,7 +193,44 @@ export function StocksTab({
             <Star size={14} color="#f59e0b" strokeWidth={2.5} fill={watchlist.length ? '#f59e0b' : 'none'} />
             <Text style={styles.cardTitle}>내 관심종목</Text>
           </View>
-          <Text style={styles.metaText}>{watchlist.length}개</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Text style={styles.metaText}>{watchlist.length}개</Text>
+            {watchlist.length >= 2 ? (
+              <Pressable
+                onPress={() => {
+                  if (bulkDeleting) return
+                  Alert.alert(
+                    '관심종목 전체 해제',
+                    `${watchlist.length}개 종목을 전부 해제할까? 되돌릴 수 없어.`,
+                    [
+                      { text: '취소', style: 'cancel' },
+                      {
+                        text: '전체 해제',
+                        style: 'destructive',
+                        onPress: () => onDeleteAllFavorites(),
+                      },
+                    ],
+                  )
+                }}
+                hitSlop={6}
+                style={({ pressed }) => [
+                  {
+                    flexDirection: 'row', alignItems: 'center', gap: 4,
+                    paddingHorizontal: 10, paddingVertical: 6,
+                    borderRadius: 999,
+                    backgroundColor: pressed ? palette.redSoft : 'transparent',
+                    borderWidth: 1, borderColor: palette.red,
+                    opacity: bulkDeleting ? 0.5 : 1,
+                  },
+                ]}
+              >
+                <Trash2 size={11} color={palette.red} strokeWidth={2.5} />
+                <Text style={{ color: palette.red, fontSize: 11, fontWeight: '800' }}>
+                  {bulkDeleting ? '해제 중...' : '전체 해제'}
+                </Text>
+              </Pressable>
+            ) : null}
+          </View>
         </View>
         {watchlist.length ? (
           watchlist.map((item) => (
