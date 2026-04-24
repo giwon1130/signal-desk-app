@@ -71,10 +71,20 @@ function GoogleWebButton({ loading, onAuth, onError }: Props) {
   const hostRef = useRef<HTMLDivElement | null>(null)
   const [ready, setReady] = useState(false)
 
+  // ⚠️ 부모(AuthScreen)에서 onAuth/onError 는 매 렌더마다 새 함수로 만들어져 내려온다.
+  //   예전엔 이 함수들을 useEffect deps 에 그대로 넣어놔서, 사용자가 이메일/비번을
+  //   한 글자 칠 때마다 GIS 가 재-initialize + renderButton 을 반복 호출 → 같은 호스트에
+  //   iframe 이 쌓이거나 상태가 꼬여 버튼이 먹통이 되던 "구글 로그인 고장" 의 원인.
+  //   콜백은 ref 에 담아두고 init/렌더는 테마/클라이언트ID 변화에만 반응하도록 한다.
+  const onAuthRef = useRef(onAuth)
+  const onErrorRef = useRef(onError)
+  useEffect(() => { onAuthRef.current = onAuth }, [onAuth])
+  useEffect(() => { onErrorRef.current = onError }, [onError])
+
   useEffect(() => {
     const clientId = extra.googleClientIdWeb
     if (!clientId) {
-      onError?.('Google webClientId 가 설정돼 있지 않아.')
+      onErrorRef.current?.('Google webClientId 가 설정돼 있지 않아.')
       return
     }
     let disposed = false
@@ -89,18 +99,21 @@ function GoogleWebButton({ loading, onAuth, onError }: Props) {
           callback: async (resp) => {
             const credential = resp.credential
             if (!credential) {
-              onError?.('Google 응답에 id_token 이 없어.')
+              onErrorRef.current?.('Google 응답에 id_token 이 없어.')
               return
             }
             try {
               const user = await apiGoogleOAuth(credential)
-              onAuth(user)
+              onAuthRef.current(user)
             } catch (e) {
-              onError?.(e instanceof Error ? e.message : 'Google 로그인에 실패했어.')
+              onErrorRef.current?.(e instanceof Error ? e.message : 'Google 로그인에 실패했어.')
             }
           },
           auto_select: false,
         })
+        // renderButton 은 호스트를 덮어쓰지 않고 자식으로 iframe 을 "추가" 한다.
+        // 테마 변경 등으로 재호출될 때 버튼이 쌓이지 않도록 명시적으로 비워준다.
+        hostRef.current.innerHTML = ''
         gid.renderButton(hostRef.current, {
           theme: palette.scheme === 'dark' ? 'filled_black' : 'outline',
           size: 'large',
@@ -112,10 +125,10 @@ function GoogleWebButton({ loading, onAuth, onError }: Props) {
         setReady(true)
       })
       .catch((e) => {
-        onError?.(e instanceof Error ? e.message : 'Google Identity Services 로드 실패')
+        onErrorRef.current?.(e instanceof Error ? e.message : 'Google Identity Services 로드 실패')
       })
     return () => { disposed = true }
-  }, [onAuth, onError, palette.scheme])
+  }, [palette.scheme])
 
   // RN 의 View 로 감싸면 GIS iframe 버튼의 너비/높이 계산이 이상해질 때가 있어서
   // 루트를 DOM div 로 직접 둠 (웹 전용 컴포넌트라 안전).
