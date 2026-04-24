@@ -644,6 +644,8 @@ function AppShell() {
           onLogout={() => void handleLogout()}
           onOpenReminder={() => { void hapticLight(); setReminderOpen(true) }}
           sections={sections}
+          summary={summary}
+          fortune={fortune}
           watchlist={watchlist}
           portfolio={portfolio}
           aiRecommendation={aiRecommendation}

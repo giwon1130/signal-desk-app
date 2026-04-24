@@ -17,6 +17,7 @@ import type { StockMarketFilter, StockSearchResult, WatchItem } from '../types'
 import { marketColor, useTheme, type Palette } from '../theme'
 import { formatCompactNumber, formatSignedRate } from '../utils'
 import { useLivePrices } from '../hooks/useLivePrices'
+import { StanceTag } from './shared'
 
 /**
  * 웹 전용 종목 페이지 — Phase 3.
@@ -59,6 +60,7 @@ type Row = {
   ticker: string
   name: string
   sector: string
+  stance: string
   price: number
   changeRate: number
   isInWatch: boolean
@@ -105,6 +107,7 @@ export function StocksPage(props: Props) {
           ticker: w.ticker,
           name: w.name,
           sector: w.sector,
+          stance: w.stance,
           price: lp?.price ?? w.price,
           changeRate: lp?.changeRate ?? w.changeRate,
           isInWatch: true,
@@ -120,6 +123,7 @@ export function StocksPage(props: Props) {
         ticker: s.ticker,
         name: s.name,
         sector: s.sector,
+        stance: s.stance,
         price: lp?.price ?? s.price,
         changeRate: lp?.changeRate ?? s.changeRate,
         isInWatch: !!watch,
@@ -393,8 +397,8 @@ export function StocksPage(props: Props) {
                   />
                 </Pressable>
 
-                {/* 종목명 */}
-                <View style={{ flex: 2.4, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                {/* 종목명 + stance */}
+                <View style={{ flex: 2.4, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                   <Text
                     numberOfLines={1}
                     style={{ color: palette.ink, fontSize: 13, fontWeight: '800', flexShrink: 1 }}
@@ -402,6 +406,7 @@ export function StocksPage(props: Props) {
                     {row.name}
                   </Text>
                   {isLive ? <Radio size={9} color="#10b981" strokeWidth={3} /> : null}
+                  {row.stance ? <StanceTag stance={row.stance} palette={palette} size="xs" /> : null}
                 </View>
 
                 {/* 티커 */}

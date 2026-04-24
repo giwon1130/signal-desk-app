@@ -14,6 +14,7 @@ import {
 import type {
   AiRecommendationData,
   AlertHistoryItem,
+  AlternativeSignal,
   HoldingPosition,
   MarketSummaryData,
   NewsSentiment,
@@ -23,6 +24,8 @@ import type {
 } from '../types'
 import { marketColor, useTheme, type Palette } from '../theme'
 import { formatCompactNumber, formatSignedRate } from '../utils'
+import { Sparkline, StanceTag } from './shared'
+import { BarChart3, Layers } from 'lucide-react-native'
 
 /**
  * 웹 전용 홈 대시보드 — Phase 2.
@@ -74,13 +77,24 @@ export function HomeDashboard(props: Props) {
         <WatchAlertsWidget summary={props.summary} palette={palette} onOpenDetail={props.onOpenDetail} />
       </View>
 
+      {/* Sector + AltSignals 행 */}
+      <View style={[{ gap: 14 }, webGrid('minmax(0, 1.6fr) minmax(0, 1fr)')]}>
+        <SectorPerformanceWidget
+          positions={props.positions}
+          watchlist={props.watchlist}
+          palette={palette}
+          onOpenDetail={props.onOpenDetail}
+        />
+        <AltSignalsWidget summary={props.summary} palette={palette} />
+      </View>
+
       <PicksRow
         aiRecommendation={props.aiRecommendation}
         palette={palette}
         onOpenDetail={props.onOpenDetail}
       />
 
-      <View style={[{ gap: 14 }, webGrid('minmax(0, 2fr) minmax(0, 1fr)')]}>
+      <View style={[{ gap: 14 }, webGrid('minmax(0, 1.6fr) minmax(0, 1fr)')]}>
         <TopMoversWidget
           topMovers={props.topMovers}
           palette={palette}
@@ -500,7 +514,9 @@ function PicksRow({
   palette: Palette
   onOpenDetail: (m: string, t: string, n?: string) => void
 }) {
-  const logs = aiRecommendation?.executionLogs?.filter((l) => l.stage?.toUpperCase().includes('RECOMMEND')).slice(0, 10) ?? []
+  const logs = aiRecommendation?.executionLogs?.filter((l) => l.stage?.toUpperCase().includes('RECOMMEND')).slice(0, 12) ?? []
+  const metrics = aiRecommendation?.metrics
+  const winRate = metrics?.hitRate != null ? Math.round(metrics.hitRate * 100) : null
 
   return (
     <Widget
@@ -508,14 +524,25 @@ function PicksRow({
       title="오늘의 AI 추천"
       icon={<Brain size={13} color={palette.purple} strokeWidth={2.5} />}
       meta={
-        aiRecommendation?.summary ? (
-          <Text
-            numberOfLines={1}
-            style={{ color: palette.inkMuted, fontSize: 11, fontWeight: '600', maxWidth: 400 }}
-          >
-            {aiRecommendation.summary}
-          </Text>
-        ) : null
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, maxWidth: 520 }}>
+          {winRate != null ? (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: palette.purpleSoft, borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2 }}>
+              <Text style={{ color: palette.purple, fontSize: 10, fontWeight: '800', letterSpacing: 0.3 }}>
+                승률 {winRate}%
+              </Text>
+            </View>
+          ) : null}
+          {metrics?.averageReturnRate != null ? (
+            <Text style={{ color: metrics.averageReturnRate >= 0 ? palette.up : palette.down, fontSize: 10, fontWeight: '800' }}>
+              평균 {formatSignedRate(metrics.averageReturnRate)}
+            </Text>
+          ) : null}
+          {aiRecommendation?.summary ? (
+            <Text numberOfLines={1} style={{ color: palette.inkMuted, fontSize: 11, fontWeight: '600', flexShrink: 1 }}>
+              {aiRecommendation.summary}
+            </Text>
+          ) : null}
+        </View>
       }
     >
       {logs.length === 0 ? (
@@ -524,11 +551,7 @@ function PicksRow({
           <Text style={{ color: palette.inkMuted, fontSize: 12 }}>오늘 AI 추천이 아직 없어</Text>
         </View>
       ) : (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ gap: 10, paddingVertical: 2 }}
-        >
+        <View style={[{ gap: 10 }, webGrid('repeat(auto-fill, minmax(220px, 1fr))')]}>
           {logs.map((log) => {
             const exp = log.expectedReturnRate
             return (
@@ -538,7 +561,6 @@ function PicksRow({
                 style={(state) => {
                   const hovered = (state as { hovered?: boolean }).hovered
                   return [{
-                    width: 220,
                     paddingHorizontal: 12,
                     paddingVertical: 11,
                     borderRadius: 10,
@@ -596,7 +618,7 @@ function PicksRow({
               </Pressable>
             )
           })}
-        </ScrollView>
+        </View>
       )}
     </Widget>
   )
@@ -739,5 +761,170 @@ function AlertTimelineWidget({
         })
       )}
     </Widget>
+  )
+}
+
+/* ── SectorPerformanceWidget ──────────────────────────── */
+/**
+ * 포트폴리오 + 관심종목을 섹터별로 집계해서 평균 changeRate 를 히트맵 형태로.
+ * 별도 백엔드 API 없이 이미 로드된 데이터만 이용. 비어있으면 안내.
+ */
+function SectorPerformanceWidget({
+  positions, watchlist, palette, onOpenDetail,
+}: {
+  positions: HoldingPosition[]
+  watchlist: WatchItem[]
+  palette: Palette
+  onOpenDetail: (m: string, t: string, n?: string) => void
+}) {
+  type Bucket = { sector: string; total: number; count: number; members: Array<{ market: string; ticker: string; name: string; changeRate: number }> }
+  const buckets = useMemo(() => {
+    const map = new Map<string, Bucket>()
+    const push = (sector: string, market: string, ticker: string, name: string, changeRate: number) => {
+      const key = sector || '기타'
+      if (!map.has(key)) map.set(key, { sector: key, total: 0, count: 0, members: [] })
+      const b = map.get(key)!
+      b.total += changeRate
+      b.count += 1
+      b.members.push({ market, ticker, name, changeRate })
+    }
+    for (const p of positions) {
+      // HoldingPosition 엔 sector 없어서 watchlist 와 티커 매칭
+      const w = watchlist.find((w) => w.market === p.market && w.ticker === p.ticker)
+      const sector = w?.sector || ''
+      // profitRate 를 change 대리지표로 사용 (현재가 변동률은 없음)
+      push(sector, p.market, p.ticker, p.name, (p.profitRate ?? 0) / 100)
+    }
+    for (const w of watchlist) push(w.sector, w.market, w.ticker, w.name, w.changeRate ?? 0)
+    const arr = Array.from(map.values())
+    arr.forEach((b) => b.members.sort((a, b) => b.changeRate - a.changeRate))
+    arr.sort((a, b) => (b.total / Math.max(1, b.count)) - (a.total / Math.max(1, a.count)))
+    return arr
+  }, [positions, watchlist])
+
+  const isEmpty = buckets.length === 0
+
+  return (
+    <Widget
+      palette={palette}
+      title="섹터 퍼포먼스"
+      icon={<Layers size={13} color={palette.teal} strokeWidth={2.5} />}
+      meta={isEmpty ? null : `${buckets.length}개 섹터`}
+    >
+      {isEmpty ? (
+        <View style={{ paddingVertical: 18, alignItems: 'center' }}>
+          <Text style={{ color: palette.inkMuted, fontSize: 12 }}>관심종목/보유가 있으면 섹터 요약이 떠</Text>
+        </View>
+      ) : (
+        <View style={[{ gap: 8 }, webGrid('repeat(auto-fill, minmax(220px, 1fr))')]}>
+          {buckets.slice(0, 8).map((b) => {
+            const avg = b.total / Math.max(1, b.count)
+            const color = avg > 0 ? palette.up : avg < 0 ? palette.down : palette.inkSub
+            const bg = avg > 0 ? palette.upSoft : avg < 0 ? palette.downSoft : palette.surfaceAlt
+            return (
+              <View
+                key={b.sector}
+                style={{
+                  backgroundColor: bg,
+                  borderRadius: 8,
+                  paddingHorizontal: 10,
+                  paddingVertical: 8,
+                  gap: 4,
+                  borderWidth: 1,
+                  borderColor: palette.border,
+                }}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Text style={{ color: palette.ink, fontSize: 12, fontWeight: '800', flex: 1 }} numberOfLines={1}>
+                    {b.sector}
+                  </Text>
+                  <Text style={{ color, fontSize: 12, fontWeight: '800', fontVariant: ['tabular-nums'] }}>
+                    {formatSignedRate(avg)}
+                  </Text>
+                </View>
+                <Text style={{ color: palette.inkMuted, fontSize: 10 }}>
+                  {b.count}종목 · 상위 {b.members.slice(0, 2).map((m) => m.name).join(', ')}
+                </Text>
+                <View style={{ flexDirection: 'row', gap: 4, flexWrap: 'wrap' }}>
+                  {b.members.slice(0, 3).map((m) => (
+                    <Pressable
+                      key={`${b.sector}-${m.ticker}`}
+                      onPress={() => onOpenDetail(m.market, m.ticker, m.name)}
+                      style={{
+                        backgroundColor: palette.surface,
+                        borderRadius: 4,
+                        paddingHorizontal: 5,
+                        paddingVertical: 1,
+                        borderWidth: 1,
+                        borderColor: palette.border,
+                      }}
+                    >
+                      <Text style={{ color: palette.inkSub, fontSize: 9, fontWeight: '700' }}>{m.ticker}</Text>
+                    </Pressable>
+                  ))}
+                </View>
+              </View>
+            )
+          })}
+        </View>
+      )}
+    </Widget>
+  )
+}
+
+/* ── AltSignalsWidget ─────────────────────────────────── */
+/**
+ * `alternativeSignals` — 비전통적 지표 (VIX, Fear&Greed, 달러지수 등).
+ * 기존 summary 에 들어있던 필드를 그냥 꺼내 씀.
+ */
+function AltSignalsWidget({ summary, palette }: { summary: MarketSummaryData | null; palette: Palette }) {
+  const signals = summary?.alternativeSignals ?? []
+  if (signals.length === 0) {
+    return (
+      <Widget palette={palette} title="대체 시그널" icon={<BarChart3 size={13} color={palette.orange} strokeWidth={2.5} />}>
+        <View style={{ paddingVertical: 18, alignItems: 'center' }}>
+          <Text style={{ color: palette.inkMuted, fontSize: 12 }}>대체 시그널 준비 중</Text>
+        </View>
+      </Widget>
+    )
+  }
+  return (
+    <Widget
+      palette={palette}
+      title="대체 시그널"
+      icon={<BarChart3 size={13} color={palette.orange} strokeWidth={2.5} />}
+      meta={`${signals.length}개`}
+    >
+      <View style={{ gap: 8 }}>
+        {signals.slice(0, 5).map((s) => (
+          <AltSignalRow key={s.label} signal={s} palette={palette} />
+        ))}
+      </View>
+    </Widget>
+  )
+}
+
+function AltSignalRow({ signal, palette }: { signal: AlternativeSignal; palette: Palette }) {
+  const score = signal.score ?? 50
+  const color = score >= 65 ? palette.up : score <= 35 ? palette.down : palette.inkSub
+  return (
+    <View style={{ gap: 4 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+        <Text style={{ color: palette.ink, fontSize: 12, fontWeight: '700', flex: 1 }} numberOfLines={1}>
+          {signal.label}
+        </Text>
+        <Text style={{ color, fontSize: 12, fontWeight: '800', fontVariant: ['tabular-nums'] }}>
+          {score.toFixed(0)}
+        </Text>
+      </View>
+      <View style={{ height: 4, backgroundColor: palette.surfaceAlt, borderRadius: 2, overflow: 'hidden' }}>
+        <View style={{ width: `${Math.max(0, Math.min(100, score))}%`, height: '100%', backgroundColor: color }} />
+      </View>
+      {signal.state ? (
+        <Text numberOfLines={1} style={{ color: palette.inkMuted, fontSize: 10 }}>
+          {signal.state}{signal.highlights && signal.highlights.length > 0 ? ` · ${signal.highlights.slice(0, 2).join(', ')}` : ''}
+        </Text>
+      ) : null}
+    </View>
   )
 }

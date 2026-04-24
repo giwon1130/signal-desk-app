@@ -1,10 +1,11 @@
 import { useMemo } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
-import { ArrowRight, Bell, Briefcase, Radio, Star, TrendingDown, TrendingUp } from 'lucide-react-native'
-import type { AiRecommendationData, PortfolioSummary, WatchItem } from '../types'
-import { marketColor, useTheme } from '../theme'
+import { ArrowRight, Bell, Briefcase, Radio, Sparkles, Star, TrendingDown, TrendingUp } from 'lucide-react-native'
+import type { AiRecommendationData, DailyFortune, PortfolioSummary, WatchItem } from '../types'
+import { marketColor, useTheme, type Palette } from '../theme'
 import { formatCompactNumber, formatSignedRate } from '../utils'
 import { useLivePrices } from '../hooks/useLivePrices'
+import { StanceTag } from './shared'
 
 /**
  * 우측 고정 컨텍스트 사이드바.
@@ -21,17 +22,18 @@ type Props = {
   watchlist: WatchItem[]
   portfolio: PortfolioSummary | null
   aiRecommendation: AiRecommendationData | null
+  fortune?: DailyFortune | null
   onOpenDetail: (market: string, ticker: string, name?: string) => void
   onGotoStocks: () => void
   onGotoAi: () => void
 }
 
-const CONTEXT_WIDTH = 300
-const WATCHLIST_CAP = 6
-const RECENT_AI_CAP = 4
+const CONTEXT_WIDTH = 320
+const WATCHLIST_CAP = 7
+const RECENT_AI_CAP = 5
 
 export function ContextSidebar(props: Props) {
-  const { watchlist, portfolio, aiRecommendation, onOpenDetail, onGotoStocks, onGotoAi } = props
+  const { watchlist, portfolio, aiRecommendation, fortune, onOpenDetail, onGotoStocks, onGotoAi } = props
   const { palette } = useTheme()
 
   const krTickers = useMemo(
@@ -99,9 +101,12 @@ export function ContextSidebar(props: Props) {
                       </Text>
                       {isLive ? <Radio size={8} color="#10b981" strokeWidth={3} /> : null}
                     </View>
-                    <Text style={{ color: palette.inkFaint, fontSize: 10, fontWeight: '600' }}>
-                      {w.market} · {w.ticker}
-                    </Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                      <Text style={{ color: palette.inkFaint, fontSize: 10, fontWeight: '600' }}>
+                        {w.market} · {w.ticker}
+                      </Text>
+                      {w.stance ? <StanceTag stance={w.stance} palette={palette} size="xs" /> : null}
+                    </View>
                   </View>
                   <View style={{ alignItems: 'flex-end' }}>
                     <Text
@@ -285,7 +290,53 @@ export function ContextSidebar(props: Props) {
             ))
           )}
         </Section>
+
+        {/* ── 오늘의 운 ──────────────────────────── */}
+        {fortune ? <FortuneMini fortune={fortune} palette={palette} /> : null}
       </ScrollView>
+    </View>
+  )
+}
+
+function FortuneMini({ fortune, palette }: { fortune: DailyFortune; palette: Palette }) {
+  const toneColor = fortune.overallTone === 'good' ? palette.up : fortune.overallTone === 'bad' ? palette.down : palette.orange
+  const toneSoft = fortune.overallTone === 'good' ? palette.upSoft : fortune.overallTone === 'bad' ? palette.downSoft : palette.orangeSoft
+  return (
+    <View
+      style={{
+        backgroundColor: toneSoft,
+        borderRadius: 10,
+        padding: 12,
+        gap: 6,
+        borderWidth: 1,
+        borderColor: palette.border,
+      }}
+    >
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+        <Sparkles size={13} color={toneColor} strokeWidth={2.5} />
+        <Text style={{ color: palette.ink, fontSize: 12, fontWeight: '800', flex: 1 }}>오늘의 운</Text>
+        <Text style={{ color: toneColor, fontSize: 11, fontWeight: '900', letterSpacing: 0.5 }}>
+          {fortune.overallLabel} · {fortune.overallScore}
+        </Text>
+      </View>
+      <Text style={{ color: palette.ink, fontSize: 12, fontWeight: '700', lineHeight: 16 }} numberOfLines={2}>
+        {fortune.headline}
+      </Text>
+      <View style={{ flexDirection: 'row', gap: 6 }}>
+        <FortuneBadge label="재물" score={fortune.wealthScore} palette={palette} />
+        <FortuneBadge label="거래" score={fortune.tradeScore} palette={palette} />
+        <FortuneBadge label="인내" score={fortune.patienceScore} palette={palette} />
+      </View>
+    </View>
+  )
+}
+
+function FortuneBadge({ label, score, palette }: { label: string; score: number; palette: Palette }) {
+  const color = score >= 70 ? palette.up : score <= 40 ? palette.down : palette.inkSub
+  return (
+    <View style={{ flex: 1, backgroundColor: palette.surface, borderRadius: 6, paddingHorizontal: 6, paddingVertical: 4, borderWidth: 1, borderColor: palette.border }}>
+      <Text style={{ color: palette.inkMuted, fontSize: 9, fontWeight: '700' }}>{label}</Text>
+      <Text style={{ color, fontSize: 13, fontWeight: '900', fontVariant: ['tabular-nums'] }}>{score}</Text>
     </View>
   )
 }
