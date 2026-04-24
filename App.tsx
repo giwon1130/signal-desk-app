@@ -204,19 +204,21 @@ function AppShell() {
     setActiveTab(key)
   }, [activeTab])
 
+  // 웹은 카드가 2~3열로 타일되니까 로그를 훨씬 더 많이 보여줌
+  const logLimit = Platform.OS === 'web' ? 60 : 20
   const filteredLogs = useMemo(() => {
     const logs = aiRecommendation?.executionLogs ?? []
     const stageFiltered = logFilter === 'ALL' ? logs : logs.filter((item) => item.stage === logFilter)
     const query = normalizeText(logQuery)
-    if (!query) return stageFiltered.slice(0, 20)
+    if (!query) return stageFiltered.slice(0, logLimit)
     return stageFiltered
       .filter((item) =>
         [item.name, item.ticker, item.market, item.status, item.rationale].some((value) =>
           normalizeText(value).includes(query),
         ),
       )
-      .slice(0, 20)
-  }, [aiRecommendation?.executionLogs, logFilter, logQuery])
+      .slice(0, logLimit)
+  }, [aiRecommendation?.executionLogs, logFilter, logQuery, logLimit])
 
   const successRate = useMemo(() => {
     const resultLogs = (aiRecommendation?.executionLogs ?? []).filter((item) => item.realizedReturnRate != null)
@@ -244,8 +246,10 @@ function AppShell() {
     )
   }, [homeQuery, portfolio?.positions])
 
-  const topWatchlist = useMemo(() => filteredWatchlist.slice(0, 4), [filteredWatchlist])
-  const topPortfolioPositions = useMemo(() => filteredPortfolioPositions.slice(0, 4), [filteredPortfolioPositions])
+  // 웹(데스크톱)에선 정보 밀도 ↑ — 홈의 top-N 을 훨씬 더 많이 보여줌.
+  const listLimit = Platform.OS === 'web' ? 12 : 4
+  const topWatchlist = useMemo(() => filteredWatchlist.slice(0, listLimit), [filteredWatchlist, listLimit])
+  const topPortfolioPositions = useMemo(() => filteredPortfolioPositions.slice(0, listLimit), [filteredPortfolioPositions, listLimit])
   const recommendLogs = useMemo(
     () => (aiRecommendation?.executionLogs ?? []).filter((item) => item.stage === 'RECOMMEND').length,
     [aiRecommendation?.executionLogs],
