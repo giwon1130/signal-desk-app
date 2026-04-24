@@ -24,6 +24,7 @@ import { useStyles } from './src/styles'
 import { ThemeProvider, useTheme } from './src/theme'
 import { Toast } from './src/components/Toast'
 import { AuthScreen } from './src/components/AuthScreen'
+import { WebFrame } from './src/components/WebFrame'
 import { useToast } from './src/hooks/useToast'
 import { hapticLight, hapticSuccess, hapticError } from './src/utils/haptics'
 import {
@@ -433,7 +434,9 @@ function AppShell() {
     return (
       <SafeAreaView style={styles.container}>
         <StatusBar style={isDark ? 'light' : 'dark'} />
-        <AuthScreen onDone={(u) => void handleAuthDone(u)} />
+        <WebFrame variant="auth">
+          <AuthScreen onDone={(u) => void handleAuthDone(u)} />
+        </WebFrame>
       </SafeAreaView>
     )
   }
@@ -441,6 +444,7 @@ function AppShell() {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style={isDark ? 'light' : 'light'} />
+      <WebFrame variant="shell">
 
       {/* ── 헤더 ─────────────────────────────────────── */}
       <View style={styles.headerWrap}>
@@ -638,6 +642,7 @@ function AppShell() {
         authToken={user?.token ?? null}
         onClose={() => setReminderOpen(false)}
       />
+      </WebFrame>
     </SafeAreaView>
   )
 }

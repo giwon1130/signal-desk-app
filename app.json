@@ -33,7 +33,12 @@
       ]
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "name": "Signal Desk — 투자 대시보드",
+      "shortName": "Signal Desk",
+      "description": "시장/종목/단타 시그널을 한눈에 보는 개인 투자 대시보드",
+      "themeColor": "#0a1628",
+      "backgroundColor": "#0a1628"
     },
     "scheme": "signaldesk",
     "extra": {
