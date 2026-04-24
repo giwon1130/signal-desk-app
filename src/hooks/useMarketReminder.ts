@@ -29,15 +29,18 @@ const US_OPEN_HOUR_KST = 23    // 23:30 KST (EST/EDT 평균)
 const US_OPEN_MINUTE   = 30
 
 // 포그라운드에서도 알림이 보이도록 핸들러 설정 (모듈 로드 시 1회)
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
-})
+// 웹은 expo-notifications 네이티브 바인딩이 없어서 setNotificationHandler 가 throw.
+if (Platform.OS !== 'web') {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowAlert: true,
+      shouldPlaySound: true,
+      shouldSetBadge: false,
+      shouldShowBanner: true,
+      shouldShowList: true,
+    }),
+  })
+}
 
 // ── 설정 getter / setter ───────────────────────────────
 export async function getKrOpenEnabled(): Promise<boolean> {
@@ -73,6 +76,7 @@ export async function setMinutesBefore(minutes: number) {
 
 // ── 권한 ───────────────────────────────────────────────
 export async function ensurePermission(): Promise<boolean> {
+  if (Platform.OS === 'web') return false
   if (!Device.isDevice) return false
 
   if (Platform.OS === 'android') {
@@ -104,6 +108,7 @@ async function scheduleDaily(opts: {
   body: string
   channelId?: string
 }) {
+  if (Platform.OS === 'web') return
   // 동일 ID 기존 알림 제거 후 새로 등록
   await Notifications.cancelScheduledNotificationAsync(opts.identifier).catch(() => {})
   await Notifications.scheduleNotificationAsync({
@@ -160,9 +165,11 @@ export async function scheduleUsOpenReminder() {
 }
 
 export async function cancelKrOpenReminder() {
+  if (Platform.OS === 'web') return
   await Notifications.cancelScheduledNotificationAsync(KR_OPEN_ID).catch(() => {})
 }
 export async function cancelUsOpenReminder() {
+  if (Platform.OS === 'web') return
   await Notifications.cancelScheduledNotificationAsync(US_OPEN_ID).catch(() => {})
 }
 
