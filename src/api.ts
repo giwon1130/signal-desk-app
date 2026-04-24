@@ -8,6 +8,7 @@ import type {
   MarketSummaryData,
   PortfolioResponse,
   StockSearchResult,
+  TopMoversResponse,
   WatchItem,
   WatchlistResponse,
 } from './types'
@@ -155,6 +156,18 @@ export async function deletePortfolioPosition(id: string): Promise<void> {
   })
   if (!response.ok) {
     throw new Error('delete-portfolio-failed')
+  }
+}
+
+/** 급등/급락 상위 종목 (KR KOSPI·KOSDAQ) */
+export async function fetchTopMovers(limit = 10): Promise<TopMoversResponse | null> {
+  try {
+    const response = await authedFetch(`${API_BASE_URL}/api/v1/market/top-movers?limit=${limit}`)
+    if (!response.ok) return null
+    const json = (await response.json()) as ApiResponse<TopMoversResponse>
+    return json.data
+  } catch {
+    return null
   }
 }
 

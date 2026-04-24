@@ -14,6 +14,7 @@ import {
   deleteFavoriteItem,
   deletePortfolioPosition,
   fetchDailyFortune,
+  fetchTopMovers,
   loadAllData,
   quickAddWatchItem,
   savePortfolioPosition,
@@ -58,6 +59,7 @@ import type {
   StockMarketFilter,
   StockSearchResult,
   TabKey,
+  TopMoversResponse,
   WatchItem,
 } from './src/types'
 import { normalizeText } from './src/utils'
@@ -124,6 +126,7 @@ function AppShell() {
   const [portfolio, setPortfolio] = useState<PortfolioSummary | null>(null)
   const [alertHistory, setAlertHistory] = useState<AlertHistoryItem[]>([])
   const [fortune, setFortune] = useState<DailyFortune | null>(null)
+  const [topMovers, setTopMovers] = useState<TopMoversResponse | null>(null)
   const [loading, setLoading] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState('')
@@ -167,6 +170,7 @@ function AppShell() {
         void fetchAlertHistory(token, 10).then(setAlertHistory)
       }
       void fetchDailyFortune().then(setFortune)
+      void fetchTopMovers(10).then(setTopMovers)
     } catch {
       setApiHealth(null)
       setError(`서버에 연결할 수 없어요.\n${API_BASE_URL}`)
@@ -545,6 +549,8 @@ function AppShell() {
           chartPeriod={chartPeriod}
           selectedIndexLabel={selectedIndexLabel}
           chartWidth={chartWidth}
+          topMovers={topMovers}
+          onOpenDetail={handleOpenDetail}
           refreshing={refreshing}
           onRefresh={onRefresh}
           onChartMarketChange={setChartMarket}

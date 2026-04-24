@@ -241,6 +241,25 @@ export type ApiResponse<T> = {
   data: T
 }
 
+export type TopMover = {
+  market: 'KR' | 'US' | string
+  ticker: string
+  name: string
+  price: number
+  changeRate: number
+}
+
+export type TopMoversBlock = {
+  gainers: TopMover[]
+  losers: TopMover[]
+}
+
+export type TopMoversResponse = {
+  generatedAt: string
+  kospi: TopMoversBlock
+  kosdaq: TopMoversBlock
+}
+
 export type DailyFortune = {
   date: string              // YYYY-MM-DD
   overallScore: number      // 0~100
