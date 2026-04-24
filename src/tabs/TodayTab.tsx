@@ -184,7 +184,7 @@ function SentimentCard({ sentiment }: { sentiment: NewsSentiment }) {
         <Text style={styles.todaySentimentMeta}>부정 {sentiment.negativeCount}</Text>
       </View>
       <Text style={styles.todaySentimentRationale}>{sentiment.rationale}</Text>
-      {sentiment.highlights.slice(0, 6).map((h, i) => (
+      {sentiment.highlights.slice(0, Platform.OS === 'web' ? 12 : 6).map((h, i) => (
         <Pressable
           key={`${sentiment.market}-${i}`}
           onPress={() => h.url && void Linking.openURL(h.url)}
@@ -212,22 +212,25 @@ export function TodayTab({
   const styles = useStyles()
   const { palette } = useTheme()
 
+  const isWeb = Platform.OS === 'web'
+  // 웹(데스크톱)에선 정보 밀도 ↑ — 더 많은 후보/모니터/알림 노출
+  const listLimit = isWeb ? 12 : 5
+  const newsLimit = isWeb ? 12 : 6
+
   const krSentiment = summary?.newsSentiments?.find((s) => s.market === 'KR')
   const usSentiment = summary?.newsSentiments?.find((s) => s.market === 'US')
 
   const picks = aiRecommendation?.executionLogs
     ?.filter((log) => log.stage === 'RECOMMEND')
-    ?.slice(0, 5) ?? []
+    ?.slice(0, listLimit) ?? []
 
   // 단타 후보: 보유 종목 중 손익 ±3% 이내 (액션 가능 구간)
   const monitorTargets = positions
     .filter((p) => Math.abs(p.profitRate) <= 8)
-    .slice(0, 5)
+    .slice(0, listLimit)
 
   const tradingDay = summary?.tradingDayStatus
   const marketClosedToday = !!tradingDay && !tradingDay.krOpen && !tradingDay.usOpen
-
-  const isWeb = Platform.OS === 'web'
 
   return (
     <ScrollView
@@ -514,7 +517,7 @@ export function TodayTab({
           }
           preview={<Text style={styles.metaText}>{alertHistory.length}건</Text>}
         >
-          {alertHistory.slice(0, 5).map((a, i) => {
+          {alertHistory.slice(0, isWeb ? 15 : 5).map((a, i) => {
             const isUp = a.direction === 'UP'
             const color = isUp ? '#dc2626' : '#2563eb'
             return (
