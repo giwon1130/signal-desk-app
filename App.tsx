@@ -47,6 +47,7 @@ import { TodayTab } from './src/tabs/TodayTab'
 import { HomeDashboard } from './src/web/HomeDashboard'
 import { StocksPage } from './src/web/StocksPage'
 import { CommandPalette } from './src/web/CommandPalette'
+import { AIWorkspace } from './src/web/AIWorkspace'
 import { StockDetailModal, type StockDetailContext } from './src/components/StockDetailModal'
 import { ReminderSettingsModal } from './src/components/ReminderSettingsModal'
 import { useMarketReminderBootstrap } from './src/hooks/useMarketReminder'
@@ -586,18 +587,28 @@ function AppShell() {
       ) : null}
 
       {!loading && !error && activeTab === 'ai' ? (
-        <AITab
-          aiRecommendation={aiRecommendation}
-          filteredLogs={filteredLogs}
-          logFilter={logFilter}
-          logQuery={logQuery}
-          recommendLogs={recommendLogs}
-          resultLogs={resultLogs}
-          refreshing={refreshing}
-          onRefresh={onRefresh}
-          onLogFilterChange={setLogFilter}
-          onLogQueryChange={setLogQuery}
-        />
+        Platform.OS === 'web' ? (
+          <AIWorkspace
+            aiRecommendation={aiRecommendation}
+            summary={summary}
+            watchlist={watchlist}
+            onOpenDetail={handleOpenDetail}
+            onQuickAddWatch={handleQuickAddWatch}
+          />
+        ) : (
+          <AITab
+            aiRecommendation={aiRecommendation}
+            filteredLogs={filteredLogs}
+            logFilter={logFilter}
+            logQuery={logQuery}
+            recommendLogs={recommendLogs}
+            resultLogs={resultLogs}
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            onLogFilterChange={setLogFilter}
+            onLogQueryChange={setLogQuery}
+          />
+        )
       ) : null}
     </>
   )
