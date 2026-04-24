@@ -353,6 +353,54 @@ export function makeStyles(C: Palette) {
     },
     todayHeroValue: { fontSize: 20, fontWeight: '900', letterSpacing: -0.3, marginTop: 2 },
 
+    // ── Fortune 카드 (오늘의 투자 운세) ───────────────────────────────────────────
+    fortuneCard: {
+      borderRadius: 16, padding: 14, gap: 10,
+      borderWidth: 1, borderColor: C.border, backgroundColor: C.surface, ...shadow.sm,
+    },
+    fortuneTopRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    fortuneScoreCircle: {
+      width: 58, height: 58, borderRadius: 999, alignItems: 'center', justifyContent: 'center',
+      borderWidth: 2,
+    },
+    fortuneScoreValue: { fontSize: 20, fontWeight: '900', ...num, letterSpacing: -0.5 },
+    fortuneScoreUnit:  { fontSize: 9, fontWeight: '700', marginTop: -2 },
+    fortuneTopText:    { flex: 1, gap: 2 },
+    fortuneLabel:      { fontSize: 11, fontWeight: '800', letterSpacing: 1.5, textTransform: 'uppercase' },
+    fortuneHeadline:   { color: C.ink, fontSize: 16, fontWeight: '900', letterSpacing: -0.3, lineHeight: 22 },
+    fortuneMessage:    { color: C.inkSub, fontSize: 13, fontWeight: '500', lineHeight: 20 },
+
+    fortuneSubScoreRow: { flexDirection: 'row', gap: 8, marginTop: 2 },
+    fortuneSubScoreCell: {
+      flex: 1, borderRadius: 10, paddingVertical: 8, paddingHorizontal: 6, alignItems: 'center',
+      backgroundColor: C.surfaceAlt, borderWidth: 1, borderColor: C.border, gap: 2,
+    },
+    fortuneSubScoreLabel: { color: C.inkMuted, fontSize: 10, fontWeight: '800', letterSpacing: 0.5 },
+    fortuneSubScoreValue: { color: C.ink, fontSize: 16, fontWeight: '900', ...num },
+    fortuneSubScoreBar:   { width: '80%', height: 3, borderRadius: 999, backgroundColor: C.border, overflow: 'hidden', marginTop: 2 },
+    fortuneSubScoreBarFill: { height: 3, borderRadius: 999 },
+
+    fortuneMetaGrid: { gap: 6 },
+    fortuneMetaRow:  { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    fortuneMetaKey:  { color: C.inkMuted, fontSize: 11, fontWeight: '800', letterSpacing: 0.5, width: 66 },
+    fortuneMetaVal:  { flex: 1, color: C.ink, fontSize: 12, fontWeight: '700' },
+
+    fortuneCaution: {
+      flexDirection: 'row', alignItems: 'flex-start', gap: 6,
+      borderRadius: 10, paddingHorizontal: 10, paddingVertical: 8,
+      backgroundColor: C.scheme === 'dark' ? '#3a2a10' : '#fff7ed',
+      borderWidth: 1, borderColor: C.scheme === 'dark' ? '#78350f' : '#fed7aa',
+    },
+    fortuneCautionText: { flex: 1, color: C.scheme === 'dark' ? '#fcd34d' : '#9a3412', fontSize: 12, fontWeight: '700', lineHeight: 17 },
+
+    fortuneMantra: {
+      color: C.ink, fontSize: 14, fontWeight: '900', textAlign: 'center', letterSpacing: -0.2,
+      paddingVertical: 10, paddingHorizontal: 12,
+      borderRadius: 12, borderWidth: 1, borderStyle: 'dashed', borderColor: C.border,
+      backgroundColor: C.surfaceAlt,
+    },
+    fortuneDisclaimer: { color: C.inkFaint, fontSize: 10, fontWeight: '600', textAlign: 'center' },
+
     todaySessionRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
     todaySessionPill: {
       flexDirection: 'row', alignItems: 'center', gap: 6,

@@ -1,6 +1,7 @@
 import type {
   AiRecommendationData,
   ApiResponse,
+  DailyFortune,
   FavoriteDraft,
   HealthResponse,
   MarketSectionsData,
@@ -154,6 +155,18 @@ export async function deletePortfolioPosition(id: string): Promise<void> {
   })
   if (!response.ok) {
     throw new Error('delete-portfolio-failed')
+  }
+}
+
+/** 오늘의 투자 운세 (userId + 날짜 시드) */
+export async function fetchDailyFortune(): Promise<DailyFortune | null> {
+  try {
+    const response = await authedFetch(`${API_BASE_URL}/api/v1/workspace/fortune`)
+    if (!response.ok) return null
+    const json = (await response.json()) as ApiResponse<DailyFortune>
+    return json.data
+  } catch {
+    return null
   }
 }
 

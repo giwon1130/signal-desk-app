@@ -1,9 +1,11 @@
 import { Linking, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native'
 import {
   Activity,
+  AlertTriangle,
   Bell,
   Brain,
   Clock,
+  Moon,
   Newspaper,
   Sparkles,
   Target,
@@ -15,6 +17,7 @@ import { useTheme } from '../theme'
 import type {
   AiRecommendationData,
   AlertHistoryItem,
+  DailyFortune,
   HoldingPosition,
   MarketSummaryData,
   NewsSentiment,
@@ -32,6 +35,7 @@ type Props = {
   aiRecommendation: AiRecommendationData | null
   positions: HoldingPosition[]
   alertHistory: AlertHistoryItem[]
+  fortune: DailyFortune | null
   onOpenDetail: (market: string, ticker: string, name?: string) => void
   refreshing: boolean
   onRefresh: () => Promise<void>
@@ -65,6 +69,87 @@ const priorityColor = (priority: string) => {
     case 'medium': return '#f59e0b'
     default:       return '#94a3b8'
   }
+}
+
+const fortuneToneColor = (tone: string) => {
+  if (tone === 'good') return '#dc2626'    // 빨강 (상승색)
+  if (tone === 'bad')  return '#2563eb'    // 파랑 (하락색)
+  return '#94a3b8'                          // 중립 회색
+}
+
+function FortuneSubScore({ label, value, color }: { label: string; value: number; color: string }) {
+  const styles = useStyles()
+  const bar = Math.max(4, Math.min(100, value))
+  return (
+    <View style={styles.fortuneSubScoreCell}>
+      <Text style={styles.fortuneSubScoreLabel}>{label}</Text>
+      <Text style={[styles.fortuneSubScoreValue, { color }]}>{value}</Text>
+      <View style={styles.fortuneSubScoreBar}>
+        <View style={[styles.fortuneSubScoreBarFill, { width: `${bar}%`, backgroundColor: color }]} />
+      </View>
+    </View>
+  )
+}
+
+function FortuneCard({ fortune }: { fortune: DailyFortune }) {
+  const styles = useStyles()
+  const { palette } = useTheme()
+  const accent = fortuneToneColor(fortune.overallTone)
+
+  return (
+    <View style={styles.fortuneCard}>
+      <View style={styles.cardTitleRow}>
+        <Moon size={13} color={accent} strokeWidth={2.5} />
+        <Text style={[styles.cardEyebrow, { color: accent }]}>오늘의 투자 운세</Text>
+      </View>
+
+      <View style={styles.fortuneTopRow}>
+        <View style={[styles.fortuneScoreCircle, { borderColor: accent }]}>
+          <Text style={[styles.fortuneScoreValue, { color: accent }]}>{fortune.overallScore}</Text>
+          <Text style={[styles.fortuneScoreUnit, { color: accent }]}>/ 100</Text>
+        </View>
+        <View style={styles.fortuneTopText}>
+          <Text style={[styles.fortuneLabel, { color: accent }]}>{fortune.overallLabel}</Text>
+          <Text style={styles.fortuneHeadline}>{fortune.headline}</Text>
+        </View>
+      </View>
+
+      <Text style={styles.fortuneMessage}>{fortune.message}</Text>
+
+      <View style={styles.fortuneSubScoreRow}>
+        <FortuneSubScore label="재물운" value={fortune.wealthScore} color={accent} />
+        <FortuneSubScore label="매매운" value={fortune.tradeScore} color={accent} />
+        <FortuneSubScore label="인내운" value={fortune.patienceScore} color={accent} />
+      </View>
+
+      <View style={styles.fortuneMetaGrid}>
+        <View style={styles.fortuneMetaRow}>
+          <Text style={styles.fortuneMetaKey}>행운의 시간</Text>
+          <Text style={styles.fortuneMetaVal}>{fortune.luckyHour}</Text>
+        </View>
+        <View style={styles.fortuneMetaRow}>
+          <Text style={styles.fortuneMetaKey}>행운의 색</Text>
+          <Text style={styles.fortuneMetaVal}>{fortune.luckyColor}</Text>
+        </View>
+        <View style={styles.fortuneMetaRow}>
+          <Text style={styles.fortuneMetaKey}>행운의 수</Text>
+          <Text style={styles.fortuneMetaVal}>{fortune.luckyNumber}</Text>
+        </View>
+        <View style={styles.fortuneMetaRow}>
+          <Text style={styles.fortuneMetaKey}>어울리는 테마</Text>
+          <Text style={styles.fortuneMetaVal}>{fortune.luckyTheme}</Text>
+        </View>
+      </View>
+
+      <View style={styles.fortuneCaution}>
+        <AlertTriangle size={13} color={palette.scheme === 'dark' ? '#fcd34d' : '#c2410c'} strokeWidth={2.5} />
+        <Text style={styles.fortuneCautionText}>{fortune.caution}</Text>
+      </View>
+
+      <Text style={styles.fortuneMantra}>“{fortune.mantra}”</Text>
+      <Text style={styles.fortuneDisclaimer}>{fortune.disclaimer}</Text>
+    </View>
+  )
 }
 
 function SentimentCard({ sentiment }: { sentiment: NewsSentiment }) {
@@ -109,6 +194,7 @@ export function TodayTab({
   aiRecommendation,
   positions,
   alertHistory,
+  fortune,
   onOpenDetail,
   refreshing,
   onRefresh,
@@ -153,6 +239,9 @@ export function TodayTab({
           ) : null}
         </View>
       ) : null}
+
+      {/* ── 오늘의 투자 운세 (재미용) ── */}
+      {fortune ? <FortuneCard fortune={fortune} /> : null}
 
       {/* ── 마켓 상태 (한 줄 요약) ── */}
       <View style={styles.todayHeroCard}>
