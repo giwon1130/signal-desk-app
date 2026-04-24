@@ -1,9 +1,6 @@
 import Constants from 'expo-constants'
 import { useEffect, useState } from 'react'
-import {
-  GoogleSignin,
-  statusCodes,
-} from '@react-native-google-signin/google-signin'
+import { Platform } from 'react-native'
 import { apiGoogleOAuth, type AuthUser } from './auth'
 
 type Extra = {
@@ -13,6 +10,21 @@ type Extra = {
 }
 const extra = ((Constants.expoConfig?.extra ?? {}) as Extra)
 
+// @react-native-google-signin/google-signin 은 네이티브 전용.
+// 웹 번들에서 top-level import 하면 TurboModuleRegistry 에러로 트리 전체가 죽음.
+// 런타임에 필요할 때만 require 로 끌어온다.
+type GoogleSigninModule = typeof import('@react-native-google-signin/google-signin')
+let googleModule: GoogleSigninModule | null = null
+function loadGoogleModule(): GoogleSigninModule {
+  if (googleModule) return googleModule
+  if (Platform.OS === 'web') {
+    throw new Error('Google 로그인은 웹에서 아직 지원하지 않아.')
+  }
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  googleModule = require('@react-native-google-signin/google-signin') as GoogleSigninModule
+  return googleModule
+}
+
 let configured = false
 function ensureConfigured() {
   if (configured) return
@@ -21,6 +33,7 @@ function ensureConfigured() {
   if (!extra.googleClientIdWeb) {
     throw new Error('Google webClientId 가 app.json extra.googleClientIdWeb 에 설정돼 있지 않아.')
   }
+  const { GoogleSignin } = loadGoogleModule()
   GoogleSignin.configure({
     webClientId: extra.googleClientIdWeb,
     iosClientId: extra.googleClientIdIos,
@@ -35,6 +48,11 @@ export function useGoogleSignIn(onAuth: (u: AuthUser) => void) {
   const [request, setRequest] = useState<boolean>(false)
 
   useEffect(() => {
+    // 웹은 네이티브 SDK 가 없어 버튼 disabled 로 유지.
+    if (Platform.OS === 'web') {
+      setRequest(false)
+      return
+    }
     try {
       ensureConfigured()
       setRequest(true)
@@ -45,6 +63,7 @@ export function useGoogleSignIn(onAuth: (u: AuthUser) => void) {
 
   const signIn = async () => {
     ensureConfigured()
+    const { GoogleSignin, statusCodes } = loadGoogleModule()
     try {
       await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true })
       const result = await GoogleSignin.signIn()

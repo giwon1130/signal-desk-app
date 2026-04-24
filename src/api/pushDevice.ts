@@ -17,6 +17,8 @@ async function setPushAlertsEnabledFlag(enabled: boolean) {
 }
 
 async function resolveExpoToken(): Promise<string | null> {
+  // 웹에는 expo-notifications 네이티브 바인딩이 없음 → 토큰 자체 없음
+  if (Platform.OS === 'web') return null
   if (!Device.isDevice) return null
   const existing = await Notifications.getPermissionsAsync()
   let status = existing.status
