@@ -17,8 +17,8 @@ cd "$(dirname "$0")/.."
 # 🔧 등록된 실기기 UDID. 바뀌면 여기 수정하거나 RELEASE_DEVICE_UDID 로 덮어쓰기.
 DEFAULT_DEVICE_UDID="00008150-0003452E0A28401C"
 
-if [[ -n "$(git status --porcelain)" ]]; then
-  echo "❌ working tree 가 깨끗하지 않아. 먼저 커밋/stash 해." >&2
+if ! git diff --quiet || ! git diff --cached --quiet; then
+  echo "❌ 변경된 트래킹 파일이 남아있어. 먼저 커밋/stash 해." >&2
   exit 1
 fi
 

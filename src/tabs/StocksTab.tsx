@@ -71,7 +71,9 @@ export function StocksTab({
     try {
       const existing = findWatchItem(stock.market, stock.ticker)
       if (existing?.id) {
-        onDeleteFavorite(existing.id)
+        // ⚠️ await 없으면 setTogglingKey('') 가 delete+refetch 보다 먼저 끝나서
+        // UI 가 "해제 안 된 것처럼" 보임 → 사용자가 다시 눌러서 중복 등록됨.
+        await onDeleteFavorite(existing.id)
       } else {
         await onQuickAddWatch(stock)
       }
