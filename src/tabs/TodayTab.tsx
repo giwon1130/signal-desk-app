@@ -28,6 +28,7 @@ import {
   formatCompactNumber,
   formatSignedRate,
   getMarketStatusTone,
+  formatMarketStatus,
   getSessionPalette,
 } from '../utils'
 
@@ -256,7 +257,7 @@ export function TodayTab({
           <Text style={styles.cardEyebrow}>지금 시장</Text>
         </View>
         <Text style={[styles.todayHeroValue, { color: getMarketStatusTone(summary?.marketStatus) }]}>
-          {summary?.marketStatus ?? '-'}
+          {formatMarketStatus(summary?.marketStatus)}
         </Text>
         <Text style={styles.cardNote}>{summary?.summary ?? '-'}</Text>
       </View>
