@@ -2,6 +2,7 @@ import { StatusBar } from 'expo-status-bar'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   ActivityIndicator,
+  Platform,
   Pressable,
   SafeAreaView,
   Text,
@@ -9,6 +10,7 @@ import {
   View,
 } from 'react-native'
 import { BarChart3, Bell, Bot, Home, LogOut, Moon, Sun, Sunrise, TrendingUp } from 'lucide-react-native'
+import { WebLayout } from './src/web/WebLayout'
 import {
   API_BASE_URL,
   deleteFavoriteItem,
@@ -25,7 +27,6 @@ import { ThemeProvider, useTheme } from './src/theme'
 import { Toast } from './src/components/Toast'
 import { AuthScreen } from './src/components/AuthScreen'
 import { WebFrame } from './src/components/WebFrame'
-import { WebFooter } from './src/components/WebFooter'
 import { webBootstrap } from './src/utils/webBootstrap'
 import { useToast } from './src/hooks/useToast'
 import { hapticLight, hapticSuccess, hapticError } from './src/utils/haptics'
@@ -447,77 +448,9 @@ function AppShell() {
     )
   }
 
-  return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar style={isDark ? 'light' : 'light'} />
-      <WebFrame variant="shell">
-
-      {/* ── 헤더 ─────────────────────────────────────── */}
-      <View style={styles.headerWrap}>
-        <View style={styles.headerGradient}>
-          <View style={styles.headerTopRow}>
-            <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8, flexShrink: 1 }}>
-              <Text style={styles.headerTitle} numberOfLines={1}>투자 대시보드</Text>
-              <Text style={styles.brand}>SIGNAL</Text>
-            </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <View style={[styles.headerStatusPill, isUp ? styles.headerStatusPillUp : styles.headerStatusPillDown]}>
-                <View style={[styles.headerStatusDot, isUp ? styles.headerStatusDotUp : styles.headerStatusDotDown]} />
-                <Text style={[styles.headerStatusText, isUp ? styles.headerStatusTextUp : styles.headerStatusTextDown]}>
-                  {isUp ? 'LIVE' : 'OFF'}
-                </Text>
-              </View>
-              <Pressable
-                onPress={() => { void hapticLight(); setReminderOpen(true) }}
-                style={({ pressed }) => [styles.themeToggleBtn, pressed && { opacity: 0.6 }]}
-                accessibilityLabel="알림 설정"
-              >
-                <Bell size={16} color="#cbd5e1" />
-              </Pressable>
-              <Pressable
-                onPress={() => { void hapticLight(); toggle() }}
-                style={({ pressed }) => [styles.themeToggleBtn, pressed && { opacity: 0.6 }]}
-                accessibilityLabel={isDark ? '라이트 모드로 전환' : '다크 모드로 전환'}
-              >
-                {isDark ? <Sun size={16} color="#fcd34d" /> : <Moon size={16} color="#cbd5e1" />}
-              </Pressable>
-              <Pressable
-                onPress={() => void handleLogout()}
-                style={({ pressed }) => [styles.themeToggleBtn, pressed && { opacity: 0.6 }]}
-                accessibilityLabel="로그아웃"
-              >
-                <LogOut size={16} color="#fca5a5" />
-              </Pressable>
-            </View>
-          </View>
-          <Text style={styles.headerSubtitle}>
-            {lastSyncedAt ? `마지막 동기화 ${lastSyncedAt}` : '시장/차트/포트폴리오를 한눈에'}
-          </Text>
-        </View>
-      </View>
-
-      {/* ── 탭 바 ────────────────────────────────────── */}
-      <View style={styles.tabBar}>
-        {TABS.map(({ key, label, Icon }) => {
-          const active = activeTab === key
-          return (
-            <Pressable
-              key={key}
-              onPress={() => handleTabChange(key)}
-              style={({ pressed }) => [styles.tabItem, active && styles.tabItemActive, pressed && styles.tabItemPressed]}
-            >
-              <Icon
-                size={20}
-                color={active ? palette.blue : palette.inkFaint}
-                strokeWidth={active ? 2.5 : 1.8}
-              />
-              <Text style={[styles.tabLabel, active && styles.tabLabelActive]}>{label}</Text>
-              {active && <View style={styles.tabActiveBar} />}
-            </Pressable>
-          )
-        })}
-      </View>
-
+  // 탭 컨텐츠 — 웹/네이티브 셸에서 공유.
+  const tabContent = (
+    <>
       {/* ── 로딩 ─────────────────────────────────────── */}
       {loading ? (
         <View style={styles.loadingWrap}>
@@ -543,7 +476,6 @@ function AppShell() {
         </View>
       ) : null}
 
-      {/* ── 탭 콘텐츠 ────────────────────────────────── */}
       {!loading && !error && activeTab === 'today' ? (
         <TodayTab
           summary={summary}
@@ -629,10 +561,13 @@ function AppShell() {
           onLogQueryChange={setLogQuery}
         />
       ) : null}
+    </>
+  )
 
+  // 전역 모달 — 웹/네이티브 공유
+  const overlays = (
+    <>
       <Toast visible={toast.visible} message={toast.message} type={toast.type} />
-
-      {/* ── 종목 상세 모달 (어느 탭에서든 호출) ── */}
       <StockDetailModal
         visible={!!detailKey}
         onClose={handleCloseDetail}
@@ -641,16 +576,108 @@ function AppShell() {
         onSavePortfolio={handleSavePortfolio}
         onDeletePortfolio={(id) => void handleDeletePortfolio(id)}
       />
-
-      {/* ── 알림 설정 모달 ── */}
       <ReminderSettingsModal
         visible={reminderOpen}
         authToken={user?.token ?? null}
         onClose={() => setReminderOpen(false)}
       />
+    </>
+  )
 
-      <WebFooter />
-      </WebFrame>
+  // ── 웹: 사이드바 레이아웃 ──
+  if (Platform.OS === 'web') {
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar style={isDark ? 'light' : 'dark'} />
+        <WebLayout
+          user={user}
+          activeTab={activeTab}
+          isUp={isUp}
+          lastSyncedAt={lastSyncedAt}
+          onTabChange={handleTabChange}
+          onLogout={() => void handleLogout()}
+          onOpenReminder={() => { void hapticLight(); setReminderOpen(true) }}
+        >
+          {tabContent}
+        </WebLayout>
+        {overlays}
+      </SafeAreaView>
+    )
+  }
+
+  // ── 네이티브 ── (기존 헤더 + 탭바 셸)
+  return (
+    <SafeAreaView style={styles.container}>
+      <StatusBar style={isDark ? 'light' : 'light'} />
+
+      {/* ── 헤더 ─────────────────────────────────────── */}
+      <View style={styles.headerWrap}>
+        <View style={styles.headerGradient}>
+          <View style={styles.headerTopRow}>
+            <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8, flexShrink: 1 }}>
+              <Text style={styles.headerTitle} numberOfLines={1}>투자 대시보드</Text>
+              <Text style={styles.brand}>SIGNAL</Text>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <View style={[styles.headerStatusPill, isUp ? styles.headerStatusPillUp : styles.headerStatusPillDown]}>
+                <View style={[styles.headerStatusDot, isUp ? styles.headerStatusDotUp : styles.headerStatusDotDown]} />
+                <Text style={[styles.headerStatusText, isUp ? styles.headerStatusTextUp : styles.headerStatusTextDown]}>
+                  {isUp ? 'LIVE' : 'OFF'}
+                </Text>
+              </View>
+              <Pressable
+                onPress={() => { void hapticLight(); setReminderOpen(true) }}
+                style={({ pressed }) => [styles.themeToggleBtn, pressed && { opacity: 0.6 }]}
+                accessibilityLabel="알림 설정"
+              >
+                <Bell size={16} color="#cbd5e1" />
+              </Pressable>
+              <Pressable
+                onPress={() => { void hapticLight(); toggle() }}
+                style={({ pressed }) => [styles.themeToggleBtn, pressed && { opacity: 0.6 }]}
+                accessibilityLabel={isDark ? '라이트 모드로 전환' : '다크 모드로 전환'}
+              >
+                {isDark ? <Sun size={16} color="#fcd34d" /> : <Moon size={16} color="#cbd5e1" />}
+              </Pressable>
+              <Pressable
+                onPress={() => void handleLogout()}
+                style={({ pressed }) => [styles.themeToggleBtn, pressed && { opacity: 0.6 }]}
+                accessibilityLabel="로그아웃"
+              >
+                <LogOut size={16} color="#fca5a5" />
+              </Pressable>
+            </View>
+          </View>
+          <Text style={styles.headerSubtitle}>
+            {lastSyncedAt ? `마지막 동기화 ${lastSyncedAt}` : '시장/차트/포트폴리오를 한눈에'}
+          </Text>
+        </View>
+      </View>
+
+      {/* ── 탭 바 ────────────────────────────────────── */}
+      <View style={styles.tabBar}>
+        {TABS.map(({ key, label, Icon }) => {
+          const active = activeTab === key
+          return (
+            <Pressable
+              key={key}
+              onPress={() => handleTabChange(key)}
+              style={({ pressed }) => [styles.tabItem, active && styles.tabItemActive, pressed && styles.tabItemPressed]}
+            >
+              <Icon
+                size={20}
+                color={active ? palette.blue : palette.inkFaint}
+                strokeWidth={active ? 2.5 : 1.8}
+              />
+              <Text style={[styles.tabLabel, active && styles.tabLabelActive]}>{label}</Text>
+              {active && <View style={styles.tabActiveBar} />}
+            </Pressable>
+          )
+        })}
+      </View>
+
+      {tabContent}
+      {overlays}
     </SafeAreaView>
   )
 }
