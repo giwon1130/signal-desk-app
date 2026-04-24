@@ -46,6 +46,7 @@ import { StocksTab } from './src/tabs/StocksTab'
 import { TodayTab } from './src/tabs/TodayTab'
 import { HomeDashboard } from './src/web/HomeDashboard'
 import { StocksPage } from './src/web/StocksPage'
+import { CommandPalette } from './src/web/CommandPalette'
 import { StockDetailModal, type StockDetailContext } from './src/components/StockDetailModal'
 import { ReminderSettingsModal } from './src/components/ReminderSettingsModal'
 import { useMarketReminderBootstrap } from './src/hooks/useMarketReminder'
@@ -618,6 +619,14 @@ function AppShell() {
         authToken={user?.token ?? null}
         onClose={() => setReminderOpen(false)}
       />
+      {Platform.OS === 'web' ? (
+        <CommandPalette
+          watchlist={watchlist}
+          onNavigateTab={handleTabChange}
+          onOpenDetail={handleOpenDetail}
+          onOpenReminder={() => setReminderOpen(true)}
+        />
+      ) : null}
     </>
   )
 
