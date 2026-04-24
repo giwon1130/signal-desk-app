@@ -1,4 +1,4 @@
-import { Linking, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native'
+import { Linking, Platform, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native'
 import {
   Activity,
   AlertTriangle,
@@ -227,16 +227,19 @@ export function TodayTab({
   const tradingDay = summary?.tradingDayStatus
   const marketClosedToday = !!tradingDay && !tradingDay.krOpen && !tradingDay.usOpen
 
+  const isWeb = Platform.OS === 'web'
+
   return (
     <ScrollView
       style={styles.scroll}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-      contentContainerStyle={styles.content}
+      contentContainerStyle={[styles.content, isWeb && styles.contentWeb]}
     >
       {/* ── 거래일 상태 배너 (휴장 시 강조) ── */}
       {tradingDay ? (
         <View style={[
           styles.tradingDayBanner,
+          isWeb && styles.cardFull,
           marketClosedToday && {
             backgroundColor: tradingDay.isWeekend ? '#fef3c7' : '#fee2e2',
             borderColor: tradingDay.isWeekend ? '#fcd34d' : '#fecaca',
@@ -264,7 +267,7 @@ export function TodayTab({
 
       {/* ── 장 세션 컴팩트 ── */}
       {summary?.marketSessions?.length ? (
-        <View style={styles.todaySessionRow}>
+        <View style={[styles.todaySessionRow, isWeb && styles.cardFull]}>
           {summary.marketSessions.map((session) => {
             const tone = getSessionPalette(session.isOpen)
             return (

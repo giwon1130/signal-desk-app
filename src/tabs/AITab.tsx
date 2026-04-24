@@ -1,4 +1,4 @@
-import { FlatList, Linking, Pressable, RefreshControl, Text, TextInput, View } from 'react-native'
+import { FlatList, Linking, Platform, Pressable, RefreshControl, Text, TextInput, View } from 'react-native'
 import { BarChart2, Bot, ExternalLink, List, Target, TrendingUp } from 'lucide-react-native'
 import { useStyles } from '../styles'
 import type { AiRecommendationData, LogFilter, RecommendationExecutionLog } from '../types'
@@ -42,15 +42,16 @@ export function AITab({
   onLogQueryChange,
 }: Props) {
   const styles = useStyles()
+  const isWeb = Platform.OS === 'web'
   return (
     <FlatList
       style={styles.scroll}
-      contentContainerStyle={styles.content}
+      contentContainerStyle={[styles.content, isWeb && styles.contentWeb]}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       data={filteredLogs}
       keyExtractor={(item) => `${item.date}-${item.market}-${item.ticker}-${item.stage}`}
       ListHeaderComponent={(
-        <View style={{ gap: 10 }}>
+        <View style={[{ gap: 10 }, isWeb && styles.cardFull]}>
           {/* ── AI Brief ── */}
           <View style={styles.primaryCard}>
             <View style={styles.cardTitleRow}>
@@ -138,7 +139,7 @@ export function AITab({
         const stageSt = stageBadgeStyle(item.stage)
         const userSt = userStatusBadgeStyle(item.userStatus)
         return (
-          <View style={[styles.card, { marginTop: 10 }]}>
+          <View style={[styles.card, !isWeb && { marginTop: 10 }]}>
             <View style={styles.logTop}>
               <Text style={styles.logName}>{item.name} <Text style={styles.logMeta}>({item.market} {item.ticker})</Text></Text>
               <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>

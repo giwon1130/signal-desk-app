@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { Pressable, RefreshControl, ScrollView, Text, TextInput, View } from 'react-native'
+import { Platform, Pressable, RefreshControl, ScrollView, Text, TextInput, View } from 'react-native'
 import { Briefcase, Eye, Search, X } from 'lucide-react-native'
 import { useLivePrices } from '../hooks/useLivePrices'
 import { useStyles } from '../styles'
@@ -62,14 +62,16 @@ export function HomeTab({
     return { totalCost, totalValue, totalProfit, totalProfitRate }
   }, [portfolio, livePrices])
 
+  const isWeb = Platform.OS === 'web'
+
   return (
     <ScrollView
       style={styles.scroll}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-      contentContainerStyle={styles.content}
+      contentContainerStyle={[styles.content, isWeb && styles.contentWeb]}
     >
       {/* ── 히어로 KPI (정보용 — 탭 안 됨) ── */}
-      <View style={styles.heroMetricsRow}>
+      <View style={[styles.heroMetricsRow, isWeb && styles.cardFull]}>
         <View style={[styles.heroMetricCard, styles.heroMetricCardDark]}>
           <Text style={[styles.heroMetricLabel, styles.heroMetricLabelOnDark]}>AI 성공률</Text>
           <Text style={[styles.heroMetricValue, styles.heroMetricValueOnDark]}>{successRate}</Text>
