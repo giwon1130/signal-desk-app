@@ -601,6 +601,11 @@ function AppShell() {
           onTabChange={handleTabChange}
           onLogout={() => void handleLogout()}
           onOpenReminder={() => { void hapticLight(); setReminderOpen(true) }}
+          sections={sections}
+          watchlist={watchlist}
+          portfolio={portfolio}
+          aiRecommendation={aiRecommendation}
+          onOpenDetail={handleOpenDetail}
         >
           {tabContent}
         </WebLayout>
