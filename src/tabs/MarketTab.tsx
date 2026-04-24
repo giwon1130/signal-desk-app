@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Linking, Modal, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native'
+import { Linking, Modal, Platform, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native'
 import { BarChart2, Bell, Flame, Globe, Info, Snowflake, TrendingUp, X, Zap } from 'lucide-react-native'
 import { CandleVolumeChart } from '../components/CandleVolumeChart'
 import { CollapsibleCard } from '../components/CollapsibleCard'
@@ -86,14 +86,15 @@ export function MarketTab({
 }: Props) {
   const styles = useStyles()
   const [activeSignal, setActiveSignal] = useState<AlternativeSignal | null>(null)
+  const isWeb = Platform.OS === 'web'
   return (
     <ScrollView
       style={styles.scroll}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-      contentContainerStyle={styles.content}
+      contentContainerStyle={[styles.content, isWeb && styles.contentWeb]}
     >
       {/* ── 지수 선택 ── */}
-      <View style={styles.card}>
+      <View style={[styles.card, isWeb && styles.cardFull]}>
         <View style={styles.sectionHeaderRow}>
           <View style={styles.cardTitleRow}>
             <Globe size={14} color="#3b82f6" strokeWidth={2.5} />
@@ -144,7 +145,7 @@ export function MarketTab({
       </View>
 
       {/* ── 차트 & 통계 ── */}
-      <View style={styles.card}>
+      <View style={[styles.card, isWeb && styles.cardFull]}>
         <View style={styles.sectionHeaderRow}>
           <View style={styles.cardTitleRow}>
             <BarChart2 size={14} color="#6366f1" strokeWidth={2.5} />

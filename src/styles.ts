@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { StyleSheet } from 'react-native'
+import type { ViewStyle } from 'react-native'
 import { useTheme } from './theme'
 import type { Palette } from './theme'
 
@@ -80,6 +81,22 @@ export function makeStyles(C: Palette) {
     // ── Scroll / Content ────────────────────────────────────────────────────────
     scroll:  { flex: 1 },
     content: { padding: 14, gap: 10, paddingBottom: 32 },
+    // 웹 데스크톱 전용: 카드를 CSS grid 로 재배치. 420px 이상 컬럼을 auto-fit.
+    // 특정 카드는 cardFull 로 컬럼 span 을 덮어씀.
+    // (RN Web 은 display/grid/gridTemplateColumns 등을 그대로 CSS 로 넘김)
+    contentWeb: {
+      padding: 0,
+      paddingBottom: 32,
+      gap: 14,
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))',
+      gridAutoFlow: 'dense',
+      alignItems: 'start',
+    } as unknown as ViewStyle,
+    // 카드가 grid 안에서 전체 폭을 차지하도록 강제
+    cardFull: {
+      gridColumn: '1 / -1',
+    } as unknown as ViewStyle,
 
     // ── Cards ───────────────────────────────────────────────────────────────────
     primaryCard: {
