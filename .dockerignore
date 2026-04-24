@@ -1,0 +1,12 @@
+node_modules
+dist
+.expo
+ios
+android
+.git
+.claude
+.idea
+.vscode
+*.log
+.DS_Store
+scripts/release.sh

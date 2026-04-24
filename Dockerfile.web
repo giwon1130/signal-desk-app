@@ -1,0 +1,35 @@
+# ── Signal Desk 웹 정적 사이트 (Railway 전용) ───────────────────────────────
+#
+# Expo 웹 번들을 빌드한 뒤 `serve` 로 SPA 라우팅 (history fallback) 지원하며 호스팅.
+# Railway 가 주입하는 $PORT 를 그대로 바인딩. ios/android 네이티브 디렉토리는
+# .dockerignore 로 제외해 빌드 속도 + 이미지 크기 줄임.
+
+FROM node:20-slim AS builder
+WORKDIR /app
+
+# 네이티브 컴파일이 필요한 패키지가 들어올 수 있어 최소 빌드 도구 설치
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 make g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY package.json package-lock.json ./
+RUN npm ci --ignore-scripts --no-audit --no-fund
+
+COPY . .
+# 서버 URL 은 빌드 시점에 번들에 박히므로 env 로 주입 가능.
+# 기본값은 프로덕션 Railway API.
+ARG EXPO_PUBLIC_API_BASE_URL=https://signal-desk-api-production.up.railway.app
+ENV EXPO_PUBLIC_API_BASE_URL=$EXPO_PUBLIC_API_BASE_URL
+
+RUN npx expo export --platform web --output-dir dist
+
+# ── Runtime ────────────────────────────────────────────────────────────────
+FROM node:20-slim
+WORKDIR /app
+RUN npm install -g serve@14
+COPY --from=builder /app/dist ./dist
+
+ENV PORT=3000
+EXPOSE 3000
+# SPA 라우팅: 없는 경로는 index.html 로 fallback (-s)
+CMD ["sh", "-c", "serve -s dist -l tcp://0.0.0.0:${PORT:-3000}"]
