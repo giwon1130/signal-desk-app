@@ -1,28 +1,30 @@
 import { Platform, Pressable, Text, View } from 'react-native'
-import type { MarketSectionsData, IndexMetric } from '../types'
+import type { MarketSectionsData, IndexMetric, MarketSessionStatus } from '../types'
 import { marketColor, useTheme } from '../theme'
 import { formatCompactNumber, formatSignedRate } from '../utils'
+import { Sparkline } from './shared'
 
 /**
  * 최상단 고정 티커 리본.
  *
+ * Phase 5 추가:
+ * - 세션 배지 (KR/US OPEN · CLOSED · PRE · POST) — marketSessions 이용
+ * - 각 지수 칩에 스파크라인 (periods[0].points 의 close 시퀀스)
+ *
  * - Yahoo Finance / Investing.com 처럼 어느 탭을 보든 항상 주요 지수가 보이게.
- * - 데이터 소스: /api/v1/market/summary 가 아니라 /api/v1/market/sections (koreaMarket/usMarket.indices).
- *   이쪽이 KOSPI/KOSDAQ/S&P500/NASDAQ 를 다 담고 있음.
- * - 지수는 실시간 WS 가 아니라 30s~ 폴링 스냅샷. Phase 1 은 이걸로 충분.
- *   (개별 종목 실시간은 `useLivePrices` 로 `ContextSidebar` 에서 따로 처리)
+ * - 지수 데이터: /api/v1/market/sections (koreaMarket/usMarket.indices)
  * - 클릭 시 시장 탭으로 이동.
  */
 
 type Props = {
   sections: MarketSectionsData | null
+  sessions?: MarketSessionStatus[] | null
   onClickIndex?: (market: 'KR' | 'US') => void
 }
 
-export function TickerRibbon({ sections, onClickIndex }: Props) {
+export function TickerRibbon({ sections, sessions, onClickIndex }: Props) {
   const { palette } = useTheme()
 
-  // 지수 순서를 사람이 보는 순서로: KOSPI → KOSDAQ → S&P500 → NASDAQ → DOW
   const indices: Array<{ market: 'KR' | 'US'; item: IndexMetric }> = []
   if (sections?.koreaMarket?.indices) {
     for (const it of sections.koreaMarket.indices) indices.push({ market: 'KR', item: it })
@@ -42,7 +44,6 @@ export function TickerRibbon({ sections, onClickIndex }: Props) {
         backgroundColor: palette.scheme === 'dark' ? '#0b1220' : '#0f172a',
         borderBottomWidth: 1,
         borderBottomColor: palette.scheme === 'dark' ? '#1e293b' : '#0b1220',
-        // 가로 스크롤이 필요한 상황에 대비 (좁은 폭)
         ...(Platform.OS === 'web' ? ({ overflowX: 'auto', overflowY: 'hidden' } as object) : null),
       }}
     >
@@ -60,6 +61,16 @@ export function TickerRibbon({ sections, onClickIndex }: Props) {
       >
         LIVE
       </Text>
+
+      {/* 세션 배지 */}
+      {sessions && sessions.length > 0 ? (
+        <View style={{ flexDirection: 'row', gap: 6, paddingRight: 10, marginRight: 6, borderRightWidth: 1, borderRightColor: '#1e293b' }}>
+          {sessions.map((s) => (
+            <SessionPill key={`${s.market}-${s.label}`} session={s} />
+          ))}
+        </View>
+      ) : null}
+
       {indices.length === 0 ? (
         <Text style={{ color: '#94a3b8', fontSize: 11, fontWeight: '600' }}>
           지수 데이터를 불러오는 중…
@@ -67,6 +78,7 @@ export function TickerRibbon({ sections, onClickIndex }: Props) {
       ) : (
         indices.map(({ market, item }) => {
           const color = marketColor(palette, market, item.changeRate)
+          const points = item.periods?.[0]?.points ?? []
           return (
             <Pressable
               key={`${market}-${item.label}`}
@@ -77,7 +89,7 @@ export function TickerRibbon({ sections, onClickIndex }: Props) {
                   {
                     flexDirection: 'row',
                     alignItems: 'center',
-                    gap: 7,
+                    gap: 8,
                     paddingHorizontal: 10,
                     paddingVertical: 4,
                     borderRadius: 6,
@@ -95,10 +107,27 @@ export function TickerRibbon({ sections, onClickIndex }: Props) {
               <Text style={{ color, fontSize: 11, fontWeight: '800', fontVariant: ['tabular-nums'] }}>
                 {formatSignedRate(item.changeRate)}
               </Text>
+              {points.length > 1 ? (
+                <Sparkline points={points} width={48} height={14} color={color} palette={palette} />
+              ) : null}
             </Pressable>
           )
         })
       )}
+    </View>
+  )
+}
+
+function SessionPill({ session }: { session: MarketSessionStatus }) {
+  const open = session.isOpen
+  const bg = open ? 'rgba(34,197,94,0.18)' : '#1e293b'
+  const fg = open ? '#4ade80' : '#94a3b8'
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: bg, borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2 }}>
+      <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: fg }} />
+      <Text style={{ color: fg, fontSize: 9, fontWeight: '800', letterSpacing: 0.4 }}>
+        {session.market} · {open ? 'OPEN' : (session.phase || 'CLOSED').toUpperCase()}
+      </Text>
     </View>
   )
 }

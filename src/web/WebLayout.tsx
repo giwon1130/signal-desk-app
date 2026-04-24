@@ -55,6 +55,8 @@ type Props = {
   onOpenReminder: () => void
   // Phase 1 에서 추가: 글로벌 컨텍스트를 위한 데이터
   sections: MarketSectionsData | null
+  summary?: import('../types').MarketSummaryData | null
+  fortune?: import('../types').DailyFortune | null
   watchlist: WatchItem[]
   portfolio: PortfolioSummary | null
   aiRecommendation: AiRecommendationData | null
@@ -66,9 +68,10 @@ export function WebLayout(props: Props) {
   const {
     user, activeTab, isUp, lastSyncedAt,
     onTabChange, onLogout, onOpenReminder,
-    sections, watchlist, portfolio, aiRecommendation, onOpenDetail,
+    sections, summary, fortune, watchlist, portfolio, aiRecommendation, onOpenDetail,
     children,
   } = props
+  const sessions = summary?.marketSessions ?? null
   const { palette, toggle } = useTheme()
   const { width } = useWindowDimensions()
   const isNarrow     = width < NARROW_BREAKPOINT
@@ -81,6 +84,7 @@ export function WebLayout(props: Props) {
       <View style={{ flex: 1, backgroundColor: palette.bg }}>
         <TickerRibbon
           sections={sections}
+          sessions={sessions}
           onClickIndex={() => onTabChange('market')}
         />
         <NarrowHeader
@@ -247,9 +251,10 @@ export function WebLayout(props: Props) {
             paddingHorizontal: 24,
             paddingVertical: 20,
             gap: 16,
-            // 컨텍스트 사이드바 없는 중간 폭(960~1280)에서는 메인에 max-width 를 줘서
-            // 한 줄이 너무 길어지지 않게. 1280+ 에서는 양쪽 사이드바가 자연스레 폭을 제한.
-            ...(showContext ? null : { maxWidth: 1200, alignSelf: 'center' }),
+            // 아주 큰 모니터(1800+) 에서도 가독성 위해 상한 1440 캡.
+            // showContext=false 구간에선 좀 더 좁게 (1200).
+            maxWidth: showContext ? 1440 : 1200,
+            alignSelf: 'center',
           }}>
             <MainHeader activeTab={activeTab} lastSyncedAt={lastSyncedAt} />
             {children}
@@ -263,6 +268,7 @@ export function WebLayout(props: Props) {
             watchlist={watchlist}
             portfolio={portfolio}
             aiRecommendation={aiRecommendation}
+            fortune={fortune ?? null}
             onOpenDetail={onOpenDetail}
             onGotoStocks={() => onTabChange('stocks')}
             onGotoAi={() => onTabChange('ai')}
