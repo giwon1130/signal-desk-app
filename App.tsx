@@ -44,6 +44,8 @@ import { HomeTab } from './src/tabs/HomeTab'
 import { MarketTab } from './src/tabs/MarketTab'
 import { StocksTab } from './src/tabs/StocksTab'
 import { TodayTab } from './src/tabs/TodayTab'
+import { HomeDashboard } from './src/web/HomeDashboard'
+import { StocksPage } from './src/web/StocksPage'
 import { StockDetailModal, type StockDetailContext } from './src/components/StockDetailModal'
 import { ReminderSettingsModal } from './src/components/ReminderSettingsModal'
 import { useMarketReminderBootstrap } from './src/hooks/useMarketReminder'
@@ -481,16 +483,29 @@ function AppShell() {
       ) : null}
 
       {!loading && !error && activeTab === 'today' ? (
-        <TodayTab
-          summary={summary}
-          aiRecommendation={aiRecommendation}
-          positions={portfolio?.positions ?? []}
-          alertHistory={alertHistory}
-          fortune={fortune}
-          onOpenDetail={handleOpenDetail}
-          refreshing={refreshing}
-          onRefresh={onRefresh}
-        />
+        Platform.OS === 'web' ? (
+          <HomeDashboard
+            summary={summary}
+            aiRecommendation={aiRecommendation}
+            positions={portfolio?.positions ?? []}
+            watchlist={watchlist}
+            alertHistory={alertHistory}
+            topMovers={topMovers}
+            portfolio={portfolio}
+            onOpenDetail={handleOpenDetail}
+          />
+        ) : (
+          <TodayTab
+            summary={summary}
+            aiRecommendation={aiRecommendation}
+            positions={portfolio?.positions ?? []}
+            alertHistory={alertHistory}
+            fortune={fortune}
+            onOpenDetail={handleOpenDetail}
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+          />
+        )
       ) : null}
 
       {!loading && !error && activeTab === 'home' ? (
@@ -532,23 +547,41 @@ function AppShell() {
       ) : null}
 
       {!loading && !error && activeTab === 'stocks' ? (
-        <StocksTab
-          watchlist={watchlist}
-          stockSearch={stockSearch}
-          stockMarketFilter={stockMarketFilter}
-          stockResults={stockResults}
-          stockSearchLoading={stockSearchLoading}
-          favoriteDeletingId={favoriteDeletingId}
-          bulkDeleting={bulkDeletingWatch}
-          refreshing={refreshing}
-          onRefresh={onRefresh}
-          onStockSearchChange={setStockSearch}
-          onStockMarketFilterChange={setStockMarketFilter}
-          onOpenDetail={handleOpenDetail}
-          onQuickAddWatch={handleQuickAddWatch}
-          onDeleteFavorite={(id) => void handleDeleteFavorite(id)}
-          onDeleteAllFavorites={() => void handleDeleteAllFavorites()}
-        />
+        Platform.OS === 'web' ? (
+          <StocksPage
+            watchlist={watchlist}
+            stockSearch={stockSearch}
+            stockMarketFilter={stockMarketFilter}
+            stockResults={stockResults}
+            stockSearchLoading={stockSearchLoading}
+            favoriteDeletingId={favoriteDeletingId}
+            bulkDeleting={bulkDeletingWatch}
+            onStockSearchChange={setStockSearch}
+            onStockMarketFilterChange={setStockMarketFilter}
+            onOpenDetail={handleOpenDetail}
+            onQuickAddWatch={handleQuickAddWatch}
+            onDeleteFavorite={(id) => void handleDeleteFavorite(id)}
+            onDeleteAllFavorites={() => void handleDeleteAllFavorites()}
+          />
+        ) : (
+          <StocksTab
+            watchlist={watchlist}
+            stockSearch={stockSearch}
+            stockMarketFilter={stockMarketFilter}
+            stockResults={stockResults}
+            stockSearchLoading={stockSearchLoading}
+            favoriteDeletingId={favoriteDeletingId}
+            bulkDeleting={bulkDeletingWatch}
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            onStockSearchChange={setStockSearch}
+            onStockMarketFilterChange={setStockMarketFilter}
+            onOpenDetail={handleOpenDetail}
+            onQuickAddWatch={handleQuickAddWatch}
+            onDeleteFavorite={(id) => void handleDeleteFavorite(id)}
+            onDeleteAllFavorites={() => void handleDeleteAllFavorites()}
+          />
+        )
       ) : null}
 
       {!loading && !error && activeTab === 'ai' ? (
