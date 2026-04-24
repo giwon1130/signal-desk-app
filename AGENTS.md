@@ -174,6 +174,27 @@ npx expo run:ios --device 00008150-0003452E0A28401C --configuration Release
 
 CocoaPods가 UTF-8 로케일 에러(`Encoding::CompatibilityError`)를 내면 `LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8` 환경변수로 다시 시도.
 
+### 머지 + 리빌드 원스텝 스크립트
+
+feature 브랜치 머지 → main 푸시 → 실기 Release 빌드/설치까지 한 번에:
+
+```bash
+./scripts/release.sh                          # 현재 체크아웃된 브랜치를 main 에 머지 + 재빌드
+./scripts/release.sh feat/foo                 # feat/foo 를 main 에 머지 + 재빌드
+./scripts/release.sh feat/foo --no-build      # 머지만 (실기 빌드는 건너뜀)
+./scripts/release.sh feat/foo --device UDID   # 다른 UDID 로 빌드
+```
+
+기본 UDID 는 스크립트 상단 `DEFAULT_DEVICE_UDID` 상수 (또는 `RELEASE_DEVICE_UDID` 환경변수) 로 바꿀 수 있다.
+
+스크립트가 하는 일:
+1. main 체크아웃 + `pull --ff-only`
+2. `merge --no-ff <branch>` + `push origin main`
+3. 로컬 feature 브랜치 정리
+4. `xctrace` 로 기기 연결 확인 후 `expo run:ios --configuration Release` 실행
+
+**Claude 가 돌릴 때 주의**: 홈 디렉터리에서 Claude 세션을 연 경우 `git push origin main` 이 호스트 정책에 막힐 수 있다. 이 저장소 폴더 안에서 Claude 를 실행하거나, 사용자가 직접 터미널에서 호출.
+
 ### ⚠️ Personal Apple Developer Team 함정
 
 **Personal Team은 Push Notifications capability를 못 사인함**. 그런데 expo-notifications 모듈이 autolink되면서 매번 `ios/signaldeskapp/signaldeskapp.entitlements`에 `aps-environment` 키를 박아넣음 → 사인 실패.
