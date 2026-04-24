@@ -1,5 +1,7 @@
+import { useMemo } from 'react'
 import { Pressable, RefreshControl, ScrollView, Text, TextInput, View } from 'react-native'
 import { Briefcase, Eye, Search, X } from 'lucide-react-native'
+import { useLivePrices } from '../hooks/useLivePrices'
 import { useStyles } from '../styles'
 import type { HoldingPosition, PortfolioSummary, WatchItem } from '../types'
 import { formatCompactNumber, formatSignedRate } from '../utils'
@@ -36,6 +38,30 @@ export function HomeTab({
   onRemoveWatch,
 }: Props) {
   const styles = useStyles()
+
+  // 화면에 보이는(top-N) 관심·보유 종목 티커만 구독. 전체를 구독하면 서버 부하↑.
+  const liveTickers = useMemo(() => {
+    const fromWatch = topWatchlist.map((w) => w.ticker)
+    const fromPort = topPortfolioPositions.map((p) => p.ticker)
+    return Array.from(new Set([...fromWatch, ...fromPort])).filter(Boolean)
+  }, [topWatchlist, topPortfolioPositions])
+  const livePrices = useLivePrices(liveTickers)
+
+  // 포트폴리오 총 평가/손익도 라이브 가격으로 재계산해서 표기.
+  const livePortfolio = useMemo(() => {
+    if (!portfolio) return null
+    let totalCost = 0
+    let totalValue = 0
+    for (const p of portfolio.positions) {
+      const livePrice = livePrices[p.ticker]?.price ?? p.currentPrice
+      totalCost += p.buyPrice * p.quantity
+      totalValue += livePrice * p.quantity
+    }
+    const totalProfit = totalValue - totalCost
+    const totalProfitRate = totalCost > 0 ? (totalProfit / totalCost) * 100 : 0
+    return { totalCost, totalValue, totalProfit, totalProfitRate }
+  }, [portfolio, livePrices])
+
   return (
     <ScrollView
       style={styles.scroll}
@@ -56,8 +82,8 @@ export function HomeTab({
         </View>
         <View style={styles.heroMetricCard}>
           <Text style={styles.heroMetricLabel}>실제 보유</Text>
-          <Text style={[styles.heroMetricValue, { color: (portfolio?.totalProfitRate ?? 0) >= 0 ? '#dc2626' : '#2563eb' }]}>
-            {portfolio ? formatSignedRate(portfolio.totalProfitRate) : '-'}
+          <Text style={[styles.heroMetricValue, { color: (livePortfolio?.totalProfitRate ?? 0) >= 0 ? '#dc2626' : '#2563eb' }]}>
+            {livePortfolio ? formatSignedRate(livePortfolio.totalProfitRate) : '-'}
           </Text>
           <Text style={styles.heroMetricFootnote}>{portfolio?.positions.length ?? 0}개 보유 · 누적 손익</Text>
         </View>
@@ -103,7 +129,11 @@ export function HomeTab({
           <Text style={styles.metaText}>{filteredWatchlist.length}개 · 탭하면 상세</Text>
         </View>
         {topWatchlist.length ? (
-          topWatchlist.map((item) => (
+          topWatchlist.map((item) => {
+            const live = livePrices[item.ticker]
+            const displayPrice = live?.price ?? item.price
+            const displayRate = live?.changeRate ?? item.changeRate
+            return (
             <View key={`${item.market}-${item.ticker}-${item.id || item.name}`} style={styles.summaryRow}>
               <Pressable
                 onPress={() => onOpenDetail(item.market, item.ticker, item.name)}
@@ -117,9 +147,9 @@ export function HomeTab({
                 style={({ pressed }) => [styles.summaryValueBox, pressed && { opacity: 0.6 }]}
               >
                 <Text style={styles.summaryMeta}>{item.stance}</Text>
-                <Text style={styles.metricScore}>{formatCompactNumber(item.price)}</Text>
-                <Text style={[styles.summaryDelta, { color: item.changeRate >= 0 ? '#dc2626' : '#2563eb' }]}>
-                  {formatSignedRate(item.changeRate)}
+                <Text style={styles.metricScore}>{formatCompactNumber(displayPrice)}</Text>
+                <Text style={[styles.summaryDelta, { color: displayRate >= 0 ? '#dc2626' : '#2563eb' }]}>
+                  {formatSignedRate(displayRate)}
                 </Text>
               </Pressable>
               {item.id ? (
@@ -136,7 +166,8 @@ export function HomeTab({
                 </Pressable>
               ) : null}
             </View>
-          ))
+            )
+          })
         ) : (
           <Text style={styles.metaText}>아직 관심종목이 없어. 종목 탭에서 + 버튼으로 담아봐.</Text>
         )}
@@ -153,22 +184,26 @@ export function HomeTab({
             {portfolio ? `손익 ${formatSignedRate(portfolio.totalProfitRate)}` : '-'}
           </Text>
         </View>
-        {portfolio ? (
+        {livePortfolio ? (
           <View style={styles.portfolioSummaryRow}>
             <View style={styles.portfolioSummaryCard}>
               <Text style={styles.kpiLabel}>총 평가금액</Text>
-              <Text style={styles.chartStatValue}>{formatCompactNumber(portfolio.totalValue)}</Text>
+              <Text style={styles.chartStatValue}>{formatCompactNumber(livePortfolio.totalValue)}</Text>
             </View>
             <View style={styles.portfolioSummaryCard}>
               <Text style={styles.kpiLabel}>총 손익</Text>
-              <Text style={[styles.chartStatValue, { color: portfolio.totalProfit >= 0 ? '#dc2626' : '#2563eb' }]}>
-                {formatCompactNumber(portfolio.totalProfit)}
+              <Text style={[styles.chartStatValue, { color: livePortfolio.totalProfit >= 0 ? '#dc2626' : '#2563eb' }]}>
+                {formatCompactNumber(livePortfolio.totalProfit)}
               </Text>
             </View>
           </View>
         ) : null}
         {topPortfolioPositions.length ? (
-          topPortfolioPositions.map((item) => (
+          topPortfolioPositions.map((item) => {
+            const live = livePrices[item.ticker]
+            const currentPrice = live?.price ?? item.currentPrice
+            const profitRate = item.buyPrice > 0 ? ((currentPrice - item.buyPrice) / item.buyPrice) * 100 : item.profitRate
+            return (
             <Pressable
               key={`${item.market}-${item.ticker}-${item.id || item.name}`}
               onPress={() => onOpenDetail(item.market, item.ticker, item.name)}
@@ -179,13 +214,14 @@ export function HomeTab({
                 <Text style={styles.metricState}>{item.market} · {item.ticker} · {item.quantity}주</Text>
               </View>
               <View style={styles.summaryValueBox}>
-                <Text style={styles.metricScore}>{formatCompactNumber(item.currentPrice)}</Text>
-                <Text style={[styles.summaryDelta, { color: item.profitRate >= 0 ? '#dc2626' : '#2563eb' }]}>
-                  {formatSignedRate(item.profitRate)}
+                <Text style={styles.metricScore}>{formatCompactNumber(currentPrice)}</Text>
+                <Text style={[styles.summaryDelta, { color: profitRate >= 0 ? '#dc2626' : '#2563eb' }]}>
+                  {formatSignedRate(profitRate)}
                 </Text>
               </View>
             </Pressable>
-          ))
+            )
+          })
         ) : (
           <Text style={styles.metaText}>실제 보유 중인 종목이 없어.</Text>
         )}
