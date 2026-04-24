@@ -249,9 +249,6 @@ export function TodayTab({
         </View>
       ) : null}
 
-      {/* ── 오늘의 투자 운세 (재미용) ── */}
-      {fortune ? <FortuneCard fortune={fortune} /> : null}
-
       {/* ── 마켓 상태 (한 줄 요약) ── */}
       <View style={styles.todayHeroCard}>
         <View style={styles.cardTitleRow}>
@@ -408,41 +405,6 @@ export function TodayTab({
         </View>
       ) : null}
 
-      {/* ── 최근 받은 알림 ── */}
-      {alertHistory.length > 0 ? (
-        <CollapsibleCard
-          title={
-            <View style={styles.cardTitleRow}>
-              <Bell size={14} color="#ea580c" strokeWidth={2.5} />
-              <Text style={styles.cardTitle}>최근 받은 알림</Text>
-            </View>
-          }
-          preview={<Text style={styles.metaText}>{alertHistory.length}건</Text>}
-        >
-          {alertHistory.slice(0, 5).map((a, i) => {
-            const isUp = a.direction === 'UP'
-            const color = isUp ? '#dc2626' : '#2563eb'
-            return (
-              <Pressable
-                key={`${a.ticker}-${a.sentAt}-${i}`}
-                onPress={() => onOpenDetail(a.market, a.ticker, a.name)}
-                style={styles.todayMonitorRow}
-              >
-                <View style={styles.todayMonitorLeft}>
-                  <Text style={styles.todayMonitorName}>{a.name}</Text>
-                  <Text style={styles.todayMonitorMeta}>{a.market} · {a.ticker} · {a.alertDate}</Text>
-                </View>
-                <View style={styles.todayMonitorRight}>
-                  <Text style={[styles.todayMonitorRate, { color }]}>
-                    {isUp ? '↑' : '↓'} {formatSignedRate(a.changeRate)}
-                  </Text>
-                </View>
-              </Pressable>
-            )
-          })}
-        </CollapsibleCard>
-      ) : null}
-
       {/* ── 오늘의 단타 픽 ── */}
       <View style={styles.card}>
         <View style={styles.sectionHeaderRow}>
@@ -536,6 +498,44 @@ export function TodayTab({
           )
         })}
       </View>
+
+      {/* ── 최근 받은 알림 (회고) ── */}
+      {alertHistory.length > 0 ? (
+        <CollapsibleCard
+          title={
+            <View style={styles.cardTitleRow}>
+              <Bell size={14} color="#ea580c" strokeWidth={2.5} />
+              <Text style={styles.cardTitle}>최근 받은 알림</Text>
+            </View>
+          }
+          preview={<Text style={styles.metaText}>{alertHistory.length}건</Text>}
+        >
+          {alertHistory.slice(0, 5).map((a, i) => {
+            const isUp = a.direction === 'UP'
+            const color = isUp ? '#dc2626' : '#2563eb'
+            return (
+              <Pressable
+                key={`${a.ticker}-${a.sentAt}-${i}`}
+                onPress={() => onOpenDetail(a.market, a.ticker, a.name)}
+                style={styles.todayMonitorRow}
+              >
+                <View style={styles.todayMonitorLeft}>
+                  <Text style={styles.todayMonitorName}>{a.name}</Text>
+                  <Text style={styles.todayMonitorMeta}>{a.market} · {a.ticker} · {a.alertDate}</Text>
+                </View>
+                <View style={styles.todayMonitorRight}>
+                  <Text style={[styles.todayMonitorRate, { color }]}>
+                    {isUp ? '↑' : '↓'} {formatSignedRate(a.changeRate)}
+                  </Text>
+                </View>
+              </Pressable>
+            )
+          })}
+        </CollapsibleCard>
+      ) : null}
+
+      {/* ── 오늘의 투자 운세 (재미용 — 맨 아래) ── */}
+      {fortune ? <FortuneCard fortune={fortune} /> : null}
     </ScrollView>
   )
 }

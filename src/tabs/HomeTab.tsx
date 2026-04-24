@@ -89,37 +89,61 @@ export function HomeTab({
         </View>
       </View>
 
-      {/* ── 빠른 검색 ── */}
+      {/* ── 포트폴리오 (실제 보유) 요약 — 실제 돈이 걸려있어서 최우선 ── */}
       <View style={styles.card}>
         <View style={styles.sectionHeaderRow}>
           <View style={styles.cardTitleRow}>
-            <Search size={14} color="#3b82f6" strokeWidth={2.5} />
-            <Text style={styles.cardTitle}>빠른 검색</Text>
+            <Briefcase size={14} color="#3b82f6" strokeWidth={2.5} />
+            <Text style={styles.cardTitle}>실제 보유 종목 (포트폴리오)</Text>
           </View>
-          <Text style={styles.metaText}>관심종목/보유종목</Text>
+          <Text style={styles.metaText}>
+            {portfolio ? `손익 ${formatSignedRate(portfolio.totalProfitRate)}` : '-'}
+          </Text>
         </View>
-        <TextInput
-          value={homeQuery}
-          onChangeText={onHomeQueryChange}
-          placeholder="종목명, 티커, 시장으로 검색"
-          placeholderTextColor="#94a3b8"
-          style={styles.searchInput}
-          autoCapitalize="none"
-          autoCorrect={false}
-        />
-        <View style={styles.quickStatsRow}>
-          <View style={styles.quickStatCard}>
-            <Text style={styles.kpiLabel}>검색 결과 관심종목</Text>
-            <Text style={styles.quickStatValue}>{filteredWatchlist.length}</Text>
+        {livePortfolio ? (
+          <View style={styles.portfolioSummaryRow}>
+            <View style={styles.portfolioSummaryCard}>
+              <Text style={styles.kpiLabel}>총 평가금액</Text>
+              <Text style={styles.chartStatValue}>{formatCompactNumber(livePortfolio.totalValue)}</Text>
+            </View>
+            <View style={styles.portfolioSummaryCard}>
+              <Text style={styles.kpiLabel}>총 손익</Text>
+              <Text style={[styles.chartStatValue, { color: livePortfolio.totalProfit >= 0 ? '#dc2626' : '#2563eb' }]}>
+                {formatCompactNumber(livePortfolio.totalProfit)}
+              </Text>
+            </View>
           </View>
-          <View style={styles.quickStatCard}>
-            <Text style={styles.kpiLabel}>검색 결과 보유종목</Text>
-            <Text style={styles.quickStatValue}>{filteredPortfolioPositions.length}</Text>
-          </View>
-        </View>
+        ) : null}
+        {topPortfolioPositions.length ? (
+          topPortfolioPositions.map((item) => {
+            const live = livePrices[item.ticker]
+            const currentPrice = live?.price ?? item.currentPrice
+            const profitRate = item.buyPrice > 0 ? ((currentPrice - item.buyPrice) / item.buyPrice) * 100 : item.profitRate
+            return (
+            <Pressable
+              key={`${item.market}-${item.ticker}-${item.id || item.name}`}
+              onPress={() => onOpenDetail(item.market, item.ticker, item.name)}
+              style={({ pressed }) => [styles.summaryRow, pressed && { opacity: 0.6 }]}
+            >
+              <View style={styles.metricLeft}>
+                <Text style={styles.metricName}>{item.name}</Text>
+                <Text style={styles.metricState}>{item.market} · {item.ticker} · {item.quantity}주</Text>
+              </View>
+              <View style={styles.summaryValueBox}>
+                <Text style={styles.metricScore}>{formatCompactNumber(currentPrice)}</Text>
+                <Text style={[styles.summaryDelta, { color: profitRate >= 0 ? '#dc2626' : '#2563eb' }]}>
+                  {formatSignedRate(profitRate)}
+                </Text>
+              </View>
+            </Pressable>
+            )
+          })
+        ) : (
+          <Text style={styles.metaText}>실제 보유 중인 종목이 없어.</Text>
+        )}
       </View>
 
-      {/* ── 관심종목 요약 ── */}
+      {/* ── 관심종목 요약 (추적만 함) ── */}
       <View style={styles.card}>
         <View style={styles.sectionHeaderRow}>
           <View style={styles.cardTitleRow}>
@@ -173,58 +197,34 @@ export function HomeTab({
         )}
       </View>
 
-      {/* ── 포트폴리오 (실제 보유) 요약 ── */}
+      {/* ── 빠른 검색 (도구 — 가장 아래) ── */}
       <View style={styles.card}>
         <View style={styles.sectionHeaderRow}>
           <View style={styles.cardTitleRow}>
-            <Briefcase size={14} color="#3b82f6" strokeWidth={2.5} />
-            <Text style={styles.cardTitle}>실제 보유 종목 (포트폴리오)</Text>
+            <Search size={14} color="#3b82f6" strokeWidth={2.5} />
+            <Text style={styles.cardTitle}>빠른 검색</Text>
           </View>
-          <Text style={styles.metaText}>
-            {portfolio ? `손익 ${formatSignedRate(portfolio.totalProfitRate)}` : '-'}
-          </Text>
+          <Text style={styles.metaText}>관심종목/보유종목</Text>
         </View>
-        {livePortfolio ? (
-          <View style={styles.portfolioSummaryRow}>
-            <View style={styles.portfolioSummaryCard}>
-              <Text style={styles.kpiLabel}>총 평가금액</Text>
-              <Text style={styles.chartStatValue}>{formatCompactNumber(livePortfolio.totalValue)}</Text>
-            </View>
-            <View style={styles.portfolioSummaryCard}>
-              <Text style={styles.kpiLabel}>총 손익</Text>
-              <Text style={[styles.chartStatValue, { color: livePortfolio.totalProfit >= 0 ? '#dc2626' : '#2563eb' }]}>
-                {formatCompactNumber(livePortfolio.totalProfit)}
-              </Text>
-            </View>
+        <TextInput
+          value={homeQuery}
+          onChangeText={onHomeQueryChange}
+          placeholder="종목명, 티커, 시장으로 검색"
+          placeholderTextColor="#94a3b8"
+          style={styles.searchInput}
+          autoCapitalize="none"
+          autoCorrect={false}
+        />
+        <View style={styles.quickStatsRow}>
+          <View style={styles.quickStatCard}>
+            <Text style={styles.kpiLabel}>검색 결과 관심종목</Text>
+            <Text style={styles.quickStatValue}>{filteredWatchlist.length}</Text>
           </View>
-        ) : null}
-        {topPortfolioPositions.length ? (
-          topPortfolioPositions.map((item) => {
-            const live = livePrices[item.ticker]
-            const currentPrice = live?.price ?? item.currentPrice
-            const profitRate = item.buyPrice > 0 ? ((currentPrice - item.buyPrice) / item.buyPrice) * 100 : item.profitRate
-            return (
-            <Pressable
-              key={`${item.market}-${item.ticker}-${item.id || item.name}`}
-              onPress={() => onOpenDetail(item.market, item.ticker, item.name)}
-              style={({ pressed }) => [styles.summaryRow, pressed && { opacity: 0.6 }]}
-            >
-              <View style={styles.metricLeft}>
-                <Text style={styles.metricName}>{item.name}</Text>
-                <Text style={styles.metricState}>{item.market} · {item.ticker} · {item.quantity}주</Text>
-              </View>
-              <View style={styles.summaryValueBox}>
-                <Text style={styles.metricScore}>{formatCompactNumber(currentPrice)}</Text>
-                <Text style={[styles.summaryDelta, { color: profitRate >= 0 ? '#dc2626' : '#2563eb' }]}>
-                  {formatSignedRate(profitRate)}
-                </Text>
-              </View>
-            </Pressable>
-            )
-          })
-        ) : (
-          <Text style={styles.metaText}>실제 보유 중인 종목이 없어.</Text>
-        )}
+          <View style={styles.quickStatCard}>
+            <Text style={styles.kpiLabel}>검색 결과 보유종목</Text>
+            <Text style={styles.quickStatValue}>{filteredPortfolioPositions.length}</Text>
+          </View>
+        </View>
       </View>
     </ScrollView>
   )
