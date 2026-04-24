@@ -174,7 +174,7 @@ function SentimentCard({ sentiment }: { sentiment: NewsSentiment }) {
         <Text style={styles.todaySentimentMeta}>부정 {sentiment.negativeCount}</Text>
       </View>
       <Text style={styles.todaySentimentRationale}>{sentiment.rationale}</Text>
-      {sentiment.highlights.slice(0, 3).map((h, i) => (
+      {sentiment.highlights.slice(0, 6).map((h, i) => (
         <Pressable
           key={`${sentiment.market}-${i}`}
           onPress={() => h.url && void Linking.openURL(h.url)}
