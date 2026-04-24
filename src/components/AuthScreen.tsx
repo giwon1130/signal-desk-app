@@ -11,10 +11,11 @@ import {
 } from 'react-native'
 import { LogIn, TrendingUp, UserPlus } from 'lucide-react-native'
 import { apiLogin, apiSignup, type AuthUser } from '../api/auth'
-import { useGoogleSignIn } from '../api/socialAuth'
 import { useStyles } from '../styles'
 import { useTheme } from '../theme'
 import { hapticError, hapticSuccess } from '../utils/haptics'
+import { GoogleSignInButton } from './GoogleSignInButton'
+import { WebFooter } from './WebFooter'
 
 type Mode = 'login' | 'signup'
 
@@ -89,21 +90,14 @@ export function AuthScreen({ onDone }: Props) {
     return ''
   }, [nickname, nickTouched, mode])
 
-  const handleSocial = async (fn: () => Promise<void>) => {
-    setError('')
-    setLoading(true)
-    try {
-      await fn()
-      void hapticSuccess()
-    } catch (e) {
-      void hapticError()
-      setError(friendlyAuthError(e, mode))
-    } finally {
-      setLoading(false)
-    }
+  const handleGoogleSuccess = (u: AuthUser) => {
+    void hapticSuccess()
+    onDone(u)
   }
-
-  const [googleRequest, googleSignIn] = useGoogleSignIn(onDone)
+  const handleGoogleError = (message: string) => {
+    void hapticError()
+    setError(message)
+  }
 
   const handleSubmit = async () => {
     setError('')
@@ -267,23 +261,11 @@ export function AuthScreen({ onDone }: Props) {
           <View style={{ flex: 1, height: 1, backgroundColor: palette.border }} />
         </View>
 
-        <Pressable
-          onPress={() => void handleSocial(googleSignIn)}
-          disabled={loading || !googleRequest}
-          style={({ pressed }) => [
-            {
-              borderRadius: 11, backgroundColor: '#ffffff',
-              borderColor: '#e2e8f0', borderWidth: 1,
-              alignItems: 'center', justifyContent: 'center',
-              flexDirection: 'row', gap: 8,
-              paddingVertical: 10, paddingHorizontal: 14,
-              opacity: loading || pressed ? 0.75 : 1,
-            },
-          ]}
-        >
-          <Text style={{ fontSize: 14, fontWeight: '900', color: '#4285F4' }}>G</Text>
-          <Text style={{ color: '#1f2937', fontSize: 13, fontWeight: '700' }}>Google 로 계속하기</Text>
-        </Pressable>
+        <GoogleSignInButton
+          loading={loading}
+          onAuth={handleGoogleSuccess}
+          onError={handleGoogleError}
+        />
 
         {/* ── 모드 전환 ── */}
         <Pressable
@@ -297,6 +279,8 @@ export function AuthScreen({ onDone }: Props) {
             {mode === 'login' ? '계정이 없어? 가입하기' : '이미 계정 있어? 로그인'}
           </Text>
         </Pressable>
+
+        <WebFooter />
       </ScrollView>
     </KeyboardAvoidingView>
   )

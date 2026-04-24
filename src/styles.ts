@@ -357,8 +357,11 @@ export function makeStyles(C: Palette) {
     collapsibleHeader: {
       flexDirection: 'row', alignItems: 'center', gap: 8,
     },
-    collapsibleHeaderMain:    { flex: 0, flexShrink: 1 },
-    collapsibleHeaderPreview: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 8 },
+    // 제목 쪽이 flex: 1 로 남은 공간을 먹어야 한국어 텍스트가 한 글자씩 세로로 떨어지지 않음.
+    // (flex: 0 + flexShrink: 1 로 해두면 preview 가 0 크기여도 title 이 줄바꿈 기준 폭을
+    //  확보하지 못해서 "한/자/씩" 세로로 박살나는 증상이 웹 520px 에서 터짐)
+    collapsibleHeaderMain:    { flex: 1, flexShrink: 1, minWidth: 0 },
+    collapsibleHeaderPreview: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 8, flexShrink: 0 },
     collapsibleBody:          { marginTop: 10, gap: 10 },
 
     // ── Fortune 카드 (오늘의 투자 운세) ───────────────────────────────────────────

@@ -25,6 +25,8 @@ import { ThemeProvider, useTheme } from './src/theme'
 import { Toast } from './src/components/Toast'
 import { AuthScreen } from './src/components/AuthScreen'
 import { WebFrame } from './src/components/WebFrame'
+import { WebFooter } from './src/components/WebFooter'
+import { webBootstrap } from './src/utils/webBootstrap'
 import { useToast } from './src/hooks/useToast'
 import { hapticLight, hapticSuccess, hapticError } from './src/utils/haptics'
 import {
@@ -78,6 +80,10 @@ function AppShell() {
   const styles = useStyles()
   const { palette, toggle, mode } = useTheme()
   const toast = useToast()
+
+  // 웹: viewport meta + body 배경 + safe-area 패딩 1회 세팅.
+  // 테마 바뀔 때마다 body bg 만 업데이트.
+  useEffect(() => { webBootstrap(palette.bg) }, [palette.bg])
 
   // ── 인증 상태 ─────────────────────────────────────
   const [authChecked, setAuthChecked] = useState(false)
@@ -642,6 +648,8 @@ function AppShell() {
         authToken={user?.token ?? null}
         onClose={() => setReminderOpen(false)}
       />
+
+      <WebFooter />
       </WebFrame>
     </SafeAreaView>
   )
