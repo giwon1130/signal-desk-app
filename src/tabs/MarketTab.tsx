@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { Linking, Modal, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native'
-import { BarChart2, Bell, Globe, Info, TrendingUp, X, Zap } from 'lucide-react-native'
+import { BarChart2, Bell, Flame, Globe, Info, Snowflake, TrendingUp, X, Zap } from 'lucide-react-native'
 import { CandleVolumeChart } from '../components/CandleVolumeChart'
+import { CollapsibleCard } from '../components/CollapsibleCard'
 import { useStyles } from '../styles'
 import type {
   AlternativeSignal,
@@ -11,6 +12,8 @@ import type {
   MarketSection,
   MarketSummaryData,
   PeriodKey,
+  TopMover,
+  TopMoversResponse,
 } from '../types'
 import {
   formatCompactNumber,
@@ -29,11 +32,39 @@ type Props = {
   chartPeriod: PeriodKey
   selectedIndexLabel: string
   chartWidth: number
+  topMovers: TopMoversResponse | null
+  onOpenDetail: (market: string, ticker: string, name?: string) => void
   refreshing: boolean
   onRefresh: () => Promise<void>
   onChartMarketChange: (market: MarketKey) => void
   onChartPeriodChange: (period: PeriodKey) => void
   onSelectedIndexLabelChange: (label: string) => void
+}
+
+function MoverRow({
+  item,
+  onOpenDetail,
+}: {
+  item: TopMover
+  onOpenDetail: (market: string, ticker: string, name?: string) => void
+}) {
+  const styles = useStyles()
+  const color = item.changeRate >= 0 ? '#dc2626' : '#2563eb'
+  return (
+    <Pressable
+      onPress={() => onOpenDetail(item.market, item.ticker, item.name)}
+      style={({ pressed }) => [styles.summaryRow, pressed && { opacity: 0.6 }]}
+    >
+      <View style={styles.metricLeft}>
+        <Text style={styles.metricName}>{item.name}</Text>
+        <Text style={styles.metricState}>{item.market} · {item.ticker}</Text>
+      </View>
+      <View style={styles.summaryValueBox}>
+        <Text style={styles.metricScore}>{formatCompactNumber(item.price)}</Text>
+        <Text style={[styles.summaryDelta, { color }]}>{formatSignedRate(item.changeRate)}</Text>
+      </View>
+    </Pressable>
+  )
 }
 
 export function MarketTab({
@@ -45,6 +76,8 @@ export function MarketTab({
   chartPeriod,
   selectedIndexLabel,
   chartWidth,
+  topMovers,
+  onOpenDetail,
   refreshing,
   onRefresh,
   onChartMarketChange,
@@ -167,6 +200,57 @@ export function MarketTab({
           </View>
         ) : null}
       </View>
+
+      {/* ── 급등 / 급락 상위 종목 ── */}
+      {topMovers ? (
+        <CollapsibleCard
+          title={
+            <View style={styles.cardTitleRow}>
+              <Flame size={14} color="#dc2626" strokeWidth={2.5} />
+              <Text style={styles.cardTitle}>급등 종목 (KOSPI · KOSDAQ)</Text>
+            </View>
+          }
+          preview={
+            <Text style={[styles.metaText, { color: '#dc2626', fontWeight: '700' }]}>
+              {topMovers.kospi.gainers[0] ? `${topMovers.kospi.gainers[0].name} ${formatSignedRate(topMovers.kospi.gainers[0].changeRate)}` : '-'}
+            </Text>
+          }
+        >
+          <Text style={styles.metaText}>KOSPI · {topMovers.kospi.gainers.length}종목</Text>
+          {topMovers.kospi.gainers.map((m) => (
+            <MoverRow key={`kospi-up-${m.ticker}`} item={m} onOpenDetail={onOpenDetail} />
+          ))}
+          <Text style={[styles.metaText, { marginTop: 6 }]}>KOSDAQ · {topMovers.kosdaq.gainers.length}종목</Text>
+          {topMovers.kosdaq.gainers.map((m) => (
+            <MoverRow key={`kosdaq-up-${m.ticker}`} item={m} onOpenDetail={onOpenDetail} />
+          ))}
+        </CollapsibleCard>
+      ) : null}
+
+      {topMovers ? (
+        <CollapsibleCard
+          title={
+            <View style={styles.cardTitleRow}>
+              <Snowflake size={14} color="#2563eb" strokeWidth={2.5} />
+              <Text style={styles.cardTitle}>급락 종목 (KOSPI · KOSDAQ)</Text>
+            </View>
+          }
+          preview={
+            <Text style={[styles.metaText, { color: '#2563eb', fontWeight: '700' }]}>
+              {topMovers.kospi.losers[0] ? `${topMovers.kospi.losers[0].name} ${formatSignedRate(topMovers.kospi.losers[0].changeRate)}` : '-'}
+            </Text>
+          }
+        >
+          <Text style={styles.metaText}>KOSPI · {topMovers.kospi.losers.length}종목</Text>
+          {topMovers.kospi.losers.map((m) => (
+            <MoverRow key={`kospi-dn-${m.ticker}`} item={m} onOpenDetail={onOpenDetail} />
+          ))}
+          <Text style={[styles.metaText, { marginTop: 6 }]}>KOSDAQ · {topMovers.kosdaq.losers.length}종목</Text>
+          {topMovers.kosdaq.losers.map((m) => (
+            <MoverRow key={`kosdaq-dn-${m.ticker}`} item={m} onOpenDetail={onOpenDetail} />
+          ))}
+        </CollapsibleCard>
+      ) : null}
 
       {/* ── 시장 요약 지표 (Home 에서 이동) ── */}
       <View style={styles.card}>
