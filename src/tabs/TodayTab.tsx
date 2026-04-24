@@ -12,6 +12,7 @@ import {
   TrendingDown,
   TrendingUp,
 } from 'lucide-react-native'
+import { CollapsibleCard } from '../components/CollapsibleCard'
 import { useStyles } from '../styles'
 import { useTheme } from '../theme'
 import type {
@@ -97,12 +98,20 @@ function FortuneCard({ fortune }: { fortune: DailyFortune }) {
   const accent = fortuneToneColor(fortune.overallTone)
 
   return (
-    <View style={styles.fortuneCard}>
-      <View style={styles.cardTitleRow}>
-        <Moon size={13} color={accent} strokeWidth={2.5} />
-        <Text style={[styles.cardEyebrow, { color: accent }]}>오늘의 투자 운세</Text>
-      </View>
-
+    <CollapsibleCard
+      title={
+        <View style={styles.cardTitleRow}>
+          <Moon size={13} color={accent} strokeWidth={2.5} />
+          <Text style={[styles.cardEyebrow, { color: accent }]}>오늘의 투자 운세</Text>
+        </View>
+      }
+      preview={
+        <>
+          <Text style={[styles.fortuneLabel, { color: accent }]}>{fortune.overallLabel}</Text>
+          <Text style={[styles.fortuneScoreValue, { color: accent, fontSize: 14 }]}>{fortune.overallScore}</Text>
+        </>
+      }
+    >
       <View style={styles.fortuneTopRow}>
         <View style={[styles.fortuneScoreCircle, { borderColor: accent }]}>
           <Text style={[styles.fortuneScoreValue, { color: accent }]}>{fortune.overallScore}</Text>
@@ -148,7 +157,7 @@ function FortuneCard({ fortune }: { fortune: DailyFortune }) {
 
       <Text style={styles.fortuneMantra}>“{fortune.mantra}”</Text>
       <Text style={styles.fortuneDisclaimer}>{fortune.disclaimer}</Text>
-    </View>
+    </CollapsibleCard>
   )
 }
 
@@ -273,32 +282,49 @@ export function TodayTab({
 
       {/* ── 뉴스 sentiment ── */}
       {(krSentiment || usSentiment) ? (
-        <View style={styles.card}>
-          <View style={styles.sectionHeaderRow}>
+        <CollapsibleCard
+          title={
             <View style={styles.cardTitleRow}>
               <Newspaper size={14} color="#0d9488" strokeWidth={2.5} />
               <Text style={styles.cardTitle}>뉴스 sentiment</Text>
             </View>
-            <Text style={styles.metaText}>오늘 헤드라인 기반</Text>
-          </View>
+          }
+          preview={
+            <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+              {krSentiment ? (
+                <Text style={[styles.todaySentimentLabel, { color: toneColor(krSentiment.label) }]}>
+                  🇰🇷 {krSentiment.label} {krSentiment.score}
+                </Text>
+              ) : null}
+              {usSentiment ? (
+                <Text style={[styles.todaySentimentLabel, { color: toneColor(usSentiment.label) }]}>
+                  🇺🇸 {usSentiment.label} {usSentiment.score}
+                </Text>
+              ) : null}
+            </View>
+          }
+        >
+          <Text style={styles.metaText}>오늘 헤드라인 기반</Text>
           {krSentiment ? <SentimentCard sentiment={krSentiment} /> : null}
           {usSentiment ? <SentimentCard sentiment={usSentiment} /> : null}
-        </View>
+        </CollapsibleCard>
       ) : null}
 
       {/* ── 개인화 브리핑 ── */}
       {summary?.briefing ? (
-        <View style={styles.card}>
-          <View style={styles.sectionHeaderRow}>
+        <CollapsibleCard
+          title={
             <View style={styles.cardTitleRow}>
               <Sparkles size={14} color={palette.blue} strokeWidth={2.5} />
               <Text style={styles.cardTitle}>오늘의 브리핑</Text>
             </View>
+          }
+          preview={
             <View style={styles.briefingSlotBadge}>
               <Text style={styles.briefingSlotBadgeText}>{slotLabel(summary.briefing.slot)}</Text>
             </View>
-          </View>
-
+          }
+        >
           <Text style={styles.briefingNarrative}>{summary.briefing.narrative || summary.briefing.headline}</Text>
 
           {summary.briefing.context ? (
@@ -351,7 +377,7 @@ export function TodayTab({
               ))}
             </View>
           ) : null}
-        </View>
+        </CollapsibleCard>
       ) : null}
 
       {/* ── AI 최근 실적 (신뢰도) ── */}
@@ -384,14 +410,15 @@ export function TodayTab({
 
       {/* ── 최근 받은 알림 ── */}
       {alertHistory.length > 0 ? (
-        <View style={styles.card}>
-          <View style={styles.sectionHeaderRow}>
+        <CollapsibleCard
+          title={
             <View style={styles.cardTitleRow}>
               <Bell size={14} color="#ea580c" strokeWidth={2.5} />
               <Text style={styles.cardTitle}>최근 받은 알림</Text>
             </View>
-            <Text style={styles.metaText}>{alertHistory.length}건</Text>
-          </View>
+          }
+          preview={<Text style={styles.metaText}>{alertHistory.length}건</Text>}
+        >
           {alertHistory.slice(0, 5).map((a, i) => {
             const isUp = a.direction === 'UP'
             const color = isUp ? '#dc2626' : '#2563eb'
@@ -413,7 +440,7 @@ export function TodayTab({
               </Pressable>
             )
           })}
-        </View>
+        </CollapsibleCard>
       ) : null}
 
       {/* ── 오늘의 단타 픽 ── */}

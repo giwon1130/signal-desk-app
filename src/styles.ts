@@ -353,6 +353,14 @@ export function makeStyles(C: Palette) {
     },
     todayHeroValue: { fontSize: 20, fontWeight: '900', letterSpacing: -0.3, marginTop: 2 },
 
+    // ── Collapsible 카드 공통 ─────────────────────────────────────────────────────
+    collapsibleHeader: {
+      flexDirection: 'row', alignItems: 'center', gap: 8,
+    },
+    collapsibleHeaderMain:    { flex: 0, flexShrink: 1 },
+    collapsibleHeaderPreview: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 8 },
+    collapsibleBody:          { marginTop: 10, gap: 10 },
+
     // ── Fortune 카드 (오늘의 투자 운세) ───────────────────────────────────────────
     fortuneCard: {
       borderRadius: 16, padding: 14, gap: 10,
