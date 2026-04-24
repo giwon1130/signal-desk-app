@@ -201,6 +201,27 @@ export function MarketTab({
         ) : null}
       </View>
 
+      {/* ── 시장 요약 지표 (정량 체온 — 차트 바로 아래) ── */}
+      <View style={styles.card}>
+        <View style={styles.sectionHeaderRow}>
+          <View style={styles.cardTitleRow}>
+            <TrendingUp size={14} color="#3b82f6" strokeWidth={2.5} />
+            <Text style={styles.cardTitle}>시장 요약 지표</Text>
+          </View>
+          <Text style={styles.metaText}>{summary?.marketSummary.length ?? 0}개</Text>
+        </View>
+        {(summary?.marketSummary ?? []).map((item) => (
+          <View key={item.label} style={styles.metricRow}>
+            <View style={styles.metricLeft}>
+              <Text style={styles.metricName}>{item.label}</Text>
+              <Text style={styles.metricState}>{item.state}</Text>
+            </View>
+            <Text style={[styles.metricScore, { color: getMetricAccent(item.score) }]}>{item.score.toFixed(1)}</Text>
+            <Text style={styles.metricNote}>{item.note}</Text>
+          </View>
+        ))}
+      </View>
+
       {/* ── 급등 / 급락 상위 종목 ── */}
       {topMovers ? (
         <CollapsibleCard
@@ -252,28 +273,65 @@ export function MarketTab({
         </CollapsibleCard>
       ) : null}
 
-      {/* ── 시장 요약 지표 (Home 에서 이동) ── */}
+      {/* ── 관심종목 시그널 (내 종목 관련 — 실험 지표 위) ── */}
       <View style={styles.card}>
         <View style={styles.sectionHeaderRow}>
           <View style={styles.cardTitleRow}>
-            <TrendingUp size={14} color="#3b82f6" strokeWidth={2.5} />
-            <Text style={styles.cardTitle}>시장 요약 지표</Text>
+            <Bell size={14} color="#dc2626" strokeWidth={2.5} />
+            <Text style={styles.cardTitle}>관심종목 시그널</Text>
           </View>
-          <Text style={styles.metaText}>{summary?.marketSummary.length ?? 0}개</Text>
+          <Text style={styles.metaText}>{summary?.watchAlerts.length ?? 0}건</Text>
         </View>
-        {(summary?.marketSummary ?? []).map((item) => (
-          <View key={item.label} style={styles.metricRow}>
-            <View style={styles.metricLeft}>
-              <Text style={styles.metricName}>{item.label}</Text>
-              <Text style={styles.metricState}>{item.state}</Text>
+        {(summary?.watchAlerts ?? []).length ? (
+          (summary?.watchAlerts ?? []).map((item) => (
+            <View
+              key={`${item.category}-${item.market}-${item.ticker}`}
+              style={[
+                styles.metricRow,
+                styles.alertMetricRow,
+                {
+                  backgroundColor: getAlertPalette(item.severity).backgroundColor,
+                  borderColor: getAlertPalette(item.severity).borderColor,
+                },
+              ]}
+            >
+              <View style={styles.metricLeft}>
+                <Text style={styles.metricName}>{item.name}</Text>
+                <Text style={styles.metricState}>{item.market} · {item.ticker} · {item.title}</Text>
+              </View>
+              <View style={styles.alternativeMetricTopRow}>
+                <Text style={[styles.metricScore, { color: getMetricAccent(item.score) }]}>{item.score}</Text>
+                <Text
+                  style={[
+                    styles.alternativeScoreBadge,
+                    {
+                      backgroundColor: getAlertPalette(item.severity).badgeBackgroundColor,
+                      color: getAlertPalette(item.severity).badgeColor,
+                    },
+                  ]}
+                >
+                  {item.severity.toUpperCase()}
+                </Text>
+              </View>
+              <View style={styles.alternativeHighlightsRow}>
+                {item.tags.map((tag) => (
+                  <Text key={`${item.market}-${item.ticker}-${tag}`} style={styles.alternativeHighlightChip}>
+                    {tag}
+                  </Text>
+                ))}
+              </View>
+              <Text style={styles.metricNote}>{item.note}</Text>
             </View>
-            <Text style={[styles.metricScore, { color: getMetricAccent(item.score) }]}>{item.score.toFixed(1)}</Text>
-            <Text style={styles.metricNote}>{item.note}</Text>
+          ))
+        ) : (
+          <View style={styles.emptyStateRow}>
+            <Bell size={14} color="#94a3b8" strokeWidth={2} />
+            <Text style={styles.metaText}>지금 주목할 시그널은 없어. 안정 구간이야.</Text>
           </View>
-        ))}
+        )}
       </View>
 
-      {/* ── 실험 지표 ── */}
+      {/* ── 실험 지표 (보조 — 하단 참고용) ── */}
       <View style={styles.card}>
         <View style={styles.sectionHeaderRow}>
           <View style={styles.cardTitleRow}>
@@ -334,64 +392,6 @@ export function MarketTab({
             </Pressable>
           )
         })}
-      </View>
-
-      {/* ── 관심종목 시그널 ── */}
-      <View style={styles.card}>
-        <View style={styles.sectionHeaderRow}>
-          <View style={styles.cardTitleRow}>
-            <Bell size={14} color="#dc2626" strokeWidth={2.5} />
-            <Text style={styles.cardTitle}>관심종목 시그널</Text>
-          </View>
-          <Text style={styles.metaText}>{summary?.watchAlerts.length ?? 0}건</Text>
-        </View>
-        {(summary?.watchAlerts ?? []).length ? (
-          (summary?.watchAlerts ?? []).map((item) => (
-            <View
-              key={`${item.category}-${item.market}-${item.ticker}`}
-              style={[
-                styles.metricRow,
-                styles.alertMetricRow,
-                {
-                  backgroundColor: getAlertPalette(item.severity).backgroundColor,
-                  borderColor: getAlertPalette(item.severity).borderColor,
-                },
-              ]}
-            >
-              <View style={styles.metricLeft}>
-                <Text style={styles.metricName}>{item.name}</Text>
-                <Text style={styles.metricState}>{item.market} · {item.ticker} · {item.title}</Text>
-              </View>
-              <View style={styles.alternativeMetricTopRow}>
-                <Text style={[styles.metricScore, { color: getMetricAccent(item.score) }]}>{item.score}</Text>
-                <Text
-                  style={[
-                    styles.alternativeScoreBadge,
-                    {
-                      backgroundColor: getAlertPalette(item.severity).badgeBackgroundColor,
-                      color: getAlertPalette(item.severity).badgeColor,
-                    },
-                  ]}
-                >
-                  {item.severity.toUpperCase()}
-                </Text>
-              </View>
-              <View style={styles.alternativeHighlightsRow}>
-                {item.tags.map((tag) => (
-                  <Text key={`${item.market}-${item.ticker}-${tag}`} style={styles.alternativeHighlightChip}>
-                    {tag}
-                  </Text>
-                ))}
-              </View>
-              <Text style={styles.metricNote}>{item.note}</Text>
-            </View>
-          ))
-        ) : (
-          <View style={styles.emptyStateRow}>
-            <Bell size={14} color="#94a3b8" strokeWidth={2} />
-            <Text style={styles.metaText}>지금 주목할 시그널은 없어. 안정 구간이야.</Text>
-          </View>
-        )}
       </View>
 
       {/* ── 실험 지표 상세 모달 ── */}
