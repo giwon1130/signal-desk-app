@@ -369,7 +369,11 @@ function AppShell() {
     setFavoriteDeletingId(id)
     try {
       await deleteFavoriteItem(id)
-      await fetchData()
+      // 서버 DELETE 성공 즉시 로컬에서 제거 → 버튼 "..." 이 끝난 듯 바로 사라짐.
+      // 전체 refetch 는 백그라운드로. (fetchData 가 모든 탭 데이터를 불러와서
+      // 느릴 때 버튼이 수초간 멈춰 보이던 문제 방지)
+      setWatchlist((prev) => prev.filter((w) => w.id !== id))
+      void fetchData()
       void hapticSuccess()
       toast.show('관심종목에서 해제했어요', 'info')
     } catch {
@@ -379,6 +383,28 @@ function AppShell() {
       setFavoriteDeletingId('')
     }
   }, [fetchData, toast])
+
+  // 일괄 해제. 개별 DELETE 를 병렬로 보내고 한 번만 refetch.
+  const [bulkDeletingWatch, setBulkDeletingWatch] = useState(false)
+  const handleDeleteAllFavorites = useCallback(async () => {
+    if (!watchlist.length || bulkDeletingWatch) return
+    setBulkDeletingWatch(true)
+    try {
+      await Promise.allSettled(
+        watchlist.filter((w) => !!w.id).map((w) => deleteFavoriteItem(w.id)),
+      )
+      // 전부 지워졌다고 가정하고 즉시 비움 → 남은 건 refetch 에서 보정.
+      setWatchlist([])
+      void fetchData()
+      void hapticSuccess()
+      toast.show('관심종목을 전부 해제했어요', 'info')
+    } catch {
+      void hapticError()
+      toast.show('일괄 해제에 실패했어요', 'error')
+    } finally {
+      setBulkDeletingWatch(false)
+    }
+  }, [watchlist, bulkDeletingWatch, fetchData, toast])
 
   // 모달용: 현재 관심 여부에 따라 자동으로 추가/해제 토글
   const handleToggleWatchInDetail = useCallback(async (stock: StockSearchResult) => {
@@ -567,6 +593,7 @@ function AppShell() {
           stockResults={stockResults}
           stockSearchLoading={stockSearchLoading}
           favoriteDeletingId={favoriteDeletingId}
+          bulkDeleting={bulkDeletingWatch}
           refreshing={refreshing}
           onRefresh={onRefresh}
           onStockSearchChange={setStockSearch}
@@ -574,6 +601,7 @@ function AppShell() {
           onOpenDetail={handleOpenDetail}
           onQuickAddWatch={handleQuickAddWatch}
           onDeleteFavorite={(id) => void handleDeleteFavorite(id)}
+          onDeleteAllFavorites={() => void handleDeleteAllFavorites()}
         />
       ) : null}
 
