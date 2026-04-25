@@ -147,6 +147,10 @@ export type RecommendationExecutionLog = {
   userStatus?: UserPickStatus
   newsUrl?: string | null
   newsTitle?: string | null
+  // 진입 가이드 — 백엔드가 라이브 시세 + expectedReturnRate 로 산출. 시세 없으면 null.
+  entryPrice?: number | null
+  stopLoss?: number | null
+  takeProfit?: number | null
 }
 
 export type RecommendationMetrics = {
