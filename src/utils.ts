@@ -11,6 +11,16 @@ export function formatCompactNumber(value: number) {
   return value.toLocaleString('ko-KR')
 }
 
+/**
+ * 풀 금액 표시 (천단위 콤마, 천원 단위로 압축 안 함).
+ * 가격·평가금액·손익액 같은 "정확한 숫자가 중요한 값" 에 사용.
+ * 대량 누적 거래량처럼 자릿수만 보고 싶은 값은 formatCompactNumber 사용.
+ */
+export function formatNumber(n: number | null | undefined, digits = 0) {
+  if (n == null || Number.isNaN(n)) return '—'
+  return n.toLocaleString('ko-KR', { maximumFractionDigits: digits })
+}
+
 export function getMarketStatusTone(status?: string) {
   if (!status) return '#64748b'
   if (status.includes('OPEN') || status.includes('REGULAR')) return '#0f766e'

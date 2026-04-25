@@ -1,7 +1,7 @@
 import { Platform, Pressable, Text, View } from 'react-native'
 import type { MarketSectionsData, IndexMetric, MarketSessionStatus } from '../types'
 import { marketColor, useTheme } from '../theme'
-import { formatCompactNumber, formatSignedRate } from '../utils'
+import { formatNumber, formatSignedRate } from '../utils'
 import { Sparkline } from './shared'
 
 /**
@@ -102,7 +102,7 @@ export function TickerRibbon({ sections, sessions, onClickIndex }: Props) {
                 {item.label}
               </Text>
               <Text style={{ color: '#e2e8f0', fontSize: 11, fontWeight: '700', fontVariant: ['tabular-nums'] }}>
-                {formatCompactNumber(item.value)}
+                {formatNumber(item.value, 2)}
               </Text>
               <Text style={{ color, fontSize: 11, fontWeight: '800', fontVariant: ['tabular-nums'] }}>
                 {formatSignedRate(item.changeRate)}

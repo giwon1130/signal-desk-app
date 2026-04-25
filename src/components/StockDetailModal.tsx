@@ -18,7 +18,7 @@ import type {
   StockSearchResult,
   WatchItem,
 } from '../types'
-import { formatCompactNumber, formatSignedRate } from '../utils'
+import { formatNumber, formatSignedRate } from '../utils'
 import { useLivePrices } from '../hooks/useLivePrices'
 
 export type StockDetailContext = {
@@ -165,7 +165,7 @@ export function StockDetailModal({
                 </View>
                 <View style={styles.summaryValueBox}>
                   <View style={styles.cardTitleRow}>
-                    <Text style={styles.stockDetailPrice}>{formatCompactNumber(livePrice)}</Text>
+                    <Text style={styles.stockDetailPrice}>{formatNumber(livePrice)}</Text>
                     {isLive ? <Radio size={12} color="#10b981" strokeWidth={2.5} /> : null}
                   </View>
                   <Text style={[styles.summaryDelta, { color: marketColor(palette, context.base.market, liveChange) }]}>
@@ -276,7 +276,7 @@ export function StockDetailModal({
                 </View>
                 {hasPosition ? (
                   <Text style={styles.metaText}>
-                    현재 평가금액 {formatCompactNumber(context.portfolioPosition!.evaluationAmount)} ·
+                    현재 평가금액 {formatNumber(context.portfolioPosition!.evaluationAmount)} ·
                     손익 {formatSignedRate(context.portfolioPosition!.profitRate)}
                   </Text>
                 ) : null}

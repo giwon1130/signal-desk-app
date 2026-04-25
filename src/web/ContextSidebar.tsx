@@ -3,9 +3,9 @@ import { Pressable, ScrollView, Text, View } from 'react-native'
 import { ArrowRight, Bell, Briefcase, Radio, Sparkles, Star, TrendingDown, TrendingUp } from 'lucide-react-native'
 import type { AiRecommendationData, DailyFortune, PortfolioSummary, WatchItem } from '../types'
 import { marketColor, useTheme, type Palette } from '../theme'
-import { formatCompactNumber, formatSignedRate } from '../utils'
+import { formatNumber, formatSignedRate } from '../utils'
 import { useLivePrices } from '../hooks/useLivePrices'
-import { formatNumber, StanceTag } from './shared'
+import { StanceTag } from './shared'
 
 /**
  * 우측 고정 컨텍스트 사이드바.
@@ -166,7 +166,7 @@ export function ContextSidebar(props: Props) {
                     fontVariant: ['tabular-nums'],
                   }}
                 >
-                  {formatCompactNumber(portfolio.totalValue)}
+                  {formatNumber(portfolio.totalValue)}
                 </Text>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 2 }}>
                   {portfolio.totalProfitRate >= 0 ? (
@@ -192,7 +192,7 @@ export function ContextSidebar(props: Props) {
                       fontVariant: ['tabular-nums'],
                     }}
                   >
-                    ({formatCompactNumber(portfolio.totalProfit)})
+                    ({portfolio.totalProfit >= 0 ? '+' : ''}{formatNumber(portfolio.totalProfit)})
                   </Text>
                 </View>
               </View>

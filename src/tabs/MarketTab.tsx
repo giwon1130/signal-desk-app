@@ -17,6 +17,7 @@ import type {
 } from '../types'
 import {
   formatCompactNumber,
+  formatNumber,
   formatSignedRate,
   getAlertPalette,
   getAlternativeSignalPalette,
@@ -60,7 +61,7 @@ function MoverRow({
         <Text style={styles.metricState}>{item.market} · {item.ticker}</Text>
       </View>
       <View style={styles.summaryValueBox}>
-        <Text style={styles.metricScore}>{formatCompactNumber(item.price)}</Text>
+        <Text style={styles.metricScore}>{formatNumber(item.price)}</Text>
         <Text style={[styles.summaryDelta, { color }]}>{formatSignedRate(item.changeRate)}</Text>
       </View>
     </Pressable>
