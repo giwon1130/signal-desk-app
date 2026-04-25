@@ -104,6 +104,44 @@ export function normalizeText(value: string) {
   return value.trim().toLowerCase()
 }
 
+/**
+ * ISO-8601 → "방금 전 / N분 전 / N시간 전 / 오늘 HH:MM / 어제 HH:MM / MM/DD HH:MM" 형식.
+ * 백엔드가 RSS pubDate 를 변환해 NewsHighlight.publishedAt 으로 내려주는 걸 화면에서 사람 읽기 좋게.
+ * 파싱 실패하면 빈 문자열 — 호출 측이 빈 값이면 표시 생략.
+ */
+export function formatRelativeOrShortTime(iso: string | null | undefined, now: Date = new Date()): string {
+  if (!iso) return ''
+  const t = new Date(iso).getTime()
+  if (Number.isNaN(t)) return ''
+  const diffMs = now.getTime() - t
+  const diffMin = Math.round(diffMs / 60_000)
+  if (diffMin < 1) return '방금 전'
+  if (diffMin < 60) return `${diffMin}분 전`
+  const diffHr = Math.round(diffMin / 60)
+  if (diffHr < 6) return `${diffHr}시간 전`
+  const d = new Date(t)
+  const hh = String(d.getHours()).padStart(2, '0')
+  const mm = String(d.getMinutes()).padStart(2, '0')
+  // 오늘 / 어제 / 그 외
+  const isSameDay = (a: Date, b: Date) =>
+    a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
+  if (isSameDay(d, now)) return `오늘 ${hh}:${mm}`
+  const yest = new Date(now); yest.setDate(yest.getDate() - 1)
+  if (isSameDay(d, yest)) return `어제 ${hh}:${mm}`
+  const MM = String(d.getMonth() + 1).padStart(2, '0')
+  const DD = String(d.getDate()).padStart(2, '0')
+  return `${MM}/${DD} ${hh}:${mm}`
+}
+
+/** 마지막 동기화용 — 항상 "MM/DD HH:MM" 풀 형식. (방금 전이라도 날짜 보이는 게 정확.) */
+export function formatSyncStamp(date: Date): string {
+  const MM = String(date.getMonth() + 1).padStart(2, '0')
+  const DD = String(date.getDate()).padStart(2, '0')
+  const hh = String(date.getHours()).padStart(2, '0')
+  const mm = String(date.getMinutes()).padStart(2, '0')
+  return `${MM}/${DD} ${hh}:${mm}`
+}
+
 export function buildMovingAverage(points: ChartPoint[], period: number) {
   return points.map((_, index) => {
     if (index + 1 < period) return null

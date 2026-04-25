@@ -70,7 +70,7 @@ import type {
   TopMoversResponse,
   WatchItem,
 } from './src/types'
-import { normalizeText } from './src/utils'
+import { normalizeText, formatSyncStamp } from './src/utils'
 
 const TABS: Array<{ key: TabKey; label: string; Icon: typeof Home }> = [
   { key: 'today',  label: '오늘', Icon: Sunrise },
@@ -176,7 +176,7 @@ function AppShell() {
       setAiRecommendation(result.aiRecommendation)
       setWatchlist(result.watchlist)
       setPortfolio(result.portfolio)
-      setLastSyncedAt(new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }))
+      setLastSyncedAt(formatSyncStamp(new Date()))
       const token = user?.token
       if (token) {
         void fetchAlertHistory(token, 10).then(setAlertHistory)

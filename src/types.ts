@@ -164,6 +164,7 @@ export type NewsHighlight = {
   source: string
   url: string
   tone: string             // 긍정 / 중립 / 부정
+  publishedAt?: string | null  // ISO-8601. 백엔드가 RSS pubDate 를 변환해서 내려줌. 없으면 표기 생략.
 }
 
 export type NewsSentiment = {
