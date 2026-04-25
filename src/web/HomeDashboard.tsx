@@ -23,7 +23,7 @@ import type {
   WatchItem,
 } from '../types'
 import { marketColor, useTheme, type Palette } from '../theme'
-import { formatCompactNumber, formatSignedRate, formatRelativeOrShortTime } from '../utils'
+import { formatNumber, formatSignedRate, formatRelativeOrShortTime } from '../utils'
 import { Sparkline, StanceTag } from './shared'
 import { BarChart3, Layers } from 'lucide-react-native'
 
@@ -270,7 +270,7 @@ function PortfolioWidget({
           평가금액
         </Text>
         <Text style={{ color: palette.ink, fontSize: 24, fontWeight: '900', fontVariant: ['tabular-nums'] }}>
-          {formatCompactNumber(portfolio.totalValue)}
+          {formatNumber(portfolio.totalValue)}
         </Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           {rate >= 0 ? (
@@ -282,7 +282,7 @@ function PortfolioWidget({
             {formatSignedRate(rate)}
           </Text>
           <Text style={{ color: rateColor, fontSize: 12, fontWeight: '700', fontVariant: ['tabular-nums'] }}>
-            ({formatCompactNumber(portfolio.totalProfit)})
+            ({portfolio.totalProfit >= 0 ? '+' : ''}{formatNumber(portfolio.totalProfit)})
           </Text>
         </View>
       </View>

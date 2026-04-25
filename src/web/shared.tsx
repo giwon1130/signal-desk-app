@@ -7,6 +7,7 @@ import React, { useMemo } from 'react'
 import { Platform, Pressable, Text, View, type PressableStateCallbackType, type StyleProp, type ViewStyle } from 'react-native'
 import type { Palette } from '../theme'
 import type { ChartPoint } from '../types'
+import { formatNumber } from '../utils'
 
 export const CARD_RADIUS = 12
 export const CARD_PADDING = 14
@@ -33,10 +34,8 @@ export function formatPct(rate: number | null | undefined, digits = 2) {
   return `${sign}${v.toFixed(digits)}%`
 }
 
-export function formatNumber(n: number | null | undefined, digits = 0) {
-  if (n == null || Number.isNaN(n)) return '—'
-  return n.toLocaleString('ko-KR', { maximumFractionDigits: digits })
-}
+// formatNumber 는 utils.ts 로 이전됨 (모바일·웹 공통). 기존 import 호환 위해 re-export.
+export { formatNumber }
 
 // ─────────────────────────── Widget Card ────────────────────────────
 
