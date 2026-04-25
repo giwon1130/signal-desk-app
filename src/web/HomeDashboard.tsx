@@ -23,7 +23,7 @@ import type {
   WatchItem,
 } from '../types'
 import { marketColor, useTheme, type Palette } from '../theme'
-import { formatNumber, formatSignedRate, formatRelativeOrShortTime } from '../utils'
+import { formatPrice, formatSignedPrice, formatSignedRate, formatRelativeOrShortTime } from '../utils'
 import { Sparkline, StanceTag } from './shared'
 import { BarChart3, Layers } from 'lucide-react-native'
 
@@ -243,8 +243,8 @@ function PortfolioWidget({
         icon={<Activity size={13} color={palette.blue} strokeWidth={2.5} />}
       >
         <View style={{ paddingVertical: 18, alignItems: 'center', gap: 4 }}>
-          <Text style={{ color: palette.inkMuted, fontSize: 12 }}>보유 종목이 없어</Text>
-          <Text style={{ color: palette.inkFaint, fontSize: 11 }}>종목 탭에서 담아봐</Text>
+          <Text style={{ color: palette.inkMuted, fontSize: 12 }}>보유 중인 종목이 없어</Text>
+          <Text style={{ color: palette.inkFaint, fontSize: 11 }}>종목 상세에서 매수가 · 수량 입력해 등록</Text>
         </View>
       </Widget>
     )
@@ -270,7 +270,7 @@ function PortfolioWidget({
           평가금액
         </Text>
         <Text style={{ color: palette.ink, fontSize: 24, fontWeight: '900', fontVariant: ['tabular-nums'] }}>
-          {formatNumber(portfolio.totalValue)}
+          {formatPrice(portfolio.totalValue, 'KR')}
         </Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           {rate >= 0 ? (
@@ -282,7 +282,7 @@ function PortfolioWidget({
             {formatSignedRate(rate)}
           </Text>
           <Text style={{ color: rateColor, fontSize: 12, fontWeight: '700', fontVariant: ['tabular-nums'] }}>
-            ({portfolio.totalProfit >= 0 ? '+' : ''}{formatNumber(portfolio.totalProfit)})
+            ({formatSignedPrice(portfolio.totalProfit, 'KR')})
           </Text>
         </View>
       </View>
@@ -368,6 +368,7 @@ function NewsWidget({ summary, palette }: { summary: MarketSummaryData | null; p
       {items.length === 0 ? (
         <View style={{ paddingVertical: 18, alignItems: 'center' }}>
           <Text style={{ color: palette.inkMuted, fontSize: 12 }}>뉴스 수집 중…</Text>
+          <Text style={{ color: palette.inkFaint, fontSize: 11, marginTop: 4 }}>잠시 뒤 새로고침</Text>
         </View>
       ) : (
         items.map((it, i) => (

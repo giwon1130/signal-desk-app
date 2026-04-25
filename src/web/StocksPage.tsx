@@ -15,7 +15,7 @@ import {
 } from 'lucide-react-native'
 import type { HoldingPosition, PortfolioSummary, StockMarketFilter, StockSearchResult, WatchItem } from '../types'
 import { marketColor, useTheme, type Palette } from '../theme'
-import { formatSignedRate } from '../utils'
+import { formatPrice, formatSignedPrice, formatSignedRate } from '../utils'
 import { useLivePrices } from '../hooks/useLivePrices'
 import { formatNumber, StanceTag } from './shared'
 import { Briefcase } from 'lucide-react-native'
@@ -428,6 +428,14 @@ export function StocksPage(props: Props) {
               <Text style={{ color: palette.inkFaint, fontSize: 11 }}>
                 종목 상세에서 매수가 · 수량 입력해 등록
               </Text>
+            ) : !stockSearchLoading && stockSearch ? (
+              <Text style={{ color: palette.inkFaint, fontSize: 11 }}>
+                다른 키워드로 시도해봐
+              </Text>
+            ) : !stockSearchLoading ? (
+              <Text style={{ color: palette.inkFaint, fontSize: 11 }}>
+                상단 검색창에 종목명 · 티커 입력
+              </Text>
             ) : null}
           </View>
         ) : (
@@ -472,7 +480,11 @@ export function StocksPage(props: Props) {
                   >
                     {row.name}
                   </Text>
-                  {isLive ? <Radio size={9} color="#10b981" strokeWidth={3} /> : null}
+                  {isLive ? (
+                    <Radio size={9} color="#10b981" strokeWidth={3} />
+                  ) : row.market === 'US' ? (
+                    <Text style={{ color: palette.inkFaint, fontSize: 9, fontWeight: '700', letterSpacing: 0.3 }}>지연</Text>
+                  ) : null}
                   {row.stance ? <StanceTag stance={row.stance} palette={palette} size="xs" /> : null}
                 </View>
 
@@ -509,7 +521,7 @@ export function StocksPage(props: Props) {
                 {mode === 'holdings' && row.holding ? (
                   <View style={{ flex: 1.4, minWidth: 0, alignItems: 'flex-end' }}>
                     <Text style={{ color: palette.ink, fontSize: 12, fontWeight: '700', fontVariant: ['tabular-nums'] }}>
-                      {formatNumber(row.holding.buyPrice)}
+                      {formatPrice(row.holding.buyPrice, row.market)}
                     </Text>
                     <Text style={{ color: palette.inkMuted, fontSize: 10, fontWeight: '600', fontVariant: ['tabular-nums'] }}>
                       × {row.holding.quantity}주
@@ -536,7 +548,7 @@ export function StocksPage(props: Props) {
                     fontVariant: ['tabular-nums'],
                   }}
                 >
-                  {formatNumber(row.price)}
+                  {formatPrice(row.price, row.market)}
                 </Text>
 
                 {/* 등락률 OR 수익률 */}
@@ -571,13 +583,13 @@ export function StocksPage(props: Props) {
                 {mode === 'holdings' && row.holding ? (
                   <View style={{ width: 120, alignItems: 'flex-end' }}>
                     <Text style={{ color: palette.ink, fontSize: 13, fontWeight: '800', fontVariant: ['tabular-nums'] }}>
-                      {formatNumber(row.holding.evaluationAmount)}
+                      {formatPrice(row.holding.evaluationAmount, row.market)}
                     </Text>
                     <Text style={{
                       color: marketColor(palette, row.market, row.holding.profitAmount),
                       fontSize: 11, fontWeight: '700', fontVariant: ['tabular-nums'],
                     }}>
-                      {row.holding.profitAmount >= 0 ? '+' : ''}{formatNumber(row.holding.profitAmount)}
+                      {formatSignedPrice(row.holding.profitAmount, row.market)}
                     </Text>
                   </View>
                 ) : (
