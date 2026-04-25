@@ -5,7 +5,7 @@ import type { AiRecommendationData, DailyFortune, PortfolioSummary, WatchItem } 
 import { marketColor, useTheme, type Palette } from '../theme'
 import { formatCompactNumber, formatSignedRate } from '../utils'
 import { useLivePrices } from '../hooks/useLivePrices'
-import { StanceTag } from './shared'
+import { formatNumber, StanceTag } from './shared'
 
 /**
  * 우측 고정 컨텍스트 사이드바.
@@ -31,6 +31,7 @@ type Props = {
 const CONTEXT_WIDTH = 320
 const WATCHLIST_CAP = 7
 const RECENT_AI_CAP = 5
+const HOLDING_CAP   = 5
 
 export function ContextSidebar(props: Props) {
   const { watchlist, portfolio, aiRecommendation, fortune, onOpenDetail, onGotoStocks, onGotoAi } = props
@@ -44,7 +45,13 @@ export function ContextSidebar(props: Props) {
 
   const topWatch = watchlist.slice(0, WATCHLIST_CAP)
   const topAi    = aiRecommendation?.executionLogs?.slice(0, RECENT_AI_CAP) ?? []
-  const topHolding = portfolio?.positions?.[0] ?? null
+  // 평가금액 큰 순으로 Top 5 — 1개만 보여주는 건 사용자 컨텍스트로 부족.
+  const topHoldings = useMemo(() => {
+    const positions = portfolio?.positions ?? []
+    return [...positions]
+      .sort((a, b) => (b.currentPrice * b.quantity) - (a.currentPrice * a.quantity))
+      .slice(0, HOLDING_CAP)
+  }, [portfolio])
 
   return (
     <View
@@ -117,7 +124,7 @@ export function ContextSidebar(props: Props) {
                         fontVariant: ['tabular-nums'],
                       }}
                     >
-                      {formatCompactNumber(price)}
+                      {formatNumber(price)}
                     </Text>
                     <Text
                       style={{
@@ -189,45 +196,61 @@ export function ContextSidebar(props: Props) {
                   </Text>
                 </View>
               </View>
-              {topHolding ? (
-                <Pressable
-                  onPress={() => onOpenDetail(topHolding.market, topHolding.ticker, topHolding.name)}
-                  style={(state) => {
-                    const hovered = (state as { hovered?: boolean }).hovered
-                    return [{
-                      marginTop: 4,
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 8,
-                      paddingHorizontal: 8,
-                      paddingVertical: 7,
-                      borderRadius: 7,
-                      backgroundColor: hovered ? palette.surfaceAlt : palette.bg,
-                      borderWidth: 1,
-                      borderColor: palette.border,
-                    }]
-                  }}
-                >
-                  <Text style={{ color: palette.inkFaint, fontSize: 10, fontWeight: '800', letterSpacing: 1 }}>
-                    TOP
-                  </Text>
-                  <Text
-                    numberOfLines={1}
-                    style={{ color: palette.ink, fontSize: 12, fontWeight: '700', flex: 1 }}
-                  >
-                    {topHolding.name}
-                  </Text>
-                  <Text
-                    style={{
-                      color: marketColor(palette, topHolding.market, topHolding.profitRate),
-                      fontSize: 11,
-                      fontWeight: '800',
-                      fontVariant: ['tabular-nums'],
-                    }}
-                  >
-                    {formatSignedRate(topHolding.profitRate)}
-                  </Text>
-                </Pressable>
+              {topHoldings.length > 0 ? (
+                <View style={{ marginTop: 6, gap: 4 }}>
+                  {topHoldings.map((h) => (
+                    <Pressable
+                      key={`${h.market}-${h.ticker}`}
+                      onPress={() => onOpenDetail(h.market, h.ticker, h.name)}
+                      style={(state) => {
+                        const hovered = (state as { hovered?: boolean }).hovered
+                        return [{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: 8,
+                          paddingHorizontal: 8,
+                          paddingVertical: 7,
+                          borderRadius: 7,
+                          backgroundColor: hovered ? palette.surfaceAlt : 'transparent',
+                        }]
+                      }}
+                    >
+                      <View style={{ flex: 1, minWidth: 0 }}>
+                        <Text
+                          numberOfLines={1}
+                          style={{ color: palette.ink, fontSize: 12, fontWeight: '800' }}
+                        >
+                          {h.name}
+                        </Text>
+                        <Text style={{ color: palette.inkFaint, fontSize: 10, fontWeight: '600' }}>
+                          {h.market} · {h.quantity}주 × {formatNumber(h.buyPrice)}
+                        </Text>
+                      </View>
+                      <View style={{ alignItems: 'flex-end' }}>
+                        <Text
+                          style={{
+                            color: palette.ink,
+                            fontSize: 12,
+                            fontWeight: '700',
+                            fontVariant: ['tabular-nums'],
+                          }}
+                        >
+                          {formatNumber(h.currentPrice)}
+                        </Text>
+                        <Text
+                          style={{
+                            color: marketColor(palette, h.market, h.profitRate),
+                            fontSize: 11,
+                            fontWeight: '800',
+                            fontVariant: ['tabular-nums'],
+                          }}
+                        >
+                          {formatSignedRate(h.profitRate)}
+                        </Text>
+                      </View>
+                    </Pressable>
+                  ))}
+                </View>
               ) : null}
             </>
           ) : (
