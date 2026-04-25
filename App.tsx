@@ -47,6 +47,7 @@ import { StockDetailModal, type StockDetailContext } from './src/components/Stoc
 import { ReminderSettingsModal } from './src/components/ReminderSettingsModal'
 import { useMarketReminderBootstrap } from './src/hooks/useMarketReminder'
 import { usePushDeepLink } from './src/hooks/usePushDeepLink'
+import { useChartSelection } from './src/hooks/useChartSelection'
 import { useMarketSnapshot } from './src/hooks/useMarketSnapshot'
 import { useStockSearch } from './src/hooks/useStockSearch'
 import type {
@@ -129,9 +130,12 @@ function AppShell() {
     setStockSearch, setStockMarketFilter,
   } = search
   const [homeQuery, setHomeQuery] = useState('')
-  const [chartMarket, setChartMarket] = useState<MarketKey>('KR')
-  const [chartPeriod, setChartPeriod] = useState<PeriodKey>('D')
-  const [selectedIndexLabel, setSelectedIndexLabel] = useState('')
+  const chart = useChartSelection(sections)
+  const {
+    chartMarket, chartPeriod, selectedIndexLabel,
+    setChartMarket, setChartPeriod, setSelectedIndexLabel,
+    activeSection, activeIndex, activePeriod,
+  } = chart
   const [favoriteDeletingId, setFavoriteDeletingId] = useState('')
 
   // ── 종목 상세 모달 (어느 탭에서든 같은 모달) ──────
@@ -180,27 +184,6 @@ function AppShell() {
   const listLimit = Platform.OS === 'web' ? 12 : 4
   const topWatchlist = useMemo(() => filteredWatchlist.slice(0, listLimit), [filteredWatchlist, listLimit])
   const topPortfolioPositions = useMemo(() => filteredPortfolioPositions.slice(0, listLimit), [filteredPortfolioPositions, listLimit])
-  const activeSection = useMemo(() => {
-    if (!sections) return null
-    return chartMarket === 'KR' ? sections.koreaMarket : sections.usMarket
-  }, [sections, chartMarket])
-
-  useEffect(() => {
-    if (!activeSection?.indices.length) return
-    if (activeSection.indices.some((item) => item.label === selectedIndexLabel)) return
-    setSelectedIndexLabel(activeSection.indices[0].label)
-  }, [activeSection, selectedIndexLabel])
-
-  const activeIndex = useMemo(() => {
-    if (!activeSection) return null
-    return activeSection.indices.find((item) => item.label === selectedIndexLabel) ?? activeSection.indices[0] ?? null
-  }, [activeSection, selectedIndexLabel])
-
-  const activePeriod = useMemo(() => {
-    if (!activeIndex) return null
-    return activeIndex.periods.find((item) => item.key === chartPeriod) ?? activeIndex.periods[0] ?? null
-  }, [activeIndex, chartPeriod])
-
   // 어느 탭에서든 호출 가능한 "종목 상세 열기"
   const handleOpenDetail = useCallback((market: string, ticker: string, name?: string) => {
     if (!market || !ticker) return
