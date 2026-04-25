@@ -30,6 +30,7 @@ import {
   getMarketStatusTone,
   formatMarketStatus,
   getSessionPalette,
+  formatRelativeOrShortTime,
 } from '../utils'
 
 type Props = {
@@ -184,17 +185,22 @@ function SentimentCard({ sentiment }: { sentiment: NewsSentiment }) {
         <Text style={styles.todaySentimentMeta}>부정 {sentiment.negativeCount}</Text>
       </View>
       <Text style={styles.todaySentimentRationale}>{sentiment.rationale}</Text>
-      {sentiment.highlights.slice(0, Platform.OS === 'web' ? 12 : 6).map((h, i) => (
-        <Pressable
-          key={`${sentiment.market}-${i}`}
-          onPress={() => h.url && void Linking.openURL(h.url)}
-          style={styles.todayHeadlineRow}
-        >
-          <View style={[styles.todayHeadlineDot, { backgroundColor: toneColor(h.tone) }]} />
-          <Text style={styles.todayHeadlineText} numberOfLines={2}>{h.title}</Text>
-          <Text style={styles.todayHeadlineSource}>{h.source}</Text>
-        </Pressable>
-      ))}
+      {sentiment.highlights.slice(0, Platform.OS === 'web' ? 12 : 6).map((h, i) => {
+        const when = formatRelativeOrShortTime(h.publishedAt)
+        return (
+          <Pressable
+            key={`${sentiment.market}-${i}`}
+            onPress={() => h.url && void Linking.openURL(h.url)}
+            style={styles.todayHeadlineRow}
+          >
+            <View style={[styles.todayHeadlineDot, { backgroundColor: toneColor(h.tone) }]} />
+            <Text style={styles.todayHeadlineText} numberOfLines={2}>{h.title}</Text>
+            <Text style={styles.todayHeadlineSource}>
+              {when ? `${h.source} · ${when}` : h.source}
+            </Text>
+          </Pressable>
+        )
+      })}
     </View>
   )
 }

@@ -23,7 +23,7 @@ import type {
   WatchItem,
 } from '../types'
 import { marketColor, useTheme, type Palette } from '../theme'
-import { formatCompactNumber, formatSignedRate } from '../utils'
+import { formatCompactNumber, formatSignedRate, formatRelativeOrShortTime } from '../utils'
 import { Sparkline, StanceTag } from './shared'
 import { BarChart3, Layers } from 'lucide-react-native'
 
@@ -403,6 +403,14 @@ function NewsWidget({ summary, palette }: { summary: MarketSummaryData | null; p
                   {it.market}
                 </Text>
                 <Text style={{ color: palette.inkMuted, fontSize: 10 }}>{it.h.source}</Text>
+                {it.h.publishedAt ? (
+                  <>
+                    <Text style={{ color: palette.inkFaint, fontSize: 10 }}>·</Text>
+                    <Text style={{ color: palette.inkMuted, fontSize: 10, fontVariant: ['tabular-nums'] }}>
+                      {formatRelativeOrShortTime(it.h.publishedAt)}
+                    </Text>
+                  </>
+                ) : null}
               </View>
             </View>
             <ExternalLink size={11} color={palette.inkFaint} />
