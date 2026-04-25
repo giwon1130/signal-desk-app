@@ -12,15 +12,10 @@ import {
 import { BarChart3, Bell, Bot, Home, LogOut, Moon, Sun, Sunrise, TrendingUp } from 'lucide-react-native'
 import { WebLayout } from './src/web/WebLayout'
 import {
-  API_BASE_URL,
   deleteFavoriteItem,
   deletePortfolioPosition,
-  fetchDailyFortune,
-  fetchTopMovers,
-  loadAllData,
   quickAddWatchItem,
   savePortfolioPosition,
-  searchStocks,
 } from './src/api'
 import { useStyles } from './src/styles'
 import { ThemeProvider, useTheme } from './src/theme'
@@ -38,7 +33,7 @@ import {
   saveAuth,
   setMemoryToken,
 } from './src/api/auth'
-import { fetchAlertHistory, registerPushToken } from './src/api/pushDevice'
+import { registerPushToken } from './src/api/pushDevice'
 import { AITab } from './src/tabs/AITab'
 import { HomeTab } from './src/tabs/HomeTab'
 import { MarketTab } from './src/tabs/MarketTab'
@@ -52,24 +47,16 @@ import { StockDetailModal, type StockDetailContext } from './src/components/Stoc
 import { ReminderSettingsModal } from './src/components/ReminderSettingsModal'
 import { useMarketReminderBootstrap } from './src/hooks/useMarketReminder'
 import { usePushDeepLink } from './src/hooks/usePushDeepLink'
+import { useMarketSnapshot } from './src/hooks/useMarketSnapshot'
+import { useStockSearch } from './src/hooks/useStockSearch'
 import type {
-  AiRecommendationData,
-  AlertHistoryItem,
-  DailyFortune,
-  HealthResponse,
   HoldingPosition,
   MarketKey,
-  MarketSectionsData,
-  MarketSummaryData,
   PeriodKey,
-  PortfolioSummary,
-  StockMarketFilter,
   StockSearchResult,
   TabKey,
-  TopMoversResponse,
-  WatchItem,
 } from './src/types'
-import { normalizeText, formatSyncStamp } from './src/utils'
+import { normalizeText } from './src/utils'
 
 const TABS: Array<{ key: TabKey; label: string; Icon: typeof Home }> = [
   { key: 'today',  label: '오늘', Icon: Sunrise },
@@ -130,27 +117,21 @@ function AppShell() {
   }, [])
 
   const [activeTab, setActiveTab] = useState<TabKey>('today')
-  const [summary, setSummary] = useState<MarketSummaryData | null>(null)
-  const [sections, setSections] = useState<MarketSectionsData | null>(null)
-  const [aiRecommendation, setAiRecommendation] = useState<AiRecommendationData | null>(null)
-  const [watchlist, setWatchlist] = useState<WatchItem[]>([])
-  const [portfolio, setPortfolio] = useState<PortfolioSummary | null>(null)
-  const [alertHistory, setAlertHistory] = useState<AlertHistoryItem[]>([])
-  const [fortune, setFortune] = useState<DailyFortune | null>(null)
-  const [topMovers, setTopMovers] = useState<TopMoversResponse | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [refreshing, setRefreshing] = useState(false)
-  const [error, setError] = useState('')
-  const [apiHealth, setApiHealth] = useState<HealthResponse | null>(null)
-  const [lastSyncedAt, setLastSyncedAt] = useState('')
+  const market = useMarketSnapshot(user?.token ?? null, !!user)
+  const {
+    summary, sections, aiRecommendation, watchlist, portfolio, fortune, topMovers,
+    alertHistory, apiHealth, lastSyncedAt, loading, refreshing, error, refresh,
+    fetchData, setLoading, setWatchlist, setPortfolio,
+  } = market
+  const search = useStockSearch()
+  const {
+    stockSearch, stockMarketFilter, stockResults, stockSearchLoading,
+    setStockSearch, setStockMarketFilter,
+  } = search
   const [homeQuery, setHomeQuery] = useState('')
   const [chartMarket, setChartMarket] = useState<MarketKey>('KR')
   const [chartPeriod, setChartPeriod] = useState<PeriodKey>('D')
   const [selectedIndexLabel, setSelectedIndexLabel] = useState('')
-  const [stockSearch, setStockSearch] = useState('')
-  const [stockMarketFilter, setStockMarketFilter] = useState<StockMarketFilter>('ALL')
-  const [stockResults, setStockResults] = useState<StockSearchResult[]>([])
-  const [stockSearchLoading, setStockSearchLoading] = useState(false)
   const [favoriteDeletingId, setFavoriteDeletingId] = useState('')
 
   // ── 종목 상세 모달 (어느 탭에서든 같은 모달) ──────
@@ -162,42 +143,6 @@ function AppShell() {
 
   // 로그인 후 1회: 권한 요청 + 켜진 알림 다시 예약
   useMarketReminderBootstrap(!!user)
-
-  const fetchData = useCallback(async () => {
-    setError('')
-    try {
-      const result = await loadAllData()
-      setApiHealth(result.health)
-      setSummary(result.summary)
-      setSections(result.sections)
-      setAiRecommendation(result.aiRecommendation)
-      setWatchlist(result.watchlist)
-      setPortfolio(result.portfolio)
-      setLastSyncedAt(formatSyncStamp(new Date()))
-      const token = user?.token
-      if (token) {
-        void fetchAlertHistory(token, 10).then(setAlertHistory)
-      }
-      void fetchDailyFortune().then(setFortune)
-      void fetchTopMovers(10).then(setTopMovers)
-    } catch {
-      setApiHealth(null)
-      setError(`서버에 연결할 수 없어요.\n${API_BASE_URL}`)
-    }
-  }, [user?.token])
-
-  useEffect(() => {
-    if (!user) return
-    setLoading(true)
-    void fetchData().finally(() => setLoading(false))
-  }, [fetchData, user])
-
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true)
-    void hapticLight()
-    await fetchData()
-    setRefreshing(false)
-  }, [fetchData])
 
   const handleTabChange = useCallback((key: TabKey) => {
     if (key === activeTab) return
@@ -255,21 +200,6 @@ function AppShell() {
     if (!activeIndex) return null
     return activeIndex.periods.find((item) => item.key === chartPeriod) ?? activeIndex.periods[0] ?? null
   }, [activeIndex, chartPeriod])
-
-  useEffect(() => {
-    let cancelled = false
-    const timeoutId = setTimeout(() => {
-      setStockSearchLoading(true)
-      searchStocks(stockSearch, stockMarketFilter)
-        .then((results) => { if (!cancelled) setStockResults(results) })
-        .catch(() => { if (!cancelled) setStockResults([]) })
-        .finally(() => { if (!cancelled) setStockSearchLoading(false) })
-    }, 250)
-    return () => {
-      cancelled = true
-      clearTimeout(timeoutId)
-    }
-  }, [stockSearch, stockMarketFilter])
 
   // 어느 탭에서든 호출 가능한 "종목 상세 열기"
   const handleOpenDetail = useCallback((market: string, ticker: string, name?: string) => {
@@ -477,7 +407,7 @@ function AppShell() {
             fortune={fortune}
             onOpenDetail={handleOpenDetail}
             refreshing={refreshing}
-            onRefresh={onRefresh}
+            onRefresh={refresh}
           />
         )
       ) : null}
@@ -487,7 +417,7 @@ function AppShell() {
           watchlist={watchlist}
           portfolio={portfolio}
           refreshing={refreshing}
-          onRefresh={onRefresh}
+          onRefresh={refresh}
           homeQuery={homeQuery}
           onHomeQueryChange={setHomeQuery}
           filteredWatchlist={filteredWatchlist}
@@ -513,7 +443,7 @@ function AppShell() {
           topMovers={topMovers}
           onOpenDetail={handleOpenDetail}
           refreshing={refreshing}
-          onRefresh={onRefresh}
+          onRefresh={refresh}
           onChartMarketChange={setChartMarket}
           onChartPeriodChange={setChartPeriod}
           onSelectedIndexLabelChange={setSelectedIndexLabel}
@@ -548,7 +478,7 @@ function AppShell() {
             favoriteDeletingId={favoriteDeletingId}
             bulkDeleting={bulkDeletingWatch}
             refreshing={refreshing}
-            onRefresh={onRefresh}
+            onRefresh={refresh}
             onStockSearchChange={setStockSearch}
             onStockMarketFilterChange={setStockMarketFilter}
             onOpenDetail={handleOpenDetail}
@@ -574,7 +504,7 @@ function AppShell() {
             summary={summary}
             watchlist={watchlist}
             refreshing={refreshing}
-            onRefresh={onRefresh}
+            onRefresh={refresh}
             onOpenDetail={handleOpenDetail}
             onQuickAddWatch={handleQuickAddWatch}
           />
