@@ -13,11 +13,12 @@ import {
   Trash2,
   X,
 } from 'lucide-react-native'
-import type { StockMarketFilter, StockSearchResult, WatchItem } from '../types'
+import type { HoldingPosition, PortfolioSummary, StockMarketFilter, StockSearchResult, WatchItem } from '../types'
 import { marketColor, useTheme, type Palette } from '../theme'
-import { formatCompactNumber, formatSignedRate } from '../utils'
+import { formatSignedRate } from '../utils'
 import { useLivePrices } from '../hooks/useLivePrices'
-import { StanceTag } from './shared'
+import { formatNumber, StanceTag } from './shared'
+import { Briefcase } from 'lucide-react-native'
 
 /**
  * 웹 전용 종목 페이지 — Phase 3.
@@ -35,6 +36,7 @@ import { StanceTag } from './shared'
 
 type Props = {
   watchlist: WatchItem[]
+  portfolio: PortfolioSummary | null
   stockSearch: string
   stockMarketFilter: StockMarketFilter
   stockResults: StockSearchResult[]
@@ -49,8 +51,8 @@ type Props = {
   onDeleteAllFavorites: () => void
 }
 
-type Mode = 'search' | 'watch'
-type SortKey = 'name' | 'market' | 'sector' | 'price' | 'changeRate'
+type Mode = 'search' | 'watch' | 'holdings'
+type SortKey = 'name' | 'market' | 'sector' | 'price' | 'changeRate' | 'profitRate' | 'evaluation'
 type SortDir = 'asc' | 'desc'
 
 // 테이블에 공통으로 들어가는 row shape
@@ -65,16 +67,25 @@ type Row = {
   changeRate: number
   isInWatch: boolean
   watchId?: string
+  // 보유 모드 전용 — search/watch 에선 undefined
+  holding?: {
+    buyPrice: number
+    quantity: number
+    profitRate: number
+    profitAmount: number
+    evaluationAmount: number
+  }
 }
 
 export function StocksPage(props: Props) {
   const { palette } = useTheme()
   const {
-    watchlist, stockSearch, stockMarketFilter, stockResults, stockSearchLoading,
+    watchlist, portfolio, stockSearch, stockMarketFilter, stockResults, stockSearchLoading,
     favoriteDeletingId, bulkDeleting,
     onStockSearchChange, onStockMarketFilterChange,
     onOpenDetail, onQuickAddWatch, onDeleteFavorite, onDeleteAllFavorites,
   } = props
+  const positions: HoldingPosition[] = portfolio?.positions ?? []
 
   const [mode, setMode] = useState<Mode>('search')
   const [sortKey, setSortKey] = useState<SortKey>('changeRate')
@@ -86,8 +97,9 @@ export function StocksPage(props: Props) {
     const set = new Set<string>()
     for (const r of stockResults) if (r.market === 'KR') set.add(r.ticker)
     for (const w of watchlist)    if (w.market === 'KR') set.add(w.ticker)
+    for (const p of positions)    if (p.market === 'KR') set.add(p.ticker)
     return Array.from(set)
-  }, [stockResults, watchlist])
+  }, [stockResults, watchlist, positions])
   const livePrices = useLivePrices(liveTickers)
 
   const watchIndex = useMemo(() => {
@@ -115,6 +127,36 @@ export function StocksPage(props: Props) {
         }
       })
     }
+    if (mode === 'holdings') {
+      return positions.map((p): Row => {
+        const lp = p.market === 'KR' ? livePrices[p.ticker] : null
+        const livePrice = lp?.price ?? p.currentPrice
+        // 라이브 가격이 들어오면 손익 재계산 (백엔드 스냅샷보다 최신)
+        const profitRate = p.buyPrice === 0 ? p.profitRate : ((livePrice - p.buyPrice) / p.buyPrice) * 100
+        const profitAmount = (livePrice - p.buyPrice) * p.quantity
+        const evaluationAmount = livePrice * p.quantity
+        const watch = watchIndex.get(`${p.market}:${p.ticker}`)
+        return {
+          id: p.id,
+          market: p.market,
+          ticker: p.ticker,
+          name: p.name,
+          sector: '',
+          stance: '',
+          price: livePrice,
+          changeRate: lp?.changeRate ?? 0,
+          isInWatch: !!watch,
+          watchId: watch?.id,
+          holding: {
+            buyPrice: p.buyPrice,
+            quantity: p.quantity,
+            profitRate,
+            profitAmount,
+            evaluationAmount,
+          },
+        }
+      })
+    }
     return stockResults.map((s): Row => {
       const lp = s.market === 'KR' ? livePrices[s.ticker] : null
       const watch = watchIndex.get(`${s.market}:${s.ticker}`)
@@ -130,7 +172,7 @@ export function StocksPage(props: Props) {
         watchId: watch?.id,
       }
     })
-  }, [mode, stockResults, watchlist, livePrices, watchIndex])
+  }, [mode, stockResults, watchlist, positions, livePrices, watchIndex])
 
   // 정렬
   const sorted = useMemo(() => {
@@ -143,6 +185,8 @@ export function StocksPage(props: Props) {
         case 'sector':     return sign * (a.sector ?? '').localeCompare(b.sector ?? '', 'ko-KR')
         case 'price':      return sign * (a.price - b.price)
         case 'changeRate': return sign * (a.changeRate - b.changeRate)
+        case 'profitRate': return sign * ((a.holding?.profitRate ?? 0) - (b.holding?.profitRate ?? 0))
+        case 'evaluation': return sign * ((a.holding?.evaluationAmount ?? 0) - (b.holding?.evaluationAmount ?? 0))
       }
     })
     return arr
@@ -202,8 +246,16 @@ export function StocksPage(props: Props) {
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           {/* 모드 탭 */}
           <View style={{ flexDirection: 'row', gap: 4, padding: 3, borderRadius: 8, backgroundColor: palette.surfaceAlt }}>
-            {(['search', 'watch'] as const).map((m) => {
+            {(['search', 'watch', 'holdings'] as const).map((m) => {
               const active = mode === m
+              const Icon = m === 'watch' ? Star : m === 'holdings' ? Briefcase : Search
+              const iconColor = active
+                ? (m === 'watch' ? '#f59e0b' : m === 'holdings' ? palette.blue : palette.blue)
+                : palette.inkSub
+              const label =
+                m === 'search'   ? '종목 탐색' :
+                m === 'watch'    ? `관심종목 (${watchlist.length})` :
+                                   `보유 (${positions.length})`
               return (
                 <Pressable
                   key={m}
@@ -218,17 +270,13 @@ export function StocksPage(props: Props) {
                     }]
                   }}
                 >
-                  {m === 'watch' ? (
-                    <Star size={11} color={active ? '#f59e0b' : palette.inkSub}
-                      strokeWidth={2.5} fill={active ? '#f59e0b' : 'none'} />
-                  ) : (
-                    <Search size={11} color={active ? palette.blue : palette.inkSub} strokeWidth={2.5} />
-                  )}
+                  <Icon size={11} color={iconColor} strokeWidth={2.5}
+                    {...(m === 'watch' ? { fill: active ? '#f59e0b' : 'none' } : {})} />
                   <Text style={{
                     color: active ? palette.ink : palette.inkSub,
                     fontSize: 12, fontWeight: '800',
                   }}>
-                    {m === 'search' ? '종목 탐색' : `관심종목 (${watchlist.length})`}
+                    {label}
                   </Text>
                 </Pressable>
               )
@@ -345,21 +393,40 @@ export function StocksPage(props: Props) {
           <HeaderCell flex={2.4} label="종목명" sortable sortKey="name" currentKey={sortKey} currentDir={sortDir} onPress={handleSort} palette={palette} />
           <HeaderCell width={70}  label="티커" palette={palette} />
           <HeaderCell width={60}  label="시장" sortable sortKey="market" currentKey={sortKey} currentDir={sortDir} onPress={handleSort} palette={palette} />
-          <HeaderCell flex={1.4}  label="섹터" sortable sortKey="sector" currentKey={sortKey} currentDir={sortDir} onPress={handleSort} palette={palette} />
+          {mode === 'holdings' ? (
+            <HeaderCell flex={1.4}  label="매수가 × 수량" align="right" palette={palette} />
+          ) : (
+            <HeaderCell flex={1.4}  label="섹터" sortable sortKey="sector" currentKey={sortKey} currentDir={sortDir} onPress={handleSort} palette={palette} />
+          )}
           <HeaderCell width={110} label="현재가" align="right" sortable sortKey="price" currentKey={sortKey} currentDir={sortDir} onPress={handleSort} palette={palette} />
-          <HeaderCell width={90}  label="등락률" align="right" sortable sortKey="changeRate" currentKey={sortKey} currentDir={sortDir} onPress={handleSort} palette={palette} />
-          <HeaderCell width={48}  label="" palette={palette} />
+          {mode === 'holdings' ? (
+            <>
+              <HeaderCell width={90}  label="수익률" align="right" sortable sortKey="profitRate" currentKey={sortKey} currentDir={sortDir} onPress={handleSort} palette={palette} />
+              <HeaderCell width={120} label="평가금액" align="right" sortable sortKey="evaluation" currentKey={sortKey} currentDir={sortDir} onPress={handleSort} palette={palette} />
+            </>
+          ) : (
+            <>
+              <HeaderCell width={90}  label="등락률" align="right" sortable sortKey="changeRate" currentKey={sortKey} currentDir={sortDir} onPress={handleSort} palette={palette} />
+              <HeaderCell width={48}  label="" palette={palette} />
+            </>
+          )}
         </View>
 
         {/* 바디 */}
         {sorted.length === 0 ? (
           <View style={{ paddingVertical: 40, alignItems: 'center', gap: 4 }}>
             <Text style={{ color: palette.inkMuted, fontSize: 13, fontWeight: '700' }}>
-              {mode === 'watch' ? '아직 관심종목이 없어' : stockSearchLoading ? '검색 중…' : '검색 결과 없음'}
+              {mode === 'watch'    ? '아직 관심종목이 없어' :
+               mode === 'holdings' ? '아직 보유 중인 종목이 없어' :
+               stockSearchLoading  ? '검색 중…' : '검색 결과 없음'}
             </Text>
             {mode === 'watch' ? (
               <Text style={{ color: palette.inkFaint, fontSize: 11 }}>
                 탐색 탭에서 ☆ 눌러 담아봐
+              </Text>
+            ) : mode === 'holdings' ? (
+              <Text style={{ color: palette.inkFaint, fontSize: 11 }}>
+                종목 상세에서 매수가 · 수량 입력해 등록
               </Text>
             ) : null}
           </View>
@@ -438,18 +505,29 @@ export function StocksPage(props: Props) {
                   </View>
                 </View>
 
-                {/* 섹터 */}
-                <Text
-                  numberOfLines={1}
-                  style={{
-                    flex: 1.4, minWidth: 0,
-                    color: palette.inkMuted, fontSize: 11, fontWeight: '600',
-                  }}
-                >
-                  {row.sector || '—'}
-                </Text>
+                {/* 섹터 OR 매수가×수량 */}
+                {mode === 'holdings' && row.holding ? (
+                  <View style={{ flex: 1.4, minWidth: 0, alignItems: 'flex-end' }}>
+                    <Text style={{ color: palette.ink, fontSize: 12, fontWeight: '700', fontVariant: ['tabular-nums'] }}>
+                      {formatNumber(row.holding.buyPrice)}
+                    </Text>
+                    <Text style={{ color: palette.inkMuted, fontSize: 10, fontWeight: '600', fontVariant: ['tabular-nums'] }}>
+                      × {row.holding.quantity}주
+                    </Text>
+                  </View>
+                ) : (
+                  <Text
+                    numberOfLines={1}
+                    style={{
+                      flex: 1.4, minWidth: 0,
+                      color: palette.inkMuted, fontSize: 11, fontWeight: '600',
+                    }}
+                  >
+                    {row.sector || '—'}
+                  </Text>
+                )}
 
-                {/* 현재가 */}
+                {/* 현재가 — 풀 금액 표시 (compact 면 "1.2M" 처럼 압축돼서 부정확) */}
                 <Text
                   style={{
                     width: 110,
@@ -458,50 +536,82 @@ export function StocksPage(props: Props) {
                     fontVariant: ['tabular-nums'],
                   }}
                 >
-                  {formatCompactNumber(row.price)}
+                  {formatNumber(row.price)}
                 </Text>
 
-                {/* 등락률 */}
-                <View style={{ width: 90, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 3 }}>
-                  {row.changeRate > 0 ? <ArrowUp size={10} color={color} strokeWidth={3} />
-                    : row.changeRate < 0 ? <ArrowDown size={10} color={color} strokeWidth={3} />
-                    : <Minus size={10} color={color} strokeWidth={3} />}
-                  <Text style={{ color, fontSize: 12, fontWeight: '800', fontVariant: ['tabular-nums'] }}>
-                    {formatSignedRate(row.changeRate)}
-                  </Text>
-                </View>
+                {/* 등락률 OR 수익률 */}
+                {mode === 'holdings' && row.holding ? (
+                  <View style={{ width: 90, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 3 }}>
+                    {(() => {
+                      const pColor = marketColor(palette, row.market, row.holding.profitRate)
+                      return (
+                        <>
+                          {row.holding.profitRate > 0 ? <ArrowUp size={10} color={pColor} strokeWidth={3} />
+                            : row.holding.profitRate < 0 ? <ArrowDown size={10} color={pColor} strokeWidth={3} />
+                            : <Minus size={10} color={pColor} strokeWidth={3} />}
+                          <Text style={{ color: pColor, fontSize: 12, fontWeight: '800', fontVariant: ['tabular-nums'] }}>
+                            {formatSignedRate(row.holding.profitRate)}
+                          </Text>
+                        </>
+                      )
+                    })()}
+                  </View>
+                ) : (
+                  <View style={{ width: 90, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 3 }}>
+                    {row.changeRate > 0 ? <ArrowUp size={10} color={color} strokeWidth={3} />
+                      : row.changeRate < 0 ? <ArrowDown size={10} color={color} strokeWidth={3} />
+                      : <Minus size={10} color={color} strokeWidth={3} />}
+                    <Text style={{ color, fontSize: 12, fontWeight: '800', fontVariant: ['tabular-nums'] }}>
+                      {formatSignedRate(row.changeRate)}
+                    </Text>
+                  </View>
+                )}
 
-                {/* 액션 */}
-                <View style={{ width: 48, alignItems: 'flex-end' }}>
-                  <Pressable
-                    onPress={(e) => { (e as unknown as { stopPropagation: () => void }).stopPropagation?.(); void handleToggle(row) }}
-                    disabled={toggling}
-                    style={(state) => {
-                      const hovered = (state as { hovered?: boolean }).hovered
-                      return [{
-                        flexDirection: 'row', alignItems: 'center', gap: 3,
-                        paddingHorizontal: 8, paddingVertical: 4,
-                        borderRadius: 6,
-                        backgroundColor: row.isInWatch
-                          ? (hovered ? palette.redSoft : palette.surfaceAlt)
-                          : (hovered ? palette.blueSoft : palette.blue),
-                        opacity: toggling ? 0.5 : 1,
-                      }]
-                    }}
-                  >
-                    {row.isInWatch ? (
-                      <>
-                        <X size={9} color={palette.red} strokeWidth={3} />
-                        <Text style={{ color: palette.red, fontSize: 10, fontWeight: '800' }}>해제</Text>
-                      </>
-                    ) : (
-                      <>
-                        <Plus size={9} color="#ffffff" strokeWidth={3} />
-                        <Text style={{ color: '#ffffff', fontSize: 10, fontWeight: '800' }}>담기</Text>
-                      </>
-                    )}
-                  </Pressable>
-                </View>
+                {/* 평가금액 OR 관심 토글 액션 */}
+                {mode === 'holdings' && row.holding ? (
+                  <View style={{ width: 120, alignItems: 'flex-end' }}>
+                    <Text style={{ color: palette.ink, fontSize: 13, fontWeight: '800', fontVariant: ['tabular-nums'] }}>
+                      {formatNumber(row.holding.evaluationAmount)}
+                    </Text>
+                    <Text style={{
+                      color: marketColor(palette, row.market, row.holding.profitAmount),
+                      fontSize: 11, fontWeight: '700', fontVariant: ['tabular-nums'],
+                    }}>
+                      {row.holding.profitAmount >= 0 ? '+' : ''}{formatNumber(row.holding.profitAmount)}
+                    </Text>
+                  </View>
+                ) : (
+                  <View style={{ width: 48, alignItems: 'flex-end' }}>
+                    <Pressable
+                      onPress={(e) => { (e as unknown as { stopPropagation: () => void }).stopPropagation?.(); void handleToggle(row) }}
+                      disabled={toggling}
+                      style={(state) => {
+                        const hovered = (state as { hovered?: boolean }).hovered
+                        return [{
+                          flexDirection: 'row', alignItems: 'center', gap: 3,
+                          paddingHorizontal: 8, paddingVertical: 4,
+                          borderRadius: 6,
+                          backgroundColor: row.isInWatch
+                            ? (hovered ? palette.redSoft : palette.surfaceAlt)
+                            : (hovered ? palette.blueSoft : palette.blue),
+                          opacity: toggling ? 0.5 : 1,
+                        }]
+                      }}
+                    >
+                      {row.isInWatch ? (
+                        <>
+                          <X size={9} color={palette.red} strokeWidth={3} />
+                          <Text style={{ color: palette.red, fontSize: 10, fontWeight: '800' }}>해제</Text>
+                        </>
+                      ) : (
+                        <>
+                          <Plus size={9} color="#ffffff" strokeWidth={3} />
+                          <Text style={{ color: '#ffffff', fontSize: 10, fontWeight: '800' }}>담기</Text>
+                        </>
+                      )}
+                    </Pressable>
+                  </View>
+                )}
               </Pressable>
             )
           })

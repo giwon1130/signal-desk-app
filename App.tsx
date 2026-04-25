@@ -524,6 +524,7 @@ function AppShell() {
         Platform.OS === 'web' ? (
           <StocksPage
             watchlist={watchlist}
+            portfolio={portfolio}
             stockSearch={stockSearch}
             stockMarketFilter={stockMarketFilter}
             stockResults={stockResults}
