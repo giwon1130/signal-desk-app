@@ -44,7 +44,7 @@ import type {
   StockSearchResult,
   WatchItem,
 } from '../types'
-import { formatSignedRate } from '../utils'
+import { formatPrice, formatSignedRate } from '../utils'
 import { hapticLight } from '../utils/haptics'
 
 type Mode = 'playbook' | 'scorecard'
@@ -234,8 +234,9 @@ function Playbook({
           </View>
         ) : null}
         {todayPicks.length === 0 ? (
-          <View style={{ paddingVertical: 18, alignItems: 'center' }}>
-            <Text style={{ color: palette.inkMuted, fontSize: 12 }}>AI 추천 준비 중</Text>
+          <View style={{ paddingVertical: 18, alignItems: 'center', gap: 4 }}>
+            <Text style={{ color: palette.inkMuted, fontSize: 12, fontWeight: '600' }}>AI 추천 준비 중</Text>
+            <Text style={{ color: palette.inkFaint, fontSize: 11 }}>오늘 픽이 산출되면 여기 떠</Text>
           </View>
         ) : (
           <View style={{ gap: 8 }}>
@@ -461,9 +462,9 @@ function PickCard({
       </View>
       {log.entryPrice != null && !marketClosed ? (
         <View style={{ flexDirection: 'row', gap: 14, paddingTop: 6, borderTopWidth: 1, borderTopColor: palette.border }}>
-          <PriceTag label="진입" value={log.entryPrice} color={palette.inkSub} palette={palette} />
-          {log.stopLoss != null ? <PriceTag label="손절" value={log.stopLoss} color={palette.down} palette={palette} /> : null}
-          {log.takeProfit != null ? <PriceTag label="목표" value={log.takeProfit} color={palette.up} palette={palette} /> : null}
+          <PriceTag label="진입" value={log.entryPrice} market={log.market} color={palette.inkSub} palette={palette} />
+          {log.stopLoss != null ? <PriceTag label="손절" value={log.stopLoss} market={log.market} color={palette.down} palette={palette} /> : null}
+          {log.takeProfit != null ? <PriceTag label="목표" value={log.takeProfit} market={log.market} color={palette.up} palette={palette} /> : null}
         </View>
       ) : null}
       <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
@@ -497,12 +498,12 @@ function PickCard({
   )
 }
 
-function PriceTag({ label, value, color, palette }: { label: string; value: number; color: string; palette: Palette }) {
+function PriceTag({ label, value, market, color, palette }: { label: string; value: number; market?: string; color: string; palette: Palette }) {
   return (
     <View style={{ gap: 1 }}>
       <Text style={{ color: palette.inkFaint, fontSize: 9, fontWeight: '800', letterSpacing: 0.4 }}>{label}</Text>
       <Text style={{ color, fontSize: 12, fontWeight: '800', fontVariant: ['tabular-nums'] }}>
-        {value.toLocaleString('ko-KR')}
+        {formatPrice(value, market)}
       </Text>
     </View>
   )

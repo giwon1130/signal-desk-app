@@ -73,7 +73,7 @@ export function TickerRibbon({ sections, sessions, onClickIndex }: Props) {
 
       {indices.length === 0 ? (
         <Text style={{ color: '#94a3b8', fontSize: 11, fontWeight: '600' }}>
-          지수 데이터를 불러오는 중…
+          지수 데이터 불러오는 중…
         </Text>
       ) : (
         indices.map(({ market, item }) => {

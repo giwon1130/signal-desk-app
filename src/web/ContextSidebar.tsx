@@ -3,7 +3,7 @@ import { Pressable, ScrollView, Text, View } from 'react-native'
 import { ArrowRight, Bell, Briefcase, Radio, Sparkles, Star, TrendingDown, TrendingUp } from 'lucide-react-native'
 import type { AiRecommendationData, DailyFortune, PortfolioSummary, WatchItem } from '../types'
 import { marketColor, useTheme, type Palette } from '../theme'
-import { formatNumber, formatSignedRate } from '../utils'
+import { formatNumber, formatPrice, formatSignedPrice, formatSignedRate } from '../utils'
 import { useLivePrices } from '../hooks/useLivePrices'
 import { StanceTag } from './shared'
 
@@ -73,7 +73,7 @@ export function ContextSidebar(props: Props) {
           palette={palette}
         >
           {topWatch.length === 0 ? (
-            <EmptyRow text="관심종목을 추가해봐" palette={palette} />
+            <EmptyRow text="아직 관심종목이 없어" hint="종목 탭에서 ☆ 눌러 담아봐" palette={palette} />
           ) : (
             topWatch.map((w) => {
               const live = w.market === 'KR' ? livePrices[w.ticker] : null
@@ -106,7 +106,11 @@ export function ContextSidebar(props: Props) {
                       >
                         {w.name}
                       </Text>
-                      {isLive ? <Radio size={8} color="#10b981" strokeWidth={3} /> : null}
+                      {isLive ? (
+                        <Radio size={8} color="#10b981" strokeWidth={3} />
+                      ) : w.market === 'US' ? (
+                        <Text style={{ color: palette.inkFaint, fontSize: 9, fontWeight: '700', letterSpacing: 0.3 }}>지연</Text>
+                      ) : null}
                     </View>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                       <Text style={{ color: palette.inkFaint, fontSize: 10, fontWeight: '600' }}>
@@ -124,7 +128,7 @@ export function ContextSidebar(props: Props) {
                         fontVariant: ['tabular-nums'],
                       }}
                     >
-                      {formatNumber(price)}
+                      {formatPrice(price, w.market)}
                     </Text>
                     <Text
                       style={{
@@ -166,7 +170,7 @@ export function ContextSidebar(props: Props) {
                     fontVariant: ['tabular-nums'],
                   }}
                 >
-                  {formatNumber(portfolio.totalValue)}
+                  {formatPrice(portfolio.totalValue, 'KR')}
                 </Text>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 2 }}>
                   {portfolio.totalProfitRate >= 0 ? (
@@ -192,7 +196,7 @@ export function ContextSidebar(props: Props) {
                       fontVariant: ['tabular-nums'],
                     }}
                   >
-                    ({portfolio.totalProfit >= 0 ? '+' : ''}{formatNumber(portfolio.totalProfit)})
+                    ({formatSignedPrice(portfolio.totalProfit, 'KR')})
                   </Text>
                 </View>
               </View>
@@ -223,7 +227,7 @@ export function ContextSidebar(props: Props) {
                           {h.name}
                         </Text>
                         <Text style={{ color: palette.inkFaint, fontSize: 10, fontWeight: '600' }}>
-                          {h.market} · {h.quantity}주 × {formatNumber(h.buyPrice)}
+                          {h.market} · {h.quantity}주 × {formatPrice(h.buyPrice, h.market)}
                         </Text>
                       </View>
                       <View style={{ alignItems: 'flex-end' }}>
@@ -235,7 +239,7 @@ export function ContextSidebar(props: Props) {
                             fontVariant: ['tabular-nums'],
                           }}
                         >
-                          {formatNumber(h.currentPrice)}
+                          {formatPrice(h.currentPrice, h.market)}
                         </Text>
                         <Text
                           style={{
@@ -254,7 +258,7 @@ export function ContextSidebar(props: Props) {
               ) : null}
             </>
           ) : (
-            <EmptyRow text="보유 종목이 없어" palette={palette} />
+            <EmptyRow text="보유 중인 종목이 없어" hint="종목 상세에서 매수가 · 수량 입력해 등록" palette={palette} />
           )}
         </Section>
 
@@ -268,7 +272,7 @@ export function ContextSidebar(props: Props) {
           palette={palette}
         >
           {topAi.length === 0 ? (
-            <EmptyRow text="최근 추천이 없어" palette={palette} />
+            <EmptyRow text="최근 AI 추천이 없어" hint="AI 탭에서 오늘의 플레이북 확인" palette={palette} />
           ) : (
             topAi.map((log) => (
               <Pressable
@@ -413,10 +417,11 @@ function Section({ icon, title, meta, onMore, onMoreLabel, palette, children }: 
   )
 }
 
-function EmptyRow({ text, palette }: { text: string; palette: ReturnType<typeof useTheme>['palette'] }) {
+function EmptyRow({ text, hint, palette }: { text: string; hint?: string; palette: ReturnType<typeof useTheme>['palette'] }) {
   return (
-    <View style={{ paddingVertical: 10, alignItems: 'center' }}>
+    <View style={{ paddingVertical: 10, alignItems: 'center', gap: 2 }}>
       <Text style={{ color: palette.inkFaint, fontSize: 11, fontWeight: '600' }}>{text}</Text>
+      {hint ? <Text style={{ color: palette.inkFaint, fontSize: 10 }}>{hint}</Text> : null}
     </View>
   )
 }

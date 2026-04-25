@@ -8,7 +8,7 @@ import type {
   StockSearchResult,
   WatchItem,
 } from '../types'
-import { formatNumber, formatSignedRate } from '../utils'
+import { formatPrice, formatSignedRate } from '../utils'
 import { useLivePrices } from '../hooks/useLivePrices'
 
 type Props = {
@@ -156,7 +156,7 @@ export function StocksTab({
                   return (
                     <View style={styles.stockResultBottom}>
                       <View style={styles.cardTitleRow}>
-                        <Text style={styles.stockResultPrice}>{formatNumber(live.price)}</Text>
+                        <Text style={styles.stockResultPrice}>{formatPrice(live.price, item.market)}</Text>
                         {live.live ? <Radio size={10} color="#10b981" strokeWidth={2.5} /> : null}
                       </View>
                       <Text style={[styles.stockResultDelta, { color: marketColor(palette, item.market, live.changeRate) }]}>

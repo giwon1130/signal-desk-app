@@ -25,7 +25,7 @@ import type {
   UserPickStatus,
 } from '../types'
 import {
-  formatNumber,
+  formatPrice,
   formatSignedRate,
   getMarketStatusTone,
   formatMarketStatus,
@@ -505,7 +505,7 @@ export function TodayTab({
                   <Icon size={13} color={color} strokeWidth={2.5} />
                   <Text style={[styles.todayMonitorRate, { color }]}>{formatSignedRate(p.profitRate)}</Text>
                 </View>
-                <Text style={styles.todayMonitorPrice}>{formatNumber(p.currentPrice)}</Text>
+                <Text style={styles.todayMonitorPrice}>{formatPrice(p.currentPrice, p.market)}</Text>
               </View>
             </View>
           )

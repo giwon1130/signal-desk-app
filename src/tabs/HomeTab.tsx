@@ -4,7 +4,7 @@ import { Briefcase, Eye, Search, X } from 'lucide-react-native'
 import { useLivePrices } from '../hooks/useLivePrices'
 import { useStyles } from '../styles'
 import type { HoldingPosition, PortfolioSummary, WatchItem } from '../types'
-import { formatNumber, formatSignedRate } from '../utils'
+import { formatPrice, formatSignedPrice, formatSignedRate } from '../utils'
 
 type Props = {
   watchlist: WatchItem[]
@@ -106,12 +106,12 @@ export function HomeTab({
           <View style={styles.portfolioSummaryRow}>
             <View style={styles.portfolioSummaryCard}>
               <Text style={styles.kpiLabel}>총 평가금액</Text>
-              <Text style={styles.chartStatValue}>{formatNumber(livePortfolio.totalValue)}</Text>
+              <Text style={styles.chartStatValue}>{formatPrice(livePortfolio.totalValue, 'KR')}</Text>
             </View>
             <View style={styles.portfolioSummaryCard}>
               <Text style={styles.kpiLabel}>총 손익</Text>
               <Text style={[styles.chartStatValue, { color: livePortfolio.totalProfit >= 0 ? '#dc2626' : '#2563eb' }]}>
-                {formatNumber(livePortfolio.totalProfit)}
+                {formatSignedPrice(livePortfolio.totalProfit, 'KR')}
               </Text>
             </View>
           </View>
@@ -132,7 +132,7 @@ export function HomeTab({
                 <Text style={styles.metricState}>{item.market} · {item.ticker} · {item.quantity}주</Text>
               </View>
               <View style={styles.summaryValueBox}>
-                <Text style={styles.metricScore}>{formatNumber(currentPrice)}</Text>
+                <Text style={styles.metricScore}>{formatPrice(currentPrice, item.market)}</Text>
                 <Text style={[styles.summaryDelta, { color: profitRate >= 0 ? '#dc2626' : '#2563eb' }]}>
                   {formatSignedRate(profitRate)}
                 </Text>
@@ -173,7 +173,7 @@ export function HomeTab({
                 style={({ pressed }) => [styles.summaryValueBox, pressed && { opacity: 0.6 }]}
               >
                 <Text style={styles.summaryMeta}>{item.stance}</Text>
-                <Text style={styles.metricScore}>{formatNumber(displayPrice)}</Text>
+                <Text style={styles.metricScore}>{formatPrice(displayPrice, item.market)}</Text>
                 <Text style={[styles.summaryDelta, { color: displayRate >= 0 ? '#dc2626' : '#2563eb' }]}>
                   {formatSignedRate(displayRate)}
                 </Text>

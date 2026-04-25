@@ -21,6 +21,36 @@ export function formatNumber(n: number | null | undefined, digits = 0) {
   return n.toLocaleString('ko-KR', { maximumFractionDigits: digits })
 }
 
+/**
+ * 가격에 통화 prefix 붙여서 반환.
+ *  · KR → "₩119,000"  (정수)
+ *  · US → "$412.43"   (소수점 2자리)
+ *  · market 모르면 formatNumber fallback
+ *
+ * 같은 화면에 ₩119,000 과 $412 가 같이 떠도 단위 혼동 안 되게 하기 위함.
+ * 손익액/평가금액에도 동일하게 사용 (음수면 prefix 가 부호 다음에).
+ */
+export function formatPrice(value: number | null | undefined, market?: string | null): string {
+  if (value == null || Number.isNaN(value)) return '—'
+  const m = (market ?? '').toUpperCase()
+  if (m === 'US') {
+    const sign = value < 0 ? '-' : ''
+    return `${sign}$${Math.abs(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  }
+  if (m === 'KR') {
+    const sign = value < 0 ? '-' : ''
+    return `${sign}₩${Math.abs(value).toLocaleString('ko-KR', { maximumFractionDigits: 0 })}`
+  }
+  return formatNumber(value)
+}
+
+/** 손익액 등 부호가 중요한 금액 — formatPrice + 양수에도 + 부호 */
+export function formatSignedPrice(value: number | null | undefined, market?: string | null): string {
+  if (value == null || Number.isNaN(value)) return '—'
+  const sign = value > 0 ? '+' : ''
+  return `${sign}${formatPrice(value, market)}`
+}
+
 export function getMarketStatusTone(status?: string) {
   if (!status) return '#64748b'
   if (status.includes('OPEN') || status.includes('REGULAR')) return '#0f766e'
