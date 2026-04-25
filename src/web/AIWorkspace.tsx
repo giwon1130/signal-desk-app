@@ -446,6 +446,15 @@ function PickCard({
           </Text>
         ) : null}
         <View style={{ flex: 1 }} />
+      </View>
+      {log.entryPrice != null ? (
+        <View style={{ flexDirection: 'row', gap: 12, paddingTop: 6, borderTopWidth: 1, borderTopColor: palette.border }}>
+          <PriceTag label="진입" value={log.entryPrice} color={palette.inkSub} palette={palette} />
+          {log.stopLoss != null ? <PriceTag label="손절" value={log.stopLoss} color={palette.down} palette={palette} /> : null}
+          {log.takeProfit != null ? <PriceTag label="목표" value={log.takeProfit} color={palette.up} palette={palette} /> : null}
+        </View>
+      ) : null}
+      <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
         {inWatch ? (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
             <Check size={10} color={palette.up} strokeWidth={3} />
@@ -472,6 +481,17 @@ function PickCard({
         )}
       </View>
     </Pressable>
+  )
+}
+
+function PriceTag({ label, value, color, palette }: { label: string; value: number; color: string; palette: Palette }) {
+  return (
+    <View style={{ gap: 1 }}>
+      <Text style={{ color: palette.inkFaint, fontSize: 9, fontWeight: '800', letterSpacing: 0.4 }}>{label}</Text>
+      <Text style={{ color, fontSize: 11, fontWeight: '800', fontVariant: ['tabular-nums'] }}>
+        {value.toLocaleString('ko-KR')}
+      </Text>
+    </View>
   )
 }
 

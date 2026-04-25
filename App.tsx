@@ -58,7 +58,6 @@ import type {
   DailyFortune,
   HealthResponse,
   HoldingPosition,
-  LogFilter,
   MarketKey,
   MarketSectionsData,
   MarketSummaryData,
@@ -145,8 +144,6 @@ function AppShell() {
   const [apiHealth, setApiHealth] = useState<HealthResponse | null>(null)
   const [lastSyncedAt, setLastSyncedAt] = useState('')
   const [homeQuery, setHomeQuery] = useState('')
-  const [logQuery, setLogQuery] = useState('')
-  const [logFilter, setLogFilter] = useState<LogFilter>('ALL')
   const [chartMarket, setChartMarket] = useState<MarketKey>('KR')
   const [chartPeriod, setChartPeriod] = useState<PeriodKey>('D')
   const [selectedIndexLabel, setSelectedIndexLabel] = useState('')
@@ -208,22 +205,6 @@ function AppShell() {
     setActiveTab(key)
   }, [activeTab])
 
-  // 웹은 카드가 2~3열로 타일되니까 로그를 훨씬 더 많이 보여줌
-  const logLimit = Platform.OS === 'web' ? 60 : 20
-  const filteredLogs = useMemo(() => {
-    const logs = aiRecommendation?.executionLogs ?? []
-    const stageFiltered = logFilter === 'ALL' ? logs : logs.filter((item) => item.stage === logFilter)
-    const query = normalizeText(logQuery)
-    if (!query) return stageFiltered.slice(0, logLimit)
-    return stageFiltered
-      .filter((item) =>
-        [item.name, item.ticker, item.market, item.status, item.rationale].some((value) =>
-          normalizeText(value).includes(query),
-        ),
-      )
-      .slice(0, logLimit)
-  }, [aiRecommendation?.executionLogs, logFilter, logQuery, logLimit])
-
   const successRate = useMemo(() => {
     const resultLogs = (aiRecommendation?.executionLogs ?? []).filter((item) => item.realizedReturnRate != null)
     if (!resultLogs.length) return '-'
@@ -254,15 +235,6 @@ function AppShell() {
   const listLimit = Platform.OS === 'web' ? 12 : 4
   const topWatchlist = useMemo(() => filteredWatchlist.slice(0, listLimit), [filteredWatchlist, listLimit])
   const topPortfolioPositions = useMemo(() => filteredPortfolioPositions.slice(0, listLimit), [filteredPortfolioPositions, listLimit])
-  const recommendLogs = useMemo(
-    () => (aiRecommendation?.executionLogs ?? []).filter((item) => item.stage === 'RECOMMEND').length,
-    [aiRecommendation?.executionLogs],
-  )
-  const resultLogs = useMemo(
-    () => (aiRecommendation?.executionLogs ?? []).filter((item) => item.stage === 'RESULT').length,
-    [aiRecommendation?.executionLogs],
-  )
-
   const activeSection = useMemo(() => {
     if (!sections) return null
     return chartMarket === 'KR' ? sections.koreaMarket : sections.usMarket
@@ -598,15 +570,12 @@ function AppShell() {
         ) : (
           <AITab
             aiRecommendation={aiRecommendation}
-            filteredLogs={filteredLogs}
-            logFilter={logFilter}
-            logQuery={logQuery}
-            recommendLogs={recommendLogs}
-            resultLogs={resultLogs}
+            summary={summary}
+            watchlist={watchlist}
             refreshing={refreshing}
             onRefresh={onRefresh}
-            onLogFilterChange={setLogFilter}
-            onLogQueryChange={setLogQuery}
+            onOpenDetail={handleOpenDetail}
+            onQuickAddWatch={handleQuickAddWatch}
           />
         )
       ) : null}
@@ -713,7 +682,7 @@ function AppShell() {
             </View>
           </View>
           <Text style={styles.headerSubtitle}>
-            {lastSyncedAt ? `마지막 동기화 ${lastSyncedAt}` : '시장/차트/포트폴리오를 한눈에'}
+            {lastSyncedAt ? `마지막 동기화 ${lastSyncedAt}` : '오늘 하루를 한 화면에서'}
           </Text>
         </View>
       </View>

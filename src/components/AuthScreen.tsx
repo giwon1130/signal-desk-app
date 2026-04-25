@@ -157,7 +157,7 @@ export function AuthScreen({ onDone }: Props) {
             {mode === 'login' ? '다시 만나서 반가워요' : '시작해볼까요'}
           </Text>
           <Text style={{ color: palette.inkMuted, fontSize: 12 }}>
-            투자 대시보드를 너만의 공간으로
+            장 시작 전 점검부터 보유 모니터까지, 오늘 하루를 한 화면에서
           </Text>
         </View>
 
