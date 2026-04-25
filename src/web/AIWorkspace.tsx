@@ -149,6 +149,10 @@ function Playbook({
     [watchlist],
   )
 
+  // 휴장 모드 — 양쪽 시장 다 닫혔을 때. UI 톤이 "실행" 에서 "준비/시뮬레이션" 으로 바뀜.
+  const td = summary?.tradingDayStatus
+  const marketClosed = !!td && !td.krOpen && !td.usOpen
+
   return (
     <View style={{ gap: 14 }}>
       {/* 상단 브리핑 히어로 */}
@@ -198,6 +202,17 @@ function Playbook({
             {aiRecommendation.summary}
           </Text>
         ) : null}
+        {marketClosed ? (
+          <View style={{
+            backgroundColor: palette.surfaceAlt,
+            borderRadius: 8, padding: 10, marginBottom: 10,
+            borderLeftWidth: 3, borderLeftColor: palette.orange,
+          }}>
+            <Text style={{ color: palette.inkSub, fontSize: 11, fontWeight: '700', lineHeight: 16 }}>
+              지금 휴장 — 픽은 다음 거래일 후보 점검용으로만 봐. 진입가는 마감가 기준이라 다음 개장가에서 다시 잡아야 해.
+            </Text>
+          </View>
+        ) : null}
         {todayPicks.length === 0 ? (
           <View style={{ paddingVertical: 18, alignItems: 'center' }}>
             <Text style={{ color: palette.inkMuted, fontSize: 12 }}>AI 추천 준비 중</Text>
@@ -209,6 +224,7 @@ function Playbook({
                 key={`${log.date}-${log.market}-${log.ticker}`}
                 log={log}
                 palette={palette}
+                marketClosed={marketClosed}
                 inWatch={watchSet.has(`${log.market}:${log.ticker}`)}
                 onOpenDetail={onOpenDetail}
                 onQuickAdd={async () => {
@@ -389,11 +405,12 @@ function ActionItemCard({
 }
 
 function PickCard({
-  log, palette, inWatch, onOpenDetail, onQuickAdd,
+  log, palette, inWatch, marketClosed, onOpenDetail, onQuickAdd,
 }: {
   log: RecommendationExecutionLog
   palette: Palette
   inWatch: boolean
+  marketClosed?: boolean
   onOpenDetail: (m: string, t: string, n?: string) => void
   onQuickAdd: () => Promise<void>
 }) {
@@ -421,6 +438,11 @@ function PickCard({
         <Text style={{ color: palette.inkMuted, fontSize: 11, fontWeight: '700' }}>
           {log.ticker}
         </Text>
+        {marketClosed ? (
+          <View style={{ backgroundColor: palette.orangeSoft, borderRadius: 4, paddingHorizontal: 5, paddingVertical: 1 }}>
+            <Text style={{ color: palette.orange, fontSize: 9, fontWeight: '800' }}>시나리오</Text>
+          </View>
+        ) : null}
         <View style={{ flex: 1 }} />
         {log.userStatus ? (
           <View style={{ backgroundColor: palette.blueSoft, borderRadius: 4, paddingHorizontal: 5, paddingVertical: 1 }}>
@@ -447,7 +469,7 @@ function PickCard({
         ) : null}
         <View style={{ flex: 1 }} />
       </View>
-      {log.entryPrice != null ? (
+      {log.entryPrice != null && !marketClosed ? (
         <View style={{ flexDirection: 'row', gap: 12, paddingTop: 6, borderTopWidth: 1, borderTopColor: palette.border }}>
           <PriceTag label="진입" value={log.entryPrice} color={palette.inkSub} palette={palette} />
           {log.stopLoss != null ? <PriceTag label="손절" value={log.stopLoss} color={palette.down} palette={palette} /> : null}
