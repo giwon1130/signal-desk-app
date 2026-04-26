@@ -11,12 +11,6 @@ import {
 } from 'react-native'
 import { BarChart3, Bell, Bot, Home, LogOut, Moon, Sun, Sunrise, TrendingUp } from 'lucide-react-native'
 import { WebLayout } from './src/web/WebLayout'
-import {
-  deleteFavoriteItem,
-  deletePortfolioPosition,
-  quickAddWatchItem,
-  savePortfolioPosition,
-} from './src/api'
 import { useStyles } from './src/styles'
 import { ThemeProvider, useTheme } from './src/theme'
 import { Toast } from './src/components/Toast'
@@ -24,16 +18,7 @@ import { AuthScreen } from './src/components/AuthScreen'
 import { WebFrame } from './src/components/WebFrame'
 import { webBootstrap } from './src/utils/webBootstrap'
 import { useToast } from './src/hooks/useToast'
-import { hapticLight, hapticSuccess, hapticError } from './src/utils/haptics'
-import {
-  type AuthUser,
-  apiMe,
-  clearAuth,
-  loadStoredAuth,
-  saveAuth,
-  setMemoryToken,
-} from './src/api/auth'
-import { registerPushToken } from './src/api/pushDevice'
+import { hapticLight } from './src/utils/haptics'
 import { AITab } from './src/tabs/AITab'
 import { HomeTab } from './src/tabs/HomeTab'
 import { MarketTab } from './src/tabs/MarketTab'
@@ -47,9 +32,11 @@ import { StockDetailModal, type StockDetailContext } from './src/components/Stoc
 import { ReminderSettingsModal } from './src/components/ReminderSettingsModal'
 import { useMarketReminderBootstrap } from './src/hooks/useMarketReminder'
 import { usePushDeepLink } from './src/hooks/usePushDeepLink'
+import { useAuthSession } from './src/hooks/useAuthSession'
 import { useChartSelection } from './src/hooks/useChartSelection'
 import { useMarketSnapshot } from './src/hooks/useMarketSnapshot'
 import { useStockSearch } from './src/hooks/useStockSearch'
+import { useWorkspaceMutations } from './src/hooks/useWorkspaceMutations'
 import type {
   HoldingPosition,
   MarketKey,
@@ -77,45 +64,8 @@ function AppShell() {
   // 테마 바뀔 때마다 body bg 만 업데이트.
   useEffect(() => { webBootstrap(palette.bg) }, [palette.bg])
 
-  // ── 인증 상태 ─────────────────────────────────────
-  const [authChecked, setAuthChecked] = useState(false)
-  const [user, setUser] = useState<AuthUser | null>(null)
-
-  useEffect(() => {
-    void (async () => {
-      const stored = await loadStoredAuth()
-      if (stored) {
-        setMemoryToken(stored.token)
-        // 토큰 유효성 검증 (서버 me 호출)
-        try {
-          const fresh = await apiMe(stored.token)
-          setUser({ ...fresh, token: stored.token })
-          await saveAuth({ ...fresh, token: stored.token })
-          void registerPushToken(stored.token)
-        } catch {
-          // 만료된 토큰
-          await clearAuth()
-          setMemoryToken(null)
-          setUser(null)
-        }
-      }
-      setAuthChecked(true)
-    })()
-  }, [])
-
-  const handleAuthDone = useCallback(async (u: AuthUser) => {
-    setMemoryToken(u.token)
-    await saveAuth(u)
-    setUser(u)
-    void registerPushToken(u.token)
-  }, [])
-
-  const handleLogout = useCallback(async () => {
-    void hapticLight()
-    await clearAuth()
-    setMemoryToken(null)
-    setUser(null)
-  }, [])
+  // ── 인증 ─────────────────────────────────────
+  const { authChecked, user, handleAuthDone, handleLogout } = useAuthSession()
 
   const [activeTab, setActiveTab] = useState<TabKey>('today')
   const market = useMarketSnapshot(user?.token ?? null, !!user)
@@ -136,7 +86,15 @@ function AppShell() {
     setChartMarket, setChartPeriod, setSelectedIndexLabel,
     activeSection, activeIndex, activePeriod,
   } = chart
-  const [favoriteDeletingId, setFavoriteDeletingId] = useState('')
+  const mutations = useWorkspaceMutations({
+    watchlist, setWatchlist, setPortfolio, fetchData, toast,
+  })
+  const {
+    favoriteDeletingId, bulkDeletingWatch,
+    handleSavePortfolio, handleDeletePortfolio,
+    handleQuickAddWatch, handleDeleteFavorite, handleDeleteAllFavorites,
+    handleToggleWatchInDetail,
+  } = mutations
 
   // ── 종목 상세 모달 (어느 탭에서든 같은 모달) ──────
   const [detailKey, setDetailKey] = useState('')        // 'MARKET:TICKER' or ''
@@ -219,103 +177,6 @@ function AppShell() {
     }
     return { base, watchItem, portfolioPosition: portfolioPos, latestAiLog }
   }, [detailKey, detailFallbackName, stockResults, watchlist, portfolio?.positions, aiRecommendation?.executionLogs])
-
-  const handleSavePortfolio = useCallback(async (payload: {
-    id?: string
-    market: string
-    ticker: string
-    name: string
-    buyPrice: number
-    currentPrice: number
-    quantity: number
-  }) => {
-    try {
-      await savePortfolioPosition(payload)
-      await fetchData()
-      void hapticSuccess()
-      toast.show(payload.id ? '보유 종목을 수정했어요' : '보유 종목으로 등록했어요', 'success')
-    } catch {
-      void hapticError()
-      toast.show('저장에 실패했어요. 입력값을 확인해줘', 'error')
-      throw new Error('save-portfolio-failed')
-    }
-  }, [fetchData, toast])
-
-  const handleDeletePortfolio = useCallback(async (id: string) => {
-    try {
-      await deletePortfolioPosition(id)
-      await fetchData()
-      void hapticSuccess()
-      toast.show('보유 종목을 삭제했어요', 'info')
-    } catch {
-      void hapticError()
-      toast.show('삭제에 실패했어요', 'error')
-    }
-  }, [fetchData, toast])
-
-  const handleQuickAddWatch = useCallback(async (stock: StockSearchResult) => {
-    try {
-      await quickAddWatchItem(stock)
-      await fetchData()
-      void hapticSuccess()
-      toast.show('관심종목에 담았어요', 'success')
-    } catch {
-      void hapticError()
-      toast.show('관심종목 추가에 실패했어요', 'error')
-      throw new Error('quick-add-failed')
-    }
-  }, [fetchData, toast])
-
-  const handleDeleteFavorite = useCallback(async (id: string) => {
-    setFavoriteDeletingId(id)
-    try {
-      await deleteFavoriteItem(id)
-      // 서버 DELETE 성공 즉시 로컬에서 제거 → 버튼 "..." 이 끝난 듯 바로 사라짐.
-      // 전체 refetch 는 백그라운드로. (fetchData 가 모든 탭 데이터를 불러와서
-      // 느릴 때 버튼이 수초간 멈춰 보이던 문제 방지)
-      setWatchlist((prev) => prev.filter((w) => w.id !== id))
-      void fetchData()
-      void hapticSuccess()
-      toast.show('관심종목에서 해제했어요', 'info')
-    } catch {
-      void hapticError()
-      toast.show('해제에 실패했어요', 'error')
-    } finally {
-      setFavoriteDeletingId('')
-    }
-  }, [fetchData, toast])
-
-  // 일괄 해제. 개별 DELETE 를 병렬로 보내고 한 번만 refetch.
-  const [bulkDeletingWatch, setBulkDeletingWatch] = useState(false)
-  const handleDeleteAllFavorites = useCallback(async () => {
-    if (!watchlist.length || bulkDeletingWatch) return
-    setBulkDeletingWatch(true)
-    try {
-      await Promise.allSettled(
-        watchlist.filter((w) => !!w.id).map((w) => deleteFavoriteItem(w.id)),
-      )
-      // 전부 지워졌다고 가정하고 즉시 비움 → 남은 건 refetch 에서 보정.
-      setWatchlist([])
-      void fetchData()
-      void hapticSuccess()
-      toast.show('관심종목을 전부 해제했어요', 'info')
-    } catch {
-      void hapticError()
-      toast.show('일괄 해제에 실패했어요', 'error')
-    } finally {
-      setBulkDeletingWatch(false)
-    }
-  }, [watchlist, bulkDeletingWatch, fetchData, toast])
-
-  // 모달용: 현재 관심 여부에 따라 자동으로 추가/해제 토글
-  const handleToggleWatchInDetail = useCallback(async (stock: StockSearchResult) => {
-    const existing = watchlist.find((w) => w.market === stock.market && w.ticker === stock.ticker)
-    if (existing?.id) {
-      await handleDeleteFavorite(existing.id)
-    } else {
-      await handleQuickAddWatch(stock)
-    }
-  }, [watchlist, handleDeleteFavorite, handleQuickAddWatch])
 
   const chartWidth = Math.max(300, Math.min(width - 28, 760))
   const isUp = apiHealth?.status === 'UP'
