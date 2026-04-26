@@ -1,0 +1,29 @@
+server {
+    listen ${PORT};
+    server_name _;
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # SPA 라우팅: 없는 경로는 index.html 로 fallback (Expo Router 호환)
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # 정적 자산 (해시 붙은 번들/폰트/이미지) 1년 immutable 캐시.
+    # Expo 가 _expo/static/js/web/index-<hash>.js 형태로 만들어서 새 빌드 시 hash 가 바뀜 → 안전.
+    location ~* \.(js|css|woff2?|ttf|eot|otf|svg|png|jpe?g|gif|webp|ico|wasm)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+        access_log off;
+    }
+
+    # index.html 은 캐시 안 함 — 새 빌드 즉시 반영
+    location = /index.html {
+        add_header Cache-Control "no-store, no-cache, must-revalidate";
+    }
+
+    # gzip — 본문 큰 텍스트 자산 압축. egress bandwidth 절감.
+    gzip on;
+    gzip_types text/plain text/css application/json application/javascript application/xml+rss application/xml application/wasm font/woff2 image/svg+xml;
+    gzip_min_length 1024;
+}
