@@ -2,6 +2,18 @@
 
 SignalDesk 클라이언트 — **Expo 하나로 iOS · Android · Web 을 모두 빌드**. 백엔드는 `../signal-desk-api` (Spring Boot Kotlin).
 
+## 📚 문서
+
+자세한 문서는 [`docs/`](docs/) 에 정리됨. 역할별 진입 경로는 [`docs/README.md`](docs/README.md) 참고.
+
+- [제품 비전 / 용어집 / 사용자 흐름](docs/제품/) — PM / 디자이너 / 모두
+- [디자인 시스템 / 컴포넌트 / 카피 가이드](docs/디자인/) — 디자이너
+- [아키텍처 / 데이터 모델 / API / 프론트엔드](docs/엔지니어링/) — FE / BE
+- [배포 / 환경변수 / 장애 대응 / 보안 / 비용](docs/운영/) — DevOps / 운영
+- [테스트 전략](docs/품질/) — QA
+
+자동화 에이전트(Claude 등) 용 노트는 [`AGENTS.md`](AGENTS.md).
+
 ## 플랫폼 포지션
 
 | 플랫폼 | 배포 | 포지션 |
