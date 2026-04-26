@@ -8,6 +8,7 @@ builder = "DOCKERFILE"
 dockerfilePath = "Dockerfile.web"
 
 [deploy]
-startCommand = "sh -c 'serve -s dist -l tcp://0.0.0.0:${PORT:-3000}'"
+# startCommand 비워두면 Dockerfile.web 의 CMD (nginx) 사용.
+# 이전엔 serve 였지만 nginx:alpine 으로 전환 (메모리·throughput).
 healthcheckPath = "/"
 restartPolicyType = "ON_FAILURE"
