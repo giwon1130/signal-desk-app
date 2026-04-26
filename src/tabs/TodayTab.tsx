@@ -2,11 +2,8 @@ import { Platform, Pressable, RefreshControl, ScrollView, Text, View } from 'rea
 import {
   Activity,
   Bell,
-  Brain,
   Clock,
   Newspaper,
-  Target,
-  TrendingDown,
   TrendingUp,
 } from 'lucide-react-native'
 import { CollapsibleCard } from '../components/CollapsibleCard'
@@ -20,7 +17,6 @@ import type {
   MarketSummaryData,
 } from '../types'
 import {
-  formatPrice,
   formatSignedRate,
   getMarketStatusTone,
   formatMarketStatus,
@@ -28,8 +24,10 @@ import {
 } from '../utils'
 import { BriefingCard } from './today_parts/BriefingCard'
 import { FortuneCard } from './today_parts/FortuneCard'
+import { HoldingMonitor } from './today_parts/HoldingMonitor'
+import { PicksCard } from './today_parts/PicksCard'
 import { SentimentCard } from './today_parts/SentimentCard'
-import { toneColor, userStatusLabel } from './today_parts/helpers'
+import { toneColor } from './today_parts/helpers'
 
 type Props = {
   summary: MarketSummaryData | null
@@ -188,98 +186,10 @@ export function TodayTab({
       ) : null}
 
       {/* ── 오늘의 단타 픽 ── */}
-      <View style={styles.card}>
-        <View style={styles.sectionHeaderRow}>
-          <View style={styles.cardTitleRow}>
-            <Target size={14} color="#dc2626" strokeWidth={2.5} />
-            <Text style={styles.cardTitle}>오늘의 단타 픽</Text>
-          </View>
-          <Text style={styles.metaText}>{picks.length}개 후보</Text>
-        </View>
-        {marketClosedToday ? (
-          <Text style={styles.metaText}>
-            지금은 휴장이라 단타 진입은 의미 없어. 다음 거래일 후보 미리 봐두는 용도로만 활용해.
-          </Text>
-        ) : null}
-        {picks.length === 0 ? (
-          <Text style={styles.metaText}>오늘은 추천 후보가 없어. 무리해서 진입하지 말 것.</Text>
-        ) : picks.map((p, i) => (
-          <View key={`${p.ticker}-${i}`} style={styles.todayPickRow}>
-            <View style={styles.todayPickTopLine}>
-              <Text style={styles.todayPickName}>{p.name}</Text>
-              <View style={styles.todayPickHeaderBadges}>
-                <View style={[
-                  styles.pickUserStatusBadge,
-                  p.userStatus === 'HELD'    && styles.pickUserStatusBadgeHeld,
-                  p.userStatus === 'WATCHED' && styles.pickUserStatusBadgeWatched,
-                  (!p.userStatus || p.userStatus === 'NEW') && styles.pickUserStatusBadgeNew,
-                ]}>
-                  <Text style={[
-                    styles.pickUserStatusBadgeText,
-                    p.userStatus === 'HELD'    && styles.pickUserStatusBadgeTextHeld,
-                    p.userStatus === 'WATCHED' && styles.pickUserStatusBadgeTextWatched,
-                  ]}>
-                    {userStatusLabel(p.userStatus)}
-                  </Text>
-                </View>
-                <View style={styles.todayPickStanceBadge}>
-                  <Text style={styles.todayPickStanceBadgeText}>{p.stage}</Text>
-                </View>
-              </View>
-            </View>
-            <Text style={styles.todayPickMeta}>{p.market} · {p.ticker}{p.confidence ? ` · 확신 ${p.confidence}%` : ''}</Text>
-            <Text style={styles.todayPickRationale} numberOfLines={2}>{p.rationale}</Text>
-            {p.expectedReturnRate != null ? (
-              <Text style={[styles.todayPickReturn, { color: p.expectedReturnRate >= 0 ? '#dc2626' : '#2563eb' }]}>
-                기대 수익률 {formatSignedRate(p.expectedReturnRate)}
-              </Text>
-            ) : null}
-          </View>
-        ))}
-      </View>
+      <PicksCard picks={picks} marketClosedToday={marketClosedToday} />
 
       {/* ── 보유 종목 모니터 ── */}
-      <View style={styles.card}>
-        <View style={styles.sectionHeaderRow}>
-          <View style={styles.cardTitleRow}>
-            <Brain size={14} color="#7c3aed" strokeWidth={2.5} />
-            <Text style={styles.cardTitle}>보유 종목 모니터</Text>
-          </View>
-          <Text style={styles.metaText}>액션 가능한 {monitorTargets.length}건</Text>
-        </View>
-        {monitorTargets.length === 0 ? (
-          <Text style={styles.metaText}>지금 액션이 필요한 종목은 없어.</Text>
-        ) : monitorTargets.map((p) => {
-          const isProfit = p.profitRate >= 0
-          const Icon = isProfit ? TrendingUp : TrendingDown
-          const color = isProfit ? '#dc2626' : '#2563eb'
-          // 휴리스틱 가이드: +3%↑ 익절 고려, -3%↓ 손절 고려
-          // 휴장 중에는 어차피 체결 안 되니까 시나리오만 점검
-          const advice = marketClosedToday
-            ? (p.profitRate >= 3 ? '휴장 중 — 다음 개장 후 분할 매도 시나리오 점검'
-              : p.profitRate <= -3 ? '휴장 중 — 다음 개장 후 손절 라인 재확인'
-              : '휴장 중 — 별도 액션 없음')
-            : (p.profitRate >= 3 ? '익절 구간 — 분할 매도 고려' :
-               p.profitRate <= -3 ? '손절 구간 — 손절 라인 점검' :
-               '관찰 구간 — 다음 시그널 기다리기')
-          return (
-            <View key={`${p.market}-${p.ticker}-${p.id || p.name}`} style={styles.todayMonitorRow}>
-              <View style={styles.todayMonitorLeft}>
-                <Text style={styles.todayMonitorName}>{p.name}</Text>
-                <Text style={styles.todayMonitorMeta}>{p.market} · {p.ticker} · {p.quantity}주</Text>
-                <Text style={styles.todayMonitorAdvice}>{advice}</Text>
-              </View>
-              <View style={styles.todayMonitorRight}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                  <Icon size={13} color={color} strokeWidth={2.5} />
-                  <Text style={[styles.todayMonitorRate, { color }]}>{formatSignedRate(p.profitRate)}</Text>
-                </View>
-                <Text style={styles.todayMonitorPrice}>{formatPrice(p.currentPrice, p.market)}</Text>
-              </View>
-            </View>
-          )
-        })}
-      </View>
+      <HoldingMonitor monitorTargets={monitorTargets} marketClosedToday={marketClosedToday} />
 
       {/* ── 최근 받은 알림 (회고) ── */}
       {alertHistory.length > 0 ? (

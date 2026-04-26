@@ -1,18 +1,20 @@
 import { useMemo, useState } from 'react'
 import { Alert, Platform, Pressable, RefreshControl, ScrollView, Text, TextInput, View } from 'react-native'
-import { Plus, Radio, Search, Sparkles, Star, Trash2, X } from 'lucide-react-native'
+import { Briefcase, Plus, Radio, Search, Sparkles, Star, Trash2, X } from 'lucide-react-native'
 import { useStyles } from '../styles'
 import { marketColor, useTheme } from '../theme'
 import type {
+  PortfolioSummary,
   StockMarketFilter,
   StockSearchResult,
   WatchItem,
 } from '../types'
-import { formatPrice, formatSignedRate } from '../utils'
+import { formatPrice, formatSignedPrice, formatSignedRate } from '../utils'
 import { useLivePrices } from '../hooks/useLivePrices'
 
 type Props = {
   watchlist: WatchItem[]
+  portfolio: PortfolioSummary | null
   stockSearch: string
   stockMarketFilter: StockMarketFilter
   stockResults: StockSearchResult[]
@@ -31,6 +33,7 @@ type Props = {
 
 export function StocksTab({
   watchlist,
+  portfolio,
   stockSearch,
   stockMarketFilter,
   stockResults,
@@ -50,12 +53,15 @@ export function StocksTab({
   const { palette } = useTheme()
   const [togglingKey, setTogglingKey] = useState('')
 
+  const positions = portfolio?.positions ?? []
+
   const liveTickers = useMemo(() => {
     const set = new Set<string>()
     for (const r of stockResults) if (r.market === 'KR') set.add(r.ticker)
     for (const w of watchlist) if (w.market === 'KR') set.add(w.ticker)
+    for (const p of positions) if (p.market === 'KR') set.add(p.ticker)
     return Array.from(set)
-  }, [stockResults, watchlist])
+  }, [stockResults, watchlist, positions])
   const livePrices = useLivePrices(liveTickers)
 
   const liveOf = (market: string, ticker: string, fallbackPrice: number, fallbackRate: number) => {
@@ -186,6 +192,74 @@ export function StocksTab({
             )
           })}
         </View>
+      </View>
+
+      {/* ── 내 보유 ── */}
+      <View style={styles.card}>
+        <View style={styles.sectionHeaderRow}>
+          <View style={styles.cardTitleRow}>
+            <Briefcase size={14} color={palette.blue} strokeWidth={2.5} />
+            <Text style={styles.cardTitle}>내 보유</Text>
+          </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Text style={styles.metaText}>{positions.length}개</Text>
+            {portfolio && positions.length > 0 ? (
+              <Text style={[styles.metaText, {
+                color: portfolio.totalProfit >= 0 ? palette.up : palette.down,
+                fontWeight: '800',
+              }]}>
+                {formatSignedPrice(portfolio.totalProfit, 'KR')} ({formatSignedRate(portfolio.totalProfitRate)})
+              </Text>
+            ) : null}
+          </View>
+        </View>
+        {positions.length ? (
+          positions.map((p) => {
+            const live = liveOf(p.market, p.ticker, p.currentPrice, 0)
+            const livePrice = live.price
+            const profitRate = p.buyPrice === 0 ? p.profitRate : ((livePrice - p.buyPrice) / p.buyPrice) * 100
+            const profitAmount = (livePrice - p.buyPrice) * p.quantity
+            const evaluationAmount = livePrice * p.quantity
+            const profitColor = marketColor(palette, p.market, profitRate)
+            return (
+              <Pressable
+                key={p.id}
+                onPress={() => onOpenDetail(p.market, p.ticker, p.name)}
+                style={({ pressed }) => [
+                  styles.summaryRow, pressed && { opacity: 0.6 },
+                ]}
+              >
+                <View style={styles.metricLeft}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <Text style={styles.metricName}>{p.name}</Text>
+                    {live.live ? <Radio size={10} color="#10b981" strokeWidth={3} /> : null}
+                  </View>
+                  <Text style={styles.metricState}>
+                    {p.market} · {p.ticker} · {p.quantity}주 × {formatPrice(p.buyPrice, p.market)}
+                  </Text>
+                </View>
+                <View style={styles.summaryValueBox}>
+                  <Text style={styles.metricScore}>{formatPrice(evaluationAmount, p.market)}</Text>
+                  <Text style={[styles.summaryDelta, { color: profitColor }]}>
+                    {formatSignedRate(profitRate)}
+                  </Text>
+                  <Text style={[styles.cardNote, { color: profitColor }]}>
+                    {formatSignedPrice(profitAmount, p.market)}
+                  </Text>
+                </View>
+              </Pressable>
+            )
+          })
+        ) : (
+          <View style={{ alignItems: 'center', gap: 8, paddingVertical: 18 }}>
+            <Text style={{ color: palette.inkMuted, fontSize: 12, fontWeight: '600' }}>
+              보유 중인 종목이 없어
+            </Text>
+            <Text style={{ color: palette.inkFaint, fontSize: 11, textAlign: 'center' }}>
+              종목 상세에서 매수가 · 수량 입력해 등록
+            </Text>
+          </View>
+        )}
       </View>
 
       {/* ── 내 관심종목 ── */}

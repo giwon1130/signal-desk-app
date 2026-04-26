@@ -315,6 +315,7 @@ function AppShell() {
         ) : (
           <StocksTab
             watchlist={watchlist}
+            portfolio={portfolio}
             stockSearch={stockSearch}
             stockMarketFilter={stockMarketFilter}
             stockResults={stockResults}
