@@ -44,7 +44,10 @@
     "extra": {
       "googleClientIdIos": "496073748220-f8me1jt6oiedqq6a7lfmvhjhnu2lh2j1.apps.googleusercontent.com",
       "googleClientIdAndroid": "",
-      "googleClientIdWeb": "496073748220-oavb78f6holdrlhlvqa6b1fcljih1g4u.apps.googleusercontent.com"
+      "googleClientIdWeb": "496073748220-oavb78f6holdrlhlvqa6b1fcljih1g4u.apps.googleusercontent.com",
+      "eas": {
+        "projectId": "891d142e-d493-43d3-a7b1-ac7bdcf23963"
+      }
     },
     "plugins": [
       "expo-web-browser",
@@ -54,6 +57,7 @@
           "iosUrlScheme": "com.googleusercontent.apps.496073748220-f8me1jt6oiedqq6a7lfmvhjhnu2lh2j1"
         }
       ]
-    ]
+    ],
+    "owner": "giwon1130"
   }
 }
