@@ -33,6 +33,10 @@ COPY docker/nginx-web.conf.template /etc/nginx/templates/default.conf.template
 
 COPY --from=builder /app/dist /usr/share/nginx/html
 
+# Privacy Policy 정적 페이지 (App Store 필수 URL).
+# /privacy 또는 /privacy.html 둘 다 같은 파일 (nginx try_files 처리).
+COPY docker/privacy.html /usr/share/nginx/html/privacy.html
+
 ENV PORT=3000
 EXPOSE 3000
 
