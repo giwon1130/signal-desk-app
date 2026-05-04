@@ -49,6 +49,14 @@
     "plugins": [
       "expo-web-browser",
       [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#0a1628",
+          "sounds": []
+        }
+      ],
+      [
         "@react-native-google-signin/google-signin",
         {
           "iosUrlScheme": "com.googleusercontent.apps.496073748220-f8me1jt6oiedqq6a7lfmvhjhnu2lh2j1"
