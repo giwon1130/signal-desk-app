@@ -4,6 +4,11 @@ server {
     root /usr/share/nginx/html;
     index index.html;
 
+    # /privacy → privacy.html (확장자 생략 깔끔)
+    location = /privacy {
+        try_files /privacy.html =404;
+    }
+
     # SPA 라우팅: 없는 경로는 index.html 로 fallback (Expo Router 호환)
     location / {
         try_files $uri $uri/ /index.html;
