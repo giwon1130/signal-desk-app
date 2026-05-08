@@ -13,7 +13,7 @@
       "backgroundColor": "#0a1628"
     },
     "ios": {
-      "supportsTablet": true,
+      "supportsTablet": false,
       "bundleIdentifier": "com.anonymous.signal-desk-app",
       "infoPlist": {
         "NSUserNotificationsUsageDescription": "장 시작과 단타 픽 업데이트 시점을 알려드려요.",
