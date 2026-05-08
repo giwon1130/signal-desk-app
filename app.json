@@ -16,7 +16,8 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.anonymous.signal-desk-app",
       "infoPlist": {
-        "NSUserNotificationsUsageDescription": "장 시작과 단타 픽 업데이트 시점을 알려드려요."
+        "NSUserNotificationsUsageDescription": "장 시작과 단타 픽 업데이트 시점을 알려드려요.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
