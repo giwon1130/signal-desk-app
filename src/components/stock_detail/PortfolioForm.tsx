@@ -9,8 +9,12 @@ type Props = {
   position?: HoldingPosition
   buyPriceInput: string
   quantityInput: string
+  targetPriceInput: string
+  stopLossPriceInput: string
   onChangeBuyPrice: (v: string) => void
   onChangeQuantity: (v: string) => void
+  onChangeTargetPrice: (v: string) => void
+  onChangeStopLossPrice: (v: string) => void
   saving: boolean
   onSave: () => void
   onDelete: () => void
@@ -21,8 +25,12 @@ export function PortfolioForm({
   position,
   buyPriceInput,
   quantityInput,
+  targetPriceInput,
+  stopLossPriceInput,
   onChangeBuyPrice,
   onChangeQuantity,
+  onChangeTargetPrice,
+  onChangeStopLossPrice,
   saving,
   onSave,
   onDelete,
@@ -64,6 +72,30 @@ export function PortfolioForm({
           />
         </View>
       </View>
+      <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.kpiLabel}>목표가 (선택)</Text>
+          <TextInput
+            value={targetPriceInput}
+            onChangeText={onChangeTargetPrice}
+            placeholder="예: 95000"
+            placeholderTextColor="#94a3b8"
+            style={styles.searchInput}
+            keyboardType="number-pad"
+          />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.kpiLabel}>손절가 (선택)</Text>
+          <TextInput
+            value={stopLossPriceInput}
+            onChangeText={onChangeStopLossPrice}
+            placeholder="예: 75000"
+            placeholderTextColor="#94a3b8"
+            style={styles.searchInput}
+            keyboardType="number-pad"
+          />
+        </View>
+      </View>
       <View style={styles.inlineButtonRow}>
         <Pressable
           onPress={onSave}
@@ -81,10 +113,26 @@ export function PortfolioForm({
         ) : null}
       </View>
       {hasPosition ? (
-        <Text style={styles.metaText}>
-          현재 평가금액 {formatPrice(position!.evaluationAmount, base.market)} ·
-          손익 {formatSignedRate(position!.profitRate)}
-        </Text>
+        <>
+          <Text style={styles.metaText}>
+            현재 평가금액 {formatPrice(position!.evaluationAmount, base.market)} ·
+            손익 {formatSignedRate(position!.profitRate)}
+          </Text>
+          {(position!.targetPrice || position!.stopLossPrice) ? (
+            <View style={{ flexDirection: 'row', gap: 6, marginTop: 4 }}>
+              {position!.targetPrice ? (
+                <Text style={[styles.alternativeHighlightChip, { color: '#0d9488' }]}>
+                  목표 {formatPrice(position!.targetPrice, base.market)}
+                </Text>
+              ) : null}
+              {position!.stopLossPrice ? (
+                <Text style={[styles.alternativeHighlightChip, { color: '#dc2626' }]}>
+                  손절 {formatPrice(position!.stopLossPrice, base.market)}
+                </Text>
+              ) : null}
+            </View>
+          ) : null}
+        </>
       ) : null}
     </View>
   )

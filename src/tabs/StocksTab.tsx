@@ -318,6 +318,24 @@ export function StocksTab({
                 <Text style={styles.metricName}>{item.name}</Text>
                 <Text style={styles.metricState}>{item.market} · {item.ticker} · {item.sector}</Text>
                 <Text style={styles.cardNote}>{item.stance}</Text>
+                {(item.technical || (item.volumeRatio != null && item.volumeRatio >= 2)) ? (
+                  <View style={styles.alternativeHighlightsRow}>
+                    {item.technical?.rsi != null ? (
+                      <Text style={styles.alternativeHighlightChip}>RSI {item.technical.rsi.toFixed(0)}</Text>
+                    ) : null}
+                    {item.technical?.maSignal && item.technical.maSignal !== 'NONE' ? (
+                      <Text style={styles.alternativeHighlightChip}>
+                        {item.technical.maSignal === 'GOLDEN' ? '골든크로스' : '데드크로스'}
+                      </Text>
+                    ) : null}
+                    {item.technical?.week52State ? (
+                      <Text style={styles.alternativeHighlightChip}>{item.technical.week52State}</Text>
+                    ) : null}
+                    {item.volumeRatio != null && item.volumeRatio >= 2 ? (
+                      <Text style={styles.alternativeHighlightChip}>거래량 {item.volumeRatio.toFixed(1)}배</Text>
+                    ) : null}
+                  </View>
+                ) : null}
               </Pressable>
               <Pressable
                 onPress={() => item.id && onDeleteFavorite(item.id)}

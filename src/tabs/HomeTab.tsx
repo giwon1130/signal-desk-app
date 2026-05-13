@@ -130,6 +130,20 @@ export function HomeTab({
               <View style={styles.metricLeft}>
                 <Text style={styles.metricName}>{item.name}</Text>
                 <Text style={styles.metricState}>{item.market} · {item.ticker} · {item.quantity}주</Text>
+                {(item.targetPrice || item.stopLossPrice) ? (
+                  <View style={styles.alternativeHighlightsRow}>
+                    {item.targetPrice ? (
+                      <Text style={[styles.alternativeHighlightChip, { color: '#0d9488' }]}>
+                        목표 {formatPrice(item.targetPrice, item.market)}
+                      </Text>
+                    ) : null}
+                    {item.stopLossPrice ? (
+                      <Text style={[styles.alternativeHighlightChip, { color: '#dc2626' }]}>
+                        손절 {formatPrice(item.stopLossPrice, item.market)}
+                      </Text>
+                    ) : null}
+                  </View>
+                ) : null}
               </View>
               <View style={styles.summaryValueBox}>
                 <Text style={styles.metricScore}>{formatPrice(currentPrice, item.market)}</Text>

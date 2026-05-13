@@ -45,6 +45,8 @@ type Props = {
     buyPrice: number
     currentPrice: number
     quantity: number
+    targetPrice?: number | null
+    stopLossPrice?: number | null
   }) => Promise<void>
   onDeletePortfolio: (id: string) => void
 }
@@ -60,8 +62,10 @@ export function StockDetailModal({
   const styles = useStyles()
   const { palette } = useTheme()
 
-  const [buyPriceInput, setBuyPriceInput]   = useState('')
-  const [quantityInput, setQuantityInput]   = useState('')
+  const [buyPriceInput, setBuyPriceInput]         = useState('')
+  const [quantityInput, setQuantityInput]         = useState('')
+  const [targetPriceInput, setTargetPriceInput]   = useState('')
+  const [stopLossPriceInput, setStopLossPriceInput] = useState('')
   const [portfolioSaving, setPortfolioSaving] = useState(false)
   const [toggling, setToggling]             = useState(false)
 
@@ -73,6 +77,8 @@ export function StockDetailModal({
     const pos = context?.portfolioPosition
     setBuyPriceInput(pos ? String(pos.buyPrice) : '')
     setQuantityInput(pos ? String(pos.quantity) : '')
+    setTargetPriceInput(pos?.targetPrice ? String(pos.targetPrice) : '')
+    setStopLossPriceInput(pos?.stopLossPrice ? String(pos.stopLossPrice) : '')
   }, [baseKey, positionId])
 
   // 라이브 시세 (KR만)
@@ -103,6 +109,8 @@ export function StockDetailModal({
     const qty = Number(quantityInput.replace(/[^0-9]/g, ''))
     if (!buy || !qty) return
     setPortfolioSaving(true)
+    const target = targetPriceInput ? Number(targetPriceInput.replace(/[^0-9]/g, '')) : null
+    const stopLoss = stopLossPriceInput ? Number(stopLossPriceInput.replace(/[^0-9]/g, '')) : null
     try {
       await onSavePortfolio({
         id: context.portfolioPosition?.id,
@@ -112,6 +120,8 @@ export function StockDetailModal({
         buyPrice: buy,
         currentPrice: Math.round(livePrice || context.base.price),
         quantity: qty,
+        targetPrice: target || null,
+        stopLossPrice: stopLoss || null,
       })
     } catch {
       // 저장 실패는 토스트로 이미 노출됨 — 모달은 그대로 유지
@@ -179,8 +189,12 @@ export function StockDetailModal({
                 position={context.portfolioPosition}
                 buyPriceInput={buyPriceInput}
                 quantityInput={quantityInput}
+                targetPriceInput={targetPriceInput}
+                stopLossPriceInput={stopLossPriceInput}
                 onChangeBuyPrice={setBuyPriceInput}
                 onChangeQuantity={setQuantityInput}
+                onChangeTargetPrice={setTargetPriceInput}
+                onChangeStopLossPrice={setStopLossPriceInput}
                 saving={portfolioSaving}
                 onSave={() => void handleSave()}
                 onDelete={handleDelete}

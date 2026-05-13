@@ -131,6 +131,8 @@ export async function savePortfolioPosition(payload: {
   buyPrice: number
   currentPrice: number
   quantity: number
+  targetPrice?: number | null
+  stopLossPrice?: number | null
 }): Promise<void> {
   const response = await authedFetch(`${API_BASE_URL}/api/v1/workspace/portfolio`, {
     method: 'POST',
@@ -143,6 +145,8 @@ export async function savePortfolioPosition(payload: {
       buyPrice: Math.round(payload.buyPrice),
       currentPrice: Math.round(payload.currentPrice),
       quantity: Math.max(1, Math.round(payload.quantity)),
+      targetPrice: payload.targetPrice ?? null,
+      stopLossPrice: payload.stopLossPrice ?? null,
     }),
   })
   if (!response.ok) {
