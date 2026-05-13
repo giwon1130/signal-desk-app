@@ -1,5 +1,5 @@
 import { StatusBar } from 'expo-status-bar'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   ActivityIndicator,
   Platform,
@@ -30,6 +30,7 @@ import { CommandPalette } from './src/web/CommandPalette'
 import { AIWorkspace } from './src/web/AIWorkspace'
 import { StockDetailModal, type StockDetailContext } from './src/components/StockDetailModal'
 import { ReminderSettingsModal } from './src/components/ReminderSettingsModal'
+import { DailyGreetingModal } from './src/components/DailyGreetingModal'
 import { useMarketReminderBootstrap } from './src/hooks/useMarketReminder'
 import { usePushDeepLink } from './src/hooks/usePushDeepLink'
 import { useAuthSession } from './src/hooks/useAuthSession'
@@ -102,6 +103,17 @@ function AppShell() {
 
   // ── 알림 설정 모달 ──────
   const [reminderOpen, setReminderOpen] = useState(false)
+
+  // ── 오늘의 운세 팝업 (앱 전용, 로그인 후 fortune 로드 시 1회) ──
+  const [greetingOpen, setGreetingOpen] = useState(false)
+  const greetingTriggered = useRef(false)
+  useEffect(() => {
+    if (Platform.OS === 'web') return
+    if (fortune && !greetingTriggered.current) {
+      greetingTriggered.current = true
+      setGreetingOpen(true)
+    }
+  }, [fortune])
 
   // 로그인 후 1회: 권한 요청 + 켜진 알림 다시 예약
   useMarketReminderBootstrap(!!user)
@@ -374,6 +386,11 @@ function AppShell() {
         visible={reminderOpen}
         authToken={user?.token ?? null}
         onClose={() => setReminderOpen(false)}
+      />
+      <DailyGreetingModal
+        visible={greetingOpen}
+        fortune={fortune ?? null}
+        onClose={() => setGreetingOpen(false)}
       />
       {Platform.OS === 'web' ? (
         <CommandPalette
