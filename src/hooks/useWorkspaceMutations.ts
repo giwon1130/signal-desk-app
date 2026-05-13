@@ -4,6 +4,7 @@ import {
   deletePortfolioPosition,
   quickAddWatchItem,
   savePortfolioPosition,
+  saveWatchItemAlerts,
 } from '../api'
 import type { PortfolioSummary, StockSearchResult, WatchItem } from '../types'
 import { hapticError, hapticSuccess } from '../utils/haptics'
@@ -130,6 +131,38 @@ export function useWorkspaceMutations(args: Args) {
     }
   }, [watchlist, handleDeleteFavorite, handleQuickAddWatch])
 
+  const handleSaveWatchAlerts = useCallback(async (
+    watchItem: WatchItem,
+    alertBelow: number | null,
+    alertAbove: number | null,
+    volumeAlert: boolean,
+  ) => {
+    try {
+      await saveWatchItemAlerts({
+        id: watchItem.id,
+        market: watchItem.market,
+        ticker: watchItem.ticker,
+        name: watchItem.name,
+        price: watchItem.price,
+        changeRate: watchItem.changeRate,
+        sector: watchItem.sector,
+        stance: watchItem.stance,
+        note: watchItem.note,
+        alertBelow,
+        alertAbove,
+        volumeAlert,
+      })
+      setWatchlist((prev) => prev.map((w) =>
+        w.id === watchItem.id ? { ...w, alertBelow, alertAbove, volumeAlert } : w,
+      ))
+      void hapticSuccess()
+      toast.show('알림 설정을 저장했어.', 'success')
+    } catch {
+      void hapticError()
+      toast.show('저장에 실패했어. 다시 시도해줘.', 'error')
+    }
+  }, [setWatchlist, toast])
+
   return {
     favoriteDeletingId,
     bulkDeletingWatch,
@@ -139,5 +172,6 @@ export function useWorkspaceMutations(args: Args) {
     handleDeleteFavorite,
     handleDeleteAllFavorites,
     handleToggleWatchInDetail,
+    handleSaveWatchAlerts,
   }
 }

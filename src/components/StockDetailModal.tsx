@@ -21,6 +21,7 @@ import { useLivePrices } from '../hooks/useLivePrices'
 import { PriceHero } from './stock_detail/PriceHero'
 import { AiContextRow } from './stock_detail/AiContextRow'
 import { WatchToggle } from './stock_detail/WatchToggle'
+import { WatchAlertForm } from './stock_detail/WatchAlertForm'
 import { PortfolioForm } from './stock_detail/PortfolioForm'
 import { QuickStats } from './stock_detail/QuickStats'
 
@@ -37,6 +38,7 @@ type Props = {
   onClose: () => void
   context: StockDetailContext | null
   onToggleWatch: (stock: StockSearchResult) => Promise<void> | void
+  onSaveWatchAlerts: (watchItem: WatchItem, alertBelow: number | null, alertAbove: number | null, volumeAlert: boolean) => Promise<void>
   onSavePortfolio: (payload: {
     id?: string
     market: string
@@ -56,6 +58,7 @@ export function StockDetailModal({
   onClose,
   context,
   onToggleWatch,
+  onSaveWatchAlerts,
   onSavePortfolio,
   onDeletePortfolio,
 }: Props) {
@@ -67,6 +70,7 @@ export function StockDetailModal({
   const [targetPriceInput, setTargetPriceInput]   = useState('')
   const [stopLossPriceInput, setStopLossPriceInput] = useState('')
   const [portfolioSaving, setPortfolioSaving] = useState(false)
+  const [alertSaving, setAlertSaving]         = useState(false)
   const [toggling, setToggling]             = useState(false)
 
   const baseKey = context ? `${context.base.market}:${context.base.ticker}` : ''
@@ -140,6 +144,16 @@ export function StockDetailModal({
     }
   }
 
+  const handleSaveAlerts = async (alertBelow: number | null, alertAbove: number | null, volumeAlert: boolean) => {
+    if (!context.watchItem) return
+    setAlertSaving(true)
+    try {
+      await onSaveWatchAlerts(context.watchItem, alertBelow, alertAbove, volumeAlert)
+    } finally {
+      setAlertSaving(false)
+    }
+  }
+
   const handleDelete = () => {
     if (!context.portfolioPosition?.id) return
     onDeletePortfolio(context.portfolioPosition.id)
@@ -183,6 +197,14 @@ export function StockDetailModal({
                 toggling={toggling}
                 onToggle={() => void handleToggle()}
               />
+
+              {hasWatch && context.watchItem ? (
+                <WatchAlertForm
+                  watchItem={context.watchItem}
+                  onSave={(below, above, vol) => void handleSaveAlerts(below, above, vol)}
+                  saving={alertSaving}
+                />
+              ) : null}
 
               <PortfolioForm
                 base={context.base}

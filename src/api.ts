@@ -188,6 +188,28 @@ export async function fetchDailyFortune(): Promise<DailyFortune | null> {
 }
 
 // 한 탭으로 관심종목에 추가하는 단순 버전 (stance/note 자동 채움)
+export async function saveWatchItemAlerts(item: {
+  id: string
+  market: string
+  ticker: string
+  name: string
+  price: number
+  changeRate: number
+  sector: string
+  stance: string
+  note: string
+  alertBelow: number | null
+  alertAbove: number | null
+  volumeAlert: boolean
+}): Promise<void> {
+  const response = await authedFetch(`${API_BASE_URL}/api/v1/workspace/watchlist`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(item),
+  })
+  if (!response.ok) throw new Error('save-watch-alerts-failed')
+}
+
 export async function quickAddWatchItem(stock: {
   market: string
   ticker: string

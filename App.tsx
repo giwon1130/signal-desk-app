@@ -95,7 +95,7 @@ function AppShell() {
     favoriteDeletingId, bulkDeletingWatch,
     handleSavePortfolio, handleDeletePortfolio,
     handleQuickAddWatch, handleDeleteFavorite, handleDeleteAllFavorites,
-    handleToggleWatchInDetail,
+    handleToggleWatchInDetail, handleSaveWatchAlerts,
   } = mutations
 
   // ── 종목 상세 모달 (어느 탭에서든 같은 모달) ──────
@@ -387,6 +387,7 @@ function AppShell() {
         onClose={handleCloseDetail}
         context={detailContext}
         onToggleWatch={handleToggleWatchInDetail}
+        onSaveWatchAlerts={handleSaveWatchAlerts}
         onSavePortfolio={handleSavePortfolio}
         onDeletePortfolio={(id) => void handleDeletePortfolio(id)}
       />

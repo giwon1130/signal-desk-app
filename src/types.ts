@@ -114,6 +114,9 @@ export type WatchItem = {
   technical?: TechnicalSignal | null
   volume?: number
   volumeRatio?: number | null
+  alertBelow?: number | null
+  alertAbove?: number | null
+  volumeAlert?: boolean
 }
 
 export type HoldingPosition = {
