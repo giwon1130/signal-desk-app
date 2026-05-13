@@ -2,6 +2,7 @@ import { StatusBar } from 'expo-status-bar'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   ActivityIndicator,
+  Alert,
   Platform,
   Pressable,
   SafeAreaView,
@@ -114,6 +115,13 @@ function AppShell() {
       setGreetingOpen(true)
     }
   }, [fortune])
+
+  const confirmLogout = useCallback(() => {
+    Alert.alert('로그아웃', '정말 로그아웃할까?', [
+      { text: '취소', style: 'cancel' },
+      { text: '로그아웃', style: 'destructive', onPress: () => void handleLogout() },
+    ])
+  }, [handleLogout])
 
   // 로그인 후 1회: 권한 요청 + 켜진 알림 다시 예약
   useMarketReminderBootstrap(!!user)
@@ -414,7 +422,7 @@ function AppShell() {
           isUp={isUp}
           lastSyncedAt={lastSyncedAt}
           onTabChange={handleTabChange}
-          onLogout={() => void handleLogout()}
+          onLogout={confirmLogout}
           onOpenReminder={() => { void hapticLight(); setReminderOpen(true) }}
           sections={sections}
           summary={summary}
@@ -466,7 +474,7 @@ function AppShell() {
                 {isDark ? <Sun size={16} color="#fcd34d" /> : <Moon size={16} color="#cbd5e1" />}
               </Pressable>
               <Pressable
-                onPress={() => void handleLogout()}
+                onPress={confirmLogout}
                 style={({ pressed }) => [styles.themeToggleBtn, pressed && { opacity: 0.6 }]}
                 accessibilityLabel="로그아웃"
               >
