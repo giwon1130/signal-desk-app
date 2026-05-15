@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { API_BASE_URL, fetchDailyFortune, fetchTopMovers, loadAllData } from '../api'
+import { fetchLatestMediaSummary } from '../api/media'
 import { fetchAlertHistory } from '../api/pushDevice'
 import { formatSyncStamp } from '../utils'
 import { hapticLight } from '../utils/haptics'
@@ -10,6 +11,7 @@ import type {
   HealthResponse,
   MarketSectionsData,
   MarketSummaryData,
+  MediaSummaryItem,
   PortfolioSummary,
   TopMoversResponse,
   WatchItem,
@@ -24,6 +26,7 @@ export function useMarketSnapshot(authToken: string | null, enabled: boolean) {
   const [alertHistory, setAlertHistory] = useState<AlertHistoryItem[]>([])
   const [fortune, setFortune] = useState<DailyFortune | null>(null)
   const [topMovers, setTopMovers] = useState<TopMoversResponse | null>(null)
+  const [mediaSummary, setMediaSummary] = useState<MediaSummaryItem | null>(null)
   const [loading, setLoading] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState('')
@@ -46,6 +49,7 @@ export function useMarketSnapshot(authToken: string | null, enabled: boolean) {
       }
       void fetchDailyFortune().then(setFortune)
       void fetchTopMovers(10).then(setTopMovers)
+      void fetchLatestMediaSummary().then(setMediaSummary)
     } catch {
       setApiHealth(null)
       setError(`서버에 연결할 수 없어요.\n${API_BASE_URL}`)
@@ -73,6 +77,7 @@ export function useMarketSnapshot(authToken: string | null, enabled: boolean) {
     portfolio,
     fortune,
     topMovers,
+    mediaSummary,
     alertHistory,
     apiHealth,
     lastSyncedAt,

@@ -15,6 +15,7 @@ import type {
   DailyFortune,
   HoldingPosition,
   MarketSummaryData,
+  MediaSummaryItem,
 } from '../types'
 import {
   formatSignedRate,
@@ -25,6 +26,7 @@ import {
 import { BriefingCard } from './today_parts/BriefingCard'
 import { FortuneCard } from './today_parts/FortuneCard'
 import { HoldingMonitor } from './today_parts/HoldingMonitor'
+import { MediaSummaryCard } from './today_parts/MediaSummaryCard'
 import { PicksCard } from './today_parts/PicksCard'
 import { SentimentCard } from './today_parts/SentimentCard'
 import { toneColor } from './today_parts/helpers'
@@ -35,6 +37,7 @@ type Props = {
   positions: HoldingPosition[]
   alertHistory: AlertHistoryItem[]
   fortune: DailyFortune | null
+  mediaSummary: MediaSummaryItem | null
   onOpenDetail: (market: string, ticker: string, name?: string) => void
   refreshing: boolean
   onRefresh: () => Promise<void>
@@ -46,6 +49,7 @@ export function TodayTab({
   positions,
   alertHistory,
   fortune,
+  mediaSummary,
   onOpenDetail,
   refreshing,
   onRefresh,
@@ -183,6 +187,18 @@ export function TodayTab({
             </View>
           </View>
         </View>
+      ) : null}
+
+      {/* ── 데일리 방송 요약 (삼프로TV 등) ── */}
+      {mediaSummary ? (
+        <MediaSummaryCard
+          item={mediaSummary}
+          onTickerPress={(t) => {
+            // 한국 6자리 코드면 KR, 영문 티커면 US 로 추정해서 상세 모달 오픈
+            const isKr = /^\d{6}$/.test(t)
+            onOpenDetail(isKr ? 'KR' : 'US', t)
+          }}
+        />
       ) : null}
 
       {/* ── 오늘의 단타 픽 ── */}

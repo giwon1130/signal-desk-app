@@ -313,6 +313,19 @@ export type AlertHistoryItem = {
   sentAt: string
 }
 
+export type MediaSummaryItem = {
+  id: string
+  channelTitle: string
+  videoTitle: string
+  videoUrl: string
+  publishedAt: string
+  summary: string
+  flowAnalysis: string
+  keyTickers: string[]
+  sentiment: 'BULLISH' | 'BEARISH' | 'NEUTRAL'
+  hasTranscript: boolean
+}
+
 export type HealthResponse = {
   status: string
   application: string
