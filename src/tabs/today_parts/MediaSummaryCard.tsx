@@ -1,5 +1,5 @@
 import { Linking, Pressable, Text, View } from 'react-native'
-import { ExternalLink, Tv } from 'lucide-react-native'
+import { ExternalLink, Newspaper, Tv } from 'lucide-react-native'
 import { CollapsibleCard } from '../../components/CollapsibleCard'
 import { useStyles } from '../../styles'
 import { useTheme } from '../../theme'
@@ -16,6 +16,8 @@ const sentimentLabel = (s: MediaSummaryItem['sentiment']) =>
 export function MediaSummaryCard({ item, onTickerPress }: Props) {
   const styles = useStyles()
   const { palette } = useTheme()
+  const isDigest = item.source === 'NEWS_DIGEST'
+  const Icon = isDigest ? Newspaper : Tv
 
   const accent =
     item.sentiment === 'BULLISH' ? palette.up
@@ -41,7 +43,7 @@ export function MediaSummaryCard({ item, onTickerPress }: Props) {
     <CollapsibleCard
       title={
         <View style={styles.cardTitleRow}>
-          <Tv size={13} color={accent} strokeWidth={2.5} />
+          <Icon size={13} color={accent} strokeWidth={2.5} />
           <Text style={[styles.cardEyebrow, { color: accent }]}>{item.channelTitle}</Text>
         </View>
       }
@@ -62,7 +64,8 @@ export function MediaSummaryCard({ item, onTickerPress }: Props) {
           {item.videoTitle}
         </Text>
         <Text style={{ color: palette.inkMuted, fontSize: 11 }}>
-          {publishedLabel}{!item.hasTranscript ? ' · 자막 미수신 (제목 기반 요약)' : ''}
+          {publishedLabel}
+          {isDigest ? '' : (!item.hasTranscript ? ' · 자막 미수신 (제목 기반 요약)' : '')}
         </Text>
       </View>
 
@@ -113,20 +116,22 @@ export function MediaSummaryCard({ item, onTickerPress }: Props) {
         </View>
       ) : null}
 
-      {/* ── 영상 링크 ── */}
-      <Pressable
-        onPress={() => { void Linking.openURL(item.videoUrl) }}
-        style={({ pressed }) => ({
-          flexDirection: 'row', alignItems: 'center', gap: 6,
-          alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 6,
-          borderRadius: 8, backgroundColor: pressed ? palette.surfaceAlt : 'transparent',
-        })}
-      >
-        <ExternalLink size={12} color={palette.blue} strokeWidth={2.5} />
-        <Text style={{ color: palette.blue, fontSize: 12, fontWeight: '700' }}>
-          유튜브에서 영상 보기
-        </Text>
-      </Pressable>
+      {/* ── 영상 링크 (NEWS_DIGEST 는 링크 없음) ── */}
+      {!isDigest && item.videoUrl ? (
+        <Pressable
+          onPress={() => { void Linking.openURL(item.videoUrl) }}
+          style={({ pressed }) => ({
+            flexDirection: 'row', alignItems: 'center', gap: 6,
+            alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 6,
+            borderRadius: 8, backgroundColor: pressed ? palette.surfaceAlt : 'transparent',
+          })}
+        >
+          <ExternalLink size={12} color={palette.blue} strokeWidth={2.5} />
+          <Text style={{ color: palette.blue, fontSize: 12, fontWeight: '700' }}>
+            유튜브에서 영상 보기
+          </Text>
+        </Pressable>
+      ) : null}
     </CollapsibleCard>
   )
 }
