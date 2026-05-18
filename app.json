@@ -14,7 +14,7 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.anonymous.signal-desk-app",
+      "bundleIdentifier": "com.giwon.signaldesk",
       "infoPlist": {
         "NSUserNotificationsUsageDescription": "장 시작과 단타 픽 업데이트 시점을 알려드려요.",
         "ITSAppUsesNonExemptEncryption": false
@@ -43,7 +43,7 @@
     },
     "scheme": "signaldesk",
     "extra": {
-      "googleClientIdIos": "496073748220-f8me1jt6oiedqq6a7lfmvhjhnu2lh2j1.apps.googleusercontent.com",
+      "googleClientIdIos": "496073748220-n9end3a963hj96nh6ru6ai3d54u8g72v.apps.googleusercontent.com",
       "googleClientIdAndroid": "",
       "googleClientIdWeb": "496073748220-oavb78f6holdrlhlvqa6b1fcljih1g4u.apps.googleusercontent.com",
       "eas": {
@@ -63,7 +63,7 @@
       [
         "@react-native-google-signin/google-signin",
         {
-          "iosUrlScheme": "com.googleusercontent.apps.496073748220-f8me1jt6oiedqq6a7lfmvhjhnu2lh2j1"
+          "iosUrlScheme": "com.googleusercontent.apps.496073748220-n9end3a963hj96nh6ru6ai3d54u8g72v"
         }
       ]
     ],
