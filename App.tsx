@@ -5,11 +5,11 @@ import {
   Alert,
   Platform,
   Pressable,
-  SafeAreaView,
   Text,
   useWindowDimensions,
   View,
 } from 'react-native'
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context'
 import { BarChart3, Bell, Bot, Home, LogOut, Moon, Sun, Sunrise, TrendingUp } from 'lucide-react-native'
 import { WebLayout } from './src/web/WebLayout'
 import { useStyles } from './src/styles'
@@ -520,8 +520,10 @@ function AppShell() {
 
 export default function App() {
   return (
-    <ThemeProvider>
-      <AppShell />
-    </ThemeProvider>
+    <SafeAreaProvider>
+      <ThemeProvider>
+        <AppShell />
+      </ThemeProvider>
+    </SafeAreaProvider>
   )
 }
