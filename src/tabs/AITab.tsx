@@ -1,17 +1,14 @@
 /**
- * 모바일 AI 탭 — 웹 AIWorkspace 와 같은 구조 (Phase 6 모바일 미러).
+ * AI 인사이트 허브 (A안).
  *
- * 두 서브탭:
- *   ├─ 오늘의 플레이북 — 지금 뭐 해야 함?
- *   └─ 성적표 — AI 를 믿어도 되나?
- *
- * 데이터는 AITab Props 그대로. 백엔드 추가 0.
- * 실제 UI 는 aitab_widgets/Playbook.tsx, Scorecard.tsx 로 분리.
+ * 단일 스크롤 — 2탭 토글 제거.
+ * 마켓 브리핑 → 나에게 맞춘 액션 → 오늘의 픽 → 숨은 시그널 → AI 트랙 레코드.
  */
-import React, { useState } from 'react'
-import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native'
-import { BookOpen, Trophy } from 'lucide-react-native'
-import { useTheme, type Palette } from '../theme'
+import { RefreshControl, ScrollView, Text, View } from 'react-native'
+import { ChevronDown, ChevronRight } from 'lucide-react-native'
+import { useState } from 'react'
+import { Pressable } from 'react-native'
+import { useTheme } from '../theme'
 import type {
   AiRecommendationData,
   MarketSummaryData,
@@ -19,10 +16,9 @@ import type {
   WatchItem,
 } from '../types'
 import { hapticLight } from '../utils/haptics'
+import { HiddenSignals } from './aitab_widgets/HiddenSignals'
 import { Playbook } from './aitab_widgets/Playbook'
 import { Scorecard } from './aitab_widgets/Scorecard'
-
-type Mode = 'playbook' | 'scorecard'
 
 type Props = {
   aiRecommendation: AiRecommendationData | null
@@ -38,7 +34,8 @@ export function AITab({
   aiRecommendation, summary, watchlist, refreshing, onRefresh, onOpenDetail, onQuickAddWatch,
 }: Props) {
   const { palette } = useTheme()
-  const [mode, setMode] = useState<Mode>('playbook')
+  const [scorecardOpen, setScorecardOpen] = useState(false)
+  const logs = aiRecommendation?.executionLogs ?? []
 
   return (
     <ScrollView
@@ -46,58 +43,58 @@ export function AITab({
       contentContainerStyle={{ padding: 14, gap: 14, paddingBottom: 32 }}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.inkMuted} />}
     >
-      <ModeToggle mode={mode} onChange={setMode} palette={palette} />
-      {mode === 'playbook' ? (
-        <Playbook
-          aiRecommendation={aiRecommendation}
-          summary={summary}
-          watchlist={watchlist}
-          palette={palette}
-          onOpenDetail={onOpenDetail}
-          onQuickAddWatch={onQuickAddWatch}
-        />
-      ) : (
-        <Scorecard aiRecommendation={aiRecommendation} palette={palette} onOpenDetail={onOpenDetail} />
-      )}
+      {/* ── 마켓 브리핑 + 액션 + 픽 ── */}
+      <Playbook
+        aiRecommendation={aiRecommendation}
+        summary={summary}
+        watchlist={watchlist}
+        palette={palette}
+        onOpenDetail={onOpenDetail}
+        onQuickAddWatch={onQuickAddWatch}
+      />
+
+      {/* ── 숨은 시그널 — 보유·관심 종목 AI 주목 ── */}
+      <HiddenSignals
+        logs={logs}
+        watchlist={watchlist}
+        palette={palette}
+        onOpenDetail={onOpenDetail}
+      />
+
+      {/* ── AI 트랙 레코드 — 접힌 상태로 하단 ── */}
+      <View style={{
+        backgroundColor: palette.surface,
+        borderRadius: 14,
+        borderWidth: 1,
+        borderColor: palette.border,
+        overflow: 'hidden',
+      }}>
+        <Pressable
+          onPress={() => { void hapticLight(); setScorecardOpen((v) => !v) }}
+          style={({ pressed }) => ({
+            flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+            paddingHorizontal: 14, paddingVertical: 12,
+            backgroundColor: pressed ? palette.surfaceAlt : palette.surface,
+          })}
+          hitSlop={8}
+        >
+          <Text style={{ color: palette.ink, fontSize: 13, fontWeight: '800' }}>
+            AI 트랙 레코드
+          </Text>
+          {scorecardOpen
+            ? <ChevronDown size={16} color={palette.inkMuted} strokeWidth={2.5} />
+            : <ChevronRight size={16} color={palette.inkMuted} strokeWidth={2.5} />}
+        </Pressable>
+        {scorecardOpen ? (
+          <View style={{ paddingHorizontal: 14, paddingBottom: 14 }}>
+            <Scorecard
+              aiRecommendation={aiRecommendation}
+              palette={palette}
+              onOpenDetail={onOpenDetail}
+            />
+          </View>
+        ) : null}
+      </View>
     </ScrollView>
-  )
-}
-
-/* ── ModeToggle ────────────────────────────────────────── */
-
-function ModeToggle({ mode, onChange, palette }: { mode: Mode; onChange: (m: Mode) => void; palette: Palette }) {
-  const tabs: Array<{ key: Mode; label: string; icon: any; hint: string }> = [
-    { key: 'playbook',  label: '플레이북', icon: BookOpen, hint: '오늘 할 것' },
-    { key: 'scorecard', label: '성적표',   icon: Trophy,   hint: 'AI 검증' },
-  ]
-  return (
-    <View style={{ flexDirection: 'row', gap: 8 }}>
-      {tabs.map((t) => {
-        const Active = t.icon
-        const isActive = mode === t.key
-        return (
-          <Pressable
-            key={t.key}
-            onPress={() => { void hapticLight(); onChange(t.key) }}
-            style={{
-              flex: 1,
-              flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
-              paddingVertical: 11, borderRadius: 10,
-              backgroundColor: isActive ? palette.blue : palette.surface,
-              borderWidth: 1,
-              borderColor: isActive ? palette.blue : palette.border,
-            }}
-          >
-            <Active size={14} color={isActive ? '#ffffff' : palette.inkSub} strokeWidth={2.5} />
-            <Text style={{ color: isActive ? '#ffffff' : palette.ink, fontSize: 13, fontWeight: '800' }}>
-              {t.label}
-            </Text>
-            <Text style={{ color: isActive ? 'rgba(255,255,255,0.75)' : palette.inkMuted, fontSize: 10, fontWeight: '600' }}>
-              {t.hint}
-            </Text>
-          </Pressable>
-        )
-      })}
-    </View>
   )
 }
