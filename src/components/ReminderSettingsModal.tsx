@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Modal, Pressable, ScrollView, Switch, Text, View } from 'react-native'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { Bell, History, Trash2, X } from 'lucide-react-native'
 import { useStyles } from '../styles'
 import { useTheme } from '../theme'
@@ -30,7 +30,6 @@ const MINUTES_OPTIONS = [5, 10, 15, 30, 60]
 export function ReminderSettingsModal({ visible, authToken, onClose }: Props) {
   const styles = useStyles()
   const { palette } = useTheme()
-  const insets = useSafeAreaInsets()
 
   const [pushOn, setPushOn] = useState(true)
   const [krOn, setKrOn] = useState(true)
@@ -83,10 +82,8 @@ export function ReminderSettingsModal({ visible, authToken, onClose }: Props) {
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable
-        style={[styles.signalModalBackdrop, { paddingTop: insets.top + 20, paddingBottom: insets.bottom + 20 }]}
-        onPress={onClose}
-      >
+      <SafeAreaView style={{ flex: 1 }} edges={['top', 'bottom']}>
+        <Pressable style={styles.signalModalBackdrop} onPress={onClose}>
         <Pressable style={styles.signalModalCard} onPress={() => {}}>
           <ScrollView showsVerticalScrollIndicator={false}>
             <View style={styles.signalModalHeader}>
@@ -259,6 +256,7 @@ export function ReminderSettingsModal({ visible, authToken, onClose }: Props) {
           </ScrollView>
         </Pressable>
       </Pressable>
+      </SafeAreaView>
     </Modal>
   )
 }

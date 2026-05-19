@@ -94,7 +94,7 @@ export function cardStyles(C: Palette): StyleObj {
       borderRadius: 14, borderWidth: 1, borderColor: C.border, padding: 12,
       backgroundColor: C.surfaceAlt, gap: 4, ...shadow.sm,
     },
-    metricLeft:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    metricLeft:   { flex: 1, gap: 2, justifyContent: 'center', minWidth: 0 },
     metricName:   { color: C.ink, fontSize: 13, fontWeight: '700' },
     metricState:  { color: C.inkSub, fontSize: 12, fontWeight: '600' },
     metricScore:  { color: C.teal, fontSize: 18, fontWeight: '800', ...num },
@@ -112,7 +112,7 @@ export function cardStyles(C: Palette): StyleObj {
       backgroundColor: C.surfaceAlt, flexDirection: 'row', justifyContent: 'space-between',
       alignItems: 'center', gap: 10,
     },
-    summaryValueBox:      { alignItems: 'flex-end', gap: 2 },
+    summaryValueBox:      { alignItems: 'flex-end', gap: 2, flexShrink: 0 },
     summaryMeta:          { color: C.inkMuted, fontSize: 11, fontWeight: '700' },
     summaryDelta:         { fontSize: 12, fontWeight: '700', ...num },
 

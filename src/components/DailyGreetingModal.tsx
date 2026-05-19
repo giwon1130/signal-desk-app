@@ -1,5 +1,5 @@
 import { Modal, Pressable, Text, View } from 'react-native'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { Sparkles, Quote } from 'lucide-react-native'
 import { useTheme } from '../theme'
 import type { DailyFortune } from '../types'
@@ -14,7 +14,6 @@ type Props = {
 
 export function DailyGreetingModal({ visible, fortune, onClose }: Props) {
   const { palette } = useTheme()
-  const insets = useSafeAreaInsets()
 
   const quote = fortune ? getDailyQuote(fortune.date) : null
   const accent = fortune ? fortuneToneColor(fortune.overallTone) : palette.blue
@@ -26,15 +25,14 @@ export function DailyGreetingModal({ visible, fortune, onClose }: Props) {
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <SafeAreaView style={{ flex: 1 }} edges={['top', 'bottom']}>
       <Pressable
         style={{
           flex: 1,
           backgroundColor: 'rgba(0,0,0,0.5)',
           justifyContent: 'center',
           alignItems: 'center',
-          paddingHorizontal: 24,
-          paddingTop: insets.top + 24,
-          paddingBottom: insets.bottom + 24,
+          padding: 24,
         }}
         onPress={onClose}
       >
@@ -151,6 +149,7 @@ export function DailyGreetingModal({ visible, fortune, onClose }: Props) {
           </Pressable>
         </Pressable>
       </Pressable>
+      </SafeAreaView>
     </Modal>
   )
 }
