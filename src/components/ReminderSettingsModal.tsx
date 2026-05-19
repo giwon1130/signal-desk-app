@@ -139,11 +139,11 @@ export function ReminderSettingsModal({ visible, authToken, onClose }: Props) {
               />
             </View>
 
-            {/* ── 프리마켓 종합 알림 ── */}
+            {/* ── 모닝 브리프 알림 ── */}
             <View style={[styles.summaryRow, { paddingHorizontal: 0 }]}>
               <View style={styles.metricLeft}>
-                <Text style={styles.metricName}>🌅 프리마켓 종합 알림</Text>
-                <Text style={styles.metricState}>08:00, 08:30 KST · 관심·보유·주요 종목 요약</Text>
+                <Text style={styles.metricName}>🌅 모닝 브리프 알림</Text>
+                <Text style={styles.metricState}>08:30 KST · 야간 미국장 + 보유 종목 공시 통합</Text>
               </View>
               <Switch
                 value={prefs.premarketEnabled}

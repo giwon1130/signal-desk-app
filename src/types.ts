@@ -346,7 +346,7 @@ export type MediaSummaryItem = {
   keyTickers: string[]
   sentiment: 'BULLISH' | 'BEARISH' | 'NEUTRAL'
   hasTranscript: boolean
-  source: 'YOUTUBE' | 'NEWS_DIGEST'
+  source: 'YOUTUBE' | 'NEWS_DIGEST' | 'MORNING_BRIEF'
 }
 
 export type HealthResponse = {

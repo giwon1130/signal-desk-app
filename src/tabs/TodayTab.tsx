@@ -103,6 +103,18 @@ export function TodayTab({
         </View>
       ) : null}
 
+      {/* ── 모닝 브리프 / 시장 종합 (Hero) ── */}
+      {mediaSummary ? (
+        <MediaSummaryCard
+          item={mediaSummary}
+          defaultCollapsed={false}
+          onTickerPress={(t) => {
+            const isKr = /^\d{6}$/.test(t)
+            onOpenDetail(isKr ? 'KR' : 'US', t)
+          }}
+        />
+      ) : null}
+
       {/* ── 마켓 상태 (한 줄 요약) ── */}
       <View style={styles.todayHeroCard}>
         <View style={styles.cardTitleRow}>
@@ -144,17 +156,6 @@ export function TodayTab({
 
       {/* ── 개인화 브리핑 ── */}
       {summary?.briefing ? <BriefingCard briefing={summary.briefing} /> : null}
-
-      {/* ── 데일리 방송 요약 (삼프로TV 등) ── */}
-      {mediaSummary ? (
-        <MediaSummaryCard
-          item={mediaSummary}
-          onTickerPress={(t) => {
-            const isKr = /^\d{6}$/.test(t)
-            onOpenDetail(isKr ? 'KR' : 'US', t)
-          }}
-        />
-      ) : null}
 
       {/* ── 뉴스 sentiment ── */}
       {(krSentiment || usSentiment) ? (

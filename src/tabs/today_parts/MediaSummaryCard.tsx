@@ -1,5 +1,5 @@
 import { Linking, Pressable, Text, View } from 'react-native'
-import { ExternalLink, Newspaper, Tv } from 'lucide-react-native'
+import { ExternalLink, Newspaper, Sunrise, Tv } from 'lucide-react-native'
 import { CollapsibleCard } from '../../components/CollapsibleCard'
 import { useStyles } from '../../styles'
 import { useTheme } from '../../theme'
@@ -8,16 +8,18 @@ import type { MediaSummaryItem } from '../../types'
 type Props = {
   item: MediaSummaryItem
   onTickerPress?: (ticker: string) => void
+  defaultCollapsed?: boolean
 }
 
 const sentimentLabel = (s: MediaSummaryItem['sentiment']) =>
   s === 'BULLISH' ? '강세' : s === 'BEARISH' ? '약세' : '관망'
 
-export function MediaSummaryCard({ item, onTickerPress }: Props) {
+export function MediaSummaryCard({ item, onTickerPress, defaultCollapsed }: Props) {
   const styles = useStyles()
   const { palette } = useTheme()
+  const isBrief = item.source === 'MORNING_BRIEF'
   const isDigest = item.source === 'NEWS_DIGEST'
-  const Icon = isDigest ? Newspaper : Tv
+  const Icon = isBrief ? Sunrise : isDigest ? Newspaper : Tv
 
   const accent =
     item.sentiment === 'BULLISH' ? palette.up
@@ -41,6 +43,7 @@ export function MediaSummaryCard({ item, onTickerPress }: Props) {
 
   return (
     <CollapsibleCard
+      defaultCollapsed={defaultCollapsed}
       title={
         <View style={styles.cardTitleRow}>
           <Icon size={13} color={accent} strokeWidth={2.5} />
@@ -65,7 +68,7 @@ export function MediaSummaryCard({ item, onTickerPress }: Props) {
         </Text>
         <Text style={{ color: palette.inkMuted, fontSize: 11 }}>
           {publishedLabel}
-          {isDigest ? '' : (!item.hasTranscript ? ' · 자막 미수신 (제목 기반 요약)' : '')}
+          {!isBrief && !isDigest && !item.hasTranscript ? ' · 자막 미수신 (제목 기반 요약)' : ''}
         </Text>
       </View>
 
@@ -116,8 +119,8 @@ export function MediaSummaryCard({ item, onTickerPress }: Props) {
         </View>
       ) : null}
 
-      {/* ── 영상 링크 (NEWS_DIGEST 는 링크 없음) ── */}
-      {!isDigest && item.videoUrl ? (
+      {/* ── 영상 링크 (MORNING_BRIEF / NEWS_DIGEST 는 링크 없음) ── */}
+      {!isBrief && !isDigest && item.videoUrl ? (
         <Pressable
           onPress={() => { void Linking.openURL(item.videoUrl) }}
           style={({ pressed }) => ({
