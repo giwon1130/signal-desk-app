@@ -41,8 +41,6 @@ import { useStockSearch } from './src/hooks/useStockSearch'
 import { useWorkspaceMutations } from './src/hooks/useWorkspaceMutations'
 import type {
   HoldingPosition,
-  MarketKey,
-  PeriodKey,
   StockSearchResult,
   TabKey,
 } from './src/types'
@@ -59,7 +57,7 @@ const TABS: Array<{ key: TabKey; label: string; Icon: typeof Home }> = [
 function AppShell() {
   const { width } = useWindowDimensions()
   const styles = useStyles()
-  const { palette, toggle, mode } = useTheme()
+  const { palette, toggle } = useTheme()
   const toast = useToast()
 
   // 웹: viewport meta + body 배경 + safe-area 패딩 1회 세팅.
