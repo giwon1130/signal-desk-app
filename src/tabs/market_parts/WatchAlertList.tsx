@@ -33,8 +33,10 @@ export function WatchAlertList({ alerts }: Props) {
             ]}
           >
             <View style={styles.metricLeft}>
-              <Text style={styles.metricName}>{item.name}</Text>
-              <Text style={styles.metricState}>{item.market} · {item.ticker} · {item.title}</Text>
+              <Text style={styles.metricName} numberOfLines={1} ellipsizeMode="tail">{item.name}</Text>
+              <Text style={styles.metricState} numberOfLines={2} ellipsizeMode="tail">
+                {item.market} · {item.ticker} · {item.title}
+              </Text>
             </View>
             <View style={styles.alternativeMetricTopRow}>
               <Text style={[styles.metricScore, { color: getMetricAccent(item.score) }]}>{item.score}</Text>
@@ -57,7 +59,7 @@ export function WatchAlertList({ alerts }: Props) {
                 </Text>
               ))}
             </View>
-            <Text style={styles.metricNote}>{item.note}</Text>
+            <Text style={styles.metricNote} numberOfLines={3} ellipsizeMode="tail">{item.note}</Text>
           </View>
         ))
       ) : (

@@ -17,8 +17,8 @@ export function MoverRow({ item, onOpenDetail }: Props) {
       style={({ pressed }) => [styles.summaryRow, pressed && { opacity: 0.6 }]}
     >
       <View style={styles.metricLeft}>
-        <Text style={styles.metricName}>{item.name}</Text>
-        <Text style={styles.metricState}>{item.market} · {item.ticker}</Text>
+        <Text style={styles.metricName} numberOfLines={1} ellipsizeMode="tail">{item.name}</Text>
+        <Text style={styles.metricState} numberOfLines={1} ellipsizeMode="tail">{item.market} · {item.ticker}</Text>
       </View>
       <View style={styles.summaryValueBox}>
         <Text style={styles.metricScore}>{formatPrice(item.price, item.market)}</Text>

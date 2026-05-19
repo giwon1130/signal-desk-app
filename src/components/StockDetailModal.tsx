@@ -8,6 +8,7 @@ import {
   Text,
   View,
 } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { X } from 'lucide-react-native'
 import { useStyles } from '../styles'
 import { useTheme } from '../theme'
@@ -64,6 +65,7 @@ export function StockDetailModal({
 }: Props) {
   const styles = useStyles()
   const { palette } = useTheme()
+  const insets = useSafeAreaInsets()
 
   const [buyPriceInput, setBuyPriceInput]         = useState('')
   const [quantityInput, setQuantityInput]         = useState('')
@@ -166,7 +168,10 @@ export function StockDetailModal({
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <Pressable style={styles.signalModalBackdrop} onPress={onClose}>
+        <Pressable
+          style={[styles.signalModalBackdrop, { paddingTop: insets.top + 20, paddingBottom: insets.bottom + 20 }]}
+          onPress={onClose}
+        >
           {/* 카드 자체는 탭 전파 차단 */}
           <Pressable style={styles.signalModalCard} onPress={() => {}}>
             <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>

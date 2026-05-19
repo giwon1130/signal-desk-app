@@ -38,7 +38,7 @@ export function PicksCard({ picks, marketClosedToday }: Props) {
       ) : picks.map((p, i) => (
         <View key={`${p.ticker}-${i}`} style={styles.todayPickRow}>
           <View style={styles.todayPickTopLine}>
-            <Text style={styles.todayPickName}>{p.name}</Text>
+            <Text style={styles.todayPickName} numberOfLines={1} ellipsizeMode="tail">{p.name}</Text>
             <View style={styles.todayPickHeaderBadges}>
               <View style={[
                 styles.pickUserStatusBadge,
