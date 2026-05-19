@@ -4,7 +4,7 @@
  */
 import React, { useMemo, useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
-import { AlertTriangle, Check, Flame, Plus, Sparkles, Target, TrendingDown, TrendingUp } from 'lucide-react-native'
+import { AlertTriangle, Check, Plus, Sparkles, Target, TrendingDown, TrendingUp } from 'lucide-react-native'
 import type { Palette } from '../../theme'
 import type {
   AiRecommendationData,
@@ -46,8 +46,11 @@ export function Playbook({
 
   return (
     <View style={{ gap: 14 }}>
-      {marketInsight ? <InsightCard insight={marketInsight} palette={palette} /> : null}
-      <BriefingHero summary={summary} palette={palette} />
+      {marketInsight ? (
+        <InsightCard insight={marketInsight} palette={palette} />
+      ) : (
+        <InsightCardSkeleton palette={palette} />
+      )}
 
       <Card
         palette={palette}
@@ -133,76 +136,25 @@ export function Playbook({
   )
 }
 
-function BriefingHero({ summary, palette }: { summary: MarketSummaryData | null; palette: Palette }) {
-  const briefing = summary?.briefing
-  const slot = briefing?.slot
-  const slotLabel =
-    slot === 'PRE_MARKET' ? '장 시작 전' :
-    slot === 'INTRADAY'   ? '장중' :
-    slot === 'POST_MARKET'? '장 마감 후' :
-    slot === 'WEEKEND'    ? '주말' :
-    slot === 'HOLIDAY'    ? '휴장' : null
-  const headline = briefing?.headline ?? summary?.summary ?? '오늘의 브리핑을 불러오는 중…'
-  const narrative = briefing?.narrative ?? ''
-
+function InsightCardSkeleton({ palette }: { palette: Palette }) {
   return (
     <View style={{
       backgroundColor: palette.surface,
-      borderRadius: 14,
-      borderWidth: 1,
-      borderColor: palette.border,
-      padding: 16,
-      gap: 8,
+      borderRadius: 14, borderWidth: 1, borderColor: palette.border,
+      padding: 16, gap: 10,
     }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        <Flame size={13} color={palette.orange} strokeWidth={2.5} />
+        <Sparkles size={13} color={palette.inkFaint} strokeWidth={2.5} />
         <Text style={{ color: palette.inkFaint, fontSize: 9, fontWeight: '800', letterSpacing: 1.5 }}>
-          TODAY · BRIEFING
+          GEMINI · 오늘의 마켓 종합 인사이트
         </Text>
-        {slotLabel ? (
-          <View style={{ backgroundColor: palette.blueSoft, borderRadius: 4, paddingHorizontal: 6, paddingVertical: 1 }}>
-            <Text style={{ color: palette.blue, fontSize: 9, fontWeight: '800', letterSpacing: 0.3 }}>{slotLabel}</Text>
-          </View>
-        ) : null}
       </View>
-      <Text style={{ color: palette.ink, fontSize: 17, fontWeight: '800', lineHeight: 23 }}>
-        {headline}
+      <Text style={{ color: palette.inkMuted, fontSize: 13, lineHeight: 19 }}>
+        AI 인사이트 불러오는 중…
       </Text>
-      {narrative ? (
-        <Text style={{ color: palette.inkSub, fontSize: 12, lineHeight: 18 }}>
-          {narrative}
-        </Text>
-      ) : null}
-      {briefing?.context ? (
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 4 }}>
-          {briefing.context.holdingPnlLabel ? (
-            <ContextPill
-              label="내 포지션"
-              value={briefing.context.holdingPnlLabel}
-              color={briefing.context.holdingPnlRate == null ? palette.inkSub : briefing.context.holdingPnlRate >= 0 ? palette.up : palette.down}
-              palette={palette}
-            />
-          ) : null}
-          {briefing.context.watchlistAlertCount > 0 ? (
-            <ContextPill label="감시 알림" value={`${briefing.context.watchlistAlertCount}건`} color={palette.orange} palette={palette} />
-          ) : null}
-          {briefing.context.marketMood ? (
-            <ContextPill label="시장 분위기" value={briefing.context.marketMood} color={palette.purple} palette={palette} />
-          ) : null}
-          {briefing.context.keyEvent ? (
-            <ContextPill label="핵심 이벤트" value={briefing.context.keyEvent} color={palette.teal} palette={palette} />
-          ) : null}
-        </View>
-      ) : null}
-    </View>
-  )
-}
-
-function ContextPill({ label, value, color, palette }: { label: string; value: string; color: string; palette: Palette }) {
-  return (
-    <View style={{ gap: 1 }}>
-      <Text style={{ color: palette.inkFaint, fontSize: 9, fontWeight: '800', letterSpacing: 0.5 }}>{label.toUpperCase()}</Text>
-      <Text style={{ color, fontSize: 12, fontWeight: '800' }}>{value}</Text>
+      <Text style={{ color: palette.inkFaint, fontSize: 11, lineHeight: 16 }}>
+        VIX·지수·뉴스 종합 분석에 잠시 시간이 걸려.
+      </Text>
     </View>
   )
 }
