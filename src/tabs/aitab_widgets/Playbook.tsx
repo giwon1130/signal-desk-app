@@ -4,11 +4,12 @@
  */
 import React, { useMemo, useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
-import { Check, Flame, Plus, Sparkles, Target } from 'lucide-react-native'
+import { AlertTriangle, Check, Flame, Plus, Sparkles, Target, TrendingDown, TrendingUp } from 'lucide-react-native'
 import type { Palette } from '../../theme'
 import type {
   AiRecommendationData,
   BriefingAction,
+  MarketInsightData,
   MarketSummaryData,
   RecommendationExecutionLog,
   StockSearchResult,
@@ -19,11 +20,12 @@ import { hapticLight } from '../../utils/haptics'
 import { Card } from './Card'
 
 export function Playbook({
-  aiRecommendation, summary, watchlist, palette, onOpenDetail, onQuickAddWatch,
+  aiRecommendation, summary, watchlist, marketInsight, palette, onOpenDetail, onQuickAddWatch,
 }: {
   aiRecommendation: AiRecommendationData | null
   summary: MarketSummaryData | null
   watchlist: WatchItem[]
+  marketInsight: MarketInsightData | null
   palette: Palette
   onOpenDetail: (m: string, t: string, n?: string) => void
   onQuickAddWatch: (s: StockSearchResult) => Promise<void>
@@ -44,6 +46,7 @@ export function Playbook({
 
   return (
     <View style={{ gap: 14 }}>
+      {marketInsight ? <InsightCard insight={marketInsight} palette={palette} /> : null}
       <BriefingHero summary={summary} palette={palette} />
 
       <Card
@@ -367,6 +370,52 @@ function PriceTag({ label, value, market, color, palette }: { label: string; val
       <Text style={{ color, fontSize: 12, fontWeight: '800', fontVariant: ['tabular-nums'] }}>
         {formatPrice(value, market)}
       </Text>
+    </View>
+  )
+}
+
+function InsightCard({ insight, palette }: { insight: MarketInsightData; palette: Palette }) {
+  const sentimentColor =
+    insight.sentiment === 'BULLISH' ? palette.up :
+    insight.sentiment === 'BEARISH' ? palette.down : palette.inkSub
+  const SentimentIcon =
+    insight.sentiment === 'BULLISH' ? TrendingUp :
+    insight.sentiment === 'BEARISH' ? TrendingDown : AlertTriangle
+
+  return (
+    <View style={{
+      backgroundColor: palette.surface,
+      borderRadius: 14, borderWidth: 1, borderColor: palette.border,
+      padding: 16, gap: 10,
+    }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <Sparkles size={13} color={palette.purple} strokeWidth={2.5} />
+        <Text style={{ color: palette.inkFaint, fontSize: 9, fontWeight: '800', letterSpacing: 1.5, flex: 1 }}>
+          GEMINI · 오늘의 마켓 종합 인사이트
+        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+          <SentimentIcon size={11} color={sentimentColor} strokeWidth={2.5} />
+          <Text style={{ color: sentimentColor, fontSize: 10, fontWeight: '800' }}>
+            {insight.sentiment === 'BULLISH' ? '강세' : insight.sentiment === 'BEARISH' ? '약세' : '중립'}
+          </Text>
+        </View>
+      </View>
+      <Text style={{ color: palette.ink, fontSize: 16, fontWeight: '900', lineHeight: 22 }}>
+        {insight.headline}
+      </Text>
+      <Text style={{ color: palette.inkSub, fontSize: 12, lineHeight: 18 }}>
+        {insight.summary}
+      </Text>
+      {insight.keyPoints.length > 0 ? (
+        <View style={{ gap: 4 }}>
+          {insight.keyPoints.map((pt, i) => (
+            <View key={i} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 6 }}>
+              <Text style={{ color: palette.purple, fontSize: 11, fontWeight: '800', marginTop: 1 }}>·</Text>
+              <Text style={{ color: palette.inkMuted, fontSize: 11, lineHeight: 16, flex: 1 }}>{pt}</Text>
+            </View>
+          ))}
+        </View>
+      ) : null}
     </View>
   )
 }

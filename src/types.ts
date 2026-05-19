@@ -1,3 +1,10 @@
+export type MarketInsightData = {
+  headline: string
+  summary: string
+  sentiment: 'BULLISH' | 'BEARISH' | 'NEUTRAL'
+  keyPoints: string[]
+}
+
 export type SummaryMetric = {
   label: string
   score: number

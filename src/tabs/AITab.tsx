@@ -11,6 +11,7 @@ import { Pressable } from 'react-native'
 import { useTheme } from '../theme'
 import type {
   AiRecommendationData,
+  MarketInsightData,
   MarketSummaryData,
   StockSearchResult,
   WatchItem,
@@ -24,6 +25,7 @@ type Props = {
   aiRecommendation: AiRecommendationData | null
   summary: MarketSummaryData | null
   watchlist: WatchItem[]
+  marketInsight: MarketInsightData | null
   refreshing: boolean
   onRefresh: () => Promise<void>
   onOpenDetail: (market: string, ticker: string, name?: string) => void
@@ -31,7 +33,7 @@ type Props = {
 }
 
 export function AITab({
-  aiRecommendation, summary, watchlist, refreshing, onRefresh, onOpenDetail, onQuickAddWatch,
+  aiRecommendation, summary, watchlist, marketInsight, refreshing, onRefresh, onOpenDetail, onQuickAddWatch,
 }: Props) {
   const { palette } = useTheme()
   const [scorecardOpen, setScorecardOpen] = useState(false)
@@ -48,6 +50,7 @@ export function AITab({
         aiRecommendation={aiRecommendation}
         summary={summary}
         watchlist={watchlist}
+        marketInsight={marketInsight}
         palette={palette}
         onOpenDetail={onOpenDetail}
         onQuickAddWatch={onQuickAddWatch}

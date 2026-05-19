@@ -1,5 +1,15 @@
 # Context
 
+## ⏭ 다음 세션 인계
+이 레포 작업 이어갈 때 먼저 읽기:
+`/Users/g/workspace/work-history/active/claude/2026-05-19_signal-desk_session-handoff.md`
+
+다음 작업 순서 (사용자가 4-5-2-1 순으로 정함):
+1. TodayTab 재배치 (`src/tabs/TodayTab.tsx`)
+2. AI탭 A안 — "AI 인사이트 허브" (`src/tabs/AITab.tsx`)
+3. Gemini 종합 인사이트 (백엔드 `MarketInsightService` + 앱 AI탭 1번 카드)
+4. 주요 이벤트 캘린더 (FOMC/실적/공시)
+
 ## ui scope
 - 시장 탭, 차트 탭, AI 로그 탭
 - 차트: 캔들/거래량/MA5/20/60

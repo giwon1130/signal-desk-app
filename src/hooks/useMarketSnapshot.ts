@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { API_BASE_URL, fetchDailyFortune, fetchTopMovers, loadAllData } from '../api'
+import { fetchMarketInsight } from '../api/insights'
 import { fetchLatestMediaSummary } from '../api/media'
 import { fetchAlertHistory } from '../api/pushDevice'
 import { formatSyncStamp } from '../utils'
@@ -9,6 +10,7 @@ import type {
   AlertHistoryItem,
   DailyFortune,
   HealthResponse,
+  MarketInsightData,
   MarketSectionsData,
   MarketSummaryData,
   MediaSummaryItem,
@@ -27,6 +29,7 @@ export function useMarketSnapshot(authToken: string | null, enabled: boolean) {
   const [fortune, setFortune] = useState<DailyFortune | null>(null)
   const [topMovers, setTopMovers] = useState<TopMoversResponse | null>(null)
   const [mediaSummary, setMediaSummary] = useState<MediaSummaryItem | null>(null)
+  const [marketInsight, setMarketInsight] = useState<MarketInsightData | null>(null)
   const [loading, setLoading] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState('')
@@ -50,6 +53,7 @@ export function useMarketSnapshot(authToken: string | null, enabled: boolean) {
       void fetchDailyFortune().then(setFortune)
       void fetchTopMovers(10).then(setTopMovers)
       void fetchLatestMediaSummary().then(setMediaSummary)
+      void fetchMarketInsight().then(setMarketInsight)
     } catch {
       setApiHealth(null)
       setError(`서버에 연결할 수 없어요.\n${API_BASE_URL}`)
@@ -78,6 +82,7 @@ export function useMarketSnapshot(authToken: string | null, enabled: boolean) {
     fortune,
     topMovers,
     mediaSummary,
+    marketInsight,
     alertHistory,
     apiHealth,
     lastSyncedAt,
