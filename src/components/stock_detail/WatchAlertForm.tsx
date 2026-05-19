@@ -10,9 +10,11 @@ type Props = {
   watchItem: WatchItem
   onSave: (alertBelow: number | null, alertAbove: number | null, volumeAlert: boolean) => void
   saving: boolean
+  /** 보유 종목이면 가격 알림은 PortfolioForm의 목표가/손절가에서 자동 트리거되므로 숨긴다 */
+  hasPortfolio?: boolean
 }
 
-export function WatchAlertForm({ watchItem, onSave, saving }: Props) {
+export function WatchAlertForm({ watchItem, onSave, saving, hasPortfolio = false }: Props) {
   const styles = useStyles()
   const { palette } = useTheme()
 
@@ -47,49 +49,57 @@ export function WatchAlertForm({ watchItem, onSave, saving }: Props) {
       </View>
 
       <View style={{ backgroundColor: palette.surfaceAlt, borderRadius: 12, padding: 14, gap: 12, borderWidth: 1, borderColor: palette.border }}>
-        {/* 하한 알림 */}
-        <View style={{ gap: 4 }}>
-          <Text style={{ color: palette.inkSub, fontSize: 11, fontWeight: '700' }}>
-            하한 알림 — 이 가격 이하로 떨어지면 알림
+        {hasPortfolio ? (
+          <Text style={{ color: palette.inkMuted, fontSize: 11, fontWeight: '600', lineHeight: 16 }}>
+            🔔 보유 중이라 아래 <Text style={{ fontWeight: '800', color: palette.ink }}>실제 보유 종목 수정</Text>의 <Text style={{ fontWeight: '800', color: palette.ink }}>목표가/손절가</Text>가 자동으로 알림 트리거가 돼.
           </Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <TextInput
-              value={alertBelowInput}
-              onChangeText={setAlertBelowInput}
-              placeholder={watchItem.price ? formatPrice(watchItem.price, watchItem.market) : '매수 희망가'}
-              placeholderTextColor={palette.inkMuted}
-              keyboardType="numeric"
-              style={[styles.formInput, { flex: 1 }]}
-            />
-            {watchItem.alertBelow ? (
-              <Text style={{ color: palette.down, fontSize: 11, fontWeight: '700' }}>
-                현재 {formatPrice(watchItem.alertBelow, watchItem.market)}
+        ) : (
+          <>
+            {/* 하한 알림 */}
+            <View style={{ gap: 4 }}>
+              <Text style={{ color: palette.inkSub, fontSize: 11, fontWeight: '700' }}>
+                하한 알림 — 이 가격 이하로 떨어지면 알림
               </Text>
-            ) : null}
-          </View>
-        </View>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <TextInput
+                  value={alertBelowInput}
+                  onChangeText={setAlertBelowInput}
+                  placeholder={watchItem.price ? formatPrice(watchItem.price, watchItem.market) : '매수 희망가'}
+                  placeholderTextColor={palette.inkMuted}
+                  keyboardType="numeric"
+                  style={[styles.formInput, { flex: 1 }]}
+                />
+                {watchItem.alertBelow ? (
+                  <Text style={{ color: palette.down, fontSize: 11, fontWeight: '700' }}>
+                    현재 {formatPrice(watchItem.alertBelow, watchItem.market)}
+                  </Text>
+                ) : null}
+              </View>
+            </View>
 
-        {/* 상한 알림 */}
-        <View style={{ gap: 4 }}>
-          <Text style={{ color: palette.inkSub, fontSize: 11, fontWeight: '700' }}>
-            상한 알림 — 이 가격 이상으로 오르면 알림
-          </Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <TextInput
-              value={alertAboveInput}
-              onChangeText={setAlertAboveInput}
-              placeholder={watchItem.price ? formatPrice(watchItem.price, watchItem.market) : '목표 매도가'}
-              placeholderTextColor={palette.inkMuted}
-              keyboardType="numeric"
-              style={[styles.formInput, { flex: 1 }]}
-            />
-            {watchItem.alertAbove ? (
-              <Text style={{ color: palette.up, fontSize: 11, fontWeight: '700' }}>
-                현재 {formatPrice(watchItem.alertAbove, watchItem.market)}
+            {/* 상한 알림 */}
+            <View style={{ gap: 4 }}>
+              <Text style={{ color: palette.inkSub, fontSize: 11, fontWeight: '700' }}>
+                상한 알림 — 이 가격 이상으로 오르면 알림
               </Text>
-            ) : null}
-          </View>
-        </View>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <TextInput
+                  value={alertAboveInput}
+                  onChangeText={setAlertAboveInput}
+                  placeholder={watchItem.price ? formatPrice(watchItem.price, watchItem.market) : '목표 매도가'}
+                  placeholderTextColor={palette.inkMuted}
+                  keyboardType="numeric"
+                  style={[styles.formInput, { flex: 1 }]}
+                />
+                {watchItem.alertAbove ? (
+                  <Text style={{ color: palette.up, fontSize: 11, fontWeight: '700' }}>
+                    현재 {formatPrice(watchItem.alertAbove, watchItem.market)}
+                  </Text>
+                ) : null}
+              </View>
+            </View>
+          </>
+        )}
 
         {/* 거래량 급증 알림 - KR 전용 */}
         {watchItem.market === 'KR' && (

@@ -201,11 +201,15 @@ export function StockDetailModal({
               />
 
               {hasWatch && context.watchItem ? (
-                <WatchAlertForm
-                  watchItem={context.watchItem}
-                  onSave={(below, above, vol) => void handleSaveAlerts(below, above, vol)}
-                  saving={alertSaving}
-                />
+                // 보유 + US는 알림 트리거가 PortfolioForm 목표/손절가뿐 (거래량 알림이 KR 전용)
+                !context.portfolioPosition || context.base.market === 'KR' ? (
+                  <WatchAlertForm
+                    watchItem={context.watchItem}
+                    onSave={(below, above, vol) => void handleSaveAlerts(below, above, vol)}
+                    saving={alertSaving}
+                    hasPortfolio={!!context.portfolioPosition}
+                  />
+                ) : null
               ) : null}
 
               <PortfolioForm

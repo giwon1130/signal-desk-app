@@ -74,7 +74,7 @@ export function PortfolioForm({
       </View>
       <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>
         <View style={{ flex: 1 }}>
-          <Text style={styles.kpiLabel}>목표가 (선택)</Text>
+          <Text style={styles.kpiLabel}>🔔 목표가 (자동 알림)</Text>
           <TextInput
             value={targetPriceInput}
             onChangeText={onChangeTargetPrice}
@@ -85,7 +85,7 @@ export function PortfolioForm({
           />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={styles.kpiLabel}>손절가 (선택)</Text>
+          <Text style={styles.kpiLabel}>🔔 손절가 (자동 알림)</Text>
           <TextInput
             value={stopLossPriceInput}
             onChangeText={onChangeStopLossPrice}
