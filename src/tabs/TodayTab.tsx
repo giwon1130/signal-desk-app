@@ -4,7 +4,6 @@ import {
   Bell,
   Clock,
   Newspaper,
-  TrendingUp,
 } from 'lucide-react-native'
 import { CollapsibleCard } from '../components/CollapsibleCard'
 import { useStyles } from '../styles'
@@ -128,6 +127,28 @@ export function TodayTab({
         </View>
       ) : null}
 
+      {/* ── 보유 종목 모니터 (보유 있는 사용자 최우선) ── */}
+      {positions.length > 0 ? (
+        <HoldingMonitor monitorTargets={monitorTargets} marketClosedToday={marketClosedToday} />
+      ) : null}
+
+      {/* ── 오늘의 단타 픽 ── */}
+      <PicksCard picks={picks} marketClosedToday={marketClosedToday} />
+
+      {/* ── 개인화 브리핑 ── */}
+      {summary?.briefing ? <BriefingCard briefing={summary.briefing} /> : null}
+
+      {/* ── 데일리 방송 요약 (삼프로TV 등) ── */}
+      {mediaSummary ? (
+        <MediaSummaryCard
+          item={mediaSummary}
+          onTickerPress={(t) => {
+            const isKr = /^\d{6}$/.test(t)
+            onOpenDetail(isKr ? 'KR' : 'US', t)
+          }}
+        />
+      ) : null}
+
       {/* ── 뉴스 sentiment ── */}
       {(krSentiment || usSentiment) ? (
         <CollapsibleCard
@@ -157,55 +178,6 @@ export function TodayTab({
           {usSentiment ? <SentimentCard sentiment={usSentiment} /> : null}
         </CollapsibleCard>
       ) : null}
-
-      {/* ── 개인화 브리핑 ── */}
-      {summary?.briefing ? <BriefingCard briefing={summary.briefing} /> : null}
-
-      {/* ── AI 최근 실적 (신뢰도) ── */}
-      {aiRecommendation?.metrics ? (
-        <View style={styles.card}>
-          <View style={styles.cardTitleRow}>
-            <TrendingUp size={13} color="#15803d" strokeWidth={2.5} />
-            <Text style={styles.cardEyebrow}>AI 최근 {aiRecommendation.metrics.windowDays}일 실적</Text>
-          </View>
-          <View style={styles.metricsRow}>
-            <View style={styles.metricsCell}>
-              <Text style={styles.metricsLabel}>적중률</Text>
-              <Text style={[styles.metricsValue, { color: aiRecommendation.metrics.hitRate >= 0.5 ? '#15803d' : '#b91c1c' }]}>
-                {Math.round(aiRecommendation.metrics.hitRate * 100)}%
-              </Text>
-              <Text style={styles.metricsSub}>{aiRecommendation.metrics.successCount}/{aiRecommendation.metrics.totalCount}건</Text>
-            </View>
-            <View style={styles.metricsCell}>
-              <Text style={styles.metricsLabel}>평균 수익률</Text>
-              <Text style={[styles.metricsValue, { color: aiRecommendation.metrics.averageReturnRate >= 0 ? '#dc2626' : '#2563eb' }]}>
-                {formatSignedRate(aiRecommendation.metrics.averageReturnRate)}
-              </Text>
-              <Text style={styles.metricsSub}>
-                최고 {formatSignedRate(aiRecommendation.metrics.bestReturnRate)} · 최저 {formatSignedRate(aiRecommendation.metrics.worstReturnRate)}
-              </Text>
-            </View>
-          </View>
-        </View>
-      ) : null}
-
-      {/* ── 데일리 방송 요약 (삼프로TV 등) ── */}
-      {mediaSummary ? (
-        <MediaSummaryCard
-          item={mediaSummary}
-          onTickerPress={(t) => {
-            // 한국 6자리 코드면 KR, 영문 티커면 US 로 추정해서 상세 모달 오픈
-            const isKr = /^\d{6}$/.test(t)
-            onOpenDetail(isKr ? 'KR' : 'US', t)
-          }}
-        />
-      ) : null}
-
-      {/* ── 오늘의 단타 픽 ── */}
-      <PicksCard picks={picks} marketClosedToday={marketClosedToday} />
-
-      {/* ── 보유 종목 모니터 ── */}
-      <HoldingMonitor monitorTargets={monitorTargets} marketClosedToday={marketClosedToday} />
 
       {/* ── 최근 받은 알림 (회고) ── */}
       {alertHistory.length > 0 ? (
