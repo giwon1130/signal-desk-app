@@ -5,6 +5,21 @@ export type MarketInsightData = {
   keyPoints: string[]
 }
 
+export type EventCategory = 'FOMC' | 'EARNINGS' | 'POLICY' | 'ECONOMIC_DATA' | 'HOLIDAY' | 'OTHER'
+export type EventImportance = 'HIGH' | 'MEDIUM' | 'LOW'
+
+export type MarketEvent = {
+  id: string
+  date: string         // ISO yyyy-MM-dd
+  time: string | null  // null = 종일
+  market: 'KR' | 'US' | 'GLOBAL'
+  category: EventCategory
+  title: string
+  description: string | null
+  importance: EventImportance
+  tickers: string[]
+}
+
 export type SummaryMetric = {
   label: string
   score: number

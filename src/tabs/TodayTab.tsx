@@ -13,6 +13,7 @@ import type {
   AlertHistoryItem,
   DailyFortune,
   HoldingPosition,
+  MarketEvent,
   MarketSummaryData,
   MediaSummaryItem,
 } from '../types'
@@ -23,6 +24,7 @@ import {
   getSessionPalette,
 } from '../utils'
 import { BriefingCard } from './today_parts/BriefingCard'
+import { EventsCard } from './today_parts/EventsCard'
 import { FortuneCard } from './today_parts/FortuneCard'
 import { HoldingMonitor } from './today_parts/HoldingMonitor'
 import { MediaSummaryCard } from './today_parts/MediaSummaryCard'
@@ -37,6 +39,7 @@ type Props = {
   alertHistory: AlertHistoryItem[]
   fortune: DailyFortune | null
   mediaSummary: MediaSummaryItem | null
+  upcomingEvents: MarketEvent[]
   onOpenDetail: (market: string, ticker: string, name?: string) => void
   refreshing: boolean
   onRefresh: () => Promise<void>
@@ -49,6 +52,7 @@ export function TodayTab({
   alertHistory,
   fortune,
   mediaSummary,
+  upcomingEvents,
   onOpenDetail,
   refreshing,
   onRefresh,
@@ -134,6 +138,9 @@ export function TodayTab({
 
       {/* ── 오늘의 단타 픽 ── */}
       <PicksCard picks={picks} marketClosedToday={marketClosedToday} />
+
+      {/* ── 다가오는 이벤트 (FOMC/실적/휴장) ── */}
+      <EventsCard events={upcomingEvents} />
 
       {/* ── 개인화 브리핑 ── */}
       {summary?.briefing ? <BriefingCard briefing={summary.briefing} /> : null}
