@@ -15,6 +15,7 @@ import {
   type NotificationRecord,
 } from '../hooks/useMarketReminder'
 import { getPushAlertsEnabled, setPushAlertsEnabled } from '../api/pushDevice'
+import { getAlertPreferences, updateAlertPreferences, type AlertPreferences } from '../api/alertPreferences'
 import { formatRelativeOrShortTime } from '../utils'
 
 type Props = {
@@ -35,26 +36,35 @@ export function ReminderSettingsModal({ visible, authToken, onClose }: Props) {
   const [minutes, setMinutes] = useState(10)
   const [hydrated, setHydrated] = useState(false)
   const [history, setHistory] = useState<NotificationRecord[]>([])
+  const [prefs, setPrefs] = useState<AlertPreferences>({ krEnabled: true, usEnabled: false, premarketEnabled: true })
 
   // 모달 열릴 때마다 현재 저장값 hydrate
   useEffect(() => {
     if (!visible) return
     void (async () => {
-      const [p, a, b, c, h] = await Promise.all([
+      const [p, a, b, c, h, sp] = await Promise.all([
         getPushAlertsEnabled(),
         getKrOpenEnabled(),
         getUsOpenEnabled(),
         getMinutesBefore(),
         getNotificationHistory(),
+        authToken ? getAlertPreferences(authToken) : Promise.resolve(prefs),
       ])
       setPushOn(p)
       setKrOn(a)
       setUsOn(b)
       setMinutes(c)
       setHistory(h)
+      setPrefs(sp)
       setHydrated(true)
     })()
   }, [visible])
+
+  const updatePref = async (patch: Partial<AlertPreferences>) => {
+    const next = { ...prefs, ...patch }
+    setPrefs(next)
+    if (authToken) await updateAlertPreferences(authToken, next)
+  }
 
   const handleClearHistory = async () => {
     await clearNotificationHistory()
@@ -88,7 +98,7 @@ export function ReminderSettingsModal({ visible, authToken, onClose }: Props) {
               장 시작은 로컬 알림, 급등락은 서버 푸시로 보내준다.
             </Text>
 
-            {/* ── 급등락 푸시 ── */}
+            {/* ── 급등락 푸시 (마스터 토글) ── */}
             <View style={[styles.summaryRow, { paddingHorizontal: 0 }]}>
               <View style={styles.metricLeft}>
                 <Text style={styles.metricName}>📈 관심종목 급등락 알림</Text>
@@ -101,7 +111,46 @@ export function ReminderSettingsModal({ visible, authToken, onClose }: Props) {
               />
             </View>
 
-            {/* ── 한국장 ── */}
+            {/* ── 한국장 watch 알림 (server) ── */}
+            <View style={[styles.summaryRow, { paddingHorizontal: 0 }]}>
+              <View style={styles.metricLeft}>
+                <Text style={styles.metricName}>🇰🇷 한국장 watch 알림</Text>
+                <Text style={styles.metricState}>09:00~15:30 KST, 거래일에만</Text>
+              </View>
+              <Switch
+                value={prefs.krEnabled}
+                onValueChange={(v) => void updatePref({ krEnabled: v })}
+                disabled={!hydrated || !authToken}
+              />
+            </View>
+
+            {/* ── 미국장 watch 알림 (server) ── */}
+            <View style={[styles.summaryRow, { paddingHorizontal: 0 }]}>
+              <View style={styles.metricLeft}>
+                <Text style={styles.metricName}>🇺🇸 미국장 watch 알림</Text>
+                <Text style={styles.metricState}>22:30~05:00 KST, 거래일에만 (디폴트 OFF)</Text>
+              </View>
+              <Switch
+                value={prefs.usEnabled}
+                onValueChange={(v) => void updatePref({ usEnabled: v })}
+                disabled={!hydrated || !authToken}
+              />
+            </View>
+
+            {/* ── 프리마켓 종합 알림 ── */}
+            <View style={[styles.summaryRow, { paddingHorizontal: 0 }]}>
+              <View style={styles.metricLeft}>
+                <Text style={styles.metricName}>🌅 프리마켓 종합 알림</Text>
+                <Text style={styles.metricState}>08:00, 08:30 KST · 관심·보유·주요 종목 요약</Text>
+              </View>
+              <Switch
+                value={prefs.premarketEnabled}
+                onValueChange={(v) => void updatePref({ premarketEnabled: v })}
+                disabled={!hydrated || !authToken}
+              />
+            </View>
+
+            {/* ── 한국장 시작 (local) ── */}
             <View style={[styles.summaryRow, { paddingHorizontal: 0 }]}>
               <View style={styles.metricLeft}>
                 <Text style={styles.metricName}>🇰🇷 한국장 시작</Text>
