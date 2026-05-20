@@ -8,7 +8,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
  * 시장 시작 알림 — baby-log 패턴(로컬 알림)으로 구현.
  *
  * - 백엔드 푸시 인프라 없이 디바이스 자체에 매주 평일 반복 예약.
- * - KR 정규장 09:00 KST, US 정규장 평균 KST 23:30 (서머타임은 평균값으로 단순화).
+ * - KR 정규장 09:00 KST. US 정규장은 서머타임(EDT) 22:30 / 표준시(EST) 23:30 KST 로 자동 분기.
  * - 사용자가 설정한 "분 전"만큼 앞서 알림.
  * - 주말 제외: WEEKLY 트리거 × 평일 5개로 분리 등록 (DAILY 쓰면 토/일도 울려서 X).
  *   (한국/미국 공휴일은 단말 로컬에서 모르니 그건 그냥 울림 — 추후 캘린더 붙이면 개선.)
@@ -36,8 +36,23 @@ const LEGACY_DAILY_IDS = [KR_OPEN_ID, US_OPEN_ID] as const
 const DEFAULT_MINUTES_BEFORE = 10
 const KR_OPEN_HOUR_KST = 9     // 09:00 KST
 const KR_OPEN_MINUTE   = 0
-const US_OPEN_HOUR_KST = 23    // 23:30 KST (EST/EDT 평균)
 const US_OPEN_MINUTE   = 30
+
+/**
+ * 미국 동부가 서머타임(EDT)인지 판정.
+ * 미국장 09:30 ET → EDT(3~11월) 22:30 KST / EST(겨울) 23:30 KST.
+ * Intl 미지원 환경에서는 EST(23시)로 안전하게 fallback.
+ */
+function isUsEasternDst(date: Date = new Date()): boolean {
+  try {
+    const tz = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/New_York', timeZoneName: 'short',
+    }).formatToParts(date).find((p) => p.type === 'timeZoneName')?.value
+    return tz === 'EDT'
+  } catch {
+    return false
+  }
+}
 
 // 포그라운드에서도 알림이 보이도록 핸들러 설정 (모듈 로드 시 1회)
 // 웹은 expo-notifications 네이티브 바인딩이 없어서 setNotificationHandler 가 throw.
@@ -177,14 +192,18 @@ export async function scheduleUsOpenReminder() {
   const ok = await ensurePermission()
   if (!ok) return
   const minutesBefore = await getMinutesBefore()
-  let hour   = US_OPEN_HOUR_KST
+  // 미국장 09:30 ET — 서머타임(EDT)이면 22:30 KST, 아니면 23:30 KST.
+  const dst = isUsEasternDst()
+  const openHourKst = dst ? 22 : 23
+  const openLabel = dst ? '22:30' : '23:30'
+  let hour   = openHourKst
   let minute = US_OPEN_MINUTE - minutesBefore
   if (minute < 0) { hour -= 1; minute = clampMinute(minute) }
   await scheduleWeekdays({
     baseIdentifier: US_OPEN_ID,
     hour, minute,
     title: '🇺🇸 미국장 곧 시작',
-    body:  `미국장이 ${minutesBefore}분 뒤(KST 23:30 기준)에 열려. 단타 픽 확인해봐!`,
+    body:  `미국장이 ${minutesBefore}분 뒤(KST ${openLabel} 기준)에 열려. 단타 픽 확인해봐!`,
     channelId: 'market-open',
   })
 }

@@ -165,7 +165,7 @@ export function ReminderSettingsModal({ visible, authToken, onClose }: Props) {
             <View style={[styles.summaryRow, { paddingHorizontal: 0 }]}>
               <View style={styles.metricLeft}>
                 <Text style={styles.metricName}>🇺🇸 미국장 시작</Text>
-                <Text style={styles.metricState}>매일 23:30 KST (서머타임 평균)</Text>
+                <Text style={styles.metricState}>평일 22:30/23:30 KST (서머타임 자동)</Text>
               </View>
               <Switch value={usOn} onValueChange={(v) => void handleUs(v)} disabled={!hydrated} />
             </View>
