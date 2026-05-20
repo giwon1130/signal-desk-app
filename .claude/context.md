@@ -39,6 +39,11 @@ ASC TestFlight 페이지: https://appstoreconnect.apple.com/apps/6770443767/test
 
 ## 빌드 / 제출 명령
 
+> **빌드 정책 (2026-05-20)**: 커밋마다 바로 빌드하지 말 것. 코드 변경·커밋·push 는 자유롭게,
+> **EAS 빌드는 작업 묶음이 끝난 뒤 사용자에게 물어보고 승인받은 다음** 한 번에 모아서 실행한다.
+> EAS 빌드는 크레딧 차감(iOS medium $2/회). Claude 가 자동으로 빌드 트리거 금지.
+> 상세: 메모리 `feedback_build_batching`, 크레딧 잔액은 `reference_app_build_commands`.
+
 ```bash
 # node_modules 없으면 먼저
 npm install

@@ -89,21 +89,19 @@ export function TodayTab({
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       contentContainerStyle={[styles.content, isWeb && styles.contentWeb]}
     >
-      {/* ── 거래일 상태 배너 (휴장 시 강조) ── */}
-      {tradingDay ? (
+      {/* ── 거래일 상태 배너 — 휴장/주말/마감일에만 노출 (장 열린 날은 정보가치 X) ── */}
+      {tradingDay && marketClosedToday ? (
         <View style={[
           styles.tradingDayBanner,
           isWeb && styles.cardFull,
-          marketClosedToday && {
+          {
             backgroundColor: tradingDay.isWeekend ? '#fef3c7' : '#fee2e2',
             borderColor: tradingDay.isWeekend ? '#fcd34d' : '#fecaca',
           },
         ]}>
           <Text style={styles.tradingDayBannerHeadline}>{tradingDay.headline}</Text>
           <Text style={styles.tradingDayBannerAdvice}>{tradingDay.advice}</Text>
-          {marketClosedToday ? (
-            <Text style={styles.tradingDayBannerNext}>다음 거래일: {tradingDay.nextTradingDay}</Text>
-          ) : null}
+          <Text style={styles.tradingDayBannerNext}>다음 거래일: {tradingDay.nextTradingDay}</Text>
         </View>
       ) : null}
 
