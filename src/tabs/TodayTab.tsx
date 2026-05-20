@@ -95,8 +95,8 @@ export function TodayTab({
           styles.tradingDayBanner,
           isWeb && styles.cardFull,
           {
-            backgroundColor: tradingDay.isWeekend ? '#fef3c7' : '#fee2e2',
-            borderColor: tradingDay.isWeekend ? '#fcd34d' : '#fecaca',
+            backgroundColor: tradingDay.isWeekend ? palette.orangeSoft : palette.redSoft,
+            borderColor: tradingDay.isWeekend ? palette.orange : palette.red,
           },
         ]}>
           <Text style={styles.tradingDayBannerHeadline}>{tradingDay.headline}</Text>
