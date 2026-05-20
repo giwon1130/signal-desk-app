@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { API_BASE_URL, fetchDailyFortune, fetchTopMovers, loadAllData } from '../api'
+import { fetchAiPicks, fetchHiddenSignals } from '../api/ai'
 import { fetchRecentDisclosures } from '../api/disclosures'
 import { fetchUpcomingEvents } from '../api/events'
 import { fetchMarketInsight } from '../api/insights'
@@ -8,11 +9,13 @@ import { fetchAlertHistory } from '../api/pushDevice'
 import { formatSyncStamp } from '../utils'
 import { hapticLight } from '../utils/haptics'
 import type {
+  AiPicksData,
   AiRecommendationData,
   AlertHistoryItem,
   DailyFortune,
   DisclosureItem,
   HealthResponse,
+  HiddenSignalsData,
   MarketEvent,
   MarketInsightData,
   MarketSectionsData,
@@ -36,6 +39,8 @@ export function useMarketSnapshot(authToken: string | null, enabled: boolean) {
   const [marketInsight, setMarketInsight] = useState<MarketInsightData | null>(null)
   const [upcomingEvents, setUpcomingEvents] = useState<MarketEvent[]>([])
   const [disclosures, setDisclosures] = useState<DisclosureItem[]>([])
+  const [aiPicks, setAiPicks] = useState<AiPicksData | null>(null)
+  const [hiddenSignals, setHiddenSignals] = useState<HiddenSignalsData | null>(null)
   const [loading, setLoading] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState('')
@@ -56,7 +61,9 @@ export function useMarketSnapshot(authToken: string | null, enabled: boolean) {
       if (authToken) {
         void fetchAlertHistory(authToken, 10).then(setAlertHistory)
         void fetchRecentDisclosures(authToken, 30).then(setDisclosures)
+        void fetchHiddenSignals(authToken).then(setHiddenSignals)
       }
+      void fetchAiPicks().then(setAiPicks)
       void fetchDailyFortune().then(setFortune)
       void fetchTopMovers(10).then(setTopMovers)
       void fetchLatestMediaSummary().then(setMediaSummary)
@@ -93,6 +100,8 @@ export function useMarketSnapshot(authToken: string | null, enabled: boolean) {
     marketInsight,
     upcomingEvents,
     disclosures,
+    aiPicks,
+    hiddenSignals,
     alertHistory,
     apiHealth,
     lastSyncedAt,

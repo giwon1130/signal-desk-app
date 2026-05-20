@@ -1,51 +1,21 @@
-import { useMemo } from 'react'
 import { Pressable, Text, View } from 'react-native'
-import { Bell, Newspaper, TrendingDown, TrendingUp } from 'lucide-react-native'
+import { Bell, Building2, FileText, TrendingDown, TrendingUp, Users } from 'lucide-react-native'
 import type { Palette } from '../../theme'
-import type { RecommendationExecutionLog, WatchItem } from '../../types'
-import { formatSignedRate } from '../../utils'
+import type { HiddenSignal, SignalTrigger } from '../../types'
 import { hapticLight } from '../../utils/haptics'
 import { Card } from './Card'
 
 type Props = {
-  logs: RecommendationExecutionLog[]
-  watchlist: WatchItem[]
+  signals: HiddenSignal[]
   palette: Palette
   onOpenDetail: (market: string, ticker: string, name?: string) => void
 }
 
 /**
- * 사용자의 보유·관심 종목에 대한 AI 시그널.
- *
- * 우선순위:
- *   1) 보유 종목 (HELD)
- *   2) 관심 종목 (WATCHED + watchSet)
- *   3) confidence 높은 순
- *   4) RecommendationExecutionLog의 신선도(date)
- *
- * 데이터가 풍부한 시그널 우선: realizedReturnRate(검증) > confidence(예측) > newsTitle(근거).
+ * 숨은 시그널 — 보유/관심 종목에 잡힌 공시·수급·급등락 실데이터.
+ * 백엔드(HiddenSignalService)가 트리거 많은 순으로 정렬해 내려준다.
  */
-export function HiddenSignals({ logs, watchlist, palette, onOpenDetail }: Props) {
-  const signals = useMemo(() => {
-    const watchSet = new Set(watchlist.map((w) => `${w.market}:${w.ticker}`))
-    const matched = logs.filter((l) =>
-      l.userStatus === 'HELD'
-      || l.userStatus === 'WATCHED'
-      || watchSet.has(`${l.market}:${l.ticker}`),
-    )
-    // 정렬: 보유 → 관심 → confidence ↓ → date ↓
-    return matched.sort((a, b) => {
-      const heldScore = (u?: string) => u === 'HELD' ? 0 : u === 'WATCHED' ? 1 : 2
-      const sa = heldScore(a.userStatus)
-      const sb = heldScore(b.userStatus)
-      if (sa !== sb) return sa - sb
-      const ca = a.confidence ?? 0
-      const cb = b.confidence ?? 0
-      if (ca !== cb) return cb - ca
-      return (b.date ?? '').localeCompare(a.date ?? '')
-    }).slice(0, 6)
-  }, [logs, watchlist])
-
+export function HiddenSignals({ signals, palette, onOpenDetail }: Props) {
   return (
     <Card
       palette={palette}
@@ -60,18 +30,13 @@ export function HiddenSignals({ logs, watchlist, palette, onOpenDetail }: Props)
             주목할 시그널 없음
           </Text>
           <Text style={{ color: palette.inkFaint, fontSize: 11, textAlign: 'center', paddingHorizontal: 20 }}>
-            보유·관심 종목에 AI 추천이 잡히면 여기 떠.{'\n'}종목 상세에서 관심 등록부터 시작해봐.
+            보유·관심 종목에 공시·수급·급등락이 잡히면 여기 떠.{'\n'}종목 상세에서 관심 등록부터 시작해봐.
           </Text>
         </View>
       ) : (
-        <View style={{ gap: 4 }}>
-          {signals.map((l, i) => (
-            <SignalRow
-              key={`${l.date}-${l.market}-${l.ticker}-${i}`}
-              log={l}
-              palette={palette}
-              onOpenDetail={onOpenDetail}
-            />
+        <View style={{ gap: 6 }}>
+          {signals.slice(0, 8).map((s) => (
+            <SignalRow key={`${s.market}-${s.ticker}`} signal={s} palette={palette} onOpenDetail={onOpenDetail} />
           ))}
         </View>
       )}
@@ -80,93 +45,77 @@ export function HiddenSignals({ logs, watchlist, palette, onOpenDetail }: Props)
 }
 
 function SignalRow({
-  log, palette, onOpenDetail,
+  signal, palette, onOpenDetail,
 }: {
-  log: RecommendationExecutionLog
+  signal: HiddenSignal
   palette: Palette
   onOpenDetail: (m: string, t: string, n?: string) => void
 }) {
-  const exp = log.expectedReturnRate
-  const realized = log.realizedReturnRate
-  // 표시할 수익률: realized 있으면 그것 (검증 완료), 없으면 expected (예측)
-  const showRate = realized ?? exp
-  const showRateLabel = realized != null ? '실현' : 'AI 기대'
-  const isUp = showRate == null || showRate >= 0
-
-  const statusColor =
-    log.userStatus === 'HELD' ? palette.up :
-    log.userStatus === 'WATCHED' ? palette.blue : palette.inkMuted
-  const statusLabel =
-    log.userStatus === 'HELD' ? '보유' :
-    log.userStatus === 'WATCHED' ? '관심' : 'AI 추천'
+  // 공시 제목 등 부가 설명은 트리거 중 detail 이 있는 첫 항목에서.
+  const detail = signal.triggers.find((t) => t.detail)?.detail
 
   return (
     <Pressable
-      onPress={() => { void hapticLight(); onOpenDetail(log.market, log.ticker, log.name) }}
+      onPress={() => { void hapticLight(); onOpenDetail(signal.market, signal.ticker, signal.name) }}
       style={({ pressed }) => ({
-        flexDirection: 'row', alignItems: 'center', gap: 8,
-        paddingHorizontal: 6, paddingVertical: 8, borderRadius: 8,
+        gap: 6,
+        paddingHorizontal: 8, paddingVertical: 9, borderRadius: 8,
         backgroundColor: pressed ? palette.surfaceAlt : palette.bg,
         borderWidth: 1, borderColor: palette.border,
       })}
     >
-      {isUp
-        ? <TrendingUp size={13} color={palette.up} strokeWidth={2.5} />
-        : <TrendingDown size={13} color={palette.down} strokeWidth={2.5} />}
-      <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-          <Text
-            numberOfLines={1}
-            ellipsizeMode="tail"
-            style={{ color: palette.ink, fontSize: 13, fontWeight: '800', flex: 1 }}
-          >
-            {log.name}
-          </Text>
-          <View style={{ backgroundColor: palette.surfaceAlt, borderRadius: 4, paddingHorizontal: 5, paddingVertical: 1 }}>
-            <Text style={{ color: statusColor, fontSize: 9, fontWeight: '800' }}>{statusLabel}</Text>
-          </View>
-          {log.confidence != null ? (
-            <View style={{ backgroundColor: palette.purple + '22', borderRadius: 4, paddingHorizontal: 5, paddingVertical: 1 }}>
-              <Text style={{ color: palette.purple, fontSize: 9, fontWeight: '800' }}>
-                {Math.round(log.confidence * 100)}%
-              </Text>
-            </View>
-          ) : null}
-        </View>
-        {log.rationale ? (
-          <Text numberOfLines={2} ellipsizeMode="tail" style={{ color: palette.inkMuted, fontSize: 11, lineHeight: 15 }}>
-            {log.rationale}
-          </Text>
-        ) : null}
-        {log.newsTitle ? (
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-            <Newspaper size={9} color={palette.inkFaint} strokeWidth={2.5} />
-            <Text
-              numberOfLines={1}
-              ellipsizeMode="tail"
-              style={{ color: palette.inkFaint, fontSize: 10, fontStyle: 'italic', flex: 1 }}
-            >
-              {log.newsTitle}
-            </Text>
-          </View>
-        ) : null}
-        <Text style={{ color: palette.inkFaint, fontSize: 10, fontWeight: '600' }}>
-          {log.market} · {log.ticker}
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+        <Text
+          numberOfLines={1}
+          ellipsizeMode="tail"
+          style={{ color: palette.ink, fontSize: 13, fontWeight: '800', flex: 1 }}
+        >
+          {signal.name}
+        </Text>
+        <Text style={{ color: palette.inkFaint, fontSize: 10, fontWeight: '700' }}>
+          {signal.market} · {signal.ticker}
         </Text>
       </View>
-      {showRate != null ? (
-        <View style={{ alignItems: 'flex-end', gap: 1 }}>
-          <Text style={{
-            color: showRate >= 0 ? palette.up : palette.down,
-            fontSize: 12, fontWeight: '800', fontVariant: ['tabular-nums'],
-          }}>
-            {formatSignedRate(showRate)}
-          </Text>
-          <Text style={{ color: palette.inkFaint, fontSize: 8, fontWeight: '700', letterSpacing: 0.3 }}>
-            {showRateLabel}
-          </Text>
-        </View>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4 }}>
+        {signal.triggers.map((t, i) => (
+          <TriggerChip key={i} trigger={t} palette={palette} />
+        ))}
+      </View>
+      {detail ? (
+        <Text numberOfLines={1} ellipsizeMode="tail" style={{ color: palette.inkMuted, fontSize: 10, fontStyle: 'italic' }}>
+          {detail}
+        </Text>
       ) : null}
     </Pressable>
   )
+}
+
+function TriggerChip({ trigger, palette }: { trigger: SignalTrigger; palette: Palette }) {
+  const { color, bg, Icon } = triggerStyle(trigger.type, palette)
+  return (
+    <View style={{
+      flexDirection: 'row', alignItems: 'center', gap: 3,
+      backgroundColor: bg, borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2,
+    }}>
+      <Icon size={9} color={color} strokeWidth={2.5} />
+      <Text style={{ color, fontSize: 9, fontWeight: '800' }}>{trigger.label}</Text>
+    </View>
+  )
+}
+
+function triggerStyle(type: string, palette: Palette) {
+  switch (type) {
+    case 'DISCLOSURE':
+      return { color: palette.blue, bg: palette.blueSoft, Icon: FileText }
+    case 'FOREIGN_BUY':
+      return { color: palette.teal, bg: palette.tealSoft, Icon: Users }
+    case 'INSTITUTION_BUY':
+      return { color: palette.purple, bg: palette.purple + '22', Icon: Building2 }
+    case 'SURGE':
+      return { color: palette.up, bg: palette.upSoft, Icon: TrendingUp }
+    case 'PLUNGE':
+      return { color: palette.down, bg: palette.downSoft, Icon: TrendingDown }
+    default:
+      return { color: palette.inkMuted, bg: palette.surfaceAlt, Icon: Bell }
+  }
 }

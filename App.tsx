@@ -71,7 +71,7 @@ function AppShell() {
   const market = useMarketSnapshot(user?.token ?? null, !!user)
   const {
     summary, sections, aiRecommendation, watchlist, portfolio, fortune, topMovers,
-    mediaSummary, marketInsight, upcomingEvents, disclosures, alertHistory, apiHealth, lastSyncedAt, loading, refreshing, error, refresh,
+    mediaSummary, marketInsight, upcomingEvents, disclosures, aiPicks, hiddenSignals, alertHistory, apiHealth, lastSyncedAt, loading, refreshing, error, refresh,
     fetchData, setLoading, setWatchlist, setPortfolio,
   } = market
   const search = useStockSearch()
@@ -370,7 +370,8 @@ function AppShell() {
           />
         ) : (
           <AITab
-            aiRecommendation={aiRecommendation}
+            aiPicks={aiPicks}
+            hiddenSignals={hiddenSignals}
             summary={summary}
             watchlist={watchlist}
             marketInsight={marketInsight}

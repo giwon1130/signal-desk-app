@@ -1,28 +1,28 @@
 /**
- * AITab — 오늘의 플레이북 서브탭.
- * BriefingHero + 오늘 해야할 것 + 오늘의 AI 픽.
+ * AITab — 마켓 인사이트 + 오늘 해야할 것 + 오늘의 AI 픽.
+ * AI 픽은 Gemini 가 급등락/수급 universe 안에서 고른 단타 후보.
  */
 import React, { useMemo, useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { AlertTriangle, Check, Plus, Sparkles, Target, TrendingDown, TrendingUp } from 'lucide-react-native'
 import type { Palette } from '../../theme'
 import type {
-  AiRecommendationData,
+  AiPick,
+  AiPicksData,
   BriefingAction,
   MarketInsightData,
   MarketSummaryData,
-  RecommendationExecutionLog,
   StockSearchResult,
   WatchItem,
 } from '../../types'
-import { formatPrice, formatSignedRate } from '../../utils'
+import { formatSignedRate } from '../../utils'
 import { hapticLight } from '../../utils/haptics'
 import { Card } from './Card'
 
 export function Playbook({
-  aiRecommendation, summary, watchlist, marketInsight, palette, onOpenDetail, onQuickAddWatch,
+  aiPicks, summary, watchlist, marketInsight, palette, onOpenDetail, onQuickAddWatch,
 }: {
-  aiRecommendation: AiRecommendationData | null
+  aiPicks: AiPicksData | null
   summary: MarketSummaryData | null
   watchlist: WatchItem[]
   marketInsight: MarketInsightData | null
@@ -32,17 +32,11 @@ export function Playbook({
 }) {
   const briefing = summary?.briefing
   const actionItems: BriefingAction[] = briefing?.actionItems ?? []
-  const todayPicks = useMemo(() => {
-    const logs = aiRecommendation?.executionLogs ?? []
-    return logs.filter((l) => l.stage?.toUpperCase().includes('RECOMMEND')).slice(0, 6)
-  }, [aiRecommendation])
+  const picks = aiPicks?.picks ?? []
   const watchSet = useMemo(
     () => new Set(watchlist.map((w) => `${w.market}:${w.ticker}`)),
     [watchlist],
   )
-  // 휴장 모드: 양쪽 시장 다 닫혔을 때 Pick UI 톤 다운.
-  const td = summary?.tradingDayStatus
-  const marketClosed = !!td && !td.krOpen && !td.usOpen
 
   return (
     <View style={{ gap: 14 }}>
@@ -83,44 +77,32 @@ export function Playbook({
         palette={palette}
         title="오늘의 AI 픽"
         icon={<Sparkles size={13} color={palette.purple} strokeWidth={2.5} />}
-        meta={todayPicks.length > 0 ? `${todayPicks.length}건` : undefined}
+        meta={picks.length > 0 ? `${picks.length}건` : undefined}
       >
-        {aiRecommendation?.summary ? (
+        {aiPicks?.summary ? (
           <Text style={{ color: palette.inkMuted, fontSize: 12, marginBottom: 10, lineHeight: 16 }}>
-            {aiRecommendation.summary}
+            {aiPicks.summary}
           </Text>
         ) : null}
-        {marketClosed ? (
-          <View style={{
-            backgroundColor: palette.surfaceAlt,
-            borderRadius: 8, padding: 10, marginBottom: 10,
-            borderLeftWidth: 3, borderLeftColor: palette.orange,
-          }}>
-            <Text style={{ color: palette.inkSub, fontSize: 11, fontWeight: '700', lineHeight: 16 }}>
-              지금 휴장 — 픽은 다음 거래일 후보 점검용. 진입가는 다음 개장가에서 다시 잡아.
-            </Text>
-          </View>
-        ) : null}
-        {todayPicks.length === 0 ? (
+        {picks.length === 0 ? (
           <View style={{ paddingVertical: 18, alignItems: 'center', gap: 4 }}>
             <Text style={{ color: palette.inkMuted, fontSize: 12, fontWeight: '600' }}>AI 추천 준비 중</Text>
             <Text style={{ color: palette.inkFaint, fontSize: 11 }}>오늘 픽이 산출되면 여기 떠</Text>
           </View>
         ) : (
           <View style={{ gap: 8 }}>
-            {todayPicks.map((log) => (
+            {picks.map((pick) => (
               <PickCard
-                key={`${log.date}-${log.market}-${log.ticker}`}
-                log={log}
+                key={`${pick.market}-${pick.ticker}`}
+                pick={pick}
                 palette={palette}
-                marketClosed={marketClosed}
-                inWatch={watchSet.has(`${log.market}:${log.ticker}`)}
+                inWatch={watchSet.has(`${pick.market}:${pick.ticker}`)}
                 onOpenDetail={onOpenDetail}
                 onQuickAdd={async () => {
                   await onQuickAddWatch({
-                    ticker: log.ticker,
-                    name: log.name,
-                    market: log.market,
+                    ticker: pick.ticker,
+                    name: pick.name,
+                    market: pick.market,
                     sector: '',
                     price: 0,
                     changeRate: 0,
@@ -220,20 +202,19 @@ function ActionItemCard({
 }
 
 function PickCard({
-  log, palette, inWatch, marketClosed, onOpenDetail, onQuickAdd,
+  pick, palette, inWatch, onOpenDetail, onQuickAdd,
 }: {
-  log: RecommendationExecutionLog
+  pick: AiPick
   palette: Palette
   inWatch: boolean
-  marketClosed?: boolean
   onOpenDetail: (m: string, t: string, n?: string) => void
   onQuickAdd: () => Promise<void>
 }) {
   const [adding, setAdding] = useState(false)
-  const exp = log.expectedReturnRate
+  const exp = pick.expectedReturnRate
   return (
     <Pressable
-      onPress={() => { void hapticLight(); onOpenDetail(log.market, log.ticker, log.name) }}
+      onPress={() => { void hapticLight(); onOpenDetail(pick.market, pick.ticker, pick.name) }}
       style={({ pressed }) => ({
         backgroundColor: pressed ? palette.surfaceAlt : palette.bg,
         borderRadius: 10,
@@ -244,44 +225,33 @@ function PickCard({
       })}
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-        <Text style={{ color: palette.inkFaint, fontSize: 9, fontWeight: '800', letterSpacing: 0.6 }}>{log.market}</Text>
-        <Text style={{ color: palette.inkMuted, fontSize: 11, fontWeight: '700' }}>{log.ticker}</Text>
-        {marketClosed ? (
-          <View style={{ backgroundColor: palette.orangeSoft, borderRadius: 4, paddingHorizontal: 5, paddingVertical: 1 }}>
-            <Text style={{ color: palette.orange, fontSize: 9, fontWeight: '800' }}>시나리오</Text>
-          </View>
-        ) : null}
+        <Text style={{ color: palette.inkFaint, fontSize: 9, fontWeight: '800', letterSpacing: 0.6 }}>{pick.market}</Text>
+        <Text style={{ color: palette.inkMuted, fontSize: 11, fontWeight: '700' }}>{pick.ticker}</Text>
         <View style={{ flex: 1 }} />
-        {log.userStatus ? (
-          <View style={{ backgroundColor: palette.blueSoft, borderRadius: 4, paddingHorizontal: 5, paddingVertical: 1 }}>
-            <Text style={{ color: palette.blue, fontSize: 9, fontWeight: '800' }}>{log.userStatus}</Text>
-          </View>
-        ) : null}
-      </View>
-      <Text numberOfLines={1} style={{ color: palette.ink, fontSize: 14, fontWeight: '800' }}>
-        {log.name}
-      </Text>
-      <Text numberOfLines={2} style={{ color: palette.inkMuted, fontSize: 11, lineHeight: 15 }}>
-        {log.rationale || '—'}
-      </Text>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        {log.confidence != null ? (
-          <Text style={{ color: palette.purple, fontSize: 10, fontWeight: '800' }}>
-            확신 {Math.round(log.confidence * 100)}%
-          </Text>
-        ) : null}
+        <Text style={{ color: palette.purple, fontSize: 10, fontWeight: '800' }}>
+          확신 {pick.confidence}%
+        </Text>
         {exp != null ? (
           <Text style={{ color: simpleDelta(exp, palette), fontSize: 10, fontWeight: '800' }}>
             기대 {formatSignedRate(exp)}
           </Text>
         ) : null}
-        <View style={{ flex: 1 }} />
       </View>
-      {log.entryPrice != null && !marketClosed ? (
-        <View style={{ flexDirection: 'row', gap: 14, paddingTop: 6, borderTopWidth: 1, borderTopColor: palette.border }}>
-          <PriceTag label="진입" value={log.entryPrice} market={log.market} color={palette.inkSub} palette={palette} />
-          {log.stopLoss != null ? <PriceTag label="손절" value={log.stopLoss} market={log.market} color={palette.down} palette={palette} /> : null}
-          {log.takeProfit != null ? <PriceTag label="목표" value={log.takeProfit} market={log.market} color={palette.up} palette={palette} /> : null}
+      <Text numberOfLines={1} style={{ color: palette.ink, fontSize: 14, fontWeight: '800' }}>
+        {pick.name}
+      </Text>
+      <Text numberOfLines={3} style={{ color: palette.inkMuted, fontSize: 11, lineHeight: 15 }}>
+        {pick.reason || '—'}
+      </Text>
+      {pick.riskNote ? (
+        <View style={{
+          flexDirection: 'row', alignItems: 'center', gap: 4,
+          backgroundColor: palette.downSoft, borderRadius: 6, paddingHorizontal: 7, paddingVertical: 4,
+        }}>
+          <AlertTriangle size={10} color={palette.down} strokeWidth={2.5} />
+          <Text style={{ color: palette.down, fontSize: 10, fontWeight: '700', flex: 1 }} numberOfLines={1}>
+            {pick.riskNote}
+          </Text>
         </View>
       ) : null}
       <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
@@ -312,17 +282,6 @@ function PickCard({
         )}
       </View>
     </Pressable>
-  )
-}
-
-function PriceTag({ label, value, market, color, palette }: { label: string; value: number; market?: string; color: string; palette: Palette }) {
-  return (
-    <View style={{ gap: 1 }}>
-      <Text style={{ color: palette.inkFaint, fontSize: 9, fontWeight: '800', letterSpacing: 0.4 }}>{label}</Text>
-      <Text style={{ color, fontSize: 12, fontWeight: '800', fontVariant: ['tabular-nums'] }}>
-        {formatPrice(value, market)}
-      </Text>
-    </View>
   )
 }
 

@@ -5,6 +5,40 @@ export type MarketInsightData = {
   keyPoints: string[]
 }
 
+export type AiPick = {
+  market: string
+  ticker: string
+  name: string
+  reason: string
+  expectedReturnRate: number | null
+  confidence: number
+  riskNote: string
+}
+
+export type AiPicksData = {
+  generatedAt: string
+  summary: string
+  picks: AiPick[]
+}
+
+export type SignalTrigger = {
+  type: 'DISCLOSURE' | 'FOREIGN_BUY' | 'INSTITUTION_BUY' | 'SURGE' | 'PLUNGE' | string
+  label: string
+  detail: string | null
+}
+
+export type HiddenSignal = {
+  market: string
+  ticker: string
+  name: string
+  triggers: SignalTrigger[]
+}
+
+export type HiddenSignalsData = {
+  generatedAt: string
+  signals: HiddenSignal[]
+}
+
 export type EventCategory = 'FOMC' | 'EARNINGS' | 'POLICY' | 'ECONOMIC_DATA' | 'HOLIDAY' | 'OTHER'
 export type EventImportance = 'HIGH' | 'MEDIUM' | 'LOW'
 
