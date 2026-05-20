@@ -172,7 +172,11 @@ function AppShell() {
     setDetailFallbackName('')
   }, [])
 
-  usePushDeepLink(handleOpenDetail)
+  const handleNavigateToday = useCallback(() => {
+    setActiveTab('today')
+  }, [])
+
+  usePushDeepLink(handleOpenDetail, handleNavigateToday)
 
   // detailKey → 표준 스냅샷. 검색결과/관심종목/보유 어디서든 만들 수 있음.
   const detailContext = useMemo<StockDetailContext | null>(() => {
