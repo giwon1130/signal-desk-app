@@ -295,6 +295,14 @@ export type TopMover = {
   changeRate: number
 }
 
+export type DisclosureItem = {
+  rceptNo: string
+  corpName: string
+  stockCode: string
+  reportNm: string
+  rceptDt: string
+}
+
 export type TopMoversBlock = {
   gainers: TopMover[]
   losers: TopMover[]

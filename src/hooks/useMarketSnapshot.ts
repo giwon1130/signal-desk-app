@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { API_BASE_URL, fetchDailyFortune, fetchTopMovers, loadAllData } from '../api'
+import { fetchRecentDisclosures } from '../api/disclosures'
 import { fetchUpcomingEvents } from '../api/events'
 import { fetchMarketInsight } from '../api/insights'
 import { fetchLatestMediaSummary } from '../api/media'
@@ -10,6 +11,7 @@ import type {
   AiRecommendationData,
   AlertHistoryItem,
   DailyFortune,
+  DisclosureItem,
   HealthResponse,
   MarketEvent,
   MarketInsightData,
@@ -33,6 +35,7 @@ export function useMarketSnapshot(authToken: string | null, enabled: boolean) {
   const [mediaSummary, setMediaSummary] = useState<MediaSummaryItem | null>(null)
   const [marketInsight, setMarketInsight] = useState<MarketInsightData | null>(null)
   const [upcomingEvents, setUpcomingEvents] = useState<MarketEvent[]>([])
+  const [disclosures, setDisclosures] = useState<DisclosureItem[]>([])
   const [loading, setLoading] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState('')
@@ -52,6 +55,7 @@ export function useMarketSnapshot(authToken: string | null, enabled: boolean) {
       setLastSyncedAt(formatSyncStamp(new Date()))
       if (authToken) {
         void fetchAlertHistory(authToken, 10).then(setAlertHistory)
+        void fetchRecentDisclosures(authToken, 30).then(setDisclosures)
       }
       void fetchDailyFortune().then(setFortune)
       void fetchTopMovers(10).then(setTopMovers)
@@ -88,6 +92,7 @@ export function useMarketSnapshot(authToken: string | null, enabled: boolean) {
     mediaSummary,
     marketInsight,
     upcomingEvents,
+    disclosures,
     alertHistory,
     apiHealth,
     lastSyncedAt,

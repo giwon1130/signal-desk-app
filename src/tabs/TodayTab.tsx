@@ -12,6 +12,7 @@ import type {
   AiRecommendationData,
   AlertHistoryItem,
   DailyFortune,
+  DisclosureItem,
   HoldingPosition,
   MarketEvent,
   MarketSummaryData,
@@ -24,6 +25,7 @@ import {
   getSessionPalette,
 } from '../utils'
 import { BriefingCard } from './today_parts/BriefingCard'
+import { DisclosureCard } from './today_parts/DisclosureCard'
 import { EventsCard } from './today_parts/EventsCard'
 import { FortuneCard } from './today_parts/FortuneCard'
 import { HoldingMonitor } from './today_parts/HoldingMonitor'
@@ -40,6 +42,7 @@ type Props = {
   fortune: DailyFortune | null
   mediaSummary: MediaSummaryItem | null
   upcomingEvents: MarketEvent[]
+  disclosures: DisclosureItem[]
   onOpenDetail: (market: string, ticker: string, name?: string) => void
   refreshing: boolean
   onRefresh: () => Promise<void>
@@ -53,6 +56,7 @@ export function TodayTab({
   fortune,
   mediaSummary,
   upcomingEvents,
+  disclosures,
   onOpenDetail,
   refreshing,
   onRefresh,
@@ -147,6 +151,9 @@ export function TodayTab({
       {positions.length > 0 ? (
         <HoldingMonitor monitorTargets={monitorTargets} marketClosedToday={marketClosedToday} />
       ) : null}
+
+      {/* ── 보유 종목 공시 (DART) ── */}
+      <DisclosureCard disclosures={disclosures} onOpenDetail={onOpenDetail} />
 
       {/* ── 오늘의 단타 픽 ── */}
       <PicksCard picks={picks} marketClosedToday={marketClosedToday} />
