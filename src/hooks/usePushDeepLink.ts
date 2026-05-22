@@ -9,6 +9,8 @@ type NotificationData = {
   direction?: string
   stockCode?: string
   rceptNo?: string
+  score?: number
+  level?: string
 }
 
 /**
@@ -16,6 +18,7 @@ type NotificationData = {
  *
  * - DISCLOSURE (DART 공시): stockCode → KR 종목 상세 모달
  * - MORNING_BRIEF (모닝 브리프): Today 탭 (최상단 Hero 카드에 브리프 노출)
+ * - COMPOSITE_RISK (합성 위험도): Market 탭 (종합 위험도 카드 노출)
  * - 가격/급등락 알림: market + ticker → 종목 상세 모달
  *
  * 트리거 경로:
@@ -26,6 +29,7 @@ type NotificationData = {
 export function usePushDeepLink(
   onOpenDetail: (market: string, ticker: string) => void,
   onNavigateToday: () => void,
+  onNavigateMarket: () => void,
 ) {
   useEffect(() => {
     // 웹 빌드에서는 getLastNotificationResponse 가 호출 즉시 예외를 던져서
@@ -45,6 +49,11 @@ export function usePushDeepLink(
         onNavigateToday()
         return
       }
+      // 합성 위험도 — Market 탭 (종합 위험도 카드)
+      if (data.type === 'COMPOSITE_RISK') {
+        onNavigateMarket()
+        return
+      }
       // 가격/급등락 등 종목 단위 알림
       const market = data.market
       const ticker = data.ticker
@@ -60,5 +69,5 @@ export function usePushDeepLink(
       handle(response.notification.request.content.data as NotificationData)
     })
     return () => sub.remove()
-  }, [onOpenDetail, onNavigateToday])
+  }, [onOpenDetail, onNavigateToday, onNavigateMarket])
 }

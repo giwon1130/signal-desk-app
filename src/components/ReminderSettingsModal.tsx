@@ -37,7 +37,9 @@ export function ReminderSettingsModal({ visible, authToken, onClose }: Props) {
   const [minutes, setMinutes] = useState(10)
   const [hydrated, setHydrated] = useState(false)
   const [history, setHistory] = useState<NotificationRecord[]>([])
-  const [prefs, setPrefs] = useState<AlertPreferences>({ krEnabled: true, usEnabled: false, premarketEnabled: true })
+  const [prefs, setPrefs] = useState<AlertPreferences>({
+    krEnabled: true, usEnabled: false, premarketEnabled: true, compositeRiskEnabled: true,
+  })
 
   // 모달 열릴 때마다 현재 저장값 hydrate
   useEffect(() => {
@@ -148,6 +150,19 @@ export function ReminderSettingsModal({ visible, authToken, onClose }: Props) {
               <Switch
                 value={prefs.premarketEnabled}
                 onValueChange={(v) => void updatePref({ premarketEnabled: v })}
+                disabled={!hydrated || !authToken}
+              />
+            </View>
+
+            {/* ── 합성 위험도 알림 (server) ── */}
+            <View style={[styles.summaryRow, { paddingHorizontal: 0 }]}>
+              <View style={styles.metricLeft}>
+                <Text style={styles.metricName}>⚠️ 시장 위험도 알림</Text>
+                <Text style={styles.metricState}>합성 위험도 8/10 이상일 때 · 08:32 KST</Text>
+              </View>
+              <Switch
+                value={prefs.compositeRiskEnabled}
+                onValueChange={(v) => void updatePref({ compositeRiskEnabled: v })}
                 disabled={!hydrated || !authToken}
               />
             </View>
