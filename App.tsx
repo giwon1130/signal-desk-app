@@ -32,6 +32,7 @@ import { AIWorkspace } from './src/web/AIWorkspace'
 import { StockDetailModal, type StockDetailContext } from './src/components/StockDetailModal'
 import { ReminderSettingsModal } from './src/components/ReminderSettingsModal'
 import { DailyGreetingModal } from './src/components/DailyGreetingModal'
+import { getFortuneGreetingShownDate, markFortuneGreetingShown } from './src/utils/fortuneGreeting'
 import { useMarketReminderBootstrap } from './src/hooks/useMarketReminder'
 import { usePushDeepLink } from './src/hooks/usePushDeepLink'
 import { useAuthSession } from './src/hooks/useAuthSession'
@@ -103,15 +104,21 @@ function AppShell() {
   // ── 알림 설정 모달 ──────
   const [reminderOpen, setReminderOpen] = useState(false)
 
-  // ── 오늘의 운세 팝업 (앱 전용, 로그인 후 fortune 로드 시 1회) ──
+  // ── 오늘의 운세 팝업 (앱 전용, 하루 1회) ──
   const [greetingOpen, setGreetingOpen] = useState(false)
   const greetingTriggered = useRef(false)
   useEffect(() => {
     if (Platform.OS === 'web') return
-    if (fortune && !greetingTriggered.current) {
-      greetingTriggered.current = true
-      setGreetingOpen(true)
-    }
+    if (!fortune || greetingTriggered.current) return
+    greetingTriggered.current = true
+    void (async () => {
+      // 같은 날 이미 띄웠으면 skip — 날짜가 바뀌어야 다시 노출.
+      const shownDate = await getFortuneGreetingShownDate()
+      if (shownDate !== fortune.date) {
+        setGreetingOpen(true)
+        await markFortuneGreetingShown(fortune.date)
+      }
+    })()
   }, [fortune])
 
   const confirmLogout = useCallback(() => {
@@ -129,13 +136,6 @@ function AppShell() {
     void hapticLight()
     setActiveTab(key)
   }, [activeTab])
-
-  const successRate = useMemo(() => {
-    const resultLogs = (aiRecommendation?.executionLogs ?? []).filter((item) => item.realizedReturnRate != null)
-    if (!resultLogs.length) return '-'
-    const successCount = resultLogs.filter((item) => (item.realizedReturnRate ?? 0) >= 0).length
-    return `${Math.round((successCount / resultLogs.length) * 100)}%`
-  }, [aiRecommendation?.executionLogs])
 
   const filteredWatchlist = useMemo(() => {
     const query = normalizeText(homeQuery)
@@ -287,7 +287,6 @@ function AppShell() {
 
       {!loading && !error && activeTab === 'home' ? (
         <HomeTab
-          watchlist={watchlist}
           portfolio={portfolio}
           refreshing={refreshing}
           onRefresh={refresh}
@@ -297,7 +296,6 @@ function AppShell() {
           filteredPortfolioPositions={filteredPortfolioPositions}
           topWatchlist={topWatchlist}
           topPortfolioPositions={topPortfolioPositions}
-          successRate={successRate}
           onOpenDetail={handleOpenDetail}
           onRemoveWatch={(id) => void handleDeleteFavorite(id)}
         />

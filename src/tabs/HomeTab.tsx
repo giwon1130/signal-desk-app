@@ -7,7 +7,6 @@ import type { HoldingPosition, PortfolioSummary, WatchItem } from '../types'
 import { formatPrice, formatSignedPrice, formatSignedRate } from '../utils'
 
 type Props = {
-  watchlist: WatchItem[]
   portfolio: PortfolioSummary | null
   refreshing: boolean
   onRefresh: () => Promise<void>
@@ -17,13 +16,11 @@ type Props = {
   filteredPortfolioPositions: HoldingPosition[]
   topWatchlist: WatchItem[]
   topPortfolioPositions: HoldingPosition[]
-  successRate: string
   onOpenDetail: (market: string, ticker: string, name?: string) => void
   onRemoveWatch: (id: string) => void
 }
 
 export function HomeTab({
-  watchlist,
   portfolio,
   refreshing,
   onRefresh,
@@ -33,7 +30,6 @@ export function HomeTab({
   filteredPortfolioPositions,
   topWatchlist,
   topPortfolioPositions,
-  successRate,
   onOpenDetail,
   onRemoveWatch,
 }: Props) {
@@ -70,27 +66,6 @@ export function HomeTab({
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       contentContainerStyle={[styles.content, isWeb && styles.contentWeb]}
     >
-      {/* ── 히어로 KPI (정보용 — 탭 안 됨) ── */}
-      <View style={[styles.heroMetricsRow, isWeb && styles.cardFull]}>
-        <View style={[styles.heroMetricCard, styles.heroMetricCardDark]}>
-          <Text style={[styles.heroMetricLabel, styles.heroMetricLabelOnDark]}>AI 성공률</Text>
-          <Text style={[styles.heroMetricValue, styles.heroMetricValueOnDark]}>{successRate}</Text>
-          <Text style={[styles.heroMetricFootnote, styles.heroMetricFootnoteOnDark]}>최근 추천 적중률</Text>
-        </View>
-        <View style={styles.heroMetricCard}>
-          <Text style={styles.heroMetricLabel}>관심종목</Text>
-          <Text style={styles.heroMetricValue}>{watchlist.length}</Text>
-          <Text style={styles.heroMetricFootnote}>추적 중인 종목 수</Text>
-        </View>
-        <View style={styles.heroMetricCard}>
-          <Text style={styles.heroMetricLabel}>실제 보유</Text>
-          <Text style={[styles.heroMetricValue, { color: (livePortfolio?.totalProfitRate ?? 0) >= 0 ? '#dc2626' : '#2563eb' }]}>
-            {livePortfolio ? formatSignedRate(livePortfolio.totalProfitRate) : '-'}
-          </Text>
-          <Text style={styles.heroMetricFootnote}>{portfolio?.positions.length ?? 0}개 보유 · 누적 손익</Text>
-        </View>
-      </View>
-
       {/* ── 포트폴리오 (실제 보유) 요약 — 실제 돈이 걸려있어서 최우선 ── */}
       <View style={styles.card}>
         <View style={styles.sectionHeaderRow}>
