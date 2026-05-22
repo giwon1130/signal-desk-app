@@ -32,6 +32,7 @@ import { AIWorkspace } from './src/web/AIWorkspace'
 import { StockDetailModal, type StockDetailContext } from './src/components/StockDetailModal'
 import { ReminderSettingsModal } from './src/components/ReminderSettingsModal'
 import { DailyGreetingModal } from './src/components/DailyGreetingModal'
+import { LoadingScreen } from './src/components/LoadingScreen'
 import { getFortuneGreetingShownDate, markFortuneGreetingShown } from './src/utils/fortuneGreeting'
 import { useMarketReminderBootstrap } from './src/hooks/useMarketReminder'
 import { usePushDeepLink } from './src/hooks/usePushDeepLink'
@@ -231,13 +232,8 @@ function AppShell() {
   // 탭 컨텐츠 — 웹/네이티브 셸에서 공유.
   const tabContent = (
     <>
-      {/* ── 로딩 ─────────────────────────────────────── */}
-      {loading ? (
-        <View style={styles.loadingWrap}>
-          <ActivityIndicator size="large" color={palette.blue} />
-          <Text style={styles.loadingText}>데이터 불러오는 중...</Text>
-        </View>
-      ) : null}
+      {/* ── 로딩 (투자 명언 로테이션) ─────────────────── */}
+      {loading ? <LoadingScreen /> : null}
 
       {/* ── 에러 ─────────────────────────────────────── */}
       {error ? (
