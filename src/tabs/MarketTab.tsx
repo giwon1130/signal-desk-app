@@ -73,6 +73,9 @@ export function MarketTab({
 
       <MarketSummaryMetrics metrics={summary?.marketSummary ?? []} />
 
+      {/* 합성 위험도 — 요약 지표와 함께 '시장 무드' 블록으로 묶음 */}
+      <CompositeRiskCard risk={summary?.compositeRisk ?? null} />
+
       {topMovers ? (
         <TopMoversSection topMovers={topMovers} kind="gainers" onOpenDetail={onOpenDetail} />
       ) : null}
@@ -80,9 +83,8 @@ export function MarketTab({
         <TopMoversSection topMovers={topMovers} kind="losers" onOpenDetail={onOpenDetail} />
       ) : null}
 
+      {/* 관심종목 알림 — 개인 정보라 시장 지표 다음, 맨 아래 */}
       <WatchAlertList alerts={summary?.watchAlerts ?? []} />
-
-      <CompositeRiskCard risk={summary?.compositeRisk ?? null} />
     </ScrollView>
   )
 }

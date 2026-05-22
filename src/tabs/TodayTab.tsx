@@ -1,6 +1,5 @@
 import { Platform, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native'
 import {
-  Activity,
   Bell,
   Clock,
   Newspaper,
@@ -20,8 +19,6 @@ import type {
 } from '../types'
 import {
   formatSignedRate,
-  getMarketStatusTone,
-  formatMarketStatus,
   getSessionPalette,
 } from '../utils'
 import { BriefingCard } from './today_parts/BriefingCard'
@@ -89,6 +86,22 @@ export function TodayTab({
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       contentContainerStyle={[styles.content, isWeb && styles.contentWeb]}
     >
+      {/* ── 장 세션 상태 — 한국/미국 per-market 컴팩트 칩 (최상단에 살짝 노출) ── */}
+      {summary?.marketSessions?.length ? (
+        <View style={[styles.todaySessionRow, isWeb && styles.cardFull]}>
+          {summary.marketSessions.map((session) => {
+            const tone = getSessionPalette(session.isOpen)
+            return (
+              <View key={session.market} style={[styles.todaySessionPill, { backgroundColor: tone.backgroundColor }]}>
+                <Clock size={11} color={tone.textColor} strokeWidth={2.5} />
+                <Text style={[styles.todaySessionLabel, { color: tone.textColor }]}>{session.label}</Text>
+                <Text style={[styles.todaySessionStatus, { color: tone.textColor }]}>{session.status}</Text>
+              </View>
+            )
+          })}
+        </View>
+      ) : null}
+
       {/* ── 거래일 상태 배너 — 휴장/주말/마감일에만 노출 (장 열린 날은 정보가치 X) ── */}
       {tradingDay && marketClosedToday ? (
         <View style={[
@@ -115,34 +128,6 @@ export function TodayTab({
             onOpenDetail(isKr ? 'KR' : 'US', t)
           }}
         />
-      ) : null}
-
-      {/* ── 마켓 상태 (한 줄 요약) ── */}
-      <View style={styles.todayHeroCard}>
-        <View style={styles.cardTitleRow}>
-          <Activity size={13} color={palette.blue} strokeWidth={2.5} />
-          <Text style={styles.cardEyebrow}>지금 시장</Text>
-        </View>
-        <Text style={[styles.todayHeroValue, { color: getMarketStatusTone(summary?.marketStatus) }]}>
-          {formatMarketStatus(summary?.marketStatus)}
-        </Text>
-        <Text style={styles.cardNote}>{summary?.summary ?? '-'}</Text>
-      </View>
-
-      {/* ── 장 세션 컴팩트 ── */}
-      {summary?.marketSessions?.length ? (
-        <View style={[styles.todaySessionRow, isWeb && styles.cardFull]}>
-          {summary.marketSessions.map((session) => {
-            const tone = getSessionPalette(session.isOpen)
-            return (
-              <View key={session.market} style={[styles.todaySessionPill, { backgroundColor: tone.backgroundColor }]}>
-                <Clock size={11} color={tone.textColor} strokeWidth={2.5} />
-                <Text style={[styles.todaySessionLabel, { color: tone.textColor }]}>{session.label}</Text>
-                <Text style={[styles.todaySessionStatus, { color: tone.textColor }]}>{session.status}</Text>
-              </View>
-            )
-          })}
-        </View>
       ) : null}
 
       {/* ── 보유 종목 모니터 (보유 있는 사용자 최우선) ── */}
