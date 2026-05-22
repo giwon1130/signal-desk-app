@@ -12,7 +12,7 @@ import type {
 import { useTheme, type Palette } from '../theme'
 import { webGrid } from './shared'
 import { SectorPerformanceWidget } from './widgets/SectorPerformanceWidget'
-import { AltSignalsWidget } from './widgets/AltSignalsWidget'
+import { CompositeRiskWidget } from './widgets/CompositeRiskWidget'
 import { TopMoversWidget } from './widgets/TopMoversWidget'
 import { AlertTimelineWidget } from './widgets/AlertTimelineWidget'
 import { WatchAlertsWidget } from './widgets/WatchAlertsWidget'
@@ -70,7 +70,7 @@ export function HomeDashboard(props: Props) {
         <WatchAlertsWidget summary={props.summary} palette={palette} onOpenDetail={props.onOpenDetail} />
       </View>
 
-      {/* Sector + AltSignals 행 */}
+      {/* Sector + 종합 위험도 행 */}
       <View style={[{ gap: 14 }, webGrid('minmax(0, 1.6fr) minmax(0, 1fr)')]}>
         <SectorPerformanceWidget
           positions={props.positions}
@@ -78,7 +78,7 @@ export function HomeDashboard(props: Props) {
           palette={palette}
           onOpenDetail={props.onOpenDetail}
         />
-        <AltSignalsWidget summary={props.summary} palette={palette} />
+        <CompositeRiskWidget summary={props.summary} palette={palette} />
       </View>
 
       <PicksRow

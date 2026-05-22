@@ -75,6 +75,26 @@ export type AlternativeSignal = {
   personalImpact?: string | null
 }
 
+export type RiskComponent = {
+  label: string
+  score: number      // 0~100 sub-score
+  weight: number     // 합성 가중치 (0.5 / 0.3 / 0.2)
+  state: string
+  detail: string
+}
+
+export type CompositeRiskSignal = {
+  score: number      // 1~10 위험도
+  score100: number   // 0~100 내부 정규화 점수
+  level: string      // 안정 / 관망 / 주의 / 경계 / 고위험
+  headline: string
+  components: RiskComponent[]
+  description: string
+  methodology: string
+  asOf: string
+  personalImpact?: string | null
+}
+
 export type TradingDayStatus = {
   krOpen: boolean
   usOpen: boolean
@@ -263,6 +283,7 @@ export type MarketSummaryData = {
   summary: string
   marketSummary: SummaryMetric[]
   alternativeSignals: AlternativeSignal[]
+  compositeRisk?: CompositeRiskSignal
   watchAlerts: WatchAlert[]
   marketSessions: MarketSessionStatus[]
   newsSentiments?: NewsSentiment[]

@@ -10,7 +10,7 @@ import type {
   TopMoversResponse,
 } from '../types'
 import { TopMoversSection } from './market_parts/TopMoversSection'
-import { AlternativeSignalsSection } from './market_parts/AlternativeSignalsSection'
+import { CompositeRiskCard } from './market_parts/CompositeRiskCard'
 import { ChartSection } from './market_parts/ChartSection'
 import { MarketSummaryMetrics } from './market_parts/MarketSummaryMetrics'
 import { WatchAlertList } from './market_parts/WatchAlertList'
@@ -82,7 +82,7 @@ export function MarketTab({
 
       <WatchAlertList alerts={summary?.watchAlerts ?? []} />
 
-      <AlternativeSignalsSection signals={summary?.alternativeSignals ?? []} />
+      <CompositeRiskCard risk={summary?.compositeRisk ?? null} />
     </ScrollView>
   )
 }

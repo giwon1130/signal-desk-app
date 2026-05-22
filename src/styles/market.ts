@@ -61,5 +61,41 @@ export function marketStyles(C: Palette): StyleObj {
       color: C.blue, fontSize: 12, fontWeight: '800', lineHeight: 17,
       paddingTop: 6, borderTopWidth: 1, borderTopColor: C.border, marginTop: 4,
     },
+
+    // ── Composite Risk (합성 위험도) ──────────────────────────────────────────────
+    riskHeroRow: { flexDirection: 'row', alignItems: 'center', gap: 14, marginTop: 4 },
+    riskScoreBox: {
+      alignItems: 'center', justifyContent: 'center', minWidth: 84,
+      borderRadius: 14, borderWidth: 1, paddingVertical: 10, paddingHorizontal: 8,
+    },
+    riskScoreValue: { fontSize: 32, fontWeight: '900', lineHeight: 34, ...num },
+    riskScoreOutOf:  { fontSize: 11, fontWeight: '700', marginTop: -2 },
+    riskLevelBadge: {
+      borderRadius: 8, paddingHorizontal: 10, paddingVertical: 3, marginTop: 6,
+      fontSize: 12, fontWeight: '800', overflow: 'hidden',
+    },
+    riskHeadline: { flex: 1, color: C.ink, fontSize: 13, lineHeight: 19, fontWeight: '600' },
+    riskComponentRow:  { gap: 5, marginTop: 12 },
+    riskComponentHead: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+    riskComponentLabel: { color: C.ink, fontSize: 12, fontWeight: '800' },
+    riskComponentWeight: {
+      color: C.inkMuted, fontSize: 10, fontWeight: '700',
+      backgroundColor: C.scheme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.06)',
+      borderRadius: 6, paddingHorizontal: 6, paddingVertical: 1, overflow: 'hidden',
+    },
+    riskComponentScore:  { fontSize: 12, fontWeight: '800', ...num },
+    riskTrack: {
+      height: 6, borderRadius: 3, overflow: 'hidden', marginTop: 1,
+      backgroundColor: C.scheme === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.07)',
+    },
+    riskTrackFill:       { height: '100%', borderRadius: 3 },
+    riskComponentDetail: { color: C.inkMuted, fontSize: 11, fontWeight: '600', lineHeight: 15 },
+    riskComponentState:  { fontSize: 11, fontWeight: '700' },
+    riskPersonalImpact: {
+      color: C.blue, fontSize: 12, fontWeight: '800', lineHeight: 17,
+      paddingTop: 8, borderTopWidth: 1, borderTopColor: C.border, marginTop: 12,
+    },
+    riskFootnote: { color: C.inkMuted, fontSize: 11, fontWeight: '600', marginTop: 10 },
+    riskEmptyBox: { paddingVertical: 18, alignItems: 'center' },
   }
 }
