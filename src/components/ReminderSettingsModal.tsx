@@ -86,18 +86,18 @@ export function ReminderSettingsModal({ visible, authToken, onClose }: Props) {
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <SafeAreaView style={{ flex: 1 }} edges={['top', 'bottom']}>
         <Pressable style={styles.signalModalBackdrop} onPress={onClose}>
-        <Pressable style={styles.signalModalCard} onPress={() => {}}>
-          <ScrollView showsVerticalScrollIndicator={false}>
-            <View style={styles.signalModalHeader}>
-              <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <Bell size={18} color={palette.blue} strokeWidth={2.5} />
-                <Text style={styles.signalModalTitle}>알림 설정</Text>
-              </View>
-              <Pressable onPress={onClose} hitSlop={10} accessibilityLabel="닫기">
-                <X size={20} color={palette.inkMuted} strokeWidth={2.5} />
-              </Pressable>
+        <Pressable style={[styles.signalModalCard, { maxHeight: '85%' }]} onPress={() => {}}>
+          {/* 헤더는 ScrollView 밖 고정 — 콘텐츠가 길어 스크롤해도 닫기 버튼이 항상 보이게 */}
+          <View style={styles.signalModalHeader}>
+            <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Bell size={18} color={palette.blue} strokeWidth={2.5} />
+              <Text style={styles.signalModalTitle}>알림 설정</Text>
             </View>
-
+            <Pressable onPress={onClose} hitSlop={10} accessibilityLabel="닫기">
+              <X size={20} color={palette.inkMuted} strokeWidth={2.5} />
+            </Pressable>
+          </View>
+          <ScrollView style={{ flexShrink: 1 }} showsVerticalScrollIndicator={false}>
             <Text style={[styles.signalModalSubtitle, { marginBottom: 12 }]}>
               장 시작은 로컬 알림, 급등락은 서버 푸시로 보내준다.
             </Text>
