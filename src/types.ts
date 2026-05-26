@@ -367,6 +367,7 @@ export type TopMoversResponse = {
   generatedAt: string
   kospi: TopMoversBlock
   kosdaq: TopMoversBlock
+  us?: TopMoversBlock
 }
 
 export type DailyFortune = {

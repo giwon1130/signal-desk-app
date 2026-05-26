@@ -9,19 +9,34 @@ import { MoverRow } from './MoverRow'
 type Props = {
   topMovers: TopMoversResponse
   kind: 'gainers' | 'losers'
+  market?: 'KR' | 'US'   // 디폴트 'KR' — 기존 호출과 호환
   onOpenDetail: (market: string, ticker: string, name?: string) => void
 }
 
-export function TopMoversSection({ topMovers, kind, onOpenDetail }: Props) {
+export function TopMoversSection({ topMovers, kind, market = 'KR', onOpenDetail }: Props) {
   const styles = useStyles()
   const isUp = kind === 'gainers'
+  const isKr = market === 'KR'
   const color = isUp ? '#dc2626' : '#2563eb'
   const Icon = isUp ? Flame : Snowflake
-  const title = isUp ? '급등 종목 (KOSPI · KOSDAQ)' : '급락 종목 (KOSPI · KOSDAQ)'
-  const kospi = isUp ? topMovers.kospi.gainers : topMovers.kospi.losers
-  const kosdaq = isUp ? topMovers.kosdaq.gainers : topMovers.kosdaq.losers
-  const head = kospi[0]
-  const prefix = isUp ? 'up' : 'dn'
+  const flag = isKr ? '🇰🇷' : '🇺🇸'
+  const verb = isUp ? '급등' : '급락'
+  const scope = isKr ? 'KOSPI · KOSDAQ' : 'NASDAQ · NYSE'
+  const title = `${flag} ${verb} 종목 (${scope})`
+  const prefix = `${market.toLowerCase()}-${isUp ? 'up' : 'dn'}`
+
+  // KR: kospi + kosdaq 두 묶음. US: 통합 한 묶음.
+  const krGroups = isKr
+    ? [
+        { label: 'KOSPI', items: isUp ? topMovers.kospi.gainers : topMovers.kospi.losers },
+        { label: 'KOSDAQ', items: isUp ? topMovers.kosdaq.gainers : topMovers.kosdaq.losers },
+      ]
+    : []
+  const usItems = !isKr
+    ? (isUp ? (topMovers.us?.gainers ?? []) : (topMovers.us?.losers ?? []))
+    : []
+  const head = isKr ? krGroups[0].items[0] : usItems[0]
+
   return (
     <CollapsibleCard
       title={
@@ -36,14 +51,25 @@ export function TopMoversSection({ topMovers, kind, onOpenDetail }: Props) {
         </Text>
       }
     >
-      <Text style={styles.metaText}>KOSPI · {kospi.length}종목</Text>
-      {kospi.map((m) => (
-        <MoverRow key={`kospi-${prefix}-${m.ticker}`} item={m} onOpenDetail={onOpenDetail} />
-      ))}
-      <Text style={[styles.metaText, { marginTop: 6 }]}>KOSDAQ · {kosdaq.length}종목</Text>
-      {kosdaq.map((m) => (
-        <MoverRow key={`kosdaq-${prefix}-${m.ticker}`} item={m} onOpenDetail={onOpenDetail} />
-      ))}
+      {isKr ? (
+        krGroups.map((g, gi) => (
+          <View key={g.label}>
+            <Text style={[styles.metaText, gi > 0 && { marginTop: 6 }]}>
+              {g.label} · {g.items.length}종목
+            </Text>
+            {g.items.map((m) => (
+              <MoverRow key={`${prefix}-${g.label}-${m.ticker}`} item={m} onOpenDetail={onOpenDetail} />
+            ))}
+          </View>
+        ))
+      ) : (
+        <>
+          <Text style={styles.metaText}>US · {usItems.length}종목</Text>
+          {usItems.map((m) => (
+            <MoverRow key={`${prefix}-${m.ticker}`} item={m} onOpenDetail={onOpenDetail} />
+          ))}
+        </>
+      )}
     </CollapsibleCard>
   )
 }

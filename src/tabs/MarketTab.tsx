@@ -77,10 +77,16 @@ export function MarketTab({
       <CompositeRiskCard risk={summary?.compositeRisk ?? null} />
 
       {topMovers ? (
-        <TopMoversSection topMovers={topMovers} kind="gainers" onOpenDetail={onOpenDetail} />
+        <TopMoversSection topMovers={topMovers} kind="gainers" market="KR" onOpenDetail={onOpenDetail} />
       ) : null}
       {topMovers ? (
-        <TopMoversSection topMovers={topMovers} kind="losers" onOpenDetail={onOpenDetail} />
+        <TopMoversSection topMovers={topMovers} kind="losers" market="KR" onOpenDetail={onOpenDetail} />
+      ) : null}
+      {topMovers?.us ? (
+        <TopMoversSection topMovers={topMovers} kind="gainers" market="US" onOpenDetail={onOpenDetail} />
+      ) : null}
+      {topMovers?.us ? (
+        <TopMoversSection topMovers={topMovers} kind="losers" market="US" onOpenDetail={onOpenDetail} />
       ) : null}
 
       {/* 관심종목 알림 — 개인 정보라 시장 지표 다음, 맨 아래 */}
