@@ -40,7 +40,7 @@ export function ReminderSettingsModal({ visible, authToken, onClose, onMarketPre
   const [history, setHistory] = useState<NotificationRecord[]>([])
   const [prefs, setPrefs] = useState<AlertPreferences>({
     krEnabled: true, usEnabled: false, premarketEnabled: true, compositeRiskEnabled: true,
-    marketPreference: 'BOTH',
+    marketPreference: 'BOTH', eveningBriefEnabled: false,
   })
 
   // 모달 열릴 때마다 현재 저장값 hydrate
@@ -177,6 +177,19 @@ export function ReminderSettingsModal({ visible, authToken, onClose, onMarketPre
               <Switch
                 value={prefs.premarketEnabled}
                 onValueChange={(v) => void updatePref({ premarketEnabled: v })}
+                disabled={!hydrated || !authToken}
+              />
+            </View>
+
+            {/* ── 미장 이브닝 브리프 (server) ── */}
+            <View style={[styles.summaryRow, { paddingHorizontal: 0 }]}>
+              <View style={styles.metricLeft}>
+                <Text style={styles.metricName}>🌆 미장 이브닝 브리프</Text>
+                <Text style={styles.metricState}>06:30 KST · NY 마감 직후 NASDAQ/S&P · 주도주 · 실적</Text>
+              </View>
+              <Switch
+                value={prefs.eveningBriefEnabled}
+                onValueChange={(v) => void updatePref({ eveningBriefEnabled: v })}
                 disabled={!hydrated || !authToken}
               />
             </View>

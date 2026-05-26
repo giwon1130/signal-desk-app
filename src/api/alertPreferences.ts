@@ -8,6 +8,7 @@ export type AlertPreferences = {
   premarketEnabled: boolean
   compositeRiskEnabled: boolean
   marketPreference: MarketPreference
+  eveningBriefEnabled: boolean
 }
 
 const DEFAULT: AlertPreferences = {
@@ -16,6 +17,7 @@ const DEFAULT: AlertPreferences = {
   premarketEnabled: true,
   compositeRiskEnabled: true,
   marketPreference: 'BOTH',
+  eveningBriefEnabled: false,
 }
 
 export async function getAlertPreferences(authToken: string): Promise<AlertPreferences> {
