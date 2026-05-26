@@ -108,6 +108,7 @@ function AppShell() {
 
   // ── 투자 시장 선호 (UI 필터링 — MarketTab/StocksTab 등) ──
   const [marketPreference, setMarketPreference] = useState<MarketPreference>('BOTH')
+  const preferenceSyncedRef = useRef(false)
   useEffect(() => {
     const tok = user?.token
     if (!tok) return
@@ -116,6 +117,19 @@ function AppShell() {
       if (p.marketPreference) setMarketPreference(p.marketPreference)
     })()
   }, [user?.token])
+  // 선호값을 최초 1회만 차트/검색 필터 디폴트에 반영. 이후 사용자 토글은 보존.
+  useEffect(() => {
+    if (preferenceSyncedRef.current) return
+    if (marketPreference === 'BOTH') return  // BOTH 는 기존 디폴트 유지
+    preferenceSyncedRef.current = true
+    if (marketPreference === 'US') {
+      setChartMarket('US')
+      setStockMarketFilter('US')
+    } else if (marketPreference === 'KR') {
+      setChartMarket('KR')
+      setStockMarketFilter('KR')
+    }
+  }, [marketPreference, setChartMarket, setStockMarketFilter])
 
   // ── 오늘의 운세 팝업 (앱 전용, 하루 1회) ──
   const [greetingOpen, setGreetingOpen] = useState(false)
@@ -149,6 +163,36 @@ function AppShell() {
     void hapticLight()
     setActiveTab(key)
   }, [activeTab])
+
+  // 시장 선호에 따라 AI 픽·숨은 시그널 필터 — 선호 시장 종목만 추천 (BOTH 면 그대로).
+  const filteredAiPicks = useMemo(() => {
+    if (!aiPicks || marketPreference === 'BOTH') return aiPicks
+    return { ...aiPicks, picks: aiPicks.picks.filter((p) => p.market === marketPreference) }
+  }, [aiPicks, marketPreference])
+  const filteredHiddenSignals = useMemo(() => {
+    if (!hiddenSignals || marketPreference === 'BOTH') return hiddenSignals
+    return { ...hiddenSignals, signals: hiddenSignals.signals.filter((s) => s.market === marketPreference) }
+  }, [hiddenSignals, marketPreference])
+  // aiRecommendation 안의 picks/executionLogs 도 동일 필터 (TodayTab의 단타 픽 PicksCard 대응).
+  const filteredAiRecommendation = useMemo(() => {
+    if (!aiRecommendation || marketPreference === 'BOTH') return aiRecommendation
+    const m = marketPreference
+    return {
+      ...aiRecommendation,
+      executionLogs: aiRecommendation.executionLogs.filter((l) => l.market === m),
+    }
+  }, [aiRecommendation, marketPreference])
+
+  // 시장 선호에 따라 이벤트 필터 — 휴장/실적은 선호 시장만, FOMC/매크로는 항상 노출.
+  const filteredUpcomingEvents = useMemo(() => {
+    if (marketPreference === 'BOTH') return upcomingEvents
+    const globalCats = new Set(['FOMC', 'POLICY', 'ECONOMIC_DATA'])
+    return upcomingEvents.filter((e) => {
+      if (e.market === 'GLOBAL') return true
+      if (globalCats.has(e.category)) return true
+      return e.market === marketPreference
+    })
+  }, [upcomingEvents, marketPreference])
 
   const filteredWatchlist = useMemo(() => {
     const query = normalizeText(homeQuery)
@@ -268,7 +312,7 @@ function AppShell() {
         Platform.OS === 'web' ? (
           <HomeDashboard
             summary={summary}
-            aiRecommendation={aiRecommendation}
+            aiRecommendation={filteredAiRecommendation}
             positions={portfolio?.positions ?? []}
             watchlist={watchlist}
             alertHistory={alertHistory}
@@ -279,12 +323,12 @@ function AppShell() {
         ) : (
           <TodayTab
             summary={summary}
-            aiRecommendation={aiRecommendation}
+            aiRecommendation={filteredAiRecommendation}
             positions={portfolio?.positions ?? []}
             alertHistory={alertHistory}
             fortune={fortune}
             mediaSummary={mediaSummary}
-            upcomingEvents={upcomingEvents}
+            upcomingEvents={filteredUpcomingEvents}
             disclosures={disclosures}
             onOpenDetail={handleOpenDetail}
             refreshing={refreshing}
@@ -373,7 +417,7 @@ function AppShell() {
       {!loading && !error && activeTab === 'ai' ? (
         Platform.OS === 'web' ? (
           <AIWorkspace
-            aiRecommendation={aiRecommendation}
+            aiRecommendation={filteredAiRecommendation}
             summary={summary}
             watchlist={watchlist}
             onOpenDetail={handleOpenDetail}
@@ -381,8 +425,8 @@ function AppShell() {
           />
         ) : (
           <AITab
-            aiPicks={aiPicks}
-            hiddenSignals={hiddenSignals}
+            aiPicks={filteredAiPicks}
+            hiddenSignals={filteredHiddenSignals}
             summary={summary}
             watchlist={watchlist}
             marketInsight={marketInsight}

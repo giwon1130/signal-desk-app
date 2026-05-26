@@ -57,6 +57,18 @@ export function MarketTab({
   const isWeb = Platform.OS === 'web'
   const showKr = marketPreference === 'KR' || marketPreference === 'BOTH'
   const showUs = marketPreference === 'US' || marketPreference === 'BOTH'
+
+  // 요약 지표(Fear Meter / KR Heat / US Heat / Flow Bias) 필터.
+  // Fear Meter 는 VIX 기반 글로벌 거시 신호 → 항상 노출.
+  // KR Heat / Flow Bias 는 KR 시장 무드, US Heat 는 US 시장 무드 → 선호 시장만.
+  const filteredMetrics = (summary?.marketSummary ?? []).filter((m) => {
+    const label = m.label
+    if (label === 'Fear Meter') return true               // 글로벌 거시
+    if (label === 'KR Heat' || label === 'Flow Bias') return showKr
+    if (label === 'US Heat') return showUs
+    return true                                            // 알 수 없는 라벨은 안전하게 노출
+  })
+
   return (
     <ScrollView
       style={styles.scroll}
@@ -76,7 +88,7 @@ export function MarketTab({
         onSelectedIndexLabelChange={onSelectedIndexLabelChange}
       />
 
-      <MarketSummaryMetrics metrics={summary?.marketSummary ?? []} />
+      <MarketSummaryMetrics metrics={filteredMetrics} />
 
       {/* 합성 위험도 — 요약 지표와 함께 '시장 무드' 블록으로 묶음 */}
       <CompositeRiskCard risk={summary?.compositeRisk ?? null} />
