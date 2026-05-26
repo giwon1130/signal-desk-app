@@ -229,7 +229,9 @@ export async function quickAddWatchItem(stock: {
       name: stock.name,
       price: Math.round(stock.price),
       changeRate: stock.changeRate,
-      sector: stock.sector,
+      // AI 픽 등 일부 호출지점은 sector 정보가 없어 빈 문자열을 보냄 — 백엔드의 @NotBlank
+      // 거절을 피하려 빈 값이면 fallback 문구로 채운다.
+      sector: stock.sector || 'AI 추천',
       stance: stock.stance || '관찰',
       note: '관심종목',
     }),
