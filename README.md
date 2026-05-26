@@ -18,8 +18,9 @@ SignalDesk 클라이언트 — **Expo 하나로 iOS · Android · Web 을 모두
 
 | 플랫폼 | 배포 | 포지션 |
 |--------|------|--------|
-| iOS / Android | Expo dev build (현재 TestFlight 전) | Today 탭 중심의 빠른 확인용 컴패니언. 장 시작 로컬 알림, 홈 KPI, 시장/종목/AI 로그. |
-| Web | Railway (`https://signal-desk-web-production.up.railway.app`) | 데스크톱 3열 셸 — 티커 리본 + 좌 네비 + 메인 + 우 컨텍스트. Cmd+K 팔레트, 정렬 테이블, AI 플레이북/성적표. |
+| iOS | **TestFlight 베타 운영 중** (Build #18, 2026-05-22) | Today 탭 중심의 빠른 확인용 컴패니언. 모닝 브리프 Hero, 합성 위험도 카드, 한/미 세션 칩, 보유 종목 공시, 알림 deep link. EAS 유료 플랜 |
+| Android | Expo dev build | 안드로이드 TestFlight 동등 채널은 미정 |
+| Web | **현재 라이브 미배포** (2026-05-26 Railway 정리). 빌드 소스는 `src/web/*` 보존 | 재오픈 시 Railway 재배포 또는 Vercel/CF Pages 무료 호스팅. 데스크톱 3열 셸(티커 리본 + 좌 네비 + 메인 + 우 컨텍스트), Cmd+K 팔레트, AI 플레이북/성적표 |
 
 단일 코드베이스지만 `Platform.OS === 'web'` 분기로 웹 전용 화면(`src/web/*`)을 올려 정보 밀도와 상호작용을 데스크톱에 맞춘다.
 
@@ -29,12 +30,17 @@ SignalDesk 클라이언트 — **Expo 하나로 iOS · Android · Web 을 모두
 - 시장 요약: 헤더 대시보드, 한국/미국 세션 상태, KPI, 핵심 지표
 - 차트: KR/US 전환, D/W/M 캔들 + 거래량 + MA5/MA20/MA60, 지수(KOSPI/KOSDAQ/NASDAQ/S&P500)
 - 워크스페이스: 관심종목, 실제 보유(매수가·수량·손익), AI 추천 로그
-- 뉴스 sentiment, 실험 지표(Pentagon Pizza / Policy Buzz / Bar Counter-Signal)
+- 뉴스 sentiment
+- **합성 위험도(`compositeRisk`)** — PizzINT+VIX+뉴스 종합 1~10 (기존 Pentagon Pizza / Policy Buzz / Bar Counter-Signal 단독 카드 폐기, 합성으로 통합)
 - 휴장/주말 모드 자동 전환
 
 ### 모바일 전용
+- **모닝 브리프 Hero 카드** (08:30 KST) — DART 공시 + FRED 매크로 + 수급 + 뉴스 Gemini 종합
+- 합성 위험도 알림 토글 (score≥8 시 08:32 KST 푸시)
+- 운세 팝업 하루 1회 제한, 시작 로딩 화면(투자 명언 로테이션)
 - 장 시작 로컬 알림 (KR 09:00 / US 23:30 KST, 분 전 옵션)
 - 종목 상세 슬라이드업 모달
+- 알림 탭 deep link (모닝 브리프/위험도/관심종목 공시)
 - Google 네이티브 SDK 로그인
 
 ### 웹 전용
@@ -93,30 +99,40 @@ EXPO_PUBLIC_API_BASE_URL=http://192.168.x.x:8091 npm start
 
 ## 배포
 
-### 웹 (Railway)
+### 웹 (현재 미배포)
 
+2026-05-26 Railway 비용 정리로 `signal-desk-web` 서비스가 삭제됐다. 빌드 소스(`src/web/*`, `Dockerfile.web`)는 보존돼 있으므로 재오픈 시 한 번에 복구 가능.
+
+재오픈 옵션:
 ```bash
-railway link                                                # 최초 1회
+# A) Railway 재배포
+railway link
 railway up --service signal-desk-web --ci --detach
 
-# 번들 해시 확인 → 배포 반영 여부
-curl -s https://signal-desk-web-production.up.railway.app/ | grep -oE 'index-[a-f0-9]+\.js' | head -1
+# B) Vercel / Cloudflare Pages (무료 호스팅)
+npx expo export -p web   # dist/ 빌드 → 정적 호스팅
 ```
 
-`Dockerfile.web` 은 `expo export -p web` 결과를 nginx 에 얹는 멀티스테이지. main 푸시 시 Railway 가 자동 재빌드하지만 auto-deploy 가 밀리면 위 명령으로 직접 트리거.
+`Dockerfile.web` 은 `expo export -p web` 결과를 nginx 에 얹는 멀티스테이지. Google OAuth 운영 URL을 재오픈 시 GCP OAuth Client의 **Authorized JavaScript origins** 에 다시 등록 (trailing slash 금지).
 
-Google OAuth 는 GCP OAuth Client 의 **Authorized JavaScript origins** 에 운영 URL + 로컬 포트(`http://localhost:8081`, `http://localhost:19006`) 를 등록. trailing slash 금지.
-
-### 모바일 (실기기 Release)
+### 모바일 (TestFlight 베타 운영 중)
 
 ```bash
-# 체크아웃된 feat/* 브랜치를 main 머지 + push + Release 빌드 설치 한 번에
+# 빌드 + TestFlight 자동 제출 한 번에 (alias `sdbuild`)
+npx eas build --profile production --platform ios --auto-submit
+```
+
+- 최근 빌드: Build #18 (2026-05-22, UX 피드백 반영 + 알림 모달 높이 수정)
+- EAS 유료 플랜 (계정 단위, `@giwon1130`)
+- ASC 앱: SignalDesk (App ID `6770443767`), Bundle ID `com.giwon.signaldesk`
+- 식별자/자격증명/Gotcha는 `.claude/context.md` 참조
+
+실기기 Debug Release(개발용):
+```bash
 ./scripts/release.sh
 ./scripts/release.sh feat/foo --device <UDID>
 ./scripts/release.sh feat/foo --no-build
 ```
-
-App Store 배포 단계는 미정(추후 EAS Build).
 
 ## 참고
 - iOS 시뮬레이터/실기기에서 `localhost` 는 기기 자신 — 같은 네트워크 PC IP 사용
