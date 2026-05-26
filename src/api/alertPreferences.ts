@@ -1,10 +1,13 @@
 import { API_BASE_URL } from '../api'
 
+export type MarketPreference = 'KR' | 'US' | 'BOTH'
+
 export type AlertPreferences = {
   krEnabled: boolean
   usEnabled: boolean
   premarketEnabled: boolean
   compositeRiskEnabled: boolean
+  marketPreference: MarketPreference
 }
 
 const DEFAULT: AlertPreferences = {
@@ -12,6 +15,7 @@ const DEFAULT: AlertPreferences = {
   usEnabled: false,
   premarketEnabled: true,
   compositeRiskEnabled: true,
+  marketPreference: 'BOTH',
 }
 
 export async function getAlertPreferences(authToken: string): Promise<AlertPreferences> {

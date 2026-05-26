@@ -23,11 +23,12 @@ type Props = {
   visible: boolean
   authToken: string | null
   onClose: () => void
+  onMarketPreferenceChange?: (pref: 'KR' | 'US' | 'BOTH') => void
 }
 
 const MINUTES_OPTIONS = [5, 10, 15, 30, 60]
 
-export function ReminderSettingsModal({ visible, authToken, onClose }: Props) {
+export function ReminderSettingsModal({ visible, authToken, onClose, onMarketPreferenceChange }: Props) {
   const styles = useStyles()
   const { palette } = useTheme()
 
@@ -39,6 +40,7 @@ export function ReminderSettingsModal({ visible, authToken, onClose }: Props) {
   const [history, setHistory] = useState<NotificationRecord[]>([])
   const [prefs, setPrefs] = useState<AlertPreferences>({
     krEnabled: true, usEnabled: false, premarketEnabled: true, compositeRiskEnabled: true,
+    marketPreference: 'BOTH',
   })
 
   // 모달 열릴 때마다 현재 저장값 hydrate
@@ -67,6 +69,7 @@ export function ReminderSettingsModal({ visible, authToken, onClose }: Props) {
     const next = { ...prefs, ...patch }
     setPrefs(next)
     if (authToken) await updateAlertPreferences(authToken, next)
+    if (patch.marketPreference) onMarketPreferenceChange?.(patch.marketPreference)
   }
 
   const handleClearHistory = async () => {
@@ -101,6 +104,30 @@ export function ReminderSettingsModal({ visible, authToken, onClose }: Props) {
             <Text style={[styles.signalModalSubtitle, { marginBottom: 12 }]}>
               장 시작은 로컬 알림, 급등락은 서버 푸시로 보내준다.
             </Text>
+
+            {/* ── 투자 시장 선호 (UI 노출 범위) ── */}
+            <View style={[styles.signalModalSection, { marginTop: 0, marginBottom: 6 }]}>
+              <Text style={styles.signalModalSectionTitle}>투자 시장</Text>
+              <Text style={[styles.metricState, { marginTop: 2, marginBottom: 8 }]}>
+                선택한 시장만 카드·종목·이벤트가 보입니다. 알림 토글과 별개.
+              </Text>
+              <View style={styles.filterRow}>
+                {(['KR', 'BOTH', 'US'] as const).map((m) => {
+                  const active = prefs.marketPreference === m
+                  const label = m === 'KR' ? '🇰🇷 한국만' : m === 'US' ? '🇺🇸 미국만' : '🇰🇷🇺🇸 둘 다'
+                  return (
+                    <Pressable
+                      key={m}
+                      onPress={() => void updatePref({ marketPreference: m })}
+                      style={[styles.filterChip, active && styles.filterChipActive]}
+                      disabled={!hydrated || !authToken}
+                    >
+                      <Text style={[styles.filterText, active && styles.filterTextActive]}>{label}</Text>
+                    </Pressable>
+                  )
+                })}
+              </View>
+            </View>
 
             {/* ── 급등락 푸시 (마스터 토글) ── */}
             <View style={[styles.summaryRow, { paddingHorizontal: 0 }]}>

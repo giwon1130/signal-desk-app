@@ -31,6 +31,7 @@ import { CommandPalette } from './src/web/CommandPalette'
 import { AIWorkspace } from './src/web/AIWorkspace'
 import { StockDetailModal, type StockDetailContext } from './src/components/StockDetailModal'
 import { ReminderSettingsModal } from './src/components/ReminderSettingsModal'
+import { getAlertPreferences, type MarketPreference } from './src/api/alertPreferences'
 import { DailyGreetingModal } from './src/components/DailyGreetingModal'
 import { LoadingScreen } from './src/components/LoadingScreen'
 import { getFortuneGreetingShownDate, markFortuneGreetingShown } from './src/utils/fortuneGreeting'
@@ -104,6 +105,17 @@ function AppShell() {
 
   // ── 알림 설정 모달 ──────
   const [reminderOpen, setReminderOpen] = useState(false)
+
+  // ── 투자 시장 선호 (UI 필터링 — MarketTab/StocksTab 등) ──
+  const [marketPreference, setMarketPreference] = useState<MarketPreference>('BOTH')
+  useEffect(() => {
+    const tok = user?.token
+    if (!tok) return
+    void (async () => {
+      const p = await getAlertPreferences(tok)
+      if (p.marketPreference) setMarketPreference(p.marketPreference)
+    })()
+  }, [user?.token])
 
   // ── 오늘의 운세 팝업 (앱 전용, 하루 1회) ──
   const [greetingOpen, setGreetingOpen] = useState(false)
@@ -308,6 +320,7 @@ function AppShell() {
           selectedIndexLabel={selectedIndexLabel}
           chartWidth={chartWidth}
           topMovers={topMovers}
+          marketPreference={marketPreference}
           onOpenDetail={handleOpenDetail}
           refreshing={refreshing}
           onRefresh={refresh}
@@ -400,6 +413,7 @@ function AppShell() {
         visible={reminderOpen}
         authToken={user?.token ?? null}
         onClose={() => setReminderOpen(false)}
+        onMarketPreferenceChange={setMarketPreference}
       />
       <DailyGreetingModal
         visible={greetingOpen}
