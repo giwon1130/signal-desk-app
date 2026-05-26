@@ -18,7 +18,9 @@ type NotificationData = {
  *
  * - DISCLOSURE (DART 공시): stockCode → KR 종목 상세 모달
  * - MORNING_BRIEF (모닝 브리프): Today 탭 (최상단 Hero 카드에 브리프 노출)
+ * - EVENING_BRIEF (미장 이브닝 브리프): Today 탭 (모닝과 동일 — Today 가 브리프 허브)
  * - COMPOSITE_RISK (합성 위험도): Market 탭 (종합 위험도 카드 노출)
+ * - US_DISCLOSURE (SEC EDGAR 공시): market+ticker 자동 라우팅 (fall-through)
  * - 가격/급등락 알림: market + ticker → 종목 상세 모달
  *
  * 트리거 경로:
@@ -46,6 +48,11 @@ export function usePushDeepLink(
       }
       // 모닝 브리프 — Today 탭 (Hero 카드)
       if (data.type === 'MORNING_BRIEF') {
+        onNavigateToday()
+        return
+      }
+      // 미장 이브닝 브리프 — Today 탭 (모닝과 동일하게 브리프는 Today 허브)
+      if (data.type === 'EVENING_BRIEF') {
         onNavigateToday()
         return
       }
