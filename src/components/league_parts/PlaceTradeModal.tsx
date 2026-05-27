@@ -91,7 +91,7 @@ export function PlaceTradeModal({ visible, leagueId, positions, cashBalance, cur
   }
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+    <Modal visible={visible} animationType="slide" presentationStyle="fullScreen" onRequestClose={onClose}>
       <SafeAreaView style={{ flex: 1, backgroundColor: palette.bg }} edges={['top', 'bottom']}>
         {/* 헤더 */}
         <View style={{
