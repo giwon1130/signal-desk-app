@@ -31,6 +31,7 @@ import { LeagueTab } from './src/tabs/LeagueTab'
 import { CreateLeagueModal } from './src/components/league_parts/CreateLeagueModal'
 import { LeagueDetailModal } from './src/components/league_parts/LeagueDetailModal'
 import { SettingsModal } from './src/components/SettingsModal'
+import { SystemStatusBanner } from './src/components/SystemStatusBanner'
 import { StocksTab } from './src/tabs/StocksTab'
 import { TodayTab } from './src/tabs/TodayTab'
 import { HomeDashboard } from './src/web/HomeDashboard'
@@ -80,7 +81,7 @@ function AppShell() {
   const market = useMarketSnapshot(user?.token ?? null, !!user)
   const {
     summary, sections, aiRecommendation, watchlist, portfolio, fortune, topMovers,
-    mediaSummary, marketInsight, upcomingEvents, disclosures, aiPicks, hiddenSignals, alertHistory, apiHealth, lastSyncedAt, loading, refreshing, error, refresh,
+    mediaSummary, marketInsight, upcomingEvents, disclosures, aiPicks, hiddenSignals, alertHistory, apiHealth, systemStatus, lastSyncedAt, loading, refreshing, error, refresh,
     fetchData, setLoading, setWatchlist, setPortfolio,
   } = market
   const search = useStockSearch()
@@ -380,6 +381,9 @@ function AppShell() {
           </Pressable>
         </View>
       ) : null}
+
+      {/* v2.1: 시스템 헬스 배너 — Gemini 일시 장애 시 상단 안내 (모든 탭에서 같이 노출) */}
+      {!loading && !error ? <SystemStatusBanner status={systemStatus} /> : null}
 
       {!loading && !error && activeTab === 'today' ? (
         Platform.OS === 'web' ? (

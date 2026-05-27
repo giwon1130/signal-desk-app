@@ -6,6 +6,7 @@ import { fetchUpcomingEvents } from '../api/events'
 import { fetchMarketInsight } from '../api/insights'
 import { fetchLatestMediaSummary } from '../api/media'
 import { fetchAlertHistory } from '../api/pushDevice'
+import { fetchSystemStatus, type SystemStatus } from '../api/system'
 import { formatSyncStamp } from '../utils'
 import { hapticLight } from '../utils/haptics'
 import type {
@@ -45,6 +46,7 @@ export function useMarketSnapshot(authToken: string | null, enabled: boolean) {
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState('')
   const [apiHealth, setApiHealth] = useState<HealthResponse | null>(null)
+  const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null)
   const [lastSyncedAt, setLastSyncedAt] = useState('')
 
   const fetchData = useCallback(async () => {
@@ -69,6 +71,7 @@ export function useMarketSnapshot(authToken: string | null, enabled: boolean) {
       void fetchLatestMediaSummary().then(setMediaSummary)
       void fetchMarketInsight().then(setMarketInsight)
       void fetchUpcomingEvents(14).then(setUpcomingEvents)
+      void fetchSystemStatus().then(setSystemStatus)
     } catch {
       setApiHealth(null)
       setError(`서버에 연결할 수 없어요.\n${API_BASE_URL}`)
@@ -104,6 +107,7 @@ export function useMarketSnapshot(authToken: string | null, enabled: boolean) {
     hiddenSignals,
     alertHistory,
     apiHealth,
+    systemStatus,
     lastSyncedAt,
     loading,
     refreshing,
