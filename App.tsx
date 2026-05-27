@@ -29,6 +29,7 @@ import { hapticLight } from './src/utils/haptics'
 import { AITab } from './src/tabs/AITab'
 import { LeagueTab } from './src/tabs/LeagueTab'
 import { CreateLeagueModal } from './src/components/league_parts/CreateLeagueModal'
+import { LeagueDetailModal } from './src/components/league_parts/LeagueDetailModal'
 import { StocksTab } from './src/tabs/StocksTab'
 import { TodayTab } from './src/tabs/TodayTab'
 import { HomeDashboard } from './src/web/HomeDashboard'
@@ -114,9 +115,10 @@ function AppShell() {
   const [onboardingState, setOnboardingState] = useState<'loading' | 'show' | 'done'>('loading')
   // v1 → v2 마이그레이션 모달 — 1회 노출 후 마크.
   const [v2MigrationOpen, setV2MigrationOpen] = useState(false)
-  // v2.1: 리그 생성 모달 + 리그 탭 새로고침 트리거
+  // v2.1: 리그 생성 모달 + 리그 탭 새로고침 트리거 + 리그 상세 모달
   const [createLeagueOpen, setCreateLeagueOpen] = useState(false)
   const [leagueRefreshTick, setLeagueRefreshTick] = useState(0)
+  const [activeLeagueId, setActiveLeagueId] = useState<string | null>(null)
 
   useEffect(() => {
     const tok = user?.token
@@ -474,7 +476,7 @@ function AppShell() {
           key={leagueRefreshTick}
           authToken={user?.token ?? null}
           refreshing={refreshing}
-          onOpenLeague={(_id) => toast.show('상세 화면 곧 출시', 'info')}
+          onOpenLeague={(id) => setActiveLeagueId(id)}
           onCreateLeague={() => setCreateLeagueOpen(true)}
           onJoinedLeague={() => setLeagueRefreshTick((t) => t + 1)}
           toast={toast}
@@ -513,7 +515,17 @@ function AppShell() {
       <CreateLeagueModal
         visible={createLeagueOpen}
         onClose={() => setCreateLeagueOpen(false)}
-        onCreated={(_id) => setLeagueRefreshTick((t) => t + 1)}
+        onCreated={(id) => {
+          setLeagueRefreshTick((t) => t + 1)
+          setActiveLeagueId(id)  // 만든 직후 바로 상세 진입
+        }}
+        toast={toast}
+      />
+      <LeagueDetailModal
+        visible={!!activeLeagueId}
+        leagueId={activeLeagueId}
+        myUserId={user?.userId}
+        onClose={() => setActiveLeagueId(null)}
         toast={toast}
       />
       <DailyGreetingModal
