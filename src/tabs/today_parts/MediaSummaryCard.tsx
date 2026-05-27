@@ -1,5 +1,5 @@
 import { Linking, Pressable, Text, View } from 'react-native'
-import { ExternalLink, Newspaper, Sunrise, Tv } from 'lucide-react-native'
+import { ExternalLink, Moon, Newspaper, Sunrise, Tv } from 'lucide-react-native'
 import { CollapsibleCard } from '../../components/CollapsibleCard'
 import { useStyles } from '../../styles'
 import { useTheme } from '../../theme'
@@ -17,9 +17,11 @@ const sentimentLabel = (s: MediaSummaryItem['sentiment']) =>
 export function MediaSummaryCard({ item, onTickerPress, defaultCollapsed }: Props) {
   const styles = useStyles()
   const { palette } = useTheme()
-  const isBrief = item.source === 'MORNING_BRIEF'
+  const isMorningBrief = item.source === 'MORNING_BRIEF'
+  const isEveningBrief = item.source === 'EVENING_BRIEF'
+  const isBrief = isMorningBrief || isEveningBrief
   const isDigest = item.source === 'NEWS_DIGEST'
-  const Icon = isBrief ? Sunrise : isDigest ? Newspaper : Tv
+  const Icon = isMorningBrief ? Sunrise : isEveningBrief ? Moon : isDigest ? Newspaper : Tv
 
   const accent =
     item.sentiment === 'BULLISH' ? palette.up
