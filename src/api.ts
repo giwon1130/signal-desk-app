@@ -2,7 +2,6 @@ import type {
   AiRecommendationData,
   ApiResponse,
   DailyFortune,
-  FavoriteDraft,
   HealthResponse,
   MarketSectionsData,
   MarketSummaryData,
@@ -85,33 +84,6 @@ export async function searchStocks(query: string, market: string): Promise<Stock
   }
   const result = (await response.json()) as ApiResponse<StockSearchResult[]>
   return result.data
-}
-
-export async function saveFavoriteItem(
-  selectedStock: {
-    watchItem?: { id: string }
-    base: { market: string; ticker: string; name: string; price: number; changeRate: number; sector: string; stance: string }
-  },
-  draft: FavoriteDraft,
-): Promise<void> {
-  const response = await authedFetch(`${API_BASE_URL}/api/v1/workspace/watchlist`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      id: selectedStock.watchItem?.id ?? '',
-      market: selectedStock.base.market,
-      ticker: selectedStock.base.ticker,
-      name: selectedStock.base.name,
-      price: Math.round(selectedStock.base.price),
-      changeRate: selectedStock.base.changeRate,
-      sector: selectedStock.base.sector,
-      stance: draft.stance.trim() || selectedStock.base.stance,
-      note: draft.note.trim() || '앱 즐겨찾기',
-    }),
-  })
-  if (!response.ok) {
-    throw new Error('save-favorite-failed')
-  }
 }
 
 export async function deleteFavoriteItem(id: string): Promise<void> {

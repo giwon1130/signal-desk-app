@@ -144,14 +144,6 @@ export function marketColor(palette: Palette, market: Market | undefined, change
   return isUp ? palette.up : palette.down
 }
 
-export function marketColorSoft(palette: Palette, market: Market | undefined, changeRate: number): string {
-  const isUp = changeRate >= 0
-  if (market === 'US') {
-    return isUp ? palette.greenSoft : palette.redSoft
-  }
-  return isUp ? palette.upSoft : palette.downSoft
-}
-
 // ─── Context ─────────────────────────────────────────────────────────────────
 
 type ThemeMode = 'system' | 'light' | 'dark'
