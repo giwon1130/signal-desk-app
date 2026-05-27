@@ -282,7 +282,13 @@ function AppShell() {
     setActiveTab('today')
   }, [])
 
-  usePushDeepLink(handleOpenDetail, handleNavigateToday, handleNavigateMarket)
+  // v2.1: League 푸시 deep link — 리그 탭 + 상세 모달 자동 진입.
+  const handleOpenLeagueFromPush = useCallback((leagueId: string) => {
+    setActiveTab('league')
+    setActiveLeagueId(leagueId)
+  }, [])
+
+  usePushDeepLink(handleOpenDetail, handleNavigateToday, handleNavigateMarket, handleOpenLeagueFromPush)
 
   // detailKey → 표준 스냅샷. 검색결과/관심종목/보유 어디서든 만들 수 있음.
   const detailContext = useMemo<StockDetailContext | null>(() => {

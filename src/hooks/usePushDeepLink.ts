@@ -11,6 +11,7 @@ type NotificationData = {
   rceptNo?: string
   score?: number
   level?: string
+  leagueId?: string
 }
 
 /**
@@ -18,20 +19,17 @@ type NotificationData = {
  *
  * - DISCLOSURE (DART 공시): stockCode → KR 종목 상세 모달
  * - MORNING_BRIEF (모닝 브리프): Today 탭 (최상단 Hero 카드에 브리프 노출)
- * - EVENING_BRIEF (미장 이브닝 브리프): Today 탭 (모닝과 동일 — Today 가 브리프 허브)
- * - COMPOSITE_RISK (합성 위험도): Market 탭 (종합 위험도 카드 노출)
+ * - EVENING_BRIEF (미장 이브닝 브리프): Today 탭
+ * - COMPOSITE_RISK (합성 위험도): Today 탭 (v2 에서 Market 흡수됨)
  * - US_DISCLOSURE (SEC EDGAR 공시): market+ticker 자동 라우팅 (fall-through)
+ * - LEAGUE_STARTED / LEAGUE_FINISHED: 리그 탭 + 상세 모달 자동 진입
  * - 가격/급등락 알림: market + ticker → 종목 상세 모달
- *
- * 트리거 경로:
- * - 포그라운드/백그라운드: addNotificationResponseReceivedListener
- * - 콜드 스타트: getLastNotificationResponse (앱 종료 상태에서 알림 탭으로 실행)
- * - 웹: expo-notifications 네이티브 바인딩 없음 → 전부 skip (호출 시 즉시 throw 함)
  */
 export function usePushDeepLink(
   onOpenDetail: (market: string, ticker: string) => void,
   onNavigateToday: () => void,
   onNavigateMarket: () => void,
+  onOpenLeague?: (leagueId: string) => void,
 ) {
   useEffect(() => {
     // 웹 빌드에서는 getLastNotificationResponse 가 호출 즉시 예외를 던져서
@@ -56,9 +54,14 @@ export function usePushDeepLink(
         onNavigateToday()
         return
       }
-      // 합성 위험도 — Market 탭 (종합 위험도 카드)
+      // 합성 위험도 — Today 탭 (v2 에서 Market 흡수)
       if (data.type === 'COMPOSITE_RISK') {
         onNavigateMarket()
+        return
+      }
+      // Trading League — 리그 탭 + 상세 모달 자동 진입
+      if ((data.type === 'LEAGUE_STARTED' || data.type === 'LEAGUE_FINISHED') && data.leagueId) {
+        onOpenLeague?.(data.leagueId)
         return
       }
       // 가격/급등락 등 종목 단위 알림
@@ -76,5 +79,5 @@ export function usePushDeepLink(
       handle(response.notification.request.content.data as NotificationData)
     })
     return () => sub.remove()
-  }, [onOpenDetail, onNavigateToday, onNavigateMarket])
+  }, [onOpenDetail, onNavigateToday, onNavigateMarket, onOpenLeague])
 }
