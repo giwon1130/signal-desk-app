@@ -91,7 +91,10 @@ export function ReminderSettingsModal({ visible, authToken, onClose }: Props) {
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <SafeAreaView style={{ flex: 1 }} edges={['top', 'bottom']}>
         <Pressable style={styles.signalModalBackdrop} onPress={onClose}>
-        <Pressable style={[styles.signalModalCard, { maxHeight: '85%' }]} onPress={() => {}}>
+        {/* BUG fix(v2): card 를 Pressable 로 두면 자식 ScrollView 의 vertical swipe 가
+            가로채여 위아래 스크롤이 안 됨. View 로 바꾸면 backdrop 의 hit test 에서
+            card 영역은 backdrop 까지 propagate 안 돼서 outside click 닫기는 그대로 작동. */}
+        <View style={[styles.signalModalCard, { maxHeight: '85%' }]}>
           {/* 헤더는 ScrollView 밖 고정 — 콘텐츠가 길어 스크롤해도 닫기 버튼이 항상 보이게 */}
           <View style={styles.signalModalHeader}>
             <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
@@ -102,7 +105,7 @@ export function ReminderSettingsModal({ visible, authToken, onClose }: Props) {
               <X size={20} color={palette.inkMuted} strokeWidth={2.5} />
             </Pressable>
           </View>
-          <ScrollView style={{ flexShrink: 1 }} showsVerticalScrollIndicator={false}>
+          <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
             <Text style={[styles.signalModalSubtitle, { marginBottom: 12 }]}>
               장 시작은 로컬 알림, 급등락은 서버 푸시로 보내준다.
             </Text>
@@ -182,7 +185,7 @@ export function ReminderSettingsModal({ visible, authToken, onClose }: Props) {
               onClear={() => void handleClearHistory()}
             />
           </ScrollView>
-        </Pressable>
+        </View>
       </Pressable>
       </SafeAreaView>
     </Modal>

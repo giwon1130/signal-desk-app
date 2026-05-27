@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native'
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context'
-import { BarChart3, Bell, Bot, LogOut, Moon, Sun, Sunrise, Trophy } from 'lucide-react-native'
+import { BarChart3, Bot, Settings as SettingsIcon, Sunrise, Trophy } from 'lucide-react-native'
 import { WebLayout } from './src/web/WebLayout'
 import { useStyles } from './src/styles'
 import { ThemeProvider, useTheme } from './src/theme'
@@ -30,6 +30,7 @@ import { AITab } from './src/tabs/AITab'
 import { LeagueTab } from './src/tabs/LeagueTab'
 import { CreateLeagueModal } from './src/components/league_parts/CreateLeagueModal'
 import { LeagueDetailModal } from './src/components/league_parts/LeagueDetailModal'
+import { SettingsModal } from './src/components/SettingsModal'
 import { StocksTab } from './src/tabs/StocksTab'
 import { TodayTab } from './src/tabs/TodayTab'
 import { HomeDashboard } from './src/web/HomeDashboard'
@@ -65,7 +66,7 @@ const TABS: Array<{ key: TabKey; label: string; Icon: typeof Sunrise }> = [
 function AppShell() {
   // v2: useWindowDimensions 은 chartWidth 부재로 미사용 — Phase 4+ 차트 복귀 시 부활.
   const styles = useStyles()
-  const { palette, toggle } = useTheme()
+  const { palette, mode, setMode } = useTheme()
   const toast = useToast()
 
   // 웹: viewport meta + body 배경 + safe-area 패딩 1회 세팅.
@@ -119,6 +120,8 @@ function AppShell() {
   const [createLeagueOpen, setCreateLeagueOpen] = useState(false)
   const [leagueRefreshTick, setLeagueRefreshTick] = useState(0)
   const [activeLeagueId, setActiveLeagueId] = useState<string | null>(null)
+  // v2.1: 통합 설정 모달
+  const [settingsOpen, setSettingsOpen] = useState(false)
 
   useEffect(() => {
     const tok = user?.token
@@ -534,6 +537,18 @@ function AppShell() {
         onClose={() => setActiveLeagueId(null)}
         toast={toast}
       />
+      <SettingsModal
+        visible={settingsOpen}
+        user={user}
+        marketPreference={marketPreference}
+        themeMode={mode}
+        authToken={user?.token ?? null}
+        onClose={() => setSettingsOpen(false)}
+        onMarketPreferenceChange={handleMarketPreferenceChange}
+        onThemeChange={(m) => setMode(m)}
+        onOpenReminder={() => setReminderOpen(true)}
+        onLogout={() => { setSettingsOpen(false); confirmLogout() }}
+      />
       <DailyGreetingModal
         visible={greetingOpen}
         fortune={fortune ?? null}
@@ -563,6 +578,7 @@ function AppShell() {
           onTabChange={handleTabChange}
           onLogout={confirmLogout}
           onOpenReminder={() => { void hapticLight(); setReminderOpen(true) }}
+          onOpenSettings={() => { void hapticLight(); setSettingsOpen(true) }}
           marketPreference={marketPreference}
           onMarketPreferenceChange={handleMarketPreferenceChange}
           sections={sections}
@@ -600,26 +616,13 @@ function AppShell() {
                   {isUp ? 'LIVE' : 'OFF'}
                 </Text>
               </View>
+              {/* v2.1: 종/Sun/로그아웃 3개 → 톱니 1개 (통합 설정 모달 진입) */}
               <Pressable
-                onPress={() => { void hapticLight(); setReminderOpen(true) }}
+                onPress={() => { void hapticLight(); setSettingsOpen(true) }}
                 style={({ pressed }) => [styles.themeToggleBtn, pressed && { opacity: 0.6 }]}
-                accessibilityLabel="알림 설정"
+                accessibilityLabel="설정"
               >
-                <Bell size={16} color="#cbd5e1" />
-              </Pressable>
-              <Pressable
-                onPress={() => { void hapticLight(); toggle() }}
-                style={({ pressed }) => [styles.themeToggleBtn, pressed && { opacity: 0.6 }]}
-                accessibilityLabel={isDark ? '라이트 모드로 전환' : '다크 모드로 전환'}
-              >
-                {isDark ? <Sun size={16} color="#fcd34d" /> : <Moon size={16} color="#cbd5e1" />}
-              </Pressable>
-              <Pressable
-                onPress={confirmLogout}
-                style={({ pressed }) => [styles.themeToggleBtn, pressed && { opacity: 0.6 }]}
-                accessibilityLabel="로그아웃"
-              >
-                <LogOut size={16} color="#fca5a5" />
+                <SettingsIcon size={16} color={palette.inkSub} />
               </Pressable>
             </View>
           </View>

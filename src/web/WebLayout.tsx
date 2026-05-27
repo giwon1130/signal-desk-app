@@ -49,6 +49,8 @@ type Props = {
   onTabChange: (key: TabKey) => void
   onLogout: () => void
   onOpenReminder: () => void
+  // v2.1: 통합 설정 모달 진입 (NarrowHeader 톱니에서 호출)
+  onOpenSettings: () => void
   // v2: 시장 선호 헤더 칩
   marketPreference: import('../api/alertPreferences').MarketPreference
   onMarketPreferenceChange: (p: import('../api/alertPreferences').MarketPreference) => void
@@ -66,7 +68,7 @@ type Props = {
 export function WebLayout(props: Props) {
   const {
     user, activeTab, isUp, lastSyncedAt,
-    onTabChange, onLogout, onOpenReminder,
+    onTabChange, onLogout, onOpenReminder, onOpenSettings,
     marketPreference, onMarketPreferenceChange,
     sections, summary, fortune, watchlist, portfolio, aiRecommendation, onOpenDetail,
     children,
@@ -91,10 +93,7 @@ export function WebLayout(props: Props) {
         <NarrowHeader
           isUp={isUp}
           lastSyncedAt={lastSyncedAt}
-          onOpenReminder={onOpenReminder}
-          onToggleTheme={handleToggleTheme}
-          onLogout={onLogout}
-          isDark={isDark}
+          onOpenSettings={onOpenSettings}
           marketPreference={marketPreference}
           onMarketPreferenceChange={onMarketPreferenceChange}
         />
