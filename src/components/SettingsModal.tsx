@@ -38,7 +38,7 @@ export function SettingsModal({
   const { palette } = useTheme()
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
       <SafeAreaView style={{ flex: 1, backgroundColor: palette.bg }} edges={['top', 'bottom']}>
         {/* 헤더 */}
         <View style={{
