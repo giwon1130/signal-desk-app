@@ -194,6 +194,7 @@ export function TodayTab({
       {/* ── 뉴스 sentiment ── */}
       {(krSentiment || usSentiment) ? (
         <CollapsibleCard
+          defaultCollapsed
           title={
             <View style={styles.cardTitleRow}>
               <Newspaper size={14} color="#0d9488" strokeWidth={2.5} />
@@ -224,6 +225,7 @@ export function TodayTab({
       {/* ── 최근 받은 알림 (회고) ── */}
       {alertHistory.length > 0 ? (
         <CollapsibleCard
+          defaultCollapsed
           title={
             <View style={styles.cardTitleRow}>
               <Bell size={14} color="#ea580c" strokeWidth={2.5} />

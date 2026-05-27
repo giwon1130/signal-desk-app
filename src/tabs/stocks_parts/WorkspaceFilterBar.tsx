@@ -1,5 +1,5 @@
 import { Pressable, Text, View } from 'react-native'
-import { ArrowDownAZ, ArrowDownWideNarrow, Clock, TrendingUp } from 'lucide-react-native'
+import { ArrowDownAZ, ArrowDownWideNarrow, Clock, ListFilter, TrendingUp } from 'lucide-react-native'
 import { useStyles } from '../../styles'
 import { useTheme } from '../../theme'
 
@@ -37,6 +37,13 @@ export function WorkspaceFilterBar({ sortKey, marketFilter, onSortChange, onMark
   const { palette } = useTheme()
   return (
     <View style={[styles.card, { gap: 8, paddingVertical: 10 }]}>
+      {/* 헤더 라벨 — 어떤 영역의 필터인지 명확화 */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+        <ListFilter size={11} color={palette.inkMuted} strokeWidth={2.5} />
+        <Text style={{ color: palette.inkMuted, fontSize: 10, fontWeight: '800', letterSpacing: 0.8 }}>
+          보유 · 관심 정렬·필터
+        </Text>
+      </View>
       {/* 정렬 segmented */}
       <View style={{ flexDirection: 'row', gap: 4 }}>
         {SORT_OPTIONS.map((o) => {
@@ -75,6 +82,12 @@ export function WorkspaceFilterBar({ sortKey, marketFilter, onSortChange, onMark
           )
         })}
       </View>
+      {/* 'profit' 정렬 + 관심엔 의미 없음 안내 (작게) */}
+      {sortKey === 'profit' ? (
+        <Text style={{ color: palette.inkFaint, fontSize: 10, fontStyle: 'italic' }}>
+          ⓘ 관심 종목은 손익 데이터가 없어 등록순으로 표시
+        </Text>
+      ) : null}
     </View>
   )
 }

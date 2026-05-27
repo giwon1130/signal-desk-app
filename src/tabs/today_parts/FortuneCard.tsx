@@ -27,6 +27,7 @@ export function FortuneCard({ fortune }: { fortune: DailyFortune }) {
 
   return (
     <CollapsibleCard
+      defaultCollapsed
       title={
         <View style={styles.cardTitleRow}>
           <Moon size={13} color={accent} strokeWidth={2.5} />

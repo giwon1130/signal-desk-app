@@ -128,14 +128,15 @@ function AppShell() {
       if (completed) {
         setOnboardingState('done')
         // 완료된 사용자 중 v2 마이그레이션 모달 아직 안 본 경우 1회 노출.
+        // 진입 직후 갑작스러우면 어색 → 700ms 지연으로 메인 그려진 뒤 자연스럽게 노출.
         const migShown = await getV2MigrationShown()
-        if (!migShown) setV2MigrationOpen(true)
+        if (!migShown) setTimeout(() => setV2MigrationOpen(true), 700)
       } else if (p.marketPreference) {
         // v1 사용자 — 온보딩 한 적 없지만 marketPreference 가 있으므로 신규 아님.
         await markOnboardingCompleted()
         setOnboardingState('done')
         const migShown = await getV2MigrationShown()
-        if (!migShown) setV2MigrationOpen(true)
+        if (!migShown) setTimeout(() => setV2MigrationOpen(true), 700)
       } else {
         setOnboardingState('show')
         // 신규 사용자는 온보딩 자체가 v2 안내라 별도 마이그레이션 모달 불필요.
@@ -156,6 +157,21 @@ function AppShell() {
       } catch { /* 실패해도 로컬 상태는 변경됨 */ }
     }
   }, [user?.token])
+
+  // v2: 헤더 시장 칩 변경 공통 핸들러 — 모바일/웹 양쪽이 같은 동작 (즉시 반영 + 토스트 + 백엔드 동기).
+  const handleMarketPreferenceChange = useCallback((pref: MarketPreference) => {
+    setMarketPreference(pref)
+    const label = pref === 'KR' ? '🇰🇷 한국 시장' : pref === 'US' ? '🇺🇸 미국 시장' : '🌍 양쪽 시장'
+    toast.show(`${label} 으로 전환`)
+    if (user?.token) {
+      void (async () => {
+        try {
+          const current = await getAlertPreferences(user.token)
+          await updateAlertPreferences(user.token, { ...current, marketPreference: pref })
+        } catch { /* 실패해도 UI 는 즉시 반영 */ }
+      })()
+    }
+  }, [user?.token, toast])
 
   const handleOnboardingComplete = useCallback((pref: MarketPreference) => {
     setMarketPreference(pref)
@@ -505,17 +521,7 @@ function AppShell() {
           onLogout={confirmLogout}
           onOpenReminder={() => { void hapticLight(); setReminderOpen(true) }}
           marketPreference={marketPreference}
-          onMarketPreferenceChange={(pref) => {
-            setMarketPreference(pref)
-            if (user?.token) {
-              void (async () => {
-                try {
-                  const current = await getAlertPreferences(user.token)
-                  await updateAlertPreferences(user.token, { ...current, marketPreference: pref })
-                } catch { /* 실패해도 UI 는 즉시 반영 */ }
-              })()
-            }
-          }}
+          onMarketPreferenceChange={handleMarketPreferenceChange}
           sections={sections}
           summary={summary}
           fortune={fortune}
@@ -578,17 +584,7 @@ function AppShell() {
             {/* v2: 시장 선호 inline 토글 — 항상 노출, 가장 자주 쓰는 설정 */}
             <MarketProfileChip
               value={marketPreference}
-              onChange={(pref) => {
-                setMarketPreference(pref)
-                if (user?.token) {
-                  void (async () => {
-                    try {
-                      const current = await getAlertPreferences(user.token)
-                      await updateAlertPreferences(user.token, { ...current, marketPreference: pref })
-                    } catch { /* 실패해도 UI 는 즉시 반영 */ }
-                  })()
-                }
-              }}
+              onChange={handleMarketPreferenceChange}
             />
             <Text style={[styles.headerSubtitle, { flexShrink: 1, textAlign: 'right' }]}>
               {lastSyncedAt ? `${lastSyncedAt}` : '오늘 하루를 한 화면에서'}
