@@ -86,7 +86,7 @@ export function CreateLeagueModal({ visible, onClose, onCreated, toast }: Props)
   }
 
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
+    <Modal visible={visible} animationType="slide" presentationStyle="fullScreen" onRequestClose={onClose}>
       <SafeAreaView style={{ flex: 1, backgroundColor: palette.bg }} edges={['top', 'bottom']}>
         {/* 헤더 */}
         <View style={{
