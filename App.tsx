@@ -6,7 +6,6 @@ import {
   Platform,
   Pressable,
   Text,
-  useWindowDimensions,
   View,
 } from 'react-native'
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context'
@@ -38,16 +37,14 @@ import { getFortuneGreetingShownDate, markFortuneGreetingShown } from './src/uti
 import { useMarketReminderBootstrap } from './src/hooks/useMarketReminder'
 import { usePushDeepLink } from './src/hooks/usePushDeepLink'
 import { useAuthSession } from './src/hooks/useAuthSession'
-import { useChartSelection } from './src/hooks/useChartSelection'
+// v2 Phase 3: useChartSelection 은 ChartSection 재배치 시 (Phase 4+ Beta 후) 복구
 import { useMarketSnapshot } from './src/hooks/useMarketSnapshot'
 import { useStockSearch } from './src/hooks/useStockSearch'
 import { useWorkspaceMutations } from './src/hooks/useWorkspaceMutations'
 import type {
-  HoldingPosition,
   StockSearchResult,
   TabKey,
 } from './src/types'
-import { normalizeText } from './src/utils'
 
 // v2: 3탭으로 압축. 'home'/'market' 콘텐츠는 'today' 탭으로 흡수됨.
 const TABS: Array<{ key: TabKey; label: string; Icon: typeof Sunrise }> = [
@@ -57,7 +54,7 @@ const TABS: Array<{ key: TabKey; label: string; Icon: typeof Sunrise }> = [
 ]
 
 function AppShell() {
-  const { width } = useWindowDimensions()
+  // v2: useWindowDimensions 은 chartWidth 부재로 미사용 — Phase 4+ 차트 복귀 시 부활.
   const styles = useStyles()
   const { palette, toggle } = useTheme()
   const toast = useToast()
@@ -81,15 +78,8 @@ function AppShell() {
     stockSearch, stockMarketFilter, stockResults, stockSearchLoading,
     setStockSearch, setStockMarketFilter,
   } = search
-  // v2: HomeTab 의 homeQuery + MarketTab 의 chart 셀렉션은 Phase 3 에서 '오늘' 또는 '종목' 으로 흡수 예정.
-  // 현 Phase 1 은 데이터 파이프라인은 유지하되 노출 위치만 'today' 로 좁힘 — 아래 변수는 Phase 3 에서 다시 사용.
-  const [homeQuery, setHomeQuery] = useState('')
-  const chart = useChartSelection(sections)
-  const {
-    chartMarket, chartPeriod, selectedIndexLabel,
-    setChartMarket, setChartPeriod, setSelectedIndexLabel,
-    activeSection, activeIndex, activePeriod,
-  } = chart
+  // v2 Phase 3 정리: HomeTab / MarketTab 삭제됨 → homeQuery + 차트 셀렉션 hook 제거.
+  // 차트는 Phase 4+ Beta 후 'today' 의 ChartSection 으로 다시 들어올 수 있음 — 그 때 useChartSelection 복구.
   const mutations = useWorkspaceMutations({
     watchlist, setWatchlist, setPortfolio, fetchData, toast,
   })
@@ -144,19 +134,18 @@ function AppShell() {
     setMarketPreference(pref)
     setOnboardingState('done')
   }, [])
-  // 선호값을 최초 1회만 차트/검색 필터 디폴트에 반영. 이후 사용자 토글은 보존.
+  // 선호값을 최초 1회만 종목 탭 검색 필터 디폴트에 반영. 이후 사용자 토글은 보존.
+  // v2: 차트 셀렉션은 MarketTab 와 함께 제거 — 종목 탭 필터만 동기화.
   useEffect(() => {
     if (preferenceSyncedRef.current) return
     if (marketPreference === 'BOTH') return  // BOTH 는 기존 디폴트 유지
     preferenceSyncedRef.current = true
     if (marketPreference === 'US') {
-      setChartMarket('US')
       setStockMarketFilter('US')
     } else if (marketPreference === 'KR') {
-      setChartMarket('KR')
       setStockMarketFilter('KR')
     }
-  }, [marketPreference, setChartMarket, setStockMarketFilter])
+  }, [marketPreference, setStockMarketFilter])
 
   // ── 오늘의 운세 팝업 (앱 전용, 하루 1회) ──
   const [greetingOpen, setGreetingOpen] = useState(false)
@@ -221,29 +210,6 @@ function AppShell() {
     })
   }, [upcomingEvents, marketPreference])
 
-  const filteredWatchlist = useMemo(() => {
-    const query = normalizeText(homeQuery)
-    if (!query) return watchlist
-    return watchlist.filter((item) =>
-      [item.name, item.ticker, item.market, item.sector, item.stance].some((value) =>
-        normalizeText(value).includes(query),
-      ),
-    )
-  }, [homeQuery, watchlist])
-
-  const filteredPortfolioPositions = useMemo<HoldingPosition[]>(() => {
-    const positions = portfolio?.positions ?? []
-    const query = normalizeText(homeQuery)
-    if (!query) return positions
-    return positions.filter((item) =>
-      [item.name, item.ticker, item.market].some((value) => normalizeText(value).includes(query)),
-    )
-  }, [homeQuery, portfolio?.positions])
-
-  // 웹(데스크톱)에선 정보 밀도 ↑ — 홈의 top-N 을 훨씬 더 많이 보여줌.
-  const listLimit = Platform.OS === 'web' ? 12 : 4
-  const topWatchlist = useMemo(() => filteredWatchlist.slice(0, listLimit), [filteredWatchlist, listLimit])
-  const topPortfolioPositions = useMemo(() => filteredPortfolioPositions.slice(0, listLimit), [filteredPortfolioPositions, listLimit])
   // 어느 탭에서든 호출 가능한 "종목 상세 열기"
   const handleOpenDetail = useCallback((market: string, ticker: string, name?: string) => {
     if (!market || !ticker) return
@@ -289,7 +255,7 @@ function AppShell() {
     return { base, watchItem, portfolioPosition: portfolioPos, latestAiLog }
   }, [detailKey, detailFallbackName, stockResults, watchlist, portfolio?.positions, aiRecommendation?.executionLogs])
 
-  const chartWidth = Math.max(300, Math.min(width - 28, 760))
+  // v2: chartWidth 는 ChartSection 부재로 미사용 — Phase 4+ 차트 복귀 시 부활.
   const isUp = apiHealth?.status === 'UP'
   const isDark = palette.scheme === 'dark'
 
