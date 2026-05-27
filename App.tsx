@@ -10,7 +10,7 @@ import {
   View,
 } from 'react-native'
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context'
-import { BarChart3, Bell, Bot, Home, LogOut, Moon, Sun, Sunrise, TrendingUp } from 'lucide-react-native'
+import { BarChart3, Bell, Bot, LogOut, Moon, Sun, Sunrise } from 'lucide-react-native'
 import { WebLayout } from './src/web/WebLayout'
 import { useStyles } from './src/styles'
 import { ThemeProvider, useTheme } from './src/theme'
@@ -21,8 +21,6 @@ import { webBootstrap } from './src/utils/webBootstrap'
 import { useToast } from './src/hooks/useToast'
 import { hapticLight } from './src/utils/haptics'
 import { AITab } from './src/tabs/AITab'
-import { HomeTab } from './src/tabs/HomeTab'
-import { MarketTab } from './src/tabs/MarketTab'
 import { StocksTab } from './src/tabs/StocksTab'
 import { TodayTab } from './src/tabs/TodayTab'
 import { HomeDashboard } from './src/web/HomeDashboard'
@@ -49,10 +47,9 @@ import type {
 } from './src/types'
 import { normalizeText } from './src/utils'
 
-const TABS: Array<{ key: TabKey; label: string; Icon: typeof Home }> = [
+// v2: 3탭으로 압축. 'home'/'market' 콘텐츠는 'today' 탭으로 흡수됨.
+const TABS: Array<{ key: TabKey; label: string; Icon: typeof Sunrise }> = [
   { key: 'today',  label: '오늘', Icon: Sunrise },
-  { key: 'home',   label: '홈',   Icon: Home },
-  { key: 'market', label: '시장', Icon: TrendingUp },
   { key: 'stocks', label: '종목', Icon: BarChart3 },
   { key: 'ai',     label: 'AI',   Icon: Bot },
 ]
@@ -82,6 +79,8 @@ function AppShell() {
     stockSearch, stockMarketFilter, stockResults, stockSearchLoading,
     setStockSearch, setStockMarketFilter,
   } = search
+  // v2: HomeTab 의 homeQuery + MarketTab 의 chart 셀렉션은 Phase 3 에서 '오늘' 또는 '종목' 으로 흡수 예정.
+  // 현 Phase 1 은 데이터 파이프라인은 유지하되 노출 위치만 'today' 로 좁힘 — 아래 변수는 Phase 3 에서 다시 사용.
   const [homeQuery, setHomeQuery] = useState('')
   const chart = useChartSelection(sections)
   const {
@@ -233,8 +232,9 @@ function AppShell() {
     setActiveTab('today')
   }, [])
 
+  // v2: 'market' 탭이 'today' 로 흡수됨 — Market 콘텐츠는 today 에서 노출되므로 같은 핸들러 재사용.
   const handleNavigateMarket = useCallback(() => {
-    setActiveTab('market')
+    setActiveTab('today')
   }, [])
 
   usePushDeepLink(handleOpenDetail, handleNavigateToday, handleNavigateMarket)
@@ -330,49 +330,17 @@ function AppShell() {
             mediaSummary={mediaSummary}
             upcomingEvents={filteredUpcomingEvents}
             disclosures={disclosures}
+            topMovers={topMovers}
+            marketPreference={marketPreference}
             onOpenDetail={handleOpenDetail}
             refreshing={refreshing}
             onRefresh={refresh}
           />
         )
       ) : null}
-
-      {!loading && !error && activeTab === 'home' ? (
-        <HomeTab
-          portfolio={portfolio}
-          refreshing={refreshing}
-          onRefresh={refresh}
-          homeQuery={homeQuery}
-          onHomeQueryChange={setHomeQuery}
-          filteredWatchlist={filteredWatchlist}
-          filteredPortfolioPositions={filteredPortfolioPositions}
-          topWatchlist={topWatchlist}
-          topPortfolioPositions={topPortfolioPositions}
-          onOpenDetail={handleOpenDetail}
-          onRemoveWatch={(id) => void handleDeleteFavorite(id)}
-        />
-      ) : null}
-
-      {!loading && !error && activeTab === 'market' ? (
-        <MarketTab
-          summary={summary}
-          activeSection={activeSection}
-          activeIndex={activeIndex}
-          activePeriod={activePeriod}
-          chartMarket={chartMarket}
-          chartPeriod={chartPeriod}
-          selectedIndexLabel={selectedIndexLabel}
-          chartWidth={chartWidth}
-          topMovers={topMovers}
-          marketPreference={marketPreference}
-          onOpenDetail={handleOpenDetail}
-          refreshing={refreshing}
-          onRefresh={refresh}
-          onChartMarketChange={setChartMarket}
-          onChartPeriodChange={setChartPeriod}
-          onSelectedIndexLabelChange={setSelectedIndexLabel}
-        />
-      ) : null}
+      {/* v2: 'home', 'market' 탭은 'today' 로 흡수됨 — HomeTab/MarketTab 호출 제거. */}
+      {/* HomeTab 의 워크스페이스 검색 기능(homeQuery) 은 Phase 3 에서 '종목' 탭으로 흡수. */}
+      {/* MarketTab 의 ChartSection 도 Phase 3 에서 'today' 또는 '종목' 으로 이전 검토. */}
 
       {!loading && !error && activeTab === 'stocks' ? (
         Platform.OS === 'web' ? (

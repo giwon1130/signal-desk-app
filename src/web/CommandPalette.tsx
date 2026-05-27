@@ -15,11 +15,11 @@ type Entry =
   | { kind: 'stock'; id: string; label: string; hint: string; market: string; ticker: string; name: string }
   | { kind: 'action'; id: string; label: string; hint: string; run: () => void }
 
+// v2: 'market' entry 제거 (today 흡수). 지수·섹터·종합 위험도는 '오늘' 안에서.
 const TAB_ENTRIES: Array<{ tab: TabKey; label: string; hint: string }> = [
-  { tab: 'today', label: '오늘', hint: '홈 대시보드' },
-  { tab: 'market', label: '시장', hint: '지수 · 섹터' },
-  { tab: 'stocks', label: '종목', hint: '검색 · 관심' },
-  { tab: 'ai', label: 'AI', hint: 'AI 추천 · 로그' },
+  { tab: 'today', label: '오늘', hint: '시장 무드 · 모닝/이브닝 브리프 · 보유 모니터' },
+  { tab: 'stocks', label: '종목', hint: '검색 · 관심 · 보유' },
+  { tab: 'ai', label: 'AI', hint: 'AI 추천 · 숨은 시그널 · 인사이트' },
 ]
 
 export function CommandPalette({ watchlist, onNavigateTab, onOpenDetail, onOpenReminder }: Props) {

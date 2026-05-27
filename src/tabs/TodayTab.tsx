@@ -16,7 +16,9 @@ import type {
   MarketEvent,
   MarketSummaryData,
   MediaSummaryItem,
+  TopMoversResponse,
 } from '../types'
+import type { MarketPreference } from '../api/alertPreferences'
 import {
   formatSignedRate,
   getSessionPalette,
@@ -30,6 +32,10 @@ import { MediaSummaryCard } from './today_parts/MediaSummaryCard'
 import { PicksCard } from './today_parts/PicksCard'
 import { SentimentCard } from './today_parts/SentimentCard'
 import { toneColor } from './today_parts/helpers'
+import { CompositeRiskCard } from './market_parts/CompositeRiskCard'
+import { MarketSummaryMetrics } from './market_parts/MarketSummaryMetrics'
+import { TopMoversSection } from './market_parts/TopMoversSection'
+import { WatchAlertList } from './market_parts/WatchAlertList'
 
 type Props = {
   summary: MarketSummaryData | null
@@ -40,6 +46,9 @@ type Props = {
   mediaSummary: MediaSummaryItem | null
   upcomingEvents: MarketEvent[]
   disclosures: DisclosureItem[]
+  // v2: Market 탭 흡수 — 합성위험도/시장 무드 지표/top movers/watch alerts.
+  topMovers: TopMoversResponse | null
+  marketPreference: MarketPreference
   onOpenDetail: (market: string, ticker: string, name?: string) => void
   refreshing: boolean
   onRefresh: () => Promise<void>
@@ -54,6 +63,8 @@ export function TodayTab({
   mediaSummary,
   upcomingEvents,
   disclosures,
+  topMovers,
+  marketPreference,
   onOpenDetail,
   refreshing,
   onRefresh,
@@ -79,6 +90,18 @@ export function TodayTab({
 
   const tradingDay = summary?.tradingDayStatus
   const marketClosedToday = !!tradingDay && !tradingDay.krOpen && !tradingDay.usOpen
+
+  // v2: Market 탭에서 흡수한 콘텐츠 — 시장 무드 지표 + top movers 의 시장 필터.
+  const showKr = marketPreference === 'KR' || marketPreference === 'BOTH'
+  const showUs = marketPreference === 'US' || marketPreference === 'BOTH'
+  // 요약 지표(Fear Meter 글로벌 / KR Heat·Flow Bias KR / US Heat US) 필터.
+  const filteredMetrics = (summary?.marketSummary ?? []).filter((m) => {
+    const label = m.label
+    if (label === 'Fear Meter') return true
+    if (label === 'KR Heat' || label === 'Flow Bias') return showKr
+    if (label === 'US Heat') return showUs
+    return true
+  })
 
   return (
     <ScrollView
@@ -118,7 +141,11 @@ export function TodayTab({
         </View>
       ) : null}
 
-      {/* ── 모닝 브리프 / 시장 종합 (Hero) ── */}
+      {/* ── 시장 무드 hero (v2): 합성 위험도 + 요약 지표 ── */}
+      <CompositeRiskCard risk={summary?.compositeRisk ?? null} />
+      {filteredMetrics.length > 0 ? <MarketSummaryMetrics metrics={filteredMetrics} /> : null}
+
+      {/* ── 모닝/이브닝 브리프 (Hero) — 시간대별 자동 전환 ── */}
       {mediaSummary ? (
         <MediaSummaryCard
           item={mediaSummary}
@@ -140,6 +167,23 @@ export function TodayTab({
 
       {/* ── 오늘의 단타 픽 ── */}
       <PicksCard picks={picks} marketClosedToday={marketClosedToday} />
+
+      {/* ── 시장 발견 (v2): top movers — 프로필별 필터 ── */}
+      {showKr && topMovers ? (
+        <TopMoversSection topMovers={topMovers} kind="gainers" market="KR" onOpenDetail={onOpenDetail} />
+      ) : null}
+      {showKr && topMovers ? (
+        <TopMoversSection topMovers={topMovers} kind="losers" market="KR" onOpenDetail={onOpenDetail} />
+      ) : null}
+      {showUs && topMovers?.us ? (
+        <TopMoversSection topMovers={topMovers} kind="gainers" market="US" onOpenDetail={onOpenDetail} />
+      ) : null}
+      {showUs && topMovers?.us ? (
+        <TopMoversSection topMovers={topMovers} kind="losers" market="US" onOpenDetail={onOpenDetail} />
+      ) : null}
+
+      {/* ── 관심종목 알림 (Market 탭에서 흡수) ── */}
+      <WatchAlertList alerts={summary?.watchAlerts ?? []} />
 
       {/* ── 다가오는 이벤트 (FOMC/실적/휴장) ── */}
       <EventsCard events={upcomingEvents} />

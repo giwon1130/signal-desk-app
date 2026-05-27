@@ -82,7 +82,7 @@ export function WebLayout(props: Props) {
         <TickerRibbon
           sections={sections}
           sessions={sessions}
-          onClickIndex={() => onTabChange('market')}
+          onClickIndex={() => onTabChange('today')}
         />
         <NarrowHeader
           isUp={isUp}
@@ -111,7 +111,7 @@ export function WebLayout(props: Props) {
       <TickerRibbon
         sections={sections}
         sessions={sessions}
-        onClickIndex={() => onTabChange('market')}
+        onClickIndex={() => onTabChange('today')}
       />
 
       <View style={{ flex: 1, flexDirection: 'row' }}>
