@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
-import { Modal, Pressable, ScrollView, Switch, Text, View } from 'react-native'
+import { Modal, Pressable, ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Bell, History, Trash2, X } from 'lucide-react-native'
+import { Bell, X } from 'lucide-react-native'
 import { useStyles } from '../styles'
 import { useTheme } from '../theme'
 import {
@@ -17,7 +17,10 @@ import {
 } from '../hooks/useMarketReminder'
 import { getPushAlertsEnabled, setPushAlertsEnabled } from '../api/pushDevice'
 import { getAlertPreferences, updateAlertPreferences, type AlertPreferences } from '../api/alertPreferences'
-import { formatRelativeOrShortTime } from '../utils'
+import { AlertToggleRow } from './reminder_parts/AlertToggleRow'
+import { MarketPreferencePicker } from './reminder_parts/MarketPreferencePicker'
+import { MinutesBeforePicker } from './reminder_parts/MinutesBeforePicker'
+import { NotificationHistorySection } from './reminder_parts/NotificationHistorySection'
 
 type Props = {
   visible: boolean
@@ -85,6 +88,8 @@ export function ReminderSettingsModal({ visible, authToken, onClose, onMarketPre
   const handleUs = async (v: boolean) => { setUsOn(v); await setUsOpenEnabled(v) }
   const handleMinutes = async (m: number) => { setMinutes(m); await setMinutesBefore(m) }
 
+  const togglesDisabled = !hydrated || !authToken
+
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <SafeAreaView style={{ flex: 1 }} edges={['top', 'bottom']}>
@@ -105,209 +110,84 @@ export function ReminderSettingsModal({ visible, authToken, onClose, onMarketPre
               장 시작은 로컬 알림, 급등락은 서버 푸시로 보내준다.
             </Text>
 
-            {/* ── 투자 시장 선호 (UI 노출 범위) ── */}
-            <View style={[styles.signalModalSection, { marginTop: 0, marginBottom: 6 }]}>
-              <Text style={styles.signalModalSectionTitle}>투자 시장</Text>
-              <Text style={[styles.metricState, { marginTop: 2, marginBottom: 8 }]}>
-                선택한 시장만 카드·종목·이벤트가 보입니다. 알림 토글과 별개.
-              </Text>
-              <View style={styles.filterRow}>
-                {(['KR', 'BOTH', 'US'] as const).map((m) => {
-                  const active = prefs.marketPreference === m
-                  const label = m === 'KR' ? '🇰🇷 한국만' : m === 'US' ? '🇺🇸 미국만' : '🇰🇷🇺🇸 둘 다'
-                  return (
-                    <Pressable
-                      key={m}
-                      onPress={() => void updatePref({ marketPreference: m })}
-                      style={[styles.filterChip, active && styles.filterChipActive]}
-                      disabled={!hydrated || !authToken}
-                    >
-                      <Text style={[styles.filterText, active && styles.filterTextActive]}>{label}</Text>
-                    </Pressable>
-                  )
-                })}
-              </View>
-            </View>
+            <MarketPreferencePicker
+              value={prefs.marketPreference}
+              disabled={togglesDisabled}
+              onChange={(m) => void updatePref({ marketPreference: m })}
+            />
 
-            {/* ── 급등락 푸시 (마스터 토글) ── */}
-            <View style={[styles.summaryRow, { paddingHorizontal: 0 }]}>
-              <View style={styles.metricLeft}>
-                <Text style={styles.metricName}>📈 관심종목 급등락 알림</Text>
-                <Text style={styles.metricState}>±5% 감지 시 푸시 (서버 발송)</Text>
-              </View>
-              <Switch
-                value={pushOn}
-                onValueChange={(v) => void handlePush(v)}
-                disabled={!hydrated || !authToken}
-              />
-            </View>
+            <AlertToggleRow
+              title="📈 관심종목 급등락 알림"
+              hint="±5% 감지 시 푸시 (서버 발송)"
+              value={pushOn}
+              disabled={togglesDisabled}
+              onValueChange={(v) => void handlePush(v)}
+            />
+            <AlertToggleRow
+              title="🇰🇷 한국장 watch 알림"
+              hint="09:00~15:30 KST, 거래일에만"
+              value={prefs.krEnabled}
+              disabled={togglesDisabled}
+              onValueChange={(v) => void updatePref({ krEnabled: v })}
+            />
+            <AlertToggleRow
+              title="🇺🇸 미국장 watch 알림"
+              hint="22:30~05:00 KST, 거래일에만 (디폴트 OFF)"
+              value={prefs.usEnabled}
+              disabled={togglesDisabled}
+              onValueChange={(v) => void updatePref({ usEnabled: v })}
+            />
+            <AlertToggleRow
+              title="🌅 모닝 브리프 알림"
+              hint="08:30 KST · 야간 미국장 + 보유 종목 공시 통합"
+              value={prefs.premarketEnabled}
+              disabled={togglesDisabled}
+              onValueChange={(v) => void updatePref({ premarketEnabled: v })}
+            />
+            <AlertToggleRow
+              title="🌆 미장 이브닝 브리프"
+              hint="06:30 KST · NY 마감 직후 NASDAQ/S&P · 주도주 · 실적"
+              value={prefs.eveningBriefEnabled}
+              disabled={togglesDisabled}
+              onValueChange={(v) => void updatePref({ eveningBriefEnabled: v })}
+            />
+            <AlertToggleRow
+              title="⚠️ 시장 위험도 알림"
+              hint="합성 위험도 8/10 이상일 때 · 08:32 KST"
+              value={prefs.compositeRiskEnabled}
+              disabled={togglesDisabled}
+              onValueChange={(v) => void updatePref({ compositeRiskEnabled: v })}
+            />
+            <AlertToggleRow
+              title="🇰🇷 한국장 시작"
+              hint="매일 09:00 KST"
+              value={krOn}
+              disabled={!hydrated}
+              onValueChange={(v) => void handleKr(v)}
+            />
+            <AlertToggleRow
+              title="🇺🇸 미국장 시작"
+              hint="평일 22:30/23:30 KST (서머타임 자동)"
+              value={usOn}
+              disabled={!hydrated}
+              onValueChange={(v) => void handleUs(v)}
+            />
 
-            {/* ── 한국장 watch 알림 (server) ── */}
-            <View style={[styles.summaryRow, { paddingHorizontal: 0 }]}>
-              <View style={styles.metricLeft}>
-                <Text style={styles.metricName}>🇰🇷 한국장 watch 알림</Text>
-                <Text style={styles.metricState}>09:00~15:30 KST, 거래일에만</Text>
-              </View>
-              <Switch
-                value={prefs.krEnabled}
-                onValueChange={(v) => void updatePref({ krEnabled: v })}
-                disabled={!hydrated || !authToken}
-              />
-            </View>
-
-            {/* ── 미국장 watch 알림 (server) ── */}
-            <View style={[styles.summaryRow, { paddingHorizontal: 0 }]}>
-              <View style={styles.metricLeft}>
-                <Text style={styles.metricName}>🇺🇸 미국장 watch 알림</Text>
-                <Text style={styles.metricState}>22:30~05:00 KST, 거래일에만 (디폴트 OFF)</Text>
-              </View>
-              <Switch
-                value={prefs.usEnabled}
-                onValueChange={(v) => void updatePref({ usEnabled: v })}
-                disabled={!hydrated || !authToken}
-              />
-            </View>
-
-            {/* ── 모닝 브리프 알림 ── */}
-            <View style={[styles.summaryRow, { paddingHorizontal: 0 }]}>
-              <View style={styles.metricLeft}>
-                <Text style={styles.metricName}>🌅 모닝 브리프 알림</Text>
-                <Text style={styles.metricState}>08:30 KST · 야간 미국장 + 보유 종목 공시 통합</Text>
-              </View>
-              <Switch
-                value={prefs.premarketEnabled}
-                onValueChange={(v) => void updatePref({ premarketEnabled: v })}
-                disabled={!hydrated || !authToken}
-              />
-            </View>
-
-            {/* ── 미장 이브닝 브리프 (server) ── */}
-            <View style={[styles.summaryRow, { paddingHorizontal: 0 }]}>
-              <View style={styles.metricLeft}>
-                <Text style={styles.metricName}>🌆 미장 이브닝 브리프</Text>
-                <Text style={styles.metricState}>06:30 KST · NY 마감 직후 NASDAQ/S&P · 주도주 · 실적</Text>
-              </View>
-              <Switch
-                value={prefs.eveningBriefEnabled}
-                onValueChange={(v) => void updatePref({ eveningBriefEnabled: v })}
-                disabled={!hydrated || !authToken}
-              />
-            </View>
-
-            {/* ── 합성 위험도 알림 (server) ── */}
-            <View style={[styles.summaryRow, { paddingHorizontal: 0 }]}>
-              <View style={styles.metricLeft}>
-                <Text style={styles.metricName}>⚠️ 시장 위험도 알림</Text>
-                <Text style={styles.metricState}>합성 위험도 8/10 이상일 때 · 08:32 KST</Text>
-              </View>
-              <Switch
-                value={prefs.compositeRiskEnabled}
-                onValueChange={(v) => void updatePref({ compositeRiskEnabled: v })}
-                disabled={!hydrated || !authToken}
-              />
-            </View>
-
-            {/* ── 한국장 시작 (local) ── */}
-            <View style={[styles.summaryRow, { paddingHorizontal: 0 }]}>
-              <View style={styles.metricLeft}>
-                <Text style={styles.metricName}>🇰🇷 한국장 시작</Text>
-                <Text style={styles.metricState}>매일 09:00 KST</Text>
-              </View>
-              <Switch value={krOn} onValueChange={(v) => void handleKr(v)} disabled={!hydrated} />
-            </View>
-
-            {/* ── 미국장 ── */}
-            <View style={[styles.summaryRow, { paddingHorizontal: 0 }]}>
-              <View style={styles.metricLeft}>
-                <Text style={styles.metricName}>🇺🇸 미국장 시작</Text>
-                <Text style={styles.metricState}>평일 22:30/23:30 KST (서머타임 자동)</Text>
-              </View>
-              <Switch value={usOn} onValueChange={(v) => void handleUs(v)} disabled={!hydrated} />
-            </View>
-
-            {/* ── 몇 분 전 ── */}
-            <View style={styles.signalModalSection}>
-              <Text style={styles.signalModalSectionTitle}>몇 분 전 알림</Text>
-              <View style={styles.filterRow}>
-                {MINUTES_OPTIONS.map((m) => (
-                  <Pressable
-                    key={m}
-                    onPress={() => void handleMinutes(m)}
-                    style={[styles.filterChip, minutes === m && styles.filterChipActive]}
-                  >
-                    <Text style={[styles.filterText, minutes === m && styles.filterTextActive]}>
-                      {m}분 전
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
-            </View>
+            <MinutesBeforePicker
+              value={minutes}
+              options={MINUTES_OPTIONS}
+              onChange={(m) => void handleMinutes(m)}
+            />
 
             <Text style={styles.signalModalDisclaimer}>
               장 시작 알림은 디바이스 로컬 예약, 급등락 알림은 서버에서 Expo 푸시로 발송한다.
               알림을 끄면 서버에서 이 기기 토큰을 제거해서 더 이상 푸시가 안 온다.
             </Text>
 
-            {/* ── 최근 알림 ── */}
-            <View style={[styles.signalModalSection, { marginTop: 16 }]}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                <History size={14} color={palette.inkSub} strokeWidth={2.5} />
-                <Text style={[styles.signalModalSectionTitle, { flex: 1, marginBottom: 0 }]}>
-                  최근 알림
-                </Text>
-                {history.length > 0 ? (
-                  <Pressable
-                    onPress={() => void handleClearHistory()}
-                    hitSlop={8}
-                    style={({ pressed }) => ({
-                      flexDirection: 'row', alignItems: 'center', gap: 4,
-                      paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6,
-                      opacity: pressed ? 0.6 : 1,
-                    })}
-                    accessibilityLabel="히스토리 지우기"
-                  >
-                    <Trash2 size={11} color={palette.inkMuted} strokeWidth={2.5} />
-                    <Text style={{ color: palette.inkMuted, fontSize: 10, fontWeight: '700' }}>지우기</Text>
-                  </Pressable>
-                ) : null}
-              </View>
-              {history.length === 0 ? (
-                <View style={{ paddingVertical: 14, alignItems: 'center' }}>
-                  <Text style={{ color: palette.inkMuted, fontSize: 11 }}>
-                    아직 기록된 알림 없음
-                  </Text>
-                  <Text style={{ color: palette.inkFaint, fontSize: 10, marginTop: 2 }}>
-                    앱 켜진 동안 도착한 알림만 기록돼
-                  </Text>
-                </View>
-              ) : (
-                <View style={{ gap: 6 }}>
-                  {history.map((h) => (
-                    <View
-                      key={`${h.id}-${h.firedAt}`}
-                      style={{
-                        backgroundColor: palette.surfaceAlt,
-                        borderRadius: 8, padding: 10, gap: 2,
-                      }}
-                    >
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                        <Text style={{ flex: 1, color: palette.ink, fontSize: 12, fontWeight: '700' }} numberOfLines={1}>
-                          {h.title || '알림'}
-                        </Text>
-                        <Text style={{ color: palette.inkFaint, fontSize: 10, fontVariant: ['tabular-nums'] }}>
-                          {formatRelativeOrShortTime(new Date(h.firedAt).toISOString())}
-                        </Text>
-                      </View>
-                      {h.body ? (
-                        <Text style={{ color: palette.inkMuted, fontSize: 11, lineHeight: 15 }} numberOfLines={3}>
-                          {h.body}
-                        </Text>
-                      ) : null}
-                    </View>
-                  ))}
-                </View>
-              )}
-            </View>
+            <NotificationHistorySection
+              history={history}
+              onClear={() => void handleClearHistory()}
+            />
           </ScrollView>
         </Pressable>
       </Pressable>

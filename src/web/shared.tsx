@@ -4,7 +4,7 @@
  * 있던 걸 한 곳에 모아서 일관된 UX + 유지보수 쉽게.
  */
 import React, { useMemo } from 'react'
-import { Platform, Pressable, Text, View, type PressableStateCallbackType, type StyleProp, type ViewStyle } from 'react-native'
+import { Platform, Text, View, type StyleProp, type ViewStyle } from 'react-native'
 import type { Palette } from '../theme'
 import type { ChartPoint } from '../types'
 import { formatNumber } from '../utils'
@@ -24,14 +24,6 @@ export function deltaColor(value: number | null | undefined, palette: Palette, n
   if (value > neutralAt) return palette.up
   if (value < -neutralAt) return palette.down
   return palette.inkSub
-}
-
-/** 0.0123 → +1.23% / -0.45% / 0.00% */
-export function formatPct(rate: number | null | undefined, digits = 2) {
-  if (rate == null || Number.isNaN(rate)) return '—'
-  const v = rate * 100
-  const sign = v > 0 ? '+' : ''
-  return `${sign}${v.toFixed(digits)}%`
 }
 
 // formatNumber 는 utils.ts 로 이전됨 (모바일·웹 공통). 기존 import 호환 위해 re-export.
@@ -81,75 +73,8 @@ export function Widget({ title, meta, icon, action, palette, children, style, bo
   )
 }
 
-// ─────────────────────────── Hoverable Row ──────────────────────────
-
-type HoverRowProps = {
-  onPress?: () => void
-  palette: Palette
-  children: React.ReactNode
-  style?: StyleProp<ViewStyle>
-  hoverStyle?: StyleProp<ViewStyle>
-  padding?: number | { paddingVertical?: number; paddingHorizontal?: number }
-  radius?: number
-}
-
-export function HoverRow({ onPress, palette, children, style, hoverStyle, padding, radius = 8 }: HoverRowProps) {
-  const pad =
-    typeof padding === 'number'
-      ? { paddingVertical: padding, paddingHorizontal: padding }
-      : { paddingVertical: 8, paddingHorizontal: 8, ...(padding ?? {}) }
-  return (
-    <Pressable
-      onPress={onPress}
-      style={(state: PressableStateCallbackType) => {
-        const hovered = (state as { hovered?: boolean }).hovered
-        return [
-          {
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 10,
-            borderRadius: radius,
-            ...pad,
-            backgroundColor: hovered ? palette.surfaceAlt : 'transparent',
-          },
-          style,
-          hovered ? hoverStyle : null,
-        ]
-      }}
-    >
-      {children}
-    </Pressable>
-  )
-}
-
-// ─────────────────────────── Empty State ────────────────────────────
-
-export function EmptyState({ palette, message, hint }: { palette: Palette; message: string; hint?: string }) {
-  return (
-    <View style={{ paddingVertical: 22, alignItems: 'center', gap: 4 }}>
-      <Text style={{ color: palette.inkMuted, fontSize: 12, fontWeight: '600' }}>{message}</Text>
-      {hint ? <Text style={{ color: palette.inkFaint, fontSize: 11 }}>{hint}</Text> : null}
-    </View>
-  )
-}
-
-// ─────────────────────────── Delta Text ─────────────────────────────
-
-export function Delta({ value, palette, digits = 2, style, showSign = true }: {
-  value: number | null | undefined
-  palette: Palette
-  digits?: number
-  style?: any
-  showSign?: boolean
-}) {
-  const color = deltaColor(value, palette)
-  const v = value == null || Number.isNaN(value) ? '—' : `${showSign && value > 0 ? '+' : ''}${(value * 100).toFixed(digits)}%`
-  return <Text style={[{ color, fontSize: 12, fontWeight: '700', fontVariant: ['tabular-nums'] }, style]}>{v}</Text>
-}
-
 // ─────────────────────────── Stance Tag ─────────────────────────────
 
-const STANCE_COLORS: Record<string, { bg: string; fg: string }> = {}
 export function stanceTagStyle(stance: string, palette: Palette) {
   const s = (stance || '').toUpperCase()
   if (s.includes('BUY') || s.includes('매수')) return { bg: palette.upSoft, fg: palette.up, label: stance || 'BUY' }
@@ -173,19 +98,6 @@ export function StanceTag({ stance, palette, size = 'sm' }: { stance: string | u
   )
 }
 
-// ─────────────────────────── Session Badge ──────────────────────────
-
-export function SessionBadge({ label, isOpen, palette }: { label: string; isOpen: boolean; palette: Palette }) {
-  const bg = isOpen ? palette.upSoft : palette.surfaceAlt
-  const fg = isOpen ? palette.up : palette.inkMuted
-  return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: bg, borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2 }}>
-      <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: fg }} />
-      <Text style={{ color: fg, fontSize: 9, fontWeight: '800', letterSpacing: 0.4 }}>{label}</Text>
-    </View>
-  )
-}
-
 // ─────────────────────────── Sparkline ──────────────────────────────
 
 type SparkProps = {
@@ -203,11 +115,11 @@ type SparkProps = {
  * RN-Web 이 View/Text 기반이라 네이티브 SVG 안 써도 되게 순수 DOM 으로 그림.
  */
 export function Sparkline({ points, width = 80, height = 26, color, fillOpacity = 0.12, palette, showLast = false }: SparkProps) {
-  const { path, areaPath, last, first, trend } = useMemo(() => {
+  const { path, areaPath, last, trend } = useMemo(() => {
     const values = (Array.isArray(points) ? points : []).map((p: any) =>
       typeof p === 'number' ? p : (p?.close as number)
     ).filter((v): v is number => typeof v === 'number' && !Number.isNaN(v))
-    if (values.length < 2) return { path: '', areaPath: '', last: null, first: null, trend: 0 }
+    if (values.length < 2) return { path: '', areaPath: '', last: null, trend: 0 }
     const min = Math.min(...values)
     const max = Math.max(...values)
     const range = max - min || 1
@@ -220,7 +132,6 @@ export function Sparkline({ points, width = 80, height = 26, color, fillOpacity 
       path: p,
       areaPath: a,
       last: values[values.length - 1],
-      first: values[0],
       trend: values[values.length - 1] - values[0],
     }
   }, [points, width, height])
