@@ -23,6 +23,7 @@ export function MainHeader({ activeTab, lastSyncedAt, marketPreference, onMarket
     today:  '시장 무드 · 모닝/이브닝 브리프 · 보유 모니터',
     stocks: '종목 탐색 · 관심 · 보유',
     ai:     '오늘의 플레이북 + 누적 성적표',
+    league: '친구 모의투자 — 시즌별 트로피 경쟁',
   }
   return (
     <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12 }}>

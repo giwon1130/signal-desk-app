@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native'
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context'
-import { BarChart3, Bell, Bot, LogOut, Moon, Sun, Sunrise } from 'lucide-react-native'
+import { BarChart3, Bell, Bot, LogOut, Moon, Sun, Sunrise, Trophy } from 'lucide-react-native'
 import { WebLayout } from './src/web/WebLayout'
 import { useStyles } from './src/styles'
 import { ThemeProvider, useTheme } from './src/theme'
@@ -27,6 +27,7 @@ import { webBootstrap } from './src/utils/webBootstrap'
 import { useToast } from './src/hooks/useToast'
 import { hapticLight } from './src/utils/haptics'
 import { AITab } from './src/tabs/AITab'
+import { LeagueTab } from './src/tabs/LeagueTab'
 import { StocksTab } from './src/tabs/StocksTab'
 import { TodayTab } from './src/tabs/TodayTab'
 import { HomeDashboard } from './src/web/HomeDashboard'
@@ -51,11 +52,12 @@ import type {
   TabKey,
 } from './src/types'
 
-// v2: 3탭으로 압축. 'home'/'market' 콘텐츠는 'today' 탭으로 흡수됨.
+// v2.1: 4탭 (today/stocks/ai/league). league 는 친구 모의투자 신규.
 const TABS: Array<{ key: TabKey; label: string; Icon: typeof Sunrise }> = [
   { key: 'today',  label: '오늘', Icon: Sunrise },
   { key: 'stocks', label: '종목', Icon: BarChart3 },
   { key: 'ai',     label: 'AI',   Icon: Bot },
+  { key: 'league', label: '리그', Icon: Trophy },
 ]
 
 function AppShell() {
@@ -460,6 +462,18 @@ function AppShell() {
             onQuickAddWatch={handleQuickAddWatch}
           />
         )
+      ) : null}
+
+      {/* v2.1: 친구 모의투자 (Trading League). 상세/거래 모달은 Phase G+ */}
+      {!loading && !error && activeTab === 'league' ? (
+        <LeagueTab
+          authToken={user?.token ?? null}
+          refreshing={refreshing}
+          onOpenLeague={(_id) => toast.show('상세 화면 곧 출시', 'info')}
+          onCreateLeague={() => toast.show('리그 생성 모달 곧 출시', 'info')}
+          onJoinedLeague={() => { void refresh() }}
+          toast={toast}
+        />
       ) : null}
     </>
   )
