@@ -212,17 +212,19 @@ purple:   #c084fc  (AI)
 
 ## 10. 구현 단계 (Phase)
 
-### Phase 0 — 디자인 시스템 재구축 (1~2일 작업, 코드 변경만)
-- 새 다크 팔레트 / 라이트 팔레트 (PALETTES 재정의)
-- borderRadius / spacing / typography 토큰 정리
-- v1 컴포넌트는 그대로 두되 새 토큰 적용 시 자동 반영되는지 검증
-- **출력물**: `src/theme.tsx` 전면 개정, 시각적 회귀는 임시 OK (Phase 1+ 에서 잡음)
+### Phase 0 — 디자인 시스템 재구축 ✅ DONE (2026-05-27, `5891873`)
+- 새 다크 팔레트 (#0a0d12 bg / #131820 surface / #2a3445 border / #4ade80 mint)
+- 라이트 팔레트 contrast 강화
+- `src/design/tokens.ts` 신규 (SPACING/RADIUS/TYPO/ELEVATION)
+- default mode 'system' → 'dark'
+- v1 컴포넌트는 새 토큰 자동 반영 — 시각적 회귀는 Phase 1+ 에서 잡음
 
-### Phase 1 — 3탭 + 시장 프로필 구조
-- 탭 5 → 3 정리 (Today/Home/Market 통합 → "오늘")
-- App.tsx 의 데이터 흐름 재배치
-- 온보딩은 아직 X — 기존 marketPreference 그대로 사용
-- **출력물**: 동작하는 3탭, 프로필별 컨텐츠 분기 구현
+### Phase 1 — 3탭 + 시장 프로필 구조 ✅ DONE (2026-05-27, `59552f2`)
+- TabKey 5 → 3 (today/stocks/ai). 'home', 'market' 제거.
+- Market 콘텐츠 4종 (CompositeRiskCard/MarketSummaryMetrics/TopMoversSection/WatchAlertList) TodayTab 으로 흡수
+- App.tsx 라우팅 정리, 웹 layout (tabs-config/CommandPalette/MainHeader/WebLayout) 동기화
+- HomeTab/MarketTab 파일은 legacy 로 보존 (Phase 3 에서 삭제 결정)
+- 온보딩은 Phase 2
 
 ### Phase 2 — 온보딩 흐름
 - OnboardingScreen 5단계 구현
