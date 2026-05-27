@@ -49,6 +49,9 @@ type Props = {
   onTabChange: (key: TabKey) => void
   onLogout: () => void
   onOpenReminder: () => void
+  // v2: 시장 선호 헤더 칩
+  marketPreference: import('../api/alertPreferences').MarketPreference
+  onMarketPreferenceChange: (p: import('../api/alertPreferences').MarketPreference) => void
   // Phase 1 에서 추가: 글로벌 컨텍스트를 위한 데이터
   sections: MarketSectionsData | null
   summary?: import('../types').MarketSummaryData | null
@@ -64,6 +67,7 @@ export function WebLayout(props: Props) {
   const {
     user, activeTab, isUp, lastSyncedAt,
     onTabChange, onLogout, onOpenReminder,
+    marketPreference, onMarketPreferenceChange,
     sections, summary, fortune, watchlist, portfolio, aiRecommendation, onOpenDetail,
     children,
   } = props
@@ -91,6 +95,8 @@ export function WebLayout(props: Props) {
           onToggleTheme={handleToggleTheme}
           onLogout={onLogout}
           isDark={isDark}
+          marketPreference={marketPreference}
+          onMarketPreferenceChange={onMarketPreferenceChange}
         />
         <NarrowTabBar activeTab={activeTab} onTabChange={onTabChange} />
         <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 20 }}>
@@ -143,7 +149,12 @@ export function WebLayout(props: Props) {
             maxWidth: showContext ? 1440 : 1200,
             alignSelf: 'center',
           }}>
-            <MainHeader activeTab={activeTab} lastSyncedAt={lastSyncedAt} />
+            <MainHeader
+              activeTab={activeTab}
+              lastSyncedAt={lastSyncedAt}
+              marketPreference={marketPreference}
+              onMarketPreferenceChange={onMarketPreferenceChange}
+            />
             {summary?.tradingDayStatus ? <TradingDayBanner status={summary.tradingDayStatus} /> : null}
             {children}
           </View>

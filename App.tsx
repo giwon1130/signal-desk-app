@@ -504,6 +504,18 @@ function AppShell() {
           onTabChange={handleTabChange}
           onLogout={confirmLogout}
           onOpenReminder={() => { void hapticLight(); setReminderOpen(true) }}
+          marketPreference={marketPreference}
+          onMarketPreferenceChange={(pref) => {
+            setMarketPreference(pref)
+            if (user?.token) {
+              void (async () => {
+                try {
+                  const current = await getAlertPreferences(user.token)
+                  await updateAlertPreferences(user.token, { ...current, marketPreference: pref })
+                } catch { /* 실패해도 UI 는 즉시 반영 */ }
+              })()
+            }
+          }}
           sections={sections}
           summary={summary}
           fortune={fortune}

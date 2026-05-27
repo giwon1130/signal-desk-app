@@ -1,12 +1,21 @@
 /**
- * 데스크톱 메인 컬럼 상단 헤더 — 활성 탭 라벨 + 설명 + 마지막 동기화.
+ * 데스크톱 메인 컬럼 상단 헤더 — 활성 탭 라벨 + 설명 + 시장 칩 + 마지막 동기화.
  */
 import { Text, View } from 'react-native'
 import { useTheme } from '../../theme'
 import type { TabKey } from '../../types'
+import type { MarketPreference } from '../../api/alertPreferences'
+import { MarketProfileChip } from '../../components/MarketProfileChip'
 import { TABS } from './tabs-config'
 
-export function MainHeader({ activeTab, lastSyncedAt }: { activeTab: TabKey; lastSyncedAt: string }) {
+type Props = {
+  activeTab: TabKey
+  lastSyncedAt: string
+  marketPreference: MarketPreference
+  onMarketPreferenceChange: (p: MarketPreference) => void
+}
+
+export function MainHeader({ activeTab, lastSyncedAt, marketPreference, onMarketPreferenceChange }: Props) {
   const { palette } = useTheme()
   const tabMeta = TABS.find((t) => t.key === activeTab)
   const tabLabel = tabMeta?.label ?? ''
@@ -24,11 +33,14 @@ export function MainHeader({ activeTab, lastSyncedAt }: { activeTab: TabKey; las
         <Text style={{ color: palette.ink, fontSize: 22, fontWeight: '800' }}>{tabLabel}</Text>
         <Text style={{ color: palette.inkMuted, fontSize: 12 }}>{descriptionMap[activeTab]}</Text>
       </View>
-      {lastSyncedAt ? (
-        <Text style={{ color: palette.inkFaint, fontSize: 11, fontWeight: '600' }}>
-          마지막 동기화 {lastSyncedAt}
-        </Text>
-      ) : null}
+      <View style={{ alignItems: 'flex-end', gap: 6 }}>
+        <MarketProfileChip value={marketPreference} onChange={onMarketPreferenceChange} />
+        {lastSyncedAt ? (
+          <Text style={{ color: palette.inkFaint, fontSize: 11, fontWeight: '600' }}>
+            마지막 동기화 {lastSyncedAt}
+          </Text>
+        ) : null}
+      </View>
     </View>
   )
 }

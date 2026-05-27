@@ -1,15 +1,20 @@
 /**
- * 좁은 뷰포트(모바일 폭) 상단 헤더 — 브랜드 + LIVE 배지 + 알림/테마/로그아웃.
+ * 좁은 뷰포트(모바일 폭) 상단 헤더 — 브랜드 + LIVE 배지 + 시장 칩 + 알림/테마/로그아웃.
  */
 import { Pressable, Text, View } from 'react-native'
 import { Bell, LogOut, Moon, Sun, TrendingUp } from 'lucide-react-native'
 import { useTheme } from '../../theme'
+import { MarketProfileChip } from '../../components/MarketProfileChip'
+import type { MarketPreference } from '../../api/alertPreferences'
 
 export function NarrowHeader({
   isUp, lastSyncedAt, onOpenReminder, onToggleTheme, onLogout, isDark,
+  marketPreference, onMarketPreferenceChange,
 }: {
   isUp: boolean; lastSyncedAt: string; onOpenReminder: () => void;
   onToggleTheme: () => void; onLogout: () => void; isDark: boolean;
+  marketPreference: MarketPreference;
+  onMarketPreferenceChange: (p: MarketPreference) => void;
 }) {
   const { palette } = useTheme()
   return (
@@ -43,6 +48,7 @@ export function NarrowHeader({
         </Text>
       </View>
       <View style={{ flex: 1 }} />
+      <MarketProfileChip value={marketPreference} onChange={onMarketPreferenceChange} />
       {lastSyncedAt ? (
         <Text style={{ color: palette.inkFaint, fontSize: 10, fontWeight: '600' }}>{lastSyncedAt}</Text>
       ) : null}
