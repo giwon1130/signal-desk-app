@@ -28,6 +28,7 @@ import { useToast } from './src/hooks/useToast'
 import { hapticLight } from './src/utils/haptics'
 import { AITab } from './src/tabs/AITab'
 import { LeagueTab } from './src/tabs/LeagueTab'
+import { CreateLeagueModal } from './src/components/league_parts/CreateLeagueModal'
 import { StocksTab } from './src/tabs/StocksTab'
 import { TodayTab } from './src/tabs/TodayTab'
 import { HomeDashboard } from './src/web/HomeDashboard'
@@ -113,6 +114,9 @@ function AppShell() {
   const [onboardingState, setOnboardingState] = useState<'loading' | 'show' | 'done'>('loading')
   // v1 → v2 마이그레이션 모달 — 1회 노출 후 마크.
   const [v2MigrationOpen, setV2MigrationOpen] = useState(false)
+  // v2.1: 리그 생성 모달 + 리그 탭 새로고침 트리거
+  const [createLeagueOpen, setCreateLeagueOpen] = useState(false)
+  const [leagueRefreshTick, setLeagueRefreshTick] = useState(0)
 
   useEffect(() => {
     const tok = user?.token
@@ -467,11 +471,12 @@ function AppShell() {
       {/* v2.1: 친구 모의투자 (Trading League). 상세/거래 모달은 Phase G+ */}
       {!loading && !error && activeTab === 'league' ? (
         <LeagueTab
+          key={leagueRefreshTick}
           authToken={user?.token ?? null}
           refreshing={refreshing}
           onOpenLeague={(_id) => toast.show('상세 화면 곧 출시', 'info')}
-          onCreateLeague={() => toast.show('리그 생성 모달 곧 출시', 'info')}
-          onJoinedLeague={() => { void refresh() }}
+          onCreateLeague={() => setCreateLeagueOpen(true)}
+          onJoinedLeague={() => setLeagueRefreshTick((t) => t + 1)}
           toast={toast}
         />
       ) : null}
@@ -504,6 +509,12 @@ function AppShell() {
           setV2MigrationOpen(false)
           void markV2MigrationShown()
         }}
+      />
+      <CreateLeagueModal
+        visible={createLeagueOpen}
+        onClose={() => setCreateLeagueOpen(false)}
+        onCreated={(_id) => setLeagueRefreshTick((t) => t + 1)}
+        toast={toast}
       />
       <DailyGreetingModal
         visible={greetingOpen}
