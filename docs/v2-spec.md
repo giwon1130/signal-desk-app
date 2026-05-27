@@ -223,36 +223,39 @@ purple:   #c084fc  (AI)
 - TabKey 5 → 3 (today/stocks/ai). 'home', 'market' 제거.
 - Market 콘텐츠 4종 (CompositeRiskCard/MarketSummaryMetrics/TopMoversSection/WatchAlertList) TodayTab 으로 흡수
 - App.tsx 라우팅 정리, 웹 layout (tabs-config/CommandPalette/MainHeader/WebLayout) 동기화
-- HomeTab/MarketTab 파일은 legacy 로 보존 (Phase 3 에서 삭제 결정)
 - 온보딩은 Phase 2
 
-### Phase 2 — 온보딩 흐름
-- OnboardingScreen 5단계 구현
-- AsyncStorage 키 `signal:onboarding:completed`
-- 기존 marketPreference 있으면 자동 스킵
-- 추천 종목 시드 데이터 정의
-- **출력물**: 신규 사용자 첫 진입 시 온보딩 → 홈
+### Phase 2 — 온보딩 흐름 ✅ DONE (2026-05-27, `7640121`)
+- OnboardingScreen 5단계 (Welcome/시장 선택/알림 권한/시드 종목/완료)
+- utils/onboarding.ts (AsyncStorage 'signal:onboarding:completed')
+- data/seedStocks.ts (KR 6 / US 6 / BOTH 3+3 시총 상위)
+- App.tsx 분기: 신규는 OnboardingScreen, v1 사용자는 자동 markCompleted 후 스킵
 
-### Phase 3 — 각 탭 v2 컨텐츠 디테일
-- "오늘" 탭 프로필별 카드 컴포지션
-- "종목" 탭 정보 밀도 개선
-- "AI" 탭 Scorecard 통합
-- 새 디자인 시스템 100% 적용
-- **출력물**: 완성형 v2 화면 전부
+### Phase 3 — 각 탭 v2 컨텐츠 디테일 ✅ DONE (2026-05-27, `5965355`/`8385401`)
+- legacy 정리: HomeTab.tsx / MarketTab.tsx 삭제, App.tsx unused state/hook 정리 (homeQuery/chart 셀렉션)
+- 종목 탭 정렬·필터 — WorkspaceFilterBar 신규 (정렬 4종 + 시장 필터 3종, Spec 결정 6)
+- App.tsx 573라인 (정리 전 600+) — 0 warning
+- **이번 단계에서 보류**:
+  - "오늘" 탭 정보 구조 polish (카드 16개 우선순위 다듬기, top movers 4→1 통합)
+  - 새 디자인 시스템 100% 인라인 스타일 마이그레이션
+  → Beta 검증 후 Phase 6 polish 로 분리 (시각 회귀 위험)
+- AI 탭 Scorecard 통합 — 모바일은 Scorecard 없음, 웹용 v1 그대로 → SKIP
 
-### Phase 4 — Beta 검증
-- EAS `production-v2` 프로필로 빌드
-- TestFlight v2 Beta 그룹 배포
-- 사용자 직접 사용 검증 (모닝/이브닝 1주일)
-- 발견 이슈 hotfix
-- **출력물**: 검증된 v2
+### Phase 4 — Beta 검증 🟡 진행 중 (2026-05-27 eas.json)
+- EAS `production-v2` 프로필 추가 (`channel: "v2-beta"`)
+- 빌드 트리거: `npx eas build --profile production-v2 --platform ios --submit`
+- TestFlight v2 Beta 그룹 사용자가 설정 (ASC 에서 별도 internal 그룹)
+- 검증 항목: 다크 새 톤 / 3탭 동작 / 온보딩 흐름 / 종목 정렬·필터 / 시장 카드 분기
 
-### Phase 5 — v2.0.0 정식 출시
+### Phase 5 — v2.0.0 정식 출시 (Beta 통과 후)
 - `v2` branch → main squash merge
 - GitHub Release v2.0.0 생성
-- 기존 v1 TestFlight 그룹에도 자동 노출
 - v1 → v2 마이그레이션 토스트 1회
-- **출력물**: 모든 사용자 v2
+
+### Phase 6 — 정식 출시 후 polish (선택)
+- 오늘 탭 카드 우선순위 / top movers 통합
+- 디자인 토큰 100% 인라인 스타일 마이그레이션
+- 새 디자인 정착 후 시각 회귀 검증 가능
 
 ## 11. 위험 + 완화
 
