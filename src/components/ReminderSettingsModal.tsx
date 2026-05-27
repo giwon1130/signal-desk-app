@@ -18,7 +18,6 @@ import {
 import { getPushAlertsEnabled, setPushAlertsEnabled } from '../api/pushDevice'
 import { getAlertPreferences, updateAlertPreferences, type AlertPreferences } from '../api/alertPreferences'
 import { AlertToggleRow } from './reminder_parts/AlertToggleRow'
-import { MarketPreferencePicker } from './reminder_parts/MarketPreferencePicker'
 import { MinutesBeforePicker } from './reminder_parts/MinutesBeforePicker'
 import { NotificationHistorySection } from './reminder_parts/NotificationHistorySection'
 
@@ -26,12 +25,11 @@ type Props = {
   visible: boolean
   authToken: string | null
   onClose: () => void
-  onMarketPreferenceChange?: (pref: 'KR' | 'US' | 'BOTH') => void
 }
 
 const MINUTES_OPTIONS = [5, 10, 15, 30, 60]
 
-export function ReminderSettingsModal({ visible, authToken, onClose, onMarketPreferenceChange }: Props) {
+export function ReminderSettingsModal({ visible, authToken, onClose }: Props) {
   const styles = useStyles()
   const { palette } = useTheme()
 
@@ -72,7 +70,6 @@ export function ReminderSettingsModal({ visible, authToken, onClose, onMarketPre
     const next = { ...prefs, ...patch }
     setPrefs(next)
     if (authToken) await updateAlertPreferences(authToken, next)
-    if (patch.marketPreference) onMarketPreferenceChange?.(patch.marketPreference)
   }
 
   const handleClearHistory = async () => {
@@ -110,11 +107,7 @@ export function ReminderSettingsModal({ visible, authToken, onClose, onMarketPre
               장 시작은 로컬 알림, 급등락은 서버 푸시로 보내준다.
             </Text>
 
-            <MarketPreferencePicker
-              value={prefs.marketPreference}
-              disabled={togglesDisabled}
-              onChange={(m) => void updatePref({ marketPreference: m })}
-            />
+            {/* v2: 시장 선호는 헤더 MarketProfileChip 으로 이동. 알림 모달은 알림 전용. */}
 
             <AlertToggleRow
               title="📈 관심종목 급등락 알림"

@@ -16,7 +16,12 @@ import { ThemeProvider, useTheme } from './src/theme'
 import { Toast } from './src/components/Toast'
 import { AuthScreen } from './src/components/AuthScreen'
 import { OnboardingScreen } from './src/components/OnboardingScreen'
-import { getOnboardingCompleted, markOnboardingCompleted } from './src/utils/onboarding'
+import { MarketProfileChip } from './src/components/MarketProfileChip'
+import { V2MigrationModal } from './src/components/V2MigrationModal'
+import {
+  getOnboardingCompleted, markOnboardingCompleted,
+  getV2MigrationShown, markV2MigrationShown,
+} from './src/utils/onboarding'
 import { WebFrame } from './src/components/WebFrame'
 import { webBootstrap } from './src/utils/webBootstrap'
 import { useToast } from './src/hooks/useToast'
@@ -30,7 +35,7 @@ import { CommandPalette } from './src/web/CommandPalette'
 import { AIWorkspace } from './src/web/AIWorkspace'
 import { StockDetailModal, type StockDetailContext } from './src/components/StockDetailModal'
 import { ReminderSettingsModal } from './src/components/ReminderSettingsModal'
-import { getAlertPreferences, type MarketPreference } from './src/api/alertPreferences'
+import { getAlertPreferences, updateAlertPreferences, type MarketPreference } from './src/api/alertPreferences'
 import { DailyGreetingModal } from './src/components/DailyGreetingModal'
 import { LoadingScreen } from './src/components/LoadingScreen'
 import { getFortuneGreetingShownDate, markFortuneGreetingShown } from './src/utils/fortuneGreeting'
@@ -104,6 +109,8 @@ function AppShell() {
   // v2 온보딩 상태 — 미완료 신규 사용자만 OnboardingScreen 노출.
   // 기존 v1 사용자는 marketPreference 가 이미 있으므로 첫 진입에서 자동 markCompleted 후 스킵.
   const [onboardingState, setOnboardingState] = useState<'loading' | 'show' | 'done'>('loading')
+  // v1 → v2 마이그레이션 모달 — 1회 노출 후 마크.
+  const [v2MigrationOpen, setV2MigrationOpen] = useState(false)
 
   useEffect(() => {
     const tok = user?.token
@@ -120,14 +127,34 @@ function AppShell() {
       // 이미 완료했으면 그대로 진입. 미완료지만 marketPreference 가 있으면(v1 사용자) 자동 완료 처리.
       if (completed) {
         setOnboardingState('done')
+        // 완료된 사용자 중 v2 마이그레이션 모달 아직 안 본 경우 1회 노출.
+        const migShown = await getV2MigrationShown()
+        if (!migShown) setV2MigrationOpen(true)
       } else if (p.marketPreference) {
         // v1 사용자 — 온보딩 한 적 없지만 marketPreference 가 있으므로 신규 아님.
         await markOnboardingCompleted()
         setOnboardingState('done')
+        const migShown = await getV2MigrationShown()
+        if (!migShown) setV2MigrationOpen(true)
       } else {
         setOnboardingState('show')
+        // 신규 사용자는 온보딩 자체가 v2 안내라 별도 마이그레이션 모달 불필요.
+        await markV2MigrationShown()
       }
     })()
+  }, [user?.token])
+
+  // v2 마이그레이션 모달 confirm — 시장 선호 즉시 반영 + 마크.
+  const handleV2MigrationConfirm = useCallback(async (pref: MarketPreference) => {
+    setMarketPreference(pref)
+    setV2MigrationOpen(false)
+    await markV2MigrationShown()
+    if (user?.token) {
+      try {
+        const current = await getAlertPreferences(user.token)
+        await updateAlertPreferences(user.token, { ...current, marketPreference: pref })
+      } catch { /* 실패해도 로컬 상태는 변경됨 */ }
+    }
   }, [user?.token])
 
   const handleOnboardingComplete = useCallback((pref: MarketPreference) => {
@@ -438,7 +465,15 @@ function AppShell() {
         visible={reminderOpen}
         authToken={user?.token ?? null}
         onClose={() => setReminderOpen(false)}
-        onMarketPreferenceChange={setMarketPreference}
+      />
+      <V2MigrationModal
+        visible={v2MigrationOpen}
+        currentPreference={marketPreference}
+        onConfirm={(p) => void handleV2MigrationConfirm(p)}
+        onClose={() => {
+          setV2MigrationOpen(false)
+          void markV2MigrationShown()
+        }}
       />
       <DailyGreetingModal
         visible={greetingOpen}
@@ -527,9 +562,26 @@ function AppShell() {
               </Pressable>
             </View>
           </View>
-          <Text style={styles.headerSubtitle}>
-            {lastSyncedAt ? `마지막 동기화 ${lastSyncedAt}` : '오늘 하루를 한 화면에서'}
-          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 6, gap: 8 }}>
+            {/* v2: 시장 선호 inline 토글 — 항상 노출, 가장 자주 쓰는 설정 */}
+            <MarketProfileChip
+              value={marketPreference}
+              onChange={(pref) => {
+                setMarketPreference(pref)
+                if (user?.token) {
+                  void (async () => {
+                    try {
+                      const current = await getAlertPreferences(user.token)
+                      await updateAlertPreferences(user.token, { ...current, marketPreference: pref })
+                    } catch { /* 실패해도 UI 는 즉시 반영 */ }
+                  })()
+                }
+              }}
+            />
+            <Text style={[styles.headerSubtitle, { flexShrink: 1, textAlign: 'right' }]}>
+              {lastSyncedAt ? `${lastSyncedAt}` : '오늘 하루를 한 화면에서'}
+            </Text>
+          </View>
         </View>
       </View>
 

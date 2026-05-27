@@ -10,6 +10,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
  * "다시 보기" 메뉴는 v2.0 에선 없음 — 설정에서 marketPreference 변경만 가능.
  */
 const KEY = 'signal:onboarding:completed'
+const V2_MIGRATION_KEY = 'signal:v2:migration:shown'
 
 export async function getOnboardingCompleted(): Promise<boolean> {
   try {
@@ -25,5 +26,22 @@ export async function markOnboardingCompleted(): Promise<void> {
     await AsyncStorage.setItem(KEY, 'true')
   } catch {
     // ignore — 다음 실행에 다시 시도
+  }
+}
+
+/** v1 사용자가 v2 첫 진입 시 마이그레이션 모달 본 적 있나 — 1회 노출 후 마크. */
+export async function getV2MigrationShown(): Promise<boolean> {
+  try {
+    return (await AsyncStorage.getItem(V2_MIGRATION_KEY)) === 'true'
+  } catch {
+    return false
+  }
+}
+
+export async function markV2MigrationShown(): Promise<void> {
+  try {
+    await AsyncStorage.setItem(V2_MIGRATION_KEY, 'true')
+  } catch {
+    // ignore
   }
 }
