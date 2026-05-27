@@ -28,13 +28,14 @@
 | `hostUserId` | UUID | 생성자 |
 | `joinCode` | string | "X7K2M" 5자리 (초대용 — URL 또는 카드) |
 | `marketScope` | enum | KR / US / BOTH |
-| `startingCapital` | bigint | 10_000_000 (1천만원, 단위 KR) |
+| `currency` | enum | **KRW / USD** — 자본금 통화 (호스트 선택, 결정 4) |
+| `startingCapital` | bigint | KRW 면 10_000_000(1천만원), USD 면 10000(만달러 — 1만달러 단위로 정수 저장 권장) |
 | `startedAt` | Instant | 시작 — 이 시각부터 거래 가능 |
 | `endsAt` | Instant | 종료 — 이 시각 이후 거래 불가, 자동 정산 |
 | `status` | enum | DRAFT / OPEN / RUNNING / FINISHED |
 | `tradingHours` | enum | MARKET_HOURS_ONLY / ALWAYS | (장중만 vs 24h)
-| `fee` | double | 0.003 (0.3%) 매수/매도 수수료 |
-| `tax` | double | 0.0023 (KR 매도세) — KR 만 |
+| `fee` | double | **0.003 (0.3%) 일괄 매수·매도** (결정 7 단순화) |
+| `tax` | double | **0** — V1 매도세 없음 (게임 단순화, 결정 7) |
 | `allowShort` | bool | false (V1 X, 추후) |
 | `maxPositionPct` | double | 0.30 (한 종목 최대 30% 비중 제한) |
 | `createdAt` | Instant | |
@@ -384,30 +385,55 @@ V1 에 X:
 - 작은 기능이면 v2.1.0
 - 새 탭/큰 변화면 v3.0
 
-## 16. 미결 결정 (구현 들어가기 전 합의 필요)
+## 16. 결정 완료 (2026-05-27 사용자 합의)
 
-- [ ] **리그 진입점**: 헤더 트로피 아이콘 vs AI 탭 안 섹션 vs 신규 4번째 탭
-- [ ] **거래 공개 default**: OPEN (피드 공개) vs CLOSED (종료 시만)
-- [ ] **거래 시간**: MARKET_HOURS_ONLY default 유지 OK?
-- [ ] **자본금 단위**: KR 원 단위만? USD 별도? (BOTH 리그에서 환율 처리)
-- [ ] **참가 max**: 10명 vs 더 큰 그룹 허용?
-- [ ] **시즌 길이 권장**: 1주일 / 1달 / 사용자 자유?
-- [ ] **수수료/세금**: 현실적 (KR 0.23% 매도세 + 0.015% 거래세) vs 단순화 (0 또는 일괄 0.3%)
-- [ ] **공매도/신용**: V1 X 동의?
-- [ ] **시작 시점 자유** vs **매주 월요일 09:00 같은 고정 시즌**
+- [x] **리그 진입점**: **신규 4번째 탭** `league` — TabKey 확장 (today/stocks/ai/**league** 🏆)
+- [x] **거래 공개 default**: **OPEN** — 피드 공개 (게임 재미↑)
+- [x] **거래 시간**: **MARKET_HOURS_ONLY** default (장 열린 시간만)
+- [x] **자본금 단위**: **사용자 선택 가능** — League 생성 시 KRW 또는 USD 통화 선택. 다른 시장 거래 시 환율 자동 변환(시세 lock 시 환율도 lock)
+- [x] **참가 max**: **10명**
+- [x] **시즌 길이**: **권장 1달** (default 1달, 사용자 자유 변경)
+- [x] **수수료/세금**: **단순** — 일괄 0.3% 매수·매도 수수료, 매도세 없음 (게임이라 가볍게)
+- [x] **공매도/신용**: **V1 X** (추후 결정)
+- [x] **시작 시점**: **자유** — 호스트가 startedAt 임의 설정 (지금부터 / 내일 09:00 / 다음 월요일 등)
 
-## 17. BOTH 시장 + 환율 이슈
+## 17. BOTH 시장 + 환율 이슈 ✅ 결정됨
 
-KR + US 모두 거래 허용 시 자본금 단위 충돌:
-- 옵션 A: 자본금 KRW 단위, US 매수 시 환율 자동 변환 (백엔드 USD/KRW fetch)
-- 옵션 B: 자본금 USD 단위, KR 매수 시 변환
-- 옵션 C: KRW 따로 / USD 따로 2개 지갑 (사용자 분배)
+**옵션 A+B 통합** — 호스트가 League 생성 시 currency (KRW or USD) 선택.
+- KRW League: 자본금·평가·수익률 모두 KRW. US 매수 시 환율 자동 변환.
+- USD League: 자본금·평가·수익률 모두 USD. KR 매수 시 환율 자동 변환.
 
-추천: **옵션 A** — KRW 통합. US 매수 시 환율 자동, 시세 lock 시 환율도 lock. 종료 시 환율도 같이 lock.
+환율 처리:
+- **시세 lock 시 환율도 lock** — Trade 테이블에 `exchange_rate` 컬럼 추가
+- **정산 시 환율도 lock** — endsAt 시점 환율로 모든 잔여 보유 평가
+- 환율 소스: 모닝브리프에 이미 사용 중인 FRED `DEXKOUS` 또는 Naver `USD/KRW` 시세
+
+Trade 스키마 변경 (§3.3):
+- `exchange_rate` numeric(10,4) 추가 — 그 거래 시점의 USD/KRW (1=동일통화면 1.0000)
+- `notional_amount` 은 league 통화 기준 (환산 후 값)
+- `original_price` (시장 통화 원래 가격) + `original_currency` 도 저장 (감사/표시용)
 
 ## 18. 다음 액션
 
-1. **사용자 미결 결정 (§16) 합의** — 9개 항목 가이드 받기
-2. **MVP 범위 합의** — V1 어디까지?
-3. **v2 와 어떻게 묶을지** — v2.1 vs v3.0
-4. 합의 후 Phase A (DB 스키마) 부터 코딩
+✅ 1. 사용자 미결 결정 (§16) 합의 — 9개 다 받음 (2026-05-27)
+
+❓ 2. **v2 와 어떻게 묶을지** — 다음 두 옵션 중 사용자 결정:
+   - **옵션 A**: v2 branch 안에 같이 — v2.0.0 정식 출시에 포함
+   - **옵션 B**: 별도 `league` branch — v2.0.0 출시 후 v2.1 또는 v3.0 으로
+
+3. 합의 후 **Phase A (DB 스키마 V19) 부터 코딩 시작** — 약 10~12일 분량
+
+## 19. 4탭 전환 영향 (결정 1)
+
+TabKey 변경: `'today' | 'stocks' | 'ai'` → `'today' | 'stocks' | 'ai' | 'league'`
+
+영향:
+- `src/types/system.ts`: TabKey 확장
+- `App.tsx`: TABS array 에 league 추가 (Icon: Trophy)
+- `src/web/layout_parts/tabs-config.ts`: 동일
+- `src/web/CommandPalette.tsx`: TAB_ENTRIES 에 league 추가
+- `src/web/layout_parts/MainHeader.tsx`: descriptionMap 에 league 추가
+- `src/web/layout_parts/NarrowTabBar.tsx`: 자동 반영
+- 메인 컨텐츠: `LeaguePage` (모바일+웹 같은 컴포넌트, 화면이 단순해서)
+
+3탭 → 4탭 변환은 v2 spec 의 "단순화" 결정과 다소 충돌하지만, League 가 큰 기능이고 다른 영역과 책임 다르니 별도 탭이 합리적.
