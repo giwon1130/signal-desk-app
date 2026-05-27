@@ -16,6 +16,8 @@ import { useStyles } from './src/styles'
 import { ThemeProvider, useTheme } from './src/theme'
 import { Toast } from './src/components/Toast'
 import { AuthScreen } from './src/components/AuthScreen'
+import { OnboardingScreen } from './src/components/OnboardingScreen'
+import { getOnboardingCompleted, markOnboardingCompleted } from './src/utils/onboarding'
 import { WebFrame } from './src/components/WebFrame'
 import { webBootstrap } from './src/utils/webBootstrap'
 import { useToast } from './src/hooks/useToast'
@@ -108,14 +110,40 @@ function AppShell() {
   // ── 투자 시장 선호 (UI 필터링 — MarketTab/StocksTab 등) ──
   const [marketPreference, setMarketPreference] = useState<MarketPreference>('BOTH')
   const preferenceSyncedRef = useRef(false)
+
+  // v2 온보딩 상태 — 미완료 신규 사용자만 OnboardingScreen 노출.
+  // 기존 v1 사용자는 marketPreference 가 이미 있으므로 첫 진입에서 자동 markCompleted 후 스킵.
+  const [onboardingState, setOnboardingState] = useState<'loading' | 'show' | 'done'>('loading')
+
   useEffect(() => {
     const tok = user?.token
-    if (!tok) return
+    if (!tok) {
+      setOnboardingState('loading')
+      return
+    }
     void (async () => {
-      const p = await getAlertPreferences(tok)
+      const [p, completed] = await Promise.all([
+        getAlertPreferences(tok),
+        getOnboardingCompleted(),
+      ])
       if (p.marketPreference) setMarketPreference(p.marketPreference)
+      // 이미 완료했으면 그대로 진입. 미완료지만 marketPreference 가 있으면(v1 사용자) 자동 완료 처리.
+      if (completed) {
+        setOnboardingState('done')
+      } else if (p.marketPreference) {
+        // v1 사용자 — 온보딩 한 적 없지만 marketPreference 가 있으므로 신규 아님.
+        await markOnboardingCompleted()
+        setOnboardingState('done')
+      } else {
+        setOnboardingState('show')
+      }
     })()
   }, [user?.token])
+
+  const handleOnboardingComplete = useCallback((pref: MarketPreference) => {
+    setMarketPreference(pref)
+    setOnboardingState('done')
+  }, [])
   // 선호값을 최초 1회만 차트/검색 필터 디폴트에 반영. 이후 사용자 토글은 보존.
   useEffect(() => {
     if (preferenceSyncedRef.current) return
@@ -281,6 +309,25 @@ function AppShell() {
         <WebFrame variant="auth">
           <AuthScreen onDone={(u) => void handleAuthDone(u)} />
         </WebFrame>
+      </SafeAreaView>
+    )
+  }
+
+  // ── v2 온보딩 분기 ──
+  // 사용자 로그인 + 온보딩 상태 결정 전: 로딩.
+  if (onboardingState === 'loading') {
+    return (
+      <SafeAreaView style={[styles.container, { alignItems: 'center', justifyContent: 'center' }]}>
+        <ActivityIndicator size="large" color={palette.brandAccent} />
+      </SafeAreaView>
+    )
+  }
+  // 온보딩 미완료 신규 사용자만 OnboardingScreen 노출.
+  if (onboardingState === 'show') {
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar style={isDark ? 'light' : 'dark'} />
+        <OnboardingScreen authToken={user.token} onComplete={handleOnboardingComplete} />
       </SafeAreaView>
     )
   }
