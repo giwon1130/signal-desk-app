@@ -6,7 +6,7 @@
  */
 import { useMemo, useState } from 'react'
 import { Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Trophy, X } from 'lucide-react-native'
 import { useTheme } from '../../theme'
 import type { LeagueCurrency, LeagueVisibility, MarketScope } from '../../types'
@@ -29,6 +29,7 @@ const DURATION_PRESETS: Array<{ label: string; days: number }> = [
 
 export function CreateLeagueModal({ visible, onClose, onCreated, toast }: Props) {
   const { palette } = useTheme()
+  const insets = useSafeAreaInsets()
   const [name, setName] = useState('')
   const [marketScope, setMarketScope] = useState<MarketScope>('BOTH')
   const [currency, setCurrency] = useState<LeagueCurrency>('KRW')
@@ -87,7 +88,7 @@ export function CreateLeagueModal({ visible, onClose, onCreated, toast }: Props)
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="fullScreen" onRequestClose={onClose}>
-      <SafeAreaView style={{ flex: 1, backgroundColor: palette.bg }} edges={['top', 'bottom']}>
+      <View style={{ flex: 1, backgroundColor: palette.bg, paddingTop: insets.top, paddingBottom: insets.bottom }}>
         {/* 헤더 */}
         <View style={{
           flexDirection: 'row', alignItems: 'center',
@@ -223,7 +224,7 @@ export function CreateLeagueModal({ visible, onClose, onCreated, toast }: Props)
             </Text>
           </Pressable>
         </View>
-      </SafeAreaView>
+      </View>
     </Modal>
   )
 }

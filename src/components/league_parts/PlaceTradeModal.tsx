@@ -3,7 +3,7 @@
  */
 import { useEffect, useState } from 'react'
 import { ActivityIndicator, FlatList, Modal, Pressable, Text, TextInput, View } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { ArrowDownToLine, ArrowUpFromLine, Search, X } from 'lucide-react-native'
 import { useTheme } from '../../theme'
 import { placeTrade } from '../../api/league'
@@ -23,6 +23,7 @@ type Props = {
 
 export function PlaceTradeModal({ visible, leagueId, positions, cashBalance, currency, onClose, onTraded, toast }: Props) {
   const { palette } = useTheme()
+  const insets = useSafeAreaInsets()
   const [side, setSide] = useState<TradeSide>('BUY')
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<StockSearchResult[]>([])
@@ -92,7 +93,7 @@ export function PlaceTradeModal({ visible, leagueId, positions, cashBalance, cur
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="fullScreen" onRequestClose={onClose}>
-      <SafeAreaView style={{ flex: 1, backgroundColor: palette.bg }} edges={['top', 'bottom']}>
+      <View style={{ flex: 1, backgroundColor: palette.bg, paddingTop: insets.top, paddingBottom: insets.bottom }}>
         {/* 헤더 */}
         <View style={{
           flexDirection: 'row', alignItems: 'center',
@@ -255,7 +256,7 @@ export function PlaceTradeModal({ visible, leagueId, positions, cashBalance, cur
             </Pressable>
           </View>
         ) : null}
-      </SafeAreaView>
+      </View>
     </Modal>
   )
 }

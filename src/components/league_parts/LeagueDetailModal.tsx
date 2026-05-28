@@ -4,7 +4,7 @@
  */
 import { useCallback, useEffect, useState } from 'react'
 import { Modal, Pressable, RefreshControl, ScrollView, Share, Text, View } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Crown, Share2, Trophy, X } from 'lucide-react-native'
 import { useTheme } from '../../theme'
 import {
@@ -25,6 +25,7 @@ type Props = {
 
 export function LeagueDetailModal({ visible, leagueId, myUserId, onClose, toast }: Props) {
   const { palette } = useTheme()
+  const insets = useSafeAreaInsets()
   const [detail, setDetail] = useState<LeagueDetailType | null>(null)
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
   const [feed, setFeed] = useState<LeagueTrade[]>([])
@@ -71,7 +72,7 @@ export function LeagueDetailModal({ visible, leagueId, myUserId, onClose, toast 
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="fullScreen" onRequestClose={onClose}>
-      <SafeAreaView style={{ flex: 1, backgroundColor: palette.bg }} edges={['top', 'bottom']}>
+      <View style={{ flex: 1, backgroundColor: palette.bg, paddingTop: insets.top, paddingBottom: insets.bottom }}>
         {/* 헤더 */}
         <View style={{
           flexDirection: 'row', alignItems: 'center',
@@ -226,7 +227,7 @@ export function LeagueDetailModal({ visible, leagueId, myUserId, onClose, toast 
             toast={toast}
           />
         ) : null}
-      </SafeAreaView>
+      </View>
     </Modal>
   )
 }

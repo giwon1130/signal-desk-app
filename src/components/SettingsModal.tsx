@@ -8,7 +8,7 @@
  *  - 계정 정보 / 로그아웃
  */
 import { Modal, Pressable, ScrollView, Text, View } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Bell, LogOut, Settings as SettingsIcon, X } from 'lucide-react-native'
 import { useStyles } from '../styles'
 import { useTheme } from '../theme'
@@ -36,10 +36,11 @@ export function SettingsModal({
 }: Props) {
   const styles = useStyles()
   const { palette } = useTheme()
+  const insets = useSafeAreaInsets()
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="fullScreen" onRequestClose={onClose}>
-      <SafeAreaView style={{ flex: 1, backgroundColor: palette.bg }} edges={['top', 'bottom']}>
+      <View style={{ flex: 1, backgroundColor: palette.bg, paddingTop: insets.top, paddingBottom: insets.bottom }}>
         {/* 헤더 */}
         <View style={{
           flexDirection: 'row', alignItems: 'center',
@@ -145,7 +146,7 @@ export function SettingsModal({
             <Text style={{ color: palette.red, fontSize: 14, fontWeight: '800' }}>로그아웃</Text>
           </Pressable>
         </ScrollView>
-      </SafeAreaView>
+      </View>
     </Modal>
   )
 }
