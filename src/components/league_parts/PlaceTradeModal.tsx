@@ -28,7 +28,7 @@ export function PlaceTradeModal({ visible, leagueId, positions, cashBalance, cur
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<StockSearchResult[]>([])
   const [searching, setSearching] = useState(false)
-  const [selected, setSelected] = useState<{ market: 'KR' | 'US'; ticker: string; name: string } | null>(null)
+  const [selected, setSelected] = useState<{ market: 'KR' | 'US'; ticker: string; name: string; price: number; changeRate: number } | null>(null)
   const [quantity, setQuantity] = useState('1')
   const [busy, setBusy] = useState(false)
 
@@ -126,9 +126,9 @@ export function PlaceTradeModal({ visible, leagueId, positions, cashBalance, cur
                 <TextInput
                   value={query}
                   onChangeText={setQuery}
-                  placeholder="종목명 / ticker"
+                  placeholder="종목명 / ticker (예: 삼성, AAPL)"
                   placeholderTextColor={palette.inkFaint}
-                  autoCapitalize="characters"
+                  autoCapitalize="none"
                   autoCorrect={false}
                   style={{ flex: 1, color: palette.ink, paddingVertical: 12, fontSize: 14 }}
                 />
@@ -139,15 +139,26 @@ export function PlaceTradeModal({ visible, leagueId, positions, cashBalance, cur
                 keyExtractor={(it) => `${it.market}:${it.ticker}`}
                 renderItem={({ item }) => (
                   <Pressable
-                    onPress={() => setSelected({ market: item.market as 'KR' | 'US', ticker: item.ticker, name: item.name })}
+                    onPress={() => setSelected({ market: item.market as 'KR' | 'US', ticker: item.ticker, name: item.name, price: item.price, changeRate: item.changeRate })}
                     style={({ pressed }) => ({
+                      flexDirection: 'row', alignItems: 'center', gap: 8,
                       paddingVertical: 10, paddingHorizontal: 4,
                       borderBottomWidth: 1, borderBottomColor: palette.border,
                       opacity: pressed ? 0.6 : 1,
                     })}
                   >
-                    <Text style={{ color: palette.ink, fontSize: 14, fontWeight: '700' }}>{item.name}</Text>
-                    <Text style={{ color: palette.inkMuted, fontSize: 11 }}>{item.market} · {item.ticker} · {item.sector || ''}</Text>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ color: palette.ink, fontSize: 14, fontWeight: '700' }}>{item.name}</Text>
+                      <Text style={{ color: palette.inkMuted, fontSize: 11 }}>{item.market} · {item.ticker} · {item.sector || ''}</Text>
+                    </View>
+                    {item.price > 0 ? (
+                      <View style={{ alignItems: 'flex-end' }}>
+                        <Text style={{ color: palette.ink, fontSize: 13, fontWeight: '800' }}>{fmtPrice(item.price, item.market as 'KR' | 'US')}</Text>
+                        <Text style={{ color: item.changeRate >= 0 ? palette.up : palette.down, fontSize: 11, fontWeight: '700' }}>
+                          {item.changeRate >= 0 ? '+' : ''}{item.changeRate.toFixed(2)}%
+                        </Text>
+                      </View>
+                    ) : null}
                   </Pressable>
                 )}
                 ListEmptyComponent={
@@ -172,7 +183,7 @@ export function PlaceTradeModal({ visible, leagueId, positions, cashBalance, cur
                   keyExtractor={(p) => `${p.market}:${p.ticker}`}
                   renderItem={({ item }) => (
                     <Pressable
-                      onPress={() => setSelected({ market: item.market as 'KR' | 'US', ticker: item.ticker, name: item.name })}
+                      onPress={() => setSelected({ market: item.market as 'KR' | 'US', ticker: item.ticker, name: item.name, price: item.averageCost, changeRate: 0 })}
                       style={({ pressed }) => ({
                         paddingVertical: 12, paddingHorizontal: 4,
                         borderBottomWidth: 1, borderBottomColor: palette.border,
@@ -199,6 +210,17 @@ export function PlaceTradeModal({ visible, leagueId, positions, cashBalance, cur
               <Text style={{ color: palette.inkMuted, fontSize: 10, fontWeight: '800', letterSpacing: 1 }}>선택 종목</Text>
               <Text style={{ color: palette.ink, fontSize: 17, fontWeight: '900' }}>{selected.name}</Text>
               <Text style={{ color: palette.inkMuted, fontSize: 12 }}>{selected.market} · {selected.ticker}</Text>
+              {selected.price > 0 ? (
+                <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8, marginTop: 6 }}>
+                  <Text style={{ color: palette.ink, fontSize: 20, fontWeight: '900' }}>{fmtPrice(selected.price, selected.market)}</Text>
+                  {side === 'BUY' && selected.changeRate !== 0 ? (
+                    <Text style={{ color: selected.changeRate >= 0 ? palette.up : palette.down, fontSize: 13, fontWeight: '800' }}>
+                      {selected.changeRate >= 0 ? '+' : ''}{selected.changeRate.toFixed(2)}%
+                    </Text>
+                  ) : null}
+                  <Text style={{ color: palette.inkFaint, fontSize: 10 }}>{side === 'SELL' ? '평단' : '현재가'}</Text>
+                </View>
+              ) : null}
             </View>
 
             <View style={{ gap: 6 }}>
@@ -215,8 +237,16 @@ export function PlaceTradeModal({ visible, leagueId, positions, cashBalance, cur
                   fontSize: 22, fontWeight: '900', textAlign: 'right',
                 }}
               />
+              {selected.price > 0 && parseInt(quantity, 10) > 0 ? (
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Text style={{ color: palette.inkMuted, fontSize: 12, fontWeight: '700' }}>예상 {side === 'BUY' ? '매수' : '매도'} 금액</Text>
+                  <Text style={{ color: palette.ink, fontSize: 15, fontWeight: '900' }}>
+                    {fmtPrice(selected.price * parseInt(quantity, 10), selected.market)}
+                  </Text>
+                </View>
+              ) : null}
               <Text style={{ color: palette.inkFaint, fontSize: 11 }}>
-                체결가는 백엔드가 실시간 시세로 lock — 수수료 0.3% 별도 차감
+                실제 체결가는 체결 시점 실시간 시세로 확정 — 수수료 0.3% 별도 차감
               </Text>
             </View>
 
@@ -259,6 +289,12 @@ export function PlaceTradeModal({ visible, leagueId, positions, cashBalance, cur
       </View>
     </Modal>
   )
+}
+
+/** 시장별 통화 기호로 가격 포맷. KR=원(정수), US=달러(소수 2자리). */
+function fmtPrice(value: number, market: 'KR' | 'US'): string {
+  if (market === 'US') return `$${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  return `${Math.round(value).toLocaleString('ko-KR')}원`
 }
 
 function SideButton({ label, active, onPress, palette }: { label: string; side: TradeSide; active: boolean; onPress: () => void; palette: any }) {
