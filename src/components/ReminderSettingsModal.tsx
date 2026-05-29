@@ -155,8 +155,8 @@ export function ReminderSettingsModal({ visible, authToken, onClose }: Props) {
               onValueChange={(v) => void updatePref({ closeBriefEnabled: v })}
             />
             <AlertToggleRow
-              title="🌆 미장 이브닝 브리프"
-              hint="06:30 KST · NY 마감 직후 NASDAQ/S&P · 주도주 · 실적"
+              title="🌆 미국장 마감 브리프 (새벽)"
+              hint="새벽 06:30 KST · NY 마감 직후 NASDAQ/S&P · 주도주 · 실적"
               value={prefs.eveningBriefEnabled}
               disabled={togglesDisabled}
               onValueChange={(v) => void updatePref({ eveningBriefEnabled: v })}
