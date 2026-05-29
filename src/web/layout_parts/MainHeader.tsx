@@ -24,6 +24,7 @@ export function MainHeader({ activeTab, lastSyncedAt, marketPreference, onMarket
     stocks: '종목 탐색 · 관심 · 보유',
     ai:     '오늘의 플레이북 + 누적 성적표',
     league: '친구 모의투자 — 시즌별 트로피 경쟁',
+    reading: '종목·시황 콜 공유 — "거봐 내가 말했지?"',
   }
   return (
     <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12 }}>

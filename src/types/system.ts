@@ -59,7 +59,7 @@ export type AlertHistoryItem = {
  *
  * v1 의 'home', 'market' 는 v2 에서 제거 (today 로 흡수).
  */
-export type TabKey = 'today' | 'stocks' | 'ai' | 'league'
+export type TabKey = 'today' | 'stocks' | 'ai' | 'league' | 'reading'
 export type LogFilter = 'ALL' | 'RECOMMEND' | 'RESULT'
 export type MarketKey = 'KR' | 'US'
 export type PeriodKey = 'D' | 'W' | 'M'

@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native'
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context'
-import { BarChart3, Bot, Settings as SettingsIcon, Sunrise, Trophy } from 'lucide-react-native'
+import { BarChart3, Bot, Megaphone, Settings as SettingsIcon, Sunrise, Trophy } from 'lucide-react-native'
 import { WebLayout } from './src/web/WebLayout'
 import { useStyles } from './src/styles'
 import { ThemeProvider, useTheme } from './src/theme'
@@ -28,6 +28,8 @@ import { useToast } from './src/hooks/useToast'
 import { hapticLight } from './src/utils/haptics'
 import { AITab } from './src/tabs/AITab'
 import { LeagueTab } from './src/tabs/LeagueTab'
+import { ReadingTab } from './src/tabs/ReadingTab'
+import { ComposePostModal } from './src/components/reading_parts/ComposePostModal'
 import { CreateLeagueModal } from './src/components/league_parts/CreateLeagueModal'
 import { LeagueDetailModal } from './src/components/league_parts/LeagueDetailModal'
 import { SettingsModal } from './src/components/SettingsModal'
@@ -56,12 +58,13 @@ import type {
   TabKey,
 } from './src/types'
 
-// v2.1: 4탭 (today/stocks/ai/league). league 는 친구 모의투자 신규.
+// v2.2: 5탭 (today/stocks/ai/league/reading). reading 은 종목·시황 콜 공유 신규.
 const TABS: Array<{ key: TabKey; label: string; Icon: typeof Sunrise }> = [
-  { key: 'today',  label: '오늘', Icon: Sunrise },
-  { key: 'stocks', label: '종목', Icon: BarChart3 },
-  { key: 'ai',     label: 'AI',   Icon: Bot },
-  { key: 'league', label: '리그', Icon: Trophy },
+  { key: 'today',   label: '오늘', Icon: Sunrise },
+  { key: 'stocks',  label: '종목', Icon: BarChart3 },
+  { key: 'ai',      label: 'AI',   Icon: Bot },
+  { key: 'league',  label: '리그', Icon: Trophy },
+  { key: 'reading', label: '리딩', Icon: Megaphone },
 ]
 
 function AppShell() {
@@ -123,6 +126,9 @@ function AppShell() {
   const [activeLeagueId, setActiveLeagueId] = useState<string | null>(null)
   // v2.1: 통합 설정 모달
   const [settingsOpen, setSettingsOpen] = useState(false)
+  // v2.2: 리딩 — 작성 모달 + 피드 새로고침 트리거
+  const [composeOpen, setComposeOpen] = useState(false)
+  const [readingRefreshTick, setReadingRefreshTick] = useState(0)
 
   useEffect(() => {
     const tok = user?.token
@@ -495,6 +501,17 @@ function AppShell() {
           toast={toast}
         />
       ) : null}
+
+      {/* v2.2: 리딩 (종목·시황 콜 공유). 작성 모달은 overlays */}
+      {!loading && !error && activeTab === 'reading' ? (
+        <ReadingTab
+          authToken={user?.token ?? null}
+          refreshing={refreshing}
+          refreshTick={readingRefreshTick}
+          onCompose={() => setComposeOpen(true)}
+          toast={toast}
+        />
+      ) : null}
     </>
   )
 
@@ -539,6 +556,12 @@ function AppShell() {
         leagueId={activeLeagueId}
         myUserId={user?.userId}
         onClose={() => setActiveLeagueId(null)}
+        toast={toast}
+      />
+      <ComposePostModal
+        visible={composeOpen}
+        onClose={() => setComposeOpen(false)}
+        onPublished={() => setReadingRefreshTick((t) => t + 1)}
         toast={toast}
       />
       <SettingsModal
