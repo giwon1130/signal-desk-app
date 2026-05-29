@@ -16,8 +16,18 @@ import { useTheme } from '../theme'
 import { hapticError, hapticSuccess } from '../utils/haptics'
 import { GoogleSignInButton } from './GoogleSignInButton'
 import { WebFooter } from './WebFooter'
+import type { MarketPreference } from '../api/alertPreferences'
+import { getAlertPreferences, updateAlertPreferences } from '../api/alertPreferences'
+import { markOnboardingCompleted } from '../utils/onboarding'
 
 type Mode = 'login' | 'signup'
+
+// 가입 폼 마지막 단계 — 시장 선호 카드.
+const MARKET_OPTIONS: Array<{ key: MarketPreference; emoji: string; title: string; desc: string }> = [
+  { key: 'KR',   emoji: '🇰🇷', title: '한국 시장', desc: 'KOSPI/KOSDAQ · 외인·기관 수급' },
+  { key: 'US',   emoji: '🇺🇸', title: '미국 시장', desc: 'NASDAQ/S&P · 글로벌 무버' },
+  { key: 'BOTH', emoji: '🌐',  title: '둘 다',      desc: '양쪽 시장 균형 있게' },
+]
 
 type Props = {
   onDone: (user: AuthUser) => void
@@ -62,6 +72,7 @@ export function AuthScreen({ onDone }: Props) {
   const [email,    setEmail]    = useState('')
   const [password, setPassword] = useState('')
   const [nickname, setNickname] = useState('')
+  const [marketPref, setMarketPref] = useState<MarketPreference | null>(null)
   const [loading,  setLoading]  = useState(false)
   const [error,    setError]    = useState('')
   // 입력 후 blur(또는 제출) 시점부터 인라인 오류를 보여주기 위한 플래그
@@ -112,11 +123,25 @@ export function AuthScreen({ onDone }: Props) {
       void hapticError()
       return
     }
+    // 가입은 시장 선호 필수 (가입 폼 마지막 단계)
+    if (mode === 'signup' && !marketPref) {
+      void hapticError()
+      setError('어느 시장을 볼지 선택해줘.')
+      return
+    }
     setLoading(true)
     try {
       const res = mode === 'login'
         ? await apiLogin(email.trim(), password)
         : await apiSignup(email.trim(), password, nickname.trim())
+      // 가입 시 선택한 시장 선호 저장 + 온보딩 스킵 처리 (이미 물어봤으므로 중복 제거)
+      if (mode === 'signup' && marketPref) {
+        try {
+          const current = await getAlertPreferences(res.token)
+          await updateAlertPreferences(res.token, { ...current, marketPreference: marketPref })
+          await markOnboardingCompleted()
+        } catch { /* 저장 실패해도 가입은 진행 — 온보딩이 fallback 으로 다시 물어봄 */ }
+      }
       void hapticSuccess()
       onDone(res)
     } catch (e) {
@@ -214,6 +239,40 @@ export function AuthScreen({ onDone }: Props) {
             />
             {pwError ? <Text style={{ color: palette.red, fontSize: 11, fontWeight: '600', marginLeft: 4 }}>{pwError}</Text> : null}
           </View>
+
+          {/* 가입 마지막 단계 — 시장 선호 (필수). 선택한 시장에 맞춰 메인 콘텐츠가 달라짐 */}
+          {mode === 'signup' && (
+            <View style={{ gap: 6, marginTop: 4 }}>
+              <Text style={{ color: palette.inkMuted, fontSize: 12, fontWeight: '700', marginLeft: 2 }}>
+                어느 시장 보세요?
+              </Text>
+              <View style={{ gap: 6 }}>
+                {MARKET_OPTIONS.map((opt) => {
+                  const active = marketPref === opt.key
+                  return (
+                    <Pressable
+                      key={opt.key}
+                      onPress={() => { setMarketPref(opt.key); setError('') }}
+                      disabled={loading}
+                      style={{
+                        flexDirection: 'row', alignItems: 'center', gap: 10,
+                        backgroundColor: active ? palette.blueSoft : palette.surface,
+                        borderWidth: 1.2, borderColor: active ? palette.blue : palette.border,
+                        borderRadius: 11, paddingHorizontal: 12, paddingVertical: 10,
+                      }}
+                    >
+                      <Text style={{ fontSize: 18 }}>{opt.emoji}</Text>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ color: palette.ink, fontSize: 13, fontWeight: '800' }}>{opt.title}</Text>
+                        <Text style={{ color: palette.inkMuted, fontSize: 11 }}>{opt.desc}</Text>
+                      </View>
+                      {active ? <Text style={{ color: palette.blue, fontSize: 14, fontWeight: '900' }}>✓</Text> : null}
+                    </Pressable>
+                  )
+                })}
+              </View>
+            </View>
+          )}
         </View>
 
         {error ? (
@@ -271,7 +330,7 @@ export function AuthScreen({ onDone }: Props) {
         <Pressable
           onPress={() => {
             setMode(mode === 'login' ? 'signup' : 'login')
-            setError(''); setEmailTouched(false); setPwTouched(false); setNickTouched(false)
+            setError(''); setEmailTouched(false); setPwTouched(false); setNickTouched(false); setMarketPref(null)
           }}
           style={{ paddingVertical: 6 }}
         >
