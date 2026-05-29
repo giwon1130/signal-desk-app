@@ -8,7 +8,6 @@ import { CollapsibleCard } from '../components/CollapsibleCard'
 import { useStyles } from '../styles'
 import { useTheme } from '../theme'
 import type {
-  AiRecommendationData,
   AlertHistoryItem,
   DailyFortune,
   DisclosureItem,
@@ -29,7 +28,6 @@ import { EventsCard } from './today_parts/EventsCard'
 import { FortuneCard } from './today_parts/FortuneCard'
 import { HoldingMonitor } from './today_parts/HoldingMonitor'
 import { MediaSummaryCard } from './today_parts/MediaSummaryCard'
-import { PicksCard } from './today_parts/PicksCard'
 import { SentimentCard } from './today_parts/SentimentCard'
 import { toneColor } from './today_parts/helpers'
 import { CompositeRiskCard } from './market_parts/CompositeRiskCard'
@@ -39,7 +37,6 @@ import { WatchAlertList } from './market_parts/WatchAlertList'
 
 type Props = {
   summary: MarketSummaryData | null
-  aiRecommendation: AiRecommendationData | null
   positions: HoldingPosition[]
   alertHistory: AlertHistoryItem[]
   fortune: DailyFortune | null
@@ -56,7 +53,6 @@ type Props = {
 
 export function TodayTab({
   summary,
-  aiRecommendation,
   positions,
   alertHistory,
   fortune,
@@ -76,12 +72,12 @@ export function TodayTab({
   // 웹(데스크톱)에선 정보 밀도 ↑ — 더 많은 후보/모니터/알림 노출
   const listLimit = isWeb ? 12 : 5
 
-  const krSentiment = summary?.newsSentiments?.find((s) => s.market === 'KR')
-  const usSentiment = summary?.newsSentiments?.find((s) => s.market === 'US')
+  // 시장 선호 — 선택 시장의 정보만 노출 (#5).
+  const showKr = marketPreference === 'KR' || marketPreference === 'BOTH'
+  const showUs = marketPreference === 'US' || marketPreference === 'BOTH'
 
-  const picks = aiRecommendation?.executionLogs
-    ?.filter((log) => log.stage === 'RECOMMEND')
-    ?.slice(0, listLimit) ?? []
+  const krSentiment = showKr ? summary?.newsSentiments?.find((s) => s.market === 'KR') : undefined
+  const usSentiment = showUs ? summary?.newsSentiments?.find((s) => s.market === 'US') : undefined
 
   // 단타 후보: 보유 종목 중 손익 ±3% 이내 (액션 가능 구간)
   const monitorTargets = positions
@@ -91,9 +87,6 @@ export function TodayTab({
   const tradingDay = summary?.tradingDayStatus
   const marketClosedToday = !!tradingDay && !tradingDay.krOpen && !tradingDay.usOpen
 
-  // v2: Market 탭에서 흡수한 콘텐츠 — 시장 무드 지표 + top movers 의 시장 필터.
-  const showKr = marketPreference === 'KR' || marketPreference === 'BOTH'
-  const showUs = marketPreference === 'US' || marketPreference === 'BOTH'
   // 요약 지표(Fear Meter 글로벌 / KR Heat·Flow Bias KR / US Heat US) 필터.
   const filteredMetrics = (summary?.marketSummary ?? []).filter((m) => {
     const label = m.label
@@ -109,10 +102,12 @@ export function TodayTab({
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       contentContainerStyle={[styles.content, isWeb && styles.contentWeb]}
     >
-      {/* ── 장 세션 상태 — 한국/미국 per-market 컴팩트 칩 (최상단에 살짝 노출) ── */}
+      {/* ── 장 세션 상태 — 선택 시장만 (#5) ── */}
       {summary?.marketSessions?.length ? (
         <View style={[styles.todaySessionRow, isWeb && styles.cardFull]}>
-          {summary.marketSessions.map((session) => {
+          {summary.marketSessions.filter((s) =>
+            (s.market === 'KR' && showKr) || (s.market === 'US' && showUs) || (s.market !== 'KR' && s.market !== 'US'),
+          ).map((session) => {
             const tone = getSessionPalette(session.isOpen)
             return (
               <View key={session.market} style={[styles.todaySessionPill, { backgroundColor: tone.backgroundColor }]}>
@@ -165,8 +160,7 @@ export function TodayTab({
       {/* ── 보유 종목 공시 (DART) ── */}
       <DisclosureCard disclosures={disclosures} onOpenDetail={onOpenDetail} />
 
-      {/* ── 오늘의 단타 픽 ── */}
-      <PicksCard picks={picks} marketClosedToday={marketClosedToday} />
+      {/* AI 추천(단타 픽)은 AI 탭으로 분리 (#6) — 오늘 탭은 오늘 시장/보유 상태만 */}
 
       {/* ── 시장 발견 (v2): top movers — 프로필별 필터 ── */}
       {showKr && topMovers ? (

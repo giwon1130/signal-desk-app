@@ -32,8 +32,9 @@ export function shellStyles(C: Palette): StyleObj {
     headerStatusTextUp:   { color: '#4ade80' },
     headerStatusTextDown: { color: '#f87171' },
     themeToggleBtn: {
-      borderRadius: 999, paddingHorizontal: 8, paddingVertical: 6,
-      backgroundColor: 'rgba(255,255,255,0.08)', marginLeft: 6,
+      borderRadius: 10, paddingHorizontal: 9, paddingVertical: 8,
+      backgroundColor: C.blueSoft, borderWidth: 1, borderColor: C.blue, marginLeft: 8,
+      flexDirection: 'row', alignItems: 'center', gap: 4,
     },
 
     // ── Tab Bar ─────────────────────────────────────────────────────────────────

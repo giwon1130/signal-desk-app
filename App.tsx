@@ -16,7 +16,6 @@ import { ThemeProvider, useTheme } from './src/theme'
 import { Toast } from './src/components/Toast'
 import { AuthScreen } from './src/components/AuthScreen'
 import { OnboardingScreen } from './src/components/OnboardingScreen'
-import { MarketProfileChip } from './src/components/MarketProfileChip'
 import { V2MigrationModal } from './src/components/V2MigrationModal'
 import {
   getOnboardingCompleted, markOnboardingCompleted,
@@ -368,8 +367,7 @@ function AppShell() {
   // 탭 컨텐츠 — 웹/네이티브 셸에서 공유.
   const tabContent = (
     <>
-      {/* ── 로딩 (투자 명언 로테이션) ─────────────────── */}
-      {loading ? <LoadingScreen /> : null}
+      {/* 로딩 화면은 overlays 에서 헤더·탭바까지 덮는 절대 오버레이로 렌더 (로딩 중 탭 전환 차단) */}
 
       {/* ── 에러 ─────────────────────────────────────── */}
       {error ? (
@@ -406,7 +404,6 @@ function AppShell() {
         ) : (
           <TodayTab
             summary={summary}
-            aiRecommendation={filteredAiRecommendation}
             positions={portfolio?.positions ?? []}
             alertHistory={alertHistory}
             fortune={fortune}
@@ -589,6 +586,13 @@ function AppShell() {
           onOpenReminder={() => setReminderOpen(true)}
         />
       ) : null}
+
+      {/* 로딩 오버레이 — 헤더·탭바 포함 전체를 덮어 로딩 중 탭 전환 차단 (#1) */}
+      {loading ? (
+        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 100 }}>
+          <LoadingScreen />
+        </View>
+      ) : null}
     </>
   )
 
@@ -643,22 +647,22 @@ function AppShell() {
                   {isUp ? 'LIVE' : 'OFF'}
                 </Text>
               </View>
-              {/* v2.1: 종/Sun/로그아웃 3개 → 톱니 1개 (통합 설정 모달 진입) */}
+              {/* v2.2: 설정 진입 — 시장 선호도 여기로 이동. 잘 보이도록 라벨+테두리 강조 */}
               <Pressable
                 onPress={() => { void hapticLight(); setSettingsOpen(true) }}
                 style={({ pressed }) => [styles.themeToggleBtn, pressed && { opacity: 0.6 }]}
                 accessibilityLabel="설정"
               >
-                <SettingsIcon size={16} color={palette.inkSub} />
+                <SettingsIcon size={18} color={palette.blue} strokeWidth={2.4} />
+                <Text style={{ color: palette.blue, fontSize: 11, fontWeight: '800' }}>설정</Text>
               </Pressable>
             </View>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 6, gap: 8 }}>
-            {/* v2: 시장 선호 inline 토글 — 항상 노출, 가장 자주 쓰는 설정 */}
-            <MarketProfileChip
-              value={marketPreference}
-              onChange={handleMarketPreferenceChange}
-            />
+            {/* v2.2: 시장 선호는 설정으로 이동 — 현재 선택만 작게 표시 */}
+            <Text style={[styles.headerSubtitle, { flexShrink: 0 }]}>
+              {marketPreference === 'KR' ? '🇰🇷 한국장' : marketPreference === 'US' ? '🇺🇸 미국장' : '🌐 한국·미국'}
+            </Text>
             <Text style={[styles.headerSubtitle, { flexShrink: 1, textAlign: 'right' }]}>
               {lastSyncedAt ? `${lastSyncedAt}` : '오늘 하루를 한 화면에서'}
             </Text>
