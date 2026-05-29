@@ -41,7 +41,7 @@ export function ReminderSettingsModal({ visible, authToken, onClose }: Props) {
   const [history, setHistory] = useState<NotificationRecord[]>([])
   const [prefs, setPrefs] = useState<AlertPreferences>({
     krEnabled: true, usEnabled: false, premarketEnabled: true, compositeRiskEnabled: true,
-    marketPreference: 'BOTH', eveningBriefEnabled: false,
+    marketPreference: 'BOTH', eveningBriefEnabled: false, middayBriefEnabled: false, closeBriefEnabled: false,
   })
 
   // 모달 열릴 때마다 현재 저장값 hydrate
@@ -139,6 +139,20 @@ export function ReminderSettingsModal({ visible, authToken, onClose }: Props) {
               value={prefs.premarketEnabled}
               disabled={togglesDisabled}
               onValueChange={(v) => void updatePref({ premarketEnabled: v })}
+            />
+            <AlertToggleRow
+              title="☀️ 장중 브리프 알림"
+              hint="12:30 KST · 오전장 흐름·수급 점검 → 오후 대응"
+              value={prefs.middayBriefEnabled}
+              disabled={togglesDisabled}
+              onValueChange={(v) => void updatePref({ middayBriefEnabled: v })}
+            />
+            <AlertToggleRow
+              title="🔔 마감 브리프 알림"
+              hint="15:40 KST · 오늘 마감 정리 + 내일 관전 포인트"
+              value={prefs.closeBriefEnabled}
+              disabled={togglesDisabled}
+              onValueChange={(v) => void updatePref({ closeBriefEnabled: v })}
             />
             <AlertToggleRow
               title="🌆 미장 이브닝 브리프"
