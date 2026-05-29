@@ -66,6 +66,8 @@ export type LeaguePosition = {
   quantity: number
   averageCost: number
   realizedPnl: number
+  currentPrice: number | null   // league 통화, 1주당
+  returnPct: number | null      // 평단 대비 수익률 %
 }
 
 export type LeaderboardEntry = {

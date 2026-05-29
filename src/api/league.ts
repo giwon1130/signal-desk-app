@@ -86,6 +86,7 @@ export async function fetchLeaderboard(leagueId: string): Promise<LeaderboardEnt
 export type PlaceTradeInput = {
   market: 'KR' | 'US'
   ticker: string
+  name?: string          // 종목명 — 백엔드 시세 API엔 이름이 없어 클라이언트가 전달
   side: TradeSide
   quantity: number
 }

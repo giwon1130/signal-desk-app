@@ -165,18 +165,26 @@ export function LeagueDetailModal({ visible, leagueId, myUserId, onClose, toast 
               <Text style={{ color: palette.inkMuted, fontSize: 10, fontWeight: '800', letterSpacing: 1 }}>
                 내 보유 ({positions.length}종목)
               </Text>
-              {positions.map((p) => (
-                <View key={`${p.market}:${p.ticker}`} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 6, gap: 8 }}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ color: palette.ink, fontSize: 13, fontWeight: '800' }}>{p.name}</Text>
-                    <Text style={{ color: palette.inkMuted, fontSize: 10 }}>{p.market} · {p.ticker}</Text>
+              {positions.map((p) => {
+                const up = (p.returnPct ?? 0) >= 0
+                const retColor = p.returnPct == null ? palette.inkFaint : up ? palette.up : palette.down
+                return (
+                  <View key={`${p.market}:${p.ticker}`} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 6, gap: 8 }}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ color: palette.ink, fontSize: 13, fontWeight: '800' }}>{p.name}</Text>
+                      <Text style={{ color: palette.inkMuted, fontSize: 10 }}>{p.market} · {p.ticker} · {p.quantity}주</Text>
+                    </View>
+                    <View style={{ alignItems: 'flex-end' }}>
+                      <Text style={{ color: retColor, fontSize: 13, fontWeight: '900' }}>
+                        {p.returnPct == null ? '—' : `${up ? '+' : ''}${p.returnPct.toFixed(2)}%`}
+                      </Text>
+                      <Text style={{ color: palette.inkMuted, fontSize: 10 }}>
+                        평단 {p.averageCost.toFixed(2)}{p.currentPrice != null ? ` → ${p.currentPrice.toFixed(2)}` : ''}
+                      </Text>
+                    </View>
                   </View>
-                  <View style={{ alignItems: 'flex-end' }}>
-                    <Text style={{ color: palette.ink, fontSize: 12, fontWeight: '800' }}>{p.quantity}주</Text>
-                    <Text style={{ color: palette.inkMuted, fontSize: 10 }}>평단 {p.averageCost.toFixed(2)}</Text>
-                  </View>
-                </View>
-              ))}
+                )
+              })}
             </View>
           ) : null}
 

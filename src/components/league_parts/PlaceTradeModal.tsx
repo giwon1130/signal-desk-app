@@ -71,7 +71,7 @@ export function PlaceTradeModal({ visible, leagueId, positions, cashBalance, cur
     setBusy(true)
     try {
       await placeTrade(leagueId, {
-        market: selected.market, ticker: selected.ticker, side, quantity: qty,
+        market: selected.market, ticker: selected.ticker, name: selected.name, side, quantity: qty,
       })
       toast?.show(`${side === 'BUY' ? '매수' : '매도'} 체결 — ${selected.name} ${qty}주`, 'success')
       onTraded()
