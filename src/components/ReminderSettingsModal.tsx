@@ -41,7 +41,7 @@ export function ReminderSettingsModal({ visible, authToken, onClose }: Props) {
   const [history, setHistory] = useState<NotificationRecord[]>([])
   const [prefs, setPrefs] = useState<AlertPreferences>({
     krEnabled: true, usEnabled: false, premarketEnabled: true, compositeRiskEnabled: true,
-    marketPreference: 'BOTH', eveningBriefEnabled: false, middayBriefEnabled: false, closeBriefEnabled: false,
+    marketPreference: 'BOTH', eveningBriefEnabled: false, middayBriefEnabled: false, closeBriefEnabled: true,
   })
 
   // 모달 열릴 때마다 현재 저장값 hydrate

@@ -21,7 +21,7 @@ const DEFAULT: AlertPreferences = {
   marketPreference: 'BOTH',
   eveningBriefEnabled: false,
   middayBriefEnabled: false,
-  closeBriefEnabled: false,
+  closeBriefEnabled: true,
 }
 
 export async function getAlertPreferences(authToken: string): Promise<AlertPreferences> {
