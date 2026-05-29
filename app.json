@@ -42,6 +42,9 @@
       "backgroundColor": "#0a1628"
     },
     "scheme": "signaldesk",
+    "experiments": {
+      "baseUrl": "/signal-desk-app"
+    },
     "extra": {
       "googleClientIdIos": "496073748220-n9end3a963hj96nh6ru6ai3d54u8g72v.apps.googleusercontent.com",
       "googleClientIdAndroid": "",
