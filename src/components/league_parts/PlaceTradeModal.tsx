@@ -2,7 +2,7 @@
  * 리그 안에서 매수/매도. 백엔드가 시세 lock + 검증 + 체결.
  */
 import { useEffect, useState } from 'react'
-import { ActivityIndicator, FlatList, Modal, Pressable, Text, TextInput, View } from 'react-native'
+import { ActivityIndicator, FlatList, KeyboardAvoidingView, Modal, Platform, Pressable, Text, TextInput, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { ArrowDownToLine, ArrowUpFromLine, Search, X } from 'lucide-react-native'
 import { useTheme } from '../../theme'
@@ -93,7 +93,8 @@ export function PlaceTradeModal({ visible, leagueId, positions, cashBalance, cur
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="fullScreen" onRequestClose={onClose}>
-      <View style={{ flex: 1, backgroundColor: palette.bg, paddingTop: insets.top, paddingBottom: insets.bottom }}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1, backgroundColor: palette.bg }}>
+      <View style={{ flex: 1, paddingTop: insets.top, paddingBottom: insets.bottom }}>
         {/* 헤더 */}
         <View style={{
           flexDirection: 'row', alignItems: 'center',
@@ -104,7 +105,7 @@ export function PlaceTradeModal({ visible, leagueId, positions, cashBalance, cur
           <Text style={{ color: palette.inkMuted, fontSize: 11 }}>
             보유 현금 {currency === 'KRW' ? `${cashBalance.toLocaleString('ko-KR')}원` : `$${cashBalance.toLocaleString('en-US')}`}
           </Text>
-          <Pressable onPress={onClose} hitSlop={10}>
+          <Pressable onPress={onClose} hitSlop={20} accessibilityLabel="닫기">
             <X size={20} color={palette.inkMuted} strokeWidth={2.5} />
           </Pressable>
         </View>
@@ -287,6 +288,7 @@ export function PlaceTradeModal({ visible, leagueId, positions, cashBalance, cur
           </View>
         ) : null}
       </View>
+      </KeyboardAvoidingView>
     </Modal>
   )
 }

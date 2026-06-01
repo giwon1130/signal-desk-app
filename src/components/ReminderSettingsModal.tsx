@@ -101,7 +101,7 @@ export function ReminderSettingsModal({ visible, authToken, onClose }: Props) {
               <Bell size={18} color={palette.blue} strokeWidth={2.5} />
               <Text style={styles.signalModalTitle}>알림 설정</Text>
             </View>
-            <Pressable onPress={onClose} hitSlop={10} accessibilityLabel="닫기">
+            <Pressable onPress={onClose} hitSlop={20} accessibilityLabel="닫기">
               <X size={20} color={palette.inkMuted} strokeWidth={2.5} />
             </Pressable>
           </View>

@@ -6,7 +6,7 @@
  * spec: docs/leading-call-spec.md
  */
 import { useState } from 'react'
-import { ActivityIndicator, Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
+import { ActivityIndicator, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Megaphone, Search, X } from 'lucide-react-native'
 import { useTheme } from '../../theme'
@@ -93,7 +93,8 @@ export function ComposePostModal({ visible, onClose, onPublished, toast }: Props
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="fullScreen" onRequestClose={handleClose}>
-      <View style={{ flex: 1, backgroundColor: palette.bg, paddingTop: insets.top, paddingBottom: insets.bottom }}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1, backgroundColor: palette.bg }}>
+      <View style={{ flex: 1, paddingTop: insets.top, paddingBottom: insets.bottom }}>
         {/* 헤더 */}
         <View style={{
           flexDirection: 'row', alignItems: 'center',
@@ -102,7 +103,7 @@ export function ComposePostModal({ visible, onClose, onPublished, toast }: Props
         }}>
           <Megaphone size={20} color={palette.brandAccent} strokeWidth={2.5} />
           <Text style={{ flex: 1, color: palette.ink, fontSize: 17, fontWeight: '900' }}>새 리딩 쓰기</Text>
-          <Pressable onPress={handleClose} hitSlop={10}>
+          <Pressable onPress={handleClose} hitSlop={20} accessibilityLabel="닫기">
             <X size={20} color={palette.inkMuted} strokeWidth={2.5} />
           </Pressable>
         </View>
@@ -220,6 +221,7 @@ export function ComposePostModal({ visible, onClose, onPublished, toast }: Props
           </Text>
         </ScrollView>
       </View>
+      </KeyboardAvoidingView>
     </Modal>
   )
 }

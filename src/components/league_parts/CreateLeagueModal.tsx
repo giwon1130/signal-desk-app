@@ -5,7 +5,7 @@
  * spec: docs/mock-investment-game-spec.md
  */
 import { useMemo, useState } from 'react'
-import { Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
+import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Trophy, X } from 'lucide-react-native'
 import { useTheme } from '../../theme'
@@ -88,7 +88,8 @@ export function CreateLeagueModal({ visible, onClose, onCreated, toast }: Props)
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="fullScreen" onRequestClose={onClose}>
-      <View style={{ flex: 1, backgroundColor: palette.bg, paddingTop: insets.top, paddingBottom: insets.bottom }}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1, backgroundColor: palette.bg }}>
+      <View style={{ flex: 1, paddingTop: insets.top, paddingBottom: insets.bottom }}>
         {/* 헤더 */}
         <View style={{
           flexDirection: 'row', alignItems: 'center',
@@ -98,7 +99,7 @@ export function CreateLeagueModal({ visible, onClose, onCreated, toast }: Props)
         }}>
           <Trophy size={20} color={palette.brandAccent} strokeWidth={2.5} />
           <Text style={{ flex: 1, color: palette.ink, fontSize: 17, fontWeight: '900' }}>새 리그 만들기</Text>
-          <Pressable onPress={onClose} hitSlop={10}>
+          <Pressable onPress={onClose} hitSlop={20} accessibilityLabel="닫기">
             <X size={20} color={palette.inkMuted} strokeWidth={2.5} />
           </Pressable>
         </View>
@@ -225,6 +226,7 @@ export function CreateLeagueModal({ visible, onClose, onCreated, toast }: Props)
           </Pressable>
         </View>
       </View>
+      </KeyboardAvoidingView>
     </Modal>
   )
 }

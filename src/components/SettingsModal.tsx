@@ -49,7 +49,7 @@ export function SettingsModal({
         }}>
           <SettingsIcon size={18} color={palette.brandAccent} strokeWidth={2.5} />
           <Text style={{ flex: 1, color: palette.ink, fontSize: 17, fontWeight: '900' }}>설정</Text>
-          <Pressable onPress={onClose} hitSlop={10}>
+          <Pressable onPress={onClose} hitSlop={20} accessibilityLabel="닫기">
             <X size={20} color={palette.inkMuted} strokeWidth={2.5} />
           </Pressable>
         </View>
@@ -109,7 +109,11 @@ export function SettingsModal({
 
           {/* 알림 진입 */}
           <Pressable
-            onPress={() => { onClose(); onOpenReminder() }}
+            onPress={() => {
+              // iOS 는 닫히는 모달 위에 다른 모달을 즉시 띄우면 무시되는 경우가 있음 → 닫힘 애니메이션 후 열기.
+              onClose()
+              setTimeout(onOpenReminder, 350)
+            }}
             style={({ pressed }) => ({
               backgroundColor: pressed ? palette.surfaceAlt : palette.surface,
               borderRadius: 12, borderWidth: 1, borderColor: palette.border,
