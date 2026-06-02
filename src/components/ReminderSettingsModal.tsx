@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Modal, Pressable, ScrollView, Text, View } from 'react-native'
+import { Dimensions, Modal, Pressable, ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Bell, X } from 'lucide-react-native'
 import { useStyles } from '../styles'
@@ -94,7 +94,7 @@ export function ReminderSettingsModal({ visible, authToken, onClose }: Props) {
         {/* BUG fix(v2): card 를 Pressable 로 두면 자식 ScrollView 의 vertical swipe 가
             가로채여 위아래 스크롤이 안 됨. View 로 바꾸면 backdrop 의 hit test 에서
             card 영역은 backdrop 까지 propagate 안 돼서 outside click 닫기는 그대로 작동. */}
-        <View style={[styles.signalModalCard, { maxHeight: '85%' }]}>
+        <View style={styles.signalModalCard}>
           {/* 헤더는 ScrollView 밖 고정 — 콘텐츠가 길어 스크롤해도 닫기 버튼이 항상 보이게 */}
           <View style={styles.signalModalHeader}>
             <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
@@ -105,7 +105,9 @@ export function ReminderSettingsModal({ visible, authToken, onClose }: Props) {
               <X size={20} color={palette.inkMuted} strokeWidth={2.5} />
             </Pressable>
           </View>
-          <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+          {/* 카드가 content-sized 라 ScrollView 에 flex:1 을 주면 0 으로 붕괴(헤더만 보임).
+              CompositeRiskCard 와 동일하게 maxHeight 로 캡 + 스크롤. */}
+          <ScrollView style={{ maxHeight: Dimensions.get('window').height * 0.7 }} showsVerticalScrollIndicator={false}>
             <Text style={[styles.signalModalSubtitle, { marginBottom: 12 }]}>
               장 시작은 로컬 알림, 급등락은 서버 푸시로 보내준다.
             </Text>
