@@ -51,7 +51,7 @@ async function postJson<T>(path: string, body: unknown): Promise<T> {
   })
   const json = await res.json().catch(() => ({}))
   if (!res.ok) {
-    const msg = (json as { error?: string }).error ?? '요청에 실패했어요.'
+    const msg = (json as { error?: string }).error ?? '요청에 실패했습니다.'
     throw new Error(msg)
   }
   return json as T
@@ -73,6 +73,6 @@ export async function apiMe(token: string): Promise<AuthUser> {
   const res = await fetch(`${API_BASE_URL}/auth/me`, {
     headers: { Authorization: `Bearer ${token}` },
   })
-  if (!res.ok) throw new Error('토큰이 만료됐어요.')
+  if (!res.ok) throw new Error('토큰이 만료되었습니다.')
   return await res.json() as AuthUser
 }

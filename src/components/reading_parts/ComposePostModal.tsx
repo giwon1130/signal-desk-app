@@ -53,7 +53,7 @@ export function ComposePostModal({ visible, onClose, onPublished, toast }: Props
       const found = await detectMentions(body)
       setCandidates(found.map((m) => ({ ...m, selected: m.confidence === 'HIGH', targetText: '' })))
       setDetected(true)
-      if (found.length === 0) toast?.show('인식된 종목이 없어요. 직접 확인해주세요.', 'info')
+      if (found.length === 0) toast?.show('인식된 종목이 없습니다. 직접 확인해주세요.', 'info')
     } catch {
       toast?.show('종목 인식 실패', 'error')
     } finally {
@@ -73,7 +73,7 @@ export function ComposePostModal({ visible, onClose, onPublished, toast }: Props
     // 목표% 가 비어있지 않은데 숫자가 아니면 막는다 (조용히 기본값 되는 것 방지).
     const badTarget = selected.find((c) => c.targetText.trim() !== '' && !Number.isFinite(Number(c.targetText.trim())))
     if (badTarget) {
-      toast?.show(`목표%가 숫자가 아니에요 — ${badTarget.name}`, 'error')
+      toast?.show(`목표%가 숫자가 아닙니다 — ${badTarget.name}`, 'error')
       return
     }
     const calls: CallInput[] = selected.map((c) => {
@@ -141,7 +141,7 @@ export function ComposePostModal({ visible, onClose, onPublished, toast }: Props
             <TextInput
               value={body}
               onChangeText={handleBodyChange}
-              placeholder={'시황과 종목 의견을 자유롭게 적어주세요.\n종목명을 적거나 $005930, $AAPL 형태로 쓰면 자동 인식돼요.'}
+              placeholder={'시황과 종목 의견을 자유롭게 적어주세요.\n종목명을 적거나 $005930, $AAPL 형태로 쓰면 자동 인식됩니다.'}
               placeholderTextColor={palette.inkFaint}
               multiline
               style={[inputStyle(palette), { minHeight: 140, textAlignVertical: 'top' }]}

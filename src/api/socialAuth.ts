@@ -18,7 +18,7 @@ let googleModule: GoogleSigninModule | null = null
 function loadGoogleModule(): GoogleSigninModule {
   if (googleModule) return googleModule
   if (Platform.OS === 'web') {
-    throw new Error('Google 로그인은 웹에서 아직 지원하지 않아.')
+    throw new Error('Google 로그인은 웹에서 아직 지원하지 않습니다.')
   }
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   googleModule = require('@react-native-google-signin/google-signin') as GoogleSigninModule
@@ -31,7 +31,7 @@ function ensureConfigured() {
   // webClientId 가 backend(서버) idToken 검증의 audience 가 되므로 반드시 필요.
   // iosClientId 는 네이티브 SDK 가 자체적으로 Info.plist 에 등록된 reversed scheme 으로 처리.
   if (!extra.googleClientIdWeb) {
-    throw new Error('Google webClientId 가 app.json extra.googleClientIdWeb 에 설정돼 있지 않아.')
+    throw new Error('Google webClientId 가 app.json extra.googleClientIdWeb 에 설정돼 있지 않습니다.')
   }
   const { GoogleSignin } = loadGoogleModule()
   GoogleSignin.configure({
@@ -70,14 +70,14 @@ export function useGoogleSignIn(onAuth: (u: AuthUser) => void) {
       // v13+ 에서는 { type: 'success', data: { idToken, ... } } 구조
       const data = (result as { data?: { idToken?: string } }).data ?? (result as unknown as { idToken?: string })
       const idToken = data?.idToken
-      if (!idToken) throw new Error('Google id_token 을 받지 못했어.')
+      if (!idToken) throw new Error('Google id_token 을 받지 못했습니다.')
       const user = await apiGoogleOAuth(idToken)
       onAuth(user)
     } catch (e) {
       const code = (e as { code?: string }).code
-      if (code === statusCodes.SIGN_IN_CANCELLED) throw new Error('로그인을 취소했어.')
-      if (code === statusCodes.IN_PROGRESS) throw new Error('이미 로그인 진행 중이야.')
-      if (code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) throw new Error('Google Play 서비스를 사용할 수 없어.')
+      if (code === statusCodes.SIGN_IN_CANCELLED) throw new Error('로그인을 취소했습니다.')
+      if (code === statusCodes.IN_PROGRESS) throw new Error('이미 로그인 진행 중입니다.')
+      if (code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) throw new Error('Google Play 서비스를 사용할 수 없습니다.')
       throw e
     }
   }

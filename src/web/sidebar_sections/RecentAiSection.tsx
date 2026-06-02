@@ -25,7 +25,7 @@ export function RecentAiSection({ aiRecommendation, onOpenDetail, onGotoAi, pale
       palette={palette}
     >
       {topAi.length === 0 ? (
-        <EmptyRow text="최근 AI 추천이 없어" hint="AI 탭에서 오늘의 플레이북 확인" palette={palette} />
+        <EmptyRow text="최근 AI 추천이 없습니다" hint="AI 탭에서 오늘의 플레이북 확인" palette={palette} />
       ) : (
         topAi.map((log) => (
           <Pressable

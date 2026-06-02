@@ -231,7 +231,7 @@ export function StockDetailModal({
               <AiContextRow latestAiLog={context.latestAiLog} />
 
               <Text style={styles.signalModalDisclaimer}>
-                현재가는 KR 시장 기준 라이브 시세이며, 휴장 시에는 마지막 종가가 표시돼.
+                현재가는 KR 시장 기준 라이브 시세이며, 휴장 시에는 마지막 종가가 표시됩니다.
               </Text>
             </ScrollView>
           </Pressable>

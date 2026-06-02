@@ -5,6 +5,7 @@ import type {
   HealthResponse,
   MarketSectionsData,
   MarketSummaryData,
+  MoverReason,
   PortfolioResponse,
   StockSearchResult,
   TopMoversResponse,
@@ -145,6 +146,18 @@ export async function fetchTopMovers(limit = 10): Promise<TopMoversResponse | nu
     return json.data
   } catch {
     return null
+  }
+}
+
+/** 급등/급락 사유 — "왜 올랐나/내렸나". 실패 시 빈 배열. */
+export async function fetchMoverReasons(): Promise<MoverReason[]> {
+  try {
+    const response = await authedFetch(`${API_BASE_URL}/api/v1/market/top-movers/reasons`)
+    if (!response.ok) return []
+    const json = (await response.json()) as ApiResponse<MoverReason[] | null>
+    return json.data ?? []
+  } catch {
+    return []
   }
 }
 

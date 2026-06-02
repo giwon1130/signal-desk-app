@@ -46,7 +46,7 @@ export function PicksRow({
       {logs.length === 0 ? (
         <View style={{ paddingVertical: 18, alignItems: 'center', gap: 4 }}>
           <Sparkles size={18} color={palette.inkFaint} />
-          <Text style={{ color: palette.inkMuted, fontSize: 12 }}>오늘 AI 추천이 아직 없어</Text>
+          <Text style={{ color: palette.inkMuted, fontSize: 12 }}>오늘 AI 추천이 아직 없습니다</Text>
         </View>
       ) : (
         <View style={[{ gap: 10 }, webGrid('repeat(auto-fill, minmax(220px, 1fr))')]}>

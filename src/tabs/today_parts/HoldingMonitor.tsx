@@ -31,7 +31,7 @@ export function HoldingMonitor({ monitorTargets, marketClosedToday }: Props) {
         <Text style={styles.metaText}>액션 가능한 {monitorTargets.length}건</Text>
       </View>
       {monitorTargets.length === 0 ? (
-        <Text style={styles.metaText}>지금 액션이 필요한 종목은 없어.</Text>
+        <Text style={styles.metaText}>지금 액션이 필요한 종목은 없습니다.</Text>
       ) : monitorTargets.map((p) => {
         const isProfit = p.profitRate >= 0
         const Icon = isProfit ? TrendingUp : TrendingDown

@@ -79,7 +79,7 @@ export function LeagueDetailModal({ visible, leagueId, myUserId, marketSessions,
     setLeaving(true)
     try {
       await leaveLeague(leagueId)
-      toast?.show('리그에서 나갔어요', 'info')
+      toast?.show('리그에서 나갔습니다', 'info')
       onLeft?.()
       onClose()
     } catch (e) {
@@ -198,7 +198,7 @@ export function LeagueDetailModal({ visible, leagueId, myUserId, marketSessions,
             })}
             {leaderboard.length === 0 ? (
               <Text style={{ color: palette.inkFaint, fontSize: 11, textAlign: 'center', paddingVertical: 14 }}>
-                {loading ? '불러오는 중…' : '아직 참가자가 없어요'}
+                {loading ? '불러오는 중…' : '아직 참가자가 없습니다'}
               </Text>
             ) : null}
           </View>

@@ -20,7 +20,7 @@ export function PortfolioWidget({
         icon={<Activity size={13} color={palette.blue} strokeWidth={2.5} />}
       >
         <View style={{ paddingVertical: 18, alignItems: 'center', gap: 4 }}>
-          <Text style={{ color: palette.inkMuted, fontSize: 12 }}>보유 중인 종목이 없어</Text>
+          <Text style={{ color: palette.inkMuted, fontSize: 12 }}>보유 중인 종목이 없습니다</Text>
           <Text style={{ color: palette.inkFaint, fontSize: 11 }}>종목 상세에서 매수가 · 수량 입력해 등록</Text>
         </View>
       </Widget>

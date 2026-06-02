@@ -30,11 +30,11 @@ export function PicksCard({ picks, marketClosedToday }: Props) {
       </View>
       {marketClosedToday ? (
         <Text style={styles.metaText}>
-          지금은 휴장이라 단타 진입은 의미 없어. 다음 거래일 후보 미리 봐두는 용도로만 활용해.
+          지금은 휴장이라 단타 진입은 의미 없습니다. 다음 거래일 후보 미리 봐 두는 용도로만 활용합니다.
         </Text>
       ) : null}
       {picks.length === 0 ? (
-        <Text style={styles.metaText}>오늘은 추천 후보가 없어. 무리해서 진입하지 말 것.</Text>
+        <Text style={styles.metaText}>오늘은 추천 후보가 없습니다. 무리해서 진입하지 마세요.</Text>
       ) : picks.map((p, i) => (
         <View key={`${p.ticker}-${i}`} style={styles.todayPickRow}>
           <View style={styles.todayPickTopLine}>

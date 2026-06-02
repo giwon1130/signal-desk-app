@@ -102,7 +102,7 @@ export function CompositeRiskCard({ risk }: Props) {
 
             <ScrollView style={{ maxHeight: 440 }}>
               <View style={styles.signalModalSection}>
-                <Text style={styles.signalModalSectionTitle}>이게 뭐야?</Text>
+                <Text style={styles.signalModalSectionTitle}>이게 무엇입니까?</Text>
                 <Text style={styles.signalModalBody}>{risk.description}</Text>
               </View>
 
@@ -122,7 +122,7 @@ export function CompositeRiskCard({ risk }: Props) {
               </View>
 
               <Text style={styles.signalModalDisclaimer}>
-                합성 위험도는 보조 신호일 뿐이야. 단독 매매 근거로 쓰지 말고 가격·수급·뉴스랑 같이 봐.
+                합성 위험도는 보조 신호일 뿐입니다. 단독 매매 근거로 쓰지 말고 가격·수급·뉴스랑 같이 봐 주세요.
                 {'\n'}기준 시각 {asOf}
               </Text>
             </ScrollView>

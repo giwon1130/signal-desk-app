@@ -180,7 +180,7 @@ function Step2Market({ palette, onPick }: { palette: any; onPick: (m: MarketPref
         어느 시장 보세요?
       </Text>
       <Text style={{ color: palette.inkMuted, fontSize: 13, marginBottom: 24, lineHeight: 19 }}>
-        선택한 시장에 맞춰 메인 화면 콘텐츠가 달라져요. 설정에서 언제든 변경 가능.
+        선택한 시장에 맞춰 메인 화면 콘텐츠가 달라집니다. 설정에서 언제든 변경 가능.
       </Text>
       <View style={{ gap: 10 }}>
         {options.map((o) => (
@@ -216,8 +216,8 @@ function Step3Notifications({ palette, busy, onAllow, onSkip }: { palette: any; 
         </View>
         <Text style={{ color: palette.ink, fontSize: 22, fontWeight: '900' }}>알림 받을래요?</Text>
         <Text style={{ color: palette.inkMuted, fontSize: 13, lineHeight: 19 }}>
-          관심 종목 ±5% 급등락, 모닝/이브닝 브리프, 보유 종목 공시 같은 핵심 알림만 골라 보내요.
-          나중에 알림 설정에서 켜고 끌 수 있어요.
+          관심 종목 ±5% 급등락, 모닝/이브닝 브리프, 보유 종목 공시 같은 핵심 알림만 골라 보냅니다.
+          나중에 알림 설정에서 켜고 끌 수 있습니다.
         </Text>
         <View style={{ marginTop: 6, gap: 6 }}>
           {['📈 관심종목 급등락', '🌅 모닝 브리프 (08:30 KST)', '⚠️ 합성 위험도 경계', '📢 보유 종목 공시 즉시'].map((it) => (
@@ -252,7 +252,7 @@ function Step4Seeds({ palette, pref, picked, busy, onToggle, onConfirm, onSkip }
           관심 종목 시드
         </Text>
         <Text style={{ color: palette.inkMuted, fontSize: 13, marginBottom: 16, lineHeight: 19 }}>
-          시총 상위 종목들이에요. 탭으로 토글하고, 원하지 않으면 건너뛰세요.
+          시총 상위 종목들입니다. 탭으로 토글하고, 원하지 않으면 건너뛰세요.
         </Text>
         <View style={{ gap: 8 }}>
           {seeds.map((s) => {

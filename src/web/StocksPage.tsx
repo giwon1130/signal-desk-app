@@ -174,7 +174,7 @@ export function StocksPage(props: Props) {
     if (bulkDeleting || watchlist.length < 2) return
     Alert.alert(
       '관심종목 전체 해제',
-      `${watchlist.length}개 종목을 전부 해제할까? 되돌릴 수 없어.`,
+      `${watchlist.length}개 종목을 전부 해제할까요? 되돌릴 수 없습니다.`,
       [
         { text: '취소', style: 'cancel' },
         { text: '전체 해제', style: 'destructive', onPress: () => onDeleteAllFavorites() },

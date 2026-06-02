@@ -72,9 +72,9 @@ export function parseJoinCode(url: string | null | undefined): string | null {
 /** 참가 실패 사유를 사용자 문구로. 백엔드 LeagueService.join 메시지 기준. */
 export function joinErrorMessage(raw: string): string {
   const s = (raw || '').toLowerCase()
-  if (s.includes('full')) return '인원이 가득 찼어요 (최대 10명)'
-  if (s.includes('finished')) return '이미 종료된 리그예요'
-  if (s.includes('not found')) return '코드를 찾을 수 없어요'
+  if (s.includes('full')) return '인원이 가득 찼습니다 (최대 10명)'
+  if (s.includes('finished')) return '이미 종료된 리그입니다'
+  if (s.includes('not found')) return '코드를 찾을 수 없습니다'
   return apiErrorMessage(raw, '참가 실패 — 코드 확인')
 }
 
@@ -86,7 +86,7 @@ export function tradeErrorMessage(raw: string): string {
   if (s.includes('is closed')) return '시장 거래 시간 아님'
   if (s.includes('price not available')) return '시세 가져오기 실패'
   if (s.includes('not running')) return '아직 시작 안 됐거나 종료됨'
-  if (s.includes('not a participant')) return '참가자가 아니에요'
-  if (s.includes('marketscope') || s.includes('market not allowed')) return '이 리그에서 거래할 수 없는 시장이에요'
+  if (s.includes('not a participant')) return '참가자가 아닙니다'
+  if (s.includes('marketscope') || s.includes('market not allowed')) return '이 리그에서 거래할 수 없는 시장입니다'
   return apiErrorMessage(raw, '체결 실패')
 }

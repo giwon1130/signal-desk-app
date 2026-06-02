@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
-import { API_BASE_URL, fetchDailyFortune, fetchTopMovers, loadAllData } from '../api'
+import { API_BASE_URL, fetchDailyFortune, fetchMoverReasons, fetchTopMovers, loadAllData } from '../api'
 import { fetchAiPicks, fetchHiddenSignals } from '../api/ai'
 import { fetchRecentDisclosures } from '../api/disclosures'
 import { fetchUpcomingEvents } from '../api/events'
 import { fetchMarketInsight } from '../api/insights'
-import { fetchLatestMediaSummary } from '../api/media'
+import { fetchLatestMediaSummary, fetchRecentMediaSummaries } from '../api/media'
 import { fetchAlertHistory } from '../api/pushDevice'
 import { fetchSystemStatus, type SystemStatus } from '../api/system'
 import { formatSyncStamp } from '../utils'
@@ -22,6 +22,7 @@ import type {
   MarketSectionsData,
   MarketSummaryData,
   MediaSummaryItem,
+  MoverReason,
   PortfolioSummary,
   TopMoversResponse,
   WatchItem,
@@ -36,7 +37,9 @@ export function useMarketSnapshot(authToken: string | null, enabled: boolean) {
   const [alertHistory, setAlertHistory] = useState<AlertHistoryItem[]>([])
   const [fortune, setFortune] = useState<DailyFortune | null>(null)
   const [topMovers, setTopMovers] = useState<TopMoversResponse | null>(null)
+  const [moverReasons, setMoverReasons] = useState<MoverReason[]>([])
   const [mediaSummary, setMediaSummary] = useState<MediaSummaryItem | null>(null)
+  const [mediaSummaries, setMediaSummaries] = useState<MediaSummaryItem[]>([])
   const [marketInsight, setMarketInsight] = useState<MarketInsightData | null>(null)
   const [upcomingEvents, setUpcomingEvents] = useState<MarketEvent[]>([])
   const [disclosures, setDisclosures] = useState<DisclosureItem[]>([])
@@ -68,13 +71,15 @@ export function useMarketSnapshot(authToken: string | null, enabled: boolean) {
       void fetchAiPicks().then(setAiPicks)
       void fetchDailyFortune().then(setFortune)
       void fetchTopMovers(10).then(setTopMovers)
+      void fetchMoverReasons().then(setMoverReasons)
       void fetchLatestMediaSummary().then(setMediaSummary)
+      void fetchRecentMediaSummaries(6).then(setMediaSummaries)
       void fetchMarketInsight().then(setMarketInsight)
       void fetchUpcomingEvents(14).then(setUpcomingEvents)
       void fetchSystemStatus().then(setSystemStatus)
     } catch {
       setApiHealth(null)
-      setError(`서버에 연결할 수 없어요.\n${API_BASE_URL}`)
+      setError(`서버에 연결할 수 없습니다.\n${API_BASE_URL}`)
     }
   }, [authToken])
 
@@ -99,7 +104,9 @@ export function useMarketSnapshot(authToken: string | null, enabled: boolean) {
     portfolio,
     fortune,
     topMovers,
+    moverReasons,
     mediaSummary,
+    mediaSummaries,
     marketInsight,
     upcomingEvents,
     disclosures,

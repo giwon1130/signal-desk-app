@@ -87,13 +87,13 @@ export function DataTable({
       {rows.length === 0 ? (
         <View style={{ paddingVertical: 40, alignItems: 'center', gap: 4 }}>
           <Text style={{ color: palette.inkMuted, fontSize: 13, fontWeight: '700' }}>
-            {mode === 'watch'    ? '아직 관심종목이 없어' :
-             mode === 'holdings' ? '아직 보유 중인 종목이 없어' :
+            {mode === 'watch'    ? '아직 관심종목이 없습니다' :
+             mode === 'holdings' ? '아직 보유 중인 종목이 없습니다' :
              stockSearchLoading  ? '검색 중…' : '검색 결과 없음'}
           </Text>
           {mode === 'watch' ? (
             <Text style={{ color: palette.inkFaint, fontSize: 11 }}>
-              탐색 탭에서 ☆ 눌러 담아봐
+              탐색 탭에서 ☆ 눌러 담아 보세요
             </Text>
           ) : mode === 'holdings' ? (
             <Text style={{ color: palette.inkFaint, fontSize: 11 }}>
@@ -101,7 +101,7 @@ export function DataTable({
             </Text>
           ) : !stockSearchLoading && stockSearch ? (
             <Text style={{ color: palette.inkFaint, fontSize: 11 }}>
-              다른 키워드로 시도해봐
+              다른 키워드로 시도해 보세요
             </Text>
           ) : !stockSearchLoading ? (
             <Text style={{ color: palette.inkFaint, fontSize: 11 }}>

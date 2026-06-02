@@ -2,7 +2,6 @@ import { Platform, Pressable, RefreshControl, ScrollView, Text, View } from 'rea
 import {
   Bell,
   Clock,
-  Newspaper,
 } from 'lucide-react-native'
 import { CollapsibleCard } from '../components/CollapsibleCard'
 import { useStyles } from '../styles'
@@ -15,6 +14,8 @@ import type {
   MarketEvent,
   MarketSummaryData,
   MediaSummaryItem,
+  MoverReason,
+  NewsSentiment,
   TopMoversResponse,
 } from '../types'
 import type { MarketPreference } from '../api/alertPreferences'
@@ -23,15 +24,12 @@ import {
   getSessionPalette,
 } from '../utils'
 import { BriefingCard } from './today_parts/BriefingCard'
+import { BriefHero } from './today_parts/BriefHero'
+import { NewsHero } from './today_parts/NewsHero'
 import { DisclosureCard } from './today_parts/DisclosureCard'
 import { EventsCard } from './today_parts/EventsCard'
-import { FortuneCard } from './today_parts/FortuneCard'
 import { HoldingMonitor } from './today_parts/HoldingMonitor'
-import { MediaSummaryCard } from './today_parts/MediaSummaryCard'
-import { SentimentCard } from './today_parts/SentimentCard'
-import { toneColor } from './today_parts/helpers'
-import { CompositeRiskCard } from './market_parts/CompositeRiskCard'
-import { MarketSummaryMetrics } from './market_parts/MarketSummaryMetrics'
+import { MarketMoodCard } from './market_parts/MarketMoodCard'
 import { TopMoversMarketCard } from './market_parts/TopMoversMarketCard'
 import { WatchAlertList } from './market_parts/WatchAlertList'
 
@@ -41,10 +39,12 @@ type Props = {
   alertHistory: AlertHistoryItem[]
   fortune: DailyFortune | null
   mediaSummary: MediaSummaryItem | null
+  mediaSummaries: MediaSummaryItem[]
   upcomingEvents: MarketEvent[]
   disclosures: DisclosureItem[]
   // v2: Market 탭 흡수 — 합성위험도/시장 무드 지표/top movers/watch alerts.
   topMovers: TopMoversResponse | null
+  moverReasons: MoverReason[]
   marketPreference: MarketPreference
   onOpenDetail: (market: string, ticker: string, name?: string) => void
   refreshing: boolean
@@ -57,9 +57,11 @@ export function TodayTab({
   alertHistory,
   fortune,
   mediaSummary,
+  mediaSummaries,
   upcomingEvents,
   disclosures,
   topMovers,
+  moverReasons,
   marketPreference,
   onOpenDetail,
   refreshing,
@@ -136,12 +138,11 @@ export function TodayTab({
         </View>
       ) : null}
 
-      {/* ── 브리프 (Hero) — 세션/거래일 상태 아래. 시황(브리프) + 개인화(브리핑) 통합 ── */}
-      {mediaSummary ? (
-        <MediaSummaryCard
-          item={mediaSummary}
+      {/* ── 브리프 Hero — 세션/거래일 상태 아래. 최근 뉴스(모닝/마감/종합) 회전 + 개인화(브리핑) 통합 ── */}
+      {(mediaSummaries.length > 0 || mediaSummary) ? (
+        <BriefHero
+          items={mediaSummaries.length > 0 ? mediaSummaries : (mediaSummary ? [mediaSummary] : [])}
           briefing={summary?.briefing ?? null}
-          defaultCollapsed={false}
           onTickerPress={(t) => {
             const isKr = /^\d{6}$/.test(t)
             onOpenDetail(isKr ? 'KR' : 'US', t)
@@ -151,9 +152,13 @@ export function TodayTab({
         <BriefingCard briefing={summary.briefing} />
       ) : null}
 
-      {/* ── 시장 무드 (v2): 합성 위험도 + 요약 지표 ── */}
-      <CompositeRiskCard risk={summary?.compositeRisk ?? null} />
-      {filteredMetrics.length > 0 ? <MarketSummaryMetrics metrics={filteredMetrics} /> : null}
+      {/* ── 오늘의 뉴스 — 헤드라인 회전(KR/US 번갈아). 브리프 바로 아래로 상단 배치 ── */}
+      {(krSentiment || usSentiment) ? (
+        <NewsHero sentiments={[krSentiment, usSentiment].filter((s): s is NewsSentiment => !!s)} />
+      ) : null}
+
+      {/* ── 오늘 시장 분위기 — 위험도 + 요약 지표 통합, 쉬운 용어 ── */}
+      <MarketMoodCard risk={summary?.compositeRisk ?? null} metrics={filteredMetrics} />
 
       {/* ── 보유 종목 모니터 (보유 있는 사용자 최우선) ── */}
       {positions.length > 0 ? (
@@ -167,10 +172,10 @@ export function TodayTab({
 
       {/* ── 시장 발견 (v2): 급등락 — 시장별 1카드(급등|급락 좌우), 프로필별 필터 ── */}
       {showKr && topMovers ? (
-        <TopMoversMarketCard topMovers={topMovers} market="KR" onOpenDetail={onOpenDetail} />
+        <TopMoversMarketCard topMovers={topMovers} moverReasons={moverReasons} market="KR" onOpenDetail={onOpenDetail} />
       ) : null}
       {showUs && topMovers?.us ? (
-        <TopMoversMarketCard topMovers={topMovers} market="US" onOpenDetail={onOpenDetail} />
+        <TopMoversMarketCard topMovers={topMovers} moverReasons={moverReasons} market="US" onOpenDetail={onOpenDetail} />
       ) : null}
 
       {/* ── 관심종목 알림 (Market 탭에서 흡수) ── */}
@@ -180,40 +185,10 @@ export function TodayTab({
       <EventsCard events={upcomingEvents} />
 
       {/* 개인화 브리핑(보유/액션)은 브리프 카드에 통합 — 별도 카드 제거 */}
+      {/* 뉴스 sentiment 는 상단 NewsHero(회전 헤드라인)로 이동 — 하단 카드 제거 */}
 
-      {/* ── 뉴스 sentiment ── */}
-      {(krSentiment || usSentiment) ? (
-        <CollapsibleCard
-          defaultCollapsed
-          title={
-            <View style={styles.cardTitleRow}>
-              <Newspaper size={14} color="#0d9488" strokeWidth={2.5} />
-              <Text style={styles.cardTitle}>뉴스 sentiment</Text>
-            </View>
-          }
-          preview={
-            <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
-              {krSentiment ? (
-                <Text style={[styles.todaySentimentLabel, { color: toneColor(krSentiment.label) }]}>
-                  🇰🇷 {krSentiment.label} {krSentiment.score}
-                </Text>
-              ) : null}
-              {usSentiment ? (
-                <Text style={[styles.todaySentimentLabel, { color: toneColor(usSentiment.label) }]}>
-                  🇺🇸 {usSentiment.label} {usSentiment.score}
-                </Text>
-              ) : null}
-            </View>
-          }
-        >
-          <Text style={styles.metaText}>오늘 헤드라인 기반</Text>
-          {krSentiment ? <SentimentCard sentiment={krSentiment} /> : null}
-          {usSentiment ? <SentimentCard sentiment={usSentiment} /> : null}
-        </CollapsibleCard>
-      ) : null}
-
-      {/* ── 최근 받은 알림 (회고) ── */}
-      {alertHistory.length > 0 ? (
+      {/* ── 최근 받은 알림 (회고) — 모바일은 헤더 종 아이콘으로 대체, 웹에서만 카드 노출 ── */}
+      {isWeb && alertHistory.length > 0 ? (
         <CollapsibleCard
           defaultCollapsed
           title={
@@ -248,8 +223,7 @@ export function TodayTab({
         </CollapsibleCard>
       ) : null}
 
-      {/* ── 오늘의 투자 운세 (재미용 — 맨 아래) ── */}
-      {fortune ? <FortuneCard fortune={fortune} /> : null}
+      {/* 투자 운세는 탭에서 제외 — 설정/별도 진입 없이 노출 안 함 */}
     </ScrollView>
   )
 }

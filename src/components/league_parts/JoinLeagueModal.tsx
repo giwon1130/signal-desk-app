@@ -67,7 +67,7 @@ export function JoinLeagueModal({ visible, code, onClose, onJoined, toast }: Pro
 
         <View style={{ padding: 18, gap: 20 }}>
           <Text style={{ color: palette.inkMuted, fontSize: 13, lineHeight: 19 }}>
-            들어가기 전에 게임에서 쓸 이름과 아바타를 정해줘.
+            들어가기 전에 게임에서 쓸 이름과 아바타를 정해 주세요.
           </Text>
 
           {/* 참가 코드 */}

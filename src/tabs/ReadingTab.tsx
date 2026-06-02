@@ -123,7 +123,7 @@ export function ReadingTab({ authToken, refreshing, refreshTick, subscribeCode, 
           <Text style={{ color: palette.ink, fontSize: 18, fontWeight: '900' }}>리딩</Text>
         </View>
         <Text style={{ color: palette.inkMuted, fontSize: 12, lineHeight: 17 }}>
-          종목·시황을 정리해 공유하면, 글 속 종목이 그 시점 가격으로 박제돼요. 오르면 "거봐 내가 말했지?" 알림이 갑니다.
+          종목·시황을 정리해 공유하면, 글 속 종목이 그 시점 가격으로 박제됩니다. 오르면 "거봐 내가 말했지?" 알림이 갑니다.
         </Text>
       </View>
 
@@ -131,10 +131,10 @@ export function ReadingTab({ authToken, refreshing, refreshTick, subscribeCode, 
       {leader ? (
         <View style={[styles.card, { gap: 10 }]}>
           {leader.status === 'PENDING' ? (
-            <Text style={{ color: palette.orange, fontSize: 13, fontWeight: '700' }}>⏳ 리더 승인 대기 중이에요.</Text>
+            <Text style={{ color: palette.orange, fontSize: 13, fontWeight: '700' }}>⏳ 리더 승인 대기 중입니다.</Text>
           ) : leader.status === 'SUSPENDED' ? (
             <View style={{ gap: 4 }}>
-              <Text style={{ color: palette.down, fontSize: 13, fontWeight: '800' }}>🚫 리더 권한이 정지되었어요.</Text>
+              <Text style={{ color: palette.down, fontSize: 13, fontWeight: '800' }}>🚫 리더 권한이 정지되었습니다.</Text>
               <Text style={{ color: palette.inkMuted, fontSize: 12 }}>새 글 작성이 제한됩니다. 문의가 필요하면 운영자에게 연락해주세요.</Text>
             </View>
           ) : (
@@ -252,7 +252,7 @@ export function ReadingTab({ authToken, refreshing, refreshTick, subscribeCode, 
           </Pressable>
         </View>
         <Text style={{ color: palette.inkFaint, fontSize: 11 }}>
-          친구가 보낸 링크를 누르면 코드가 자동으로 채워져요.
+          친구가 보낸 링크를 누르면 코드가 자동으로 채워집니다.
         </Text>
 
         {/* 구독 중인 리더 */}
@@ -301,7 +301,7 @@ export function ReadingTab({ authToken, refreshing, refreshTick, subscribeCode, 
         ) : feed.length === 0 ? (
           <View style={{ paddingVertical: 26, alignItems: 'center', gap: 6 }}>
             <Megaphone size={28} color={palette.inkFaint} strokeWidth={1.8} />
-            <Text style={{ color: palette.inkMuted, fontSize: 12, fontWeight: '700' }}>아직 리딩이 없어요</Text>
+            <Text style={{ color: palette.inkMuted, fontSize: 12, fontWeight: '700' }}>아직 리딩이 없습니다</Text>
             <Text style={{ color: palette.inkFaint, fontSize: 11, textAlign: 'center', lineHeight: 16 }}>
               {isApproved ? '첫 리딩을 써보거나, ' : ''}친구 리더의 코드로 구독해보세요.
             </Text>

@@ -30,7 +30,7 @@ export function HiddenSignals({ signals, palette, onOpenDetail }: Props) {
             주목할 시그널 없음
           </Text>
           <Text style={{ color: palette.inkFaint, fontSize: 11, textAlign: 'center', paddingHorizontal: 20 }}>
-            보유·관심 종목에 공시·수급·급등락이 잡히면 여기 떠.{'\n'}종목 상세에서 관심 등록부터 시작해봐.
+            보유·관심 종목에 공시·수급·급등락이 잡히면 여기 떠요.{'\n'}종목 상세에서 관심 등록부터 시작해 보세요.
           </Text>
         </View>
       ) : (

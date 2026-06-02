@@ -66,7 +66,7 @@ export function LeagueTab({ authToken, refreshing, onOpenLeague, onCreateLeague,
           <Text style={{ color: palette.ink, fontSize: 18, fontWeight: '900' }}>친구 모의투자</Text>
         </View>
         <Text style={{ color: palette.inkMuted, fontSize: 12, lineHeight: 17 }}>
-          자본금·기간 정해놓고 친구들과 수익률 1등 가리기. 매수가는 실시간 시세로 잠겨요.
+          자본금·기간 정해놓고 친구들과 수익률 1등 가리기. 매수가는 실시간 시세로 잠깁니다.
         </Text>
       </View>
 
@@ -120,7 +120,7 @@ export function LeagueTab({ authToken, refreshing, onOpenLeague, onCreateLeague,
           </Pressable>
         </View>
         <Text style={{ color: palette.inkFaint, fontSize: 11 }}>
-          친구가 보낸 링크를 누르면 코드 없이 바로 참가할 수 있어요.
+          친구가 보낸 링크를 누르면 코드 없이 바로 참가할 수 있습니다.
         </Text>
       </View>
 
@@ -149,7 +149,7 @@ export function LeagueTab({ authToken, refreshing, onOpenLeague, onCreateLeague,
           <View style={{ paddingVertical: 26, alignItems: 'center', gap: 6 }}>
             <Trophy size={28} color={palette.inkFaint} strokeWidth={1.8} />
             <Text style={{ color: palette.inkMuted, fontSize: 12, fontWeight: '700' }}>
-              참여 중인 리그가 없어요
+              참여 중인 리그가 없습니다
             </Text>
             <Text style={{ color: palette.inkFaint, fontSize: 11, textAlign: 'center', lineHeight: 16 }}>
               새 리그를 만들거나, 친구가 준 코드로 참가해보세요.

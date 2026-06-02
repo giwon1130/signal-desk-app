@@ -166,6 +166,16 @@ export type TopMoversBlock = {
   losers: TopMover[]
 }
 
+/** 급등/급락 사유 — "왜 올랐나/내렸나" (뉴스 기반 한 줄). */
+export type MoverReason = {
+  market: string
+  ticker: string
+  name: string
+  direction: 'UP' | 'DOWN' | string
+  changeRate: number
+  reason: string
+}
+
 export type TopMoversResponse = {
   generatedAt: string
   kospi: TopMoversBlock

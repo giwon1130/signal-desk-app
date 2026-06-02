@@ -181,7 +181,7 @@ export async function scheduleKrOpenReminder() {
     baseIdentifier: KR_OPEN_ID,
     hour, minute,
     title: '🇰🇷 한국장 곧 시작',
-    body:  `오늘 한국장이 ${minutesBefore}분 뒤 09:00에 열려. 시나리오 한 번 점검!`,
+    body:  `오늘 한국장이 ${minutesBefore}분 뒤 09:00에 열립니다. 시나리오 한 번 점검해 보세요!`,
     channelId: 'market-open',
   })
 }
@@ -203,7 +203,7 @@ export async function scheduleUsOpenReminder() {
     baseIdentifier: US_OPEN_ID,
     hour, minute,
     title: '🇺🇸 미국장 곧 시작',
-    body:  `미국장이 ${minutesBefore}분 뒤(KST ${openLabel} 기준)에 열려. 단타 픽 확인해봐!`,
+    body:  `미국장이 ${minutesBefore}분 뒤(KST ${openLabel} 기준)에 열립니다. 단타 픽 확인해 보세요!`,
     channelId: 'market-open',
   })
 }

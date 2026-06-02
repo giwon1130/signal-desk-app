@@ -135,7 +135,7 @@ export function PortfolioSection({ portfolio, onOpenDetail, onGotoStocks, palett
           ) : null}
         </>
       ) : (
-        <EmptyRow text="보유 중인 종목이 없어" hint="종목 상세에서 매수가 · 수량 입력해 등록" palette={palette} />
+        <EmptyRow text="보유 중인 종목이 없습니다" hint="종목 상세에서 매수가 · 수량 입력해 등록" palette={palette} />
       )}
     </Section>
   )

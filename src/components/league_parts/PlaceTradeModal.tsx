@@ -224,7 +224,7 @@ export function PlaceTradeModal({
                 ListEmptyComponent={
                   searchError ? (
                     <Text style={{ color: palette.down, fontSize: 12, textAlign: 'center', paddingVertical: 20 }}>
-                      검색 실패 — 다시 시도해줘
+                      검색 실패 — 다시 시도해 주세요
                     </Text>
                   ) : query.trim() && !searching ? (
                     <Text style={{ color: palette.inkFaint, fontSize: 12, textAlign: 'center', paddingVertical: 20 }}>
@@ -239,7 +239,7 @@ export function PlaceTradeModal({
             <View style={{ flex: 1, paddingHorizontal: 16 }}>
               {sellOptions.length === 0 ? (
                 <Text style={{ color: palette.inkMuted, fontSize: 12, textAlign: 'center', paddingTop: 40 }}>
-                  매도할 보유 종목이 없어요
+                  매도할 보유 종목이 없습니다
                 </Text>
               ) : (
                 <FlatList
@@ -311,8 +311,8 @@ export function PlaceTradeModal({
                 </Text>
                 <Text style={{ color: palette.inkMuted, fontSize: 11, lineHeight: 16 }}>
                   {hoursBlocked
-                    ? '이 리그는 장중에만 거래돼요. 장이 열린 뒤 다시 시도해줘.'
-                    : '지금은 장이 끝나서 마지막 시세로 체결돼요. 정상 거래는 장이 열린 뒤에 하는 걸 추천해 🙂'}
+                    ? '이 리그는 장중에만 거래됩니다. 장이 열린 뒤 다시 시도해 주세요.'
+                    : '지금은 장이 끝나서 마지막 시세로 체결됩니다. 정상 거래는 장이 열린 뒤에 하는 걸 추천합니다 🙂'}
                 </Text>
               </View>
             ) : null}
@@ -383,7 +383,7 @@ export function PlaceTradeModal({
               {/* 경고들 */}
               {overQty ? (
                 <Text style={{ color: palette.down, fontSize: 12, fontWeight: '700' }}>
-                  보유 수량({selected.heldQty}주)보다 많이 팔 수 없어요
+                  보유 수량({selected.heldQty}주)보다 많이 팔 수 없습니다
                 </Text>
               ) : null}
               {insufficientCash ? (

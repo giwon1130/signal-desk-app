@@ -4,11 +4,12 @@ import { Flame, Snowflake } from 'lucide-react-native'
 import { CollapsibleCard } from '../../components/CollapsibleCard'
 import { useStyles } from '../../styles'
 import { useTheme } from '../../theme'
-import type { TopMover, TopMoversResponse } from '../../types'
+import type { MoverReason, TopMover, TopMoversResponse } from '../../types'
 import { formatSignedRate } from '../../utils'
 
 type Props = {
   topMovers: TopMoversResponse
+  moverReasons?: MoverReason[]
   market: 'KR' | 'US'
   onOpenDetail: (market: string, ticker: string, name?: string) => void
 }
@@ -16,10 +17,14 @@ type Props = {
 const TOP_N = 5
 
 /** 시장별 급등락 카드 — 급등(좌)·급락(우) 한 카드에. */
-export function TopMoversMarketCard({ topMovers, market, onOpenDetail }: Props) {
+export function TopMoversMarketCard({ topMovers, moverReasons, market, onOpenDetail }: Props) {
   const styles = useStyles()
   const { palette } = useTheme()
   const isKr = market === 'KR'
+
+  // 급등락 사유 — ticker 기준 매핑 ("왜 올랐나/내렸나").
+  const reasonByTicker: Record<string, string> = {}
+  for (const r of moverReasons ?? []) reasonByTicker[r.ticker] = r.reason
 
   const gainers: TopMover[] = isKr
     ? [...topMovers.kospi.gainers, ...topMovers.kosdaq.gainers].sort((a, b) => b.changeRate - a.changeRate).slice(0, TOP_N)
@@ -51,9 +56,9 @@ export function TopMoversMarketCard({ topMovers, market, onOpenDetail }: Props) 
       preview={<RotatingPreview items={rotating} palette={palette} />}
     >
       <View style={{ flexDirection: 'row', gap: 10 }}>
-        <Column title="급등" Icon={Flame} color={palette.up} items={gainers} market={market} onOpenDetail={onOpenDetail} palette={palette} />
+        <Column title="급등" Icon={Flame} color={palette.up} items={gainers} market={market} onOpenDetail={onOpenDetail} palette={palette} reasonByTicker={reasonByTicker} />
         <View style={{ width: 1, backgroundColor: palette.border }} />
-        <Column title="급락" Icon={Snowflake} color={palette.down} items={losers} market={market} onOpenDetail={onOpenDetail} palette={palette} />
+        <Column title="급락" Icon={Snowflake} color={palette.down} items={losers} market={market} onOpenDetail={onOpenDetail} palette={palette} reasonByTicker={reasonByTicker} />
       </View>
     </CollapsibleCard>
   )
@@ -88,7 +93,7 @@ function RotatingPreview({ items, palette }: { items: RotItem[]; palette: any })
 }
 
 function Column({
-  title, Icon, color, items, market, onOpenDetail, palette,
+  title, Icon, color, items, market, onOpenDetail, palette, reasonByTicker,
 }: {
   title: string
   Icon: typeof Flame
@@ -97,6 +102,7 @@ function Column({
   market: 'KR' | 'US'
   onOpenDetail: (market: string, ticker: string, name?: string) => void
   palette: any
+  reasonByTicker: Record<string, string>
 }) {
   return (
     <View style={{ flex: 1, gap: 2 }}>
@@ -107,20 +113,27 @@ function Column({
       {items.length === 0 ? (
         <Text style={{ color: palette.inkFaint, fontSize: 11, paddingVertical: 6 }}>-</Text>
       ) : (
-        items.map((m) => (
-          <Pressable
-            key={`${m.market}-${m.ticker}`}
-            onPress={() => onOpenDetail(market, m.ticker, m.name)}
-            accessibilityRole="button"
-            style={({ pressed }) => ({
-              flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 6,
-              paddingVertical: 6, opacity: pressed ? 0.6 : 1,
-            })}
-          >
-            <Text style={{ color: palette.ink, fontSize: 12, fontWeight: '700', flex: 1 }} numberOfLines={1}>{m.name}</Text>
-            <Text style={{ color, fontSize: 12, fontWeight: '800', fontVariant: ['tabular-nums'] }}>{formatSignedRate(m.changeRate)}</Text>
-          </Pressable>
-        ))
+        items.map((m) => {
+          const reason = reasonByTicker[m.ticker]
+          return (
+            <Pressable
+              key={`${m.market}-${m.ticker}`}
+              onPress={() => onOpenDetail(market, m.ticker, m.name)}
+              accessibilityRole="button"
+              style={({ pressed }) => ({
+                paddingVertical: 6, gap: 2, opacity: pressed ? 0.6 : 1,
+              })}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
+                <Text style={{ color: palette.ink, fontSize: 12, fontWeight: '700', flex: 1 }} numberOfLines={1}>{m.name}</Text>
+                <Text style={{ color, fontSize: 12, fontWeight: '800', fontVariant: ['tabular-nums'] }}>{formatSignedRate(m.changeRate)}</Text>
+              </View>
+              {reason ? (
+                <Text style={{ color: palette.inkMuted, fontSize: 10, lineHeight: 14 }} numberOfLines={2}>{reason}</Text>
+              ) : null}
+            </Pressable>
+          )
+        })
       )}
     </View>
   )

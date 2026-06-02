@@ -43,25 +43,25 @@ function friendlyAuthError(e: unknown, mode: Mode): string {
   const m = raw.toLowerCase()
 
   if (m.includes('network') || m.includes('failed to fetch') || m.includes('timeout')) {
-    return '서버에 연결할 수 없어. 잠시 후 다시 시도해줘.'
+    return '서버에 연결할 수 없습니다. 잠시 후 다시 시도해 주세요.'
   }
   if (m.includes('email') && (m.includes('exists') || m.includes('duplicate') || m.includes('이미'))) {
-    return '이미 가입된 이메일이야. 로그인을 눌러줘.'
+    return '이미 가입된 이메일입니다. 로그인을 눌러 주세요.'
   }
   if (m.includes('invalid') && m.includes('credential')) {
-    return '이메일 또는 비밀번호가 올바르지 않아.'
+    return '이메일 또는 비밀번호가 올바르지 않습니다.'
   }
   if (m.includes('user not found') || m.includes('찾을 수 없')) {
-    return '가입된 계정이 없어. 먼저 가입해줘.'
+    return '가입된 계정이 없습니다. 먼저 가입해 주세요.'
   }
   if (m.includes('password')) {
-    return '비밀번호가 올바르지 않아.'
+    return '비밀번호가 올바르지 않습니다.'
   }
   if (m.includes('cancel')) {
-    return '로그인을 취소했어.'
+    return '로그인을 취소했습니다.'
   }
-  if (raw && raw !== '요청에 실패했어요.') return raw
-  return mode === 'login' ? '로그인에 실패했어. 다시 시도해줘.' : '가입에 실패했어. 다시 시도해줘.'
+  if (raw && raw !== '요청에 실패했습니다.') return raw
+  return mode === 'login' ? '로그인에 실패했습니다. 다시 시도해 주세요.' : '가입에 실패했습니다. 다시 시도해 주세요.'
 }
 
 export function AuthScreen({ onDone }: Props) {
@@ -82,22 +82,22 @@ export function AuthScreen({ onDone }: Props) {
 
   const emailError = useMemo(() => {
     if (!emailTouched) return ''
-    if (!email.trim()) return '이메일을 입력해줘.'
-    if (!isValidEmail(email)) return '이메일 형식이 올바르지 않아. (예: name@example.com)'
+    if (!email.trim()) return '이메일을 입력해 주세요.'
+    if (!isValidEmail(email)) return '이메일 형식이 올바르지 않습니다. (예: name@example.com)'
     return ''
   }, [email, emailTouched])
 
   const pwError = useMemo(() => {
     if (!pwTouched) return ''
-    if (!password) return '비밀번호를 입력해줘.'
-    if (password.length < 6) return '비밀번호는 6자 이상이어야 해.'
+    if (!password) return '비밀번호를 입력해 주세요.'
+    if (password.length < 6) return '비밀번호는 6자 이상이어야 해요.'
     return ''
   }, [password, pwTouched])
 
   const nickError = useMemo(() => {
     if (mode !== 'signup' || !nickTouched) return ''
-    if (!nickname.trim()) return '닉네임을 입력해줘.'
-    if (nickname.trim().length < 2) return '닉네임은 2자 이상으로 정해줘.'
+    if (!nickname.trim()) return '닉네임을 입력해 주세요.'
+    if (nickname.trim().length < 2) return '닉네임은 2자 이상으로 정해 주세요.'
     return ''
   }, [nickname, nickTouched, mode])
 
@@ -126,7 +126,7 @@ export function AuthScreen({ onDone }: Props) {
     // 가입은 시장 선호 필수 (가입 폼 마지막 단계)
     if (mode === 'signup' && !marketPref) {
       void hapticError()
-      setError('어느 시장을 볼지 선택해줘.')
+      setError('어느 시장을 볼지 선택해 주세요.')
       return
     }
     setLoading(true)
@@ -179,7 +179,7 @@ export function AuthScreen({ onDone }: Props) {
             SIGNAL DESK
           </Text>
           <Text style={{ color: palette.ink, fontSize: 19, fontWeight: '800', marginTop: 2 }}>
-            {mode === 'login' ? '다시 만나서 반가워요' : '시작해볼까요'}
+            {mode === 'login' ? '다시 만나서 반갑습니다' : '시작해볼까요'}
           </Text>
           <Text style={{ color: palette.inkMuted, fontSize: 12 }}>
             장 시작 전 점검부터 보유 모니터까지, 오늘 하루를 한 화면에서
@@ -335,7 +335,7 @@ export function AuthScreen({ onDone }: Props) {
           style={{ paddingVertical: 6 }}
         >
           <Text style={{ color: palette.blue, fontSize: 12, textAlign: 'center', fontWeight: '700' }}>
-            {mode === 'login' ? '계정이 없어? 가입하기' : '이미 계정 있어? 로그인'}
+            {mode === 'login' ? '계정이 없으세요? 가입하기' : '이미 계정이 있으세요? 로그인'}
           </Text>
         </Pressable>
 

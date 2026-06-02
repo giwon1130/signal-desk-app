@@ -50,10 +50,10 @@ export function useWorkspaceMutations(args: Args) {
       await savePortfolioPosition(payload)
       await fetchData()
       void hapticSuccess()
-      toast.show(payload.id ? '보유 종목을 수정했어요' : '보유 종목으로 등록했어요', 'success')
+      toast.show(payload.id ? '보유 종목을 수정했습니다' : '보유 종목으로 등록했습니다', 'success')
     } catch (e) {
       void hapticError()
-      toast.show(apiErrorMessage(e, '저장에 실패했어요. 입력값을 확인해줘'), 'error')
+      toast.show(apiErrorMessage(e, '저장에 실패했습니다. 입력값을 확인해 주세요'), 'error')
       throw new Error('save-portfolio-failed')
     }
   }, [fetchData, toast])
@@ -63,10 +63,10 @@ export function useWorkspaceMutations(args: Args) {
       await deletePortfolioPosition(id)
       await fetchData()
       void hapticSuccess()
-      toast.show('보유 종목을 삭제했어요', 'info')
+      toast.show('보유 종목을 삭제했습니다', 'info')
     } catch (e) {
       void hapticError()
-      toast.show(apiErrorMessage(e, '삭제에 실패했어요'), 'error')
+      toast.show(apiErrorMessage(e, '삭제에 실패했습니다'), 'error')
     }
   }, [fetchData, toast])
 
@@ -75,10 +75,10 @@ export function useWorkspaceMutations(args: Args) {
       await quickAddWatchItem(stock)
       await fetchData()
       void hapticSuccess()
-      toast.show('관심종목에 담았어요', 'success')
+      toast.show('관심종목에 담았습니다', 'success')
     } catch (e) {
       void hapticError()
-      toast.show(apiErrorMessage(e, '관심종목 추가에 실패했어요'), 'error')
+      toast.show(apiErrorMessage(e, '관심종목 추가에 실패했습니다'), 'error')
       throw new Error('quick-add-failed')
     }
   }, [fetchData, toast])
@@ -92,10 +92,10 @@ export function useWorkspaceMutations(args: Args) {
       setWatchlist((prev) => prev.filter((w) => w.id !== id))
       void fetchData()
       void hapticSuccess()
-      toast.show('관심종목에서 해제했어요', 'info')
+      toast.show('관심종목에서 해제했습니다', 'info')
     } catch (e) {
       void hapticError()
-      toast.show(apiErrorMessage(e, '해제에 실패했어요'), 'error')
+      toast.show(apiErrorMessage(e, '해제에 실패했습니다'), 'error')
     } finally {
       setFavoriteDeletingId('')
     }
@@ -113,10 +113,10 @@ export function useWorkspaceMutations(args: Args) {
       setWatchlist([])
       void fetchData()
       void hapticSuccess()
-      toast.show('관심종목을 전부 해제했어요', 'info')
+      toast.show('관심종목을 전부 해제했습니다', 'info')
     } catch (e) {
       void hapticError()
-      toast.show(apiErrorMessage(e, '일괄 해제에 실패했어요'), 'error')
+      toast.show(apiErrorMessage(e, '일괄 해제에 실패했습니다'), 'error')
     } finally {
       setBulkDeletingWatch(false)
     }
@@ -157,10 +157,10 @@ export function useWorkspaceMutations(args: Args) {
         w.id === watchItem.id ? { ...w, alertBelow, alertAbove, volumeAlert } : w,
       ))
       void hapticSuccess()
-      toast.show('알림 설정을 저장했어.', 'success')
+      toast.show('알림 설정을 저장했습니다.', 'success')
     } catch (e) {
       void hapticError()
-      toast.show(apiErrorMessage(e, '저장에 실패했어. 다시 시도해줘.'), 'error')
+      toast.show(apiErrorMessage(e, '저장에 실패했습니다. 다시 시도해 주세요.'), 'error')
     }
   }, [setWatchlist, toast])
 

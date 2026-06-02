@@ -31,7 +31,7 @@ export function WatchlistSection({ watchlist, livePrices, onOpenDetail, onGotoSt
       palette={palette}
     >
       {topWatch.length === 0 ? (
-        <EmptyRow text="아직 관심종목이 없어" hint="종목 탭에서 ☆ 눌러 담아봐" palette={palette} />
+        <EmptyRow text="아직 관심종목이 없습니다" hint="종목 탭에서 ☆ 눌러 담아 보세요" palette={palette} />
       ) : (
         topWatch.map((w) => {
           const live = w.market === 'KR' ? livePrices[w.ticker] : null

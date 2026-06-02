@@ -158,7 +158,7 @@ export function LeaderProfileModal({ visible, leaderUserId, myUserId, onClose, o
               {/* 글 목록 */}
               <View style={{ backgroundColor: palette.surface, borderRadius: 12, borderWidth: 1, borderColor: palette.border, paddingHorizontal: 12, paddingVertical: 4 }}>
                 {profile.posts.length === 0 ? (
-                  <Text style={{ color: palette.inkFaint, fontSize: 12, textAlign: 'center', paddingVertical: 20 }}>아직 글이 없어요</Text>
+                  <Text style={{ color: palette.inkFaint, fontSize: 12, textAlign: 'center', paddingVertical: 20 }}>아직 글이 없습니다</Text>
                 ) : (
                   profile.posts.map((p) => <PostCard key={p.id} post={p} showLeader={false} />)
                 )}

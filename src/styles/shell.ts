@@ -36,6 +36,15 @@ export function shellStyles(C: Palette): StyleObj {
       backgroundColor: C.blueSoft, borderWidth: 1, borderColor: C.blue, marginLeft: 8,
       flexDirection: 'row', alignItems: 'center', gap: 4,
     },
+    headerIconBtn: {
+      borderRadius: 10, padding: 8,
+      backgroundColor: 'rgba(255,255,255,0.08)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.14)',
+    },
+    headerIconBadge: {
+      position: 'absolute', top: -4, right: -4, minWidth: 16, height: 16, borderRadius: 999,
+      backgroundColor: C.orange, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4,
+    },
+    headerIconBadgeText: { color: '#1a1205', fontSize: 9, fontWeight: '900' },
 
     // ── Tab Bar ─────────────────────────────────────────────────────────────────
     tabBar: {

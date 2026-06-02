@@ -9,7 +9,7 @@
  * 백엔드는 모든 에러를 `{"error": "<한국어 메시지>"}` 로 주고, api 클라이언트가
  * 그 텍스트를 Error.message 로 throw 하므로 여기서 그대로 노출하면 된다.
  */
-export function apiErrorMessage(e: unknown, fallback = '문제가 생겼어요. 잠시 후 다시 시도해줘.'): string {
+export function apiErrorMessage(e: unknown, fallback = '문제가 생겼습니다. 잠시 후 다시 시도해 주세요.'): string {
   const raw = (e instanceof Error ? e.message : String(e ?? '')).trim()
   const lower = raw.toLowerCase()
 
@@ -19,7 +19,7 @@ export function apiErrorMessage(e: unknown, fallback = '문제가 생겼어요. 
     lower.includes('timeout') || lower.includes('timed out') ||
     lower.includes('econnrefused') || lower.includes('load failed')
   ) {
-    return '네트워크 연결을 확인해줘.'
+    return '네트워크 연결을 확인해 주세요.'
   }
 
   // 2) 서버가 준 친절 메시지로 보이면 그대로 (영문 코드/JSON/스택은 제외)

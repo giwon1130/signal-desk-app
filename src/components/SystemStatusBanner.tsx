@@ -30,7 +30,7 @@ export function SystemStatusBanner({ status }: Props) {
           AI 분석 일시 지연
         </Text>
         <Text style={{ color: palette.inkSub, fontSize: 11 }}>
-          Google Gemini 과부하 — 자동 복구 중. AI 픽·마켓 인사이트가 잠깐 비어있을 수 있어요.
+          Google Gemini 과부하 — 자동 복구 중. AI 픽·마켓 인사이트가 잠깐 비어있을 수 있습니다.
         </Text>
       </View>
     </View>

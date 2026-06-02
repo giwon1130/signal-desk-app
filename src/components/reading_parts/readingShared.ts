@@ -56,8 +56,8 @@ export function parseLeaderCode(url: string | null | undefined): string | null {
 /** 구독 실패 사유 → 사용자 문구. 백엔드 메시지 기준(best-effort). */
 export function subscribeErrorMessage(raw: string): string {
   const s = (raw || '').toLowerCase()
-  if (s.includes('self') || s.includes('yourself') || s.includes('own')) return '내 코드는 구독할 수 없어요'
-  if (s.includes('approved')) return '아직 승인된 리더가 아니에요'
-  if (s.includes('not found') || s.includes('invalid')) return '코드를 찾을 수 없어요'
+  if (s.includes('self') || s.includes('yourself') || s.includes('own')) return '내 코드는 구독할 수 없습니다'
+  if (s.includes('approved')) return '아직 승인된 리더가 아닙니다'
+  if (s.includes('not found') || s.includes('invalid')) return '코드를 찾을 수 없습니다'
   return apiErrorMessage(raw, '구독 실패 — 코드 확인')
 }

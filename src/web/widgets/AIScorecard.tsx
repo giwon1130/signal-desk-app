@@ -73,7 +73,7 @@ export function Scorecard({
         >
           {missed.length === 0 ? (
             <View style={{ paddingVertical: 18, alignItems: 'center' }}>
-              <Text style={{ color: palette.inkMuted, fontSize: 12 }}>놓친 픽 없음 — 잘 따라가고 있어</Text>
+              <Text style={{ color: palette.inkMuted, fontSize: 12 }}>놓친 픽 없음 — 잘 따라가고 있습니다</Text>
             </View>
           ) : (
             <View style={{ gap: 4 }}>

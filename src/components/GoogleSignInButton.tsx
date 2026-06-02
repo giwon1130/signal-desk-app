@@ -84,7 +84,7 @@ function GoogleWebButton({ loading, onAuth, onError }: Props) {
   useEffect(() => {
     const clientId = extra.googleClientIdWeb
     if (!clientId) {
-      onErrorRef.current?.('Google webClientId 가 설정돼 있지 않아.')
+      onErrorRef.current?.('Google webClientId 가 설정돼 있지 않습니다.')
       return
     }
     let disposed = false
@@ -99,14 +99,14 @@ function GoogleWebButton({ loading, onAuth, onError }: Props) {
           callback: async (resp) => {
             const credential = resp.credential
             if (!credential) {
-              onErrorRef.current?.('Google 응답에 id_token 이 없어.')
+              onErrorRef.current?.('Google 응답에 id_token 이 없습니다.')
               return
             }
             try {
               const user = await apiGoogleOAuth(credential)
               onAuthRef.current(user)
             } catch (e) {
-              onErrorRef.current?.(e instanceof Error ? e.message : 'Google 로그인에 실패했어.')
+              onErrorRef.current?.(e instanceof Error ? e.message : 'Google 로그인에 실패했습니다.')
             }
           },
           auto_select: false,
@@ -173,7 +173,7 @@ function GoogleNativeButton({ loading, onAuth, onError }: Props) {
     try {
       await signIn()
     } catch (e) {
-      onError?.(e instanceof Error ? e.message : 'Google 로그인에 실패했어.')
+      onError?.(e instanceof Error ? e.message : 'Google 로그인에 실패했습니다.')
     } finally {
       setSubmitting(false)
     }

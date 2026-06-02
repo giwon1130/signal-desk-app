@@ -102,7 +102,7 @@ export function Playbook({
             borderLeftWidth: 3, borderLeftColor: palette.orange,
           }}>
             <Text style={{ color: palette.inkSub, fontSize: 11, fontWeight: '700', lineHeight: 16 }}>
-              지금 휴장 — 픽은 다음 거래일 후보 점검용으로만 봐. 진입가는 마감가 기준이라 다음 개장가에서 다시 잡아야 해.
+              지금 휴장 — 픽은 다음 거래일 후보 점검용으로만 봐 주세요. 진입가는 마감가 기준이라 다음 개장가에서 다시 잡아야 해요.
             </Text>
           </View>
         ) : null}

@@ -51,7 +51,7 @@ export function WatchAlertForm({ watchItem, onSave, saving, hasPortfolio = false
       <View style={{ backgroundColor: palette.surfaceAlt, borderRadius: 12, padding: 14, gap: 12, borderWidth: 1, borderColor: palette.border }}>
         {hasPortfolio ? (
           <Text style={{ color: palette.inkMuted, fontSize: 11, fontWeight: '600', lineHeight: 16 }}>
-            🔔 보유 중이라 아래 <Text style={{ fontWeight: '800', color: palette.ink }}>실제 보유 종목 수정</Text>의 <Text style={{ fontWeight: '800', color: palette.ink }}>목표가/손절가</Text>가 자동으로 알림 트리거가 돼.
+            🔔 보유 중이라 아래 <Text style={{ fontWeight: '800', color: palette.ink }}>실제 보유 종목 수정</Text>의 <Text style={{ fontWeight: '800', color: palette.ink }}>목표가/손절가</Text>가 자동으로 알림 트리거가 됩니다.
           </Text>
         ) : (
           <>

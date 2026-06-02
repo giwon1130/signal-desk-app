@@ -65,7 +65,7 @@ export function WatchAlertList({ alerts }: Props) {
       ) : (
         <View style={styles.emptyStateRow}>
           <Bell size={14} color="#94a3b8" strokeWidth={2} />
-          <Text style={styles.metaText}>지금 주목할 시그널은 없어. 안정 구간이야.</Text>
+          <Text style={styles.metaText}>지금 주목할 시그널은 없습니다. 안정 구간입니다.</Text>
         </View>
       )}
     </View>

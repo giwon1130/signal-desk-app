@@ -10,7 +10,7 @@ import {
   View,
 } from 'react-native'
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context'
-import { BarChart3, Bot, Megaphone, Settings as SettingsIcon, Sunrise, Trophy } from 'lucide-react-native'
+import { BarChart3, Bell, Bot, Megaphone, Settings as SettingsIcon, Sunrise, Trophy } from 'lucide-react-native'
 import { WebLayout } from './src/web/WebLayout'
 import { useStyles } from './src/styles'
 import { ThemeProvider, useTheme } from './src/theme'
@@ -38,6 +38,8 @@ import { LeaderProfileModal } from './src/components/reading_parts/LeaderProfile
 import { parseLeaderCode } from './src/components/reading_parts/readingShared'
 import { SettingsModal } from './src/components/SettingsModal'
 import { SystemStatusBanner } from './src/components/SystemStatusBanner'
+import { IndexPulse } from './src/components/IndexPulse'
+import { RecentAlertsModal } from './src/components/RecentAlertsModal'
 import { StocksTab } from './src/tabs/StocksTab'
 import { TodayTab } from './src/tabs/TodayTab'
 import { HomeDashboard } from './src/web/HomeDashboard'
@@ -87,8 +89,8 @@ function AppShell() {
   const [activeTab, setActiveTab] = useState<TabKey>('today')
   const market = useMarketSnapshot(user?.token ?? null, !!user)
   const {
-    summary, sections, aiRecommendation, watchlist, portfolio, fortune, topMovers,
-    mediaSummary, marketInsight, upcomingEvents, disclosures, aiPicks, hiddenSignals, alertHistory, apiHealth, systemStatus, lastSyncedAt, loading, refreshing, error, refresh,
+    summary, sections, aiRecommendation, watchlist, portfolio, fortune, topMovers, moverReasons,
+    mediaSummary, mediaSummaries, marketInsight, upcomingEvents, disclosures, aiPicks, hiddenSignals, alertHistory, apiHealth, systemStatus, lastSyncedAt, loading, refreshing, error, refresh,
     fetchData, setLoading, setWatchlist, setPortfolio,
   } = market
   const search = useStockSearch()
@@ -132,6 +134,7 @@ function AppShell() {
   const [joinModalCode, setJoinModalCode] = useState<string | null>(null)
   // v2.1: 통합 설정 모달
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [alertsOpen, setAlertsOpen] = useState(false)
   // v2.2: 리딩 — 작성 모달 + 피드 새로고침 트리거 + 리더 프로필 + 구독 코드(딥링크)
   const [composeOpen, setComposeOpen] = useState(false)
   const [readingRefreshTick, setReadingRefreshTick] = useState(0)
@@ -234,7 +237,7 @@ function AppShell() {
   }, [fortune])
 
   const confirmLogout = useCallback(() => {
-    Alert.alert('로그아웃', '정말 로그아웃할까?', [
+    Alert.alert('로그아웃', '정말 로그아웃할까요?', [
       { text: '취소', style: 'cancel' },
       { text: '로그아웃', style: 'destructive', onPress: () => void handleLogout() },
     ])
@@ -446,9 +449,11 @@ function AppShell() {
             alertHistory={alertHistory}
             fortune={fortune}
             mediaSummary={mediaSummary}
+            mediaSummaries={mediaSummaries}
             upcomingEvents={filteredUpcomingEvents}
             disclosures={disclosures}
             topMovers={topMovers}
+            moverReasons={moverReasons}
             marketPreference={marketPreference}
             onOpenDetail={handleOpenDetail}
             refreshing={refreshing}
@@ -568,6 +573,12 @@ function AppShell() {
         visible={reminderOpen}
         authToken={user?.token ?? null}
         onClose={() => setReminderOpen(false)}
+      />
+      <RecentAlertsModal
+        visible={alertsOpen}
+        alerts={alertHistory}
+        onClose={() => setAlertsOpen(false)}
+        onOpenDetail={handleOpenDetail}
       />
       <V2MigrationModal
         visible={v2MigrationOpen}
@@ -706,6 +717,20 @@ function AppShell() {
                   {isUp ? 'LIVE' : 'OFF'}
                 </Text>
               </View>
+              {/* 최근 받은 알림 — 종 아이콘. 미수신 시에도 진입은 가능 */}
+              <Pressable
+                onPress={() => { void hapticLight(); setAlertsOpen(true) }}
+                style={({ pressed }) => [styles.headerIconBtn, pressed && { opacity: 0.6 }]}
+                accessibilityLabel="최근 받은 알림"
+                hitSlop={6}
+              >
+                <Bell size={18} color={palette.orange ?? '#ea580c'} strokeWidth={2.4} />
+                {alertHistory.length > 0 ? (
+                  <View style={styles.headerIconBadge}>
+                    <Text style={styles.headerIconBadgeText}>{alertHistory.length > 9 ? '9+' : alertHistory.length}</Text>
+                  </View>
+                ) : null}
+              </Pressable>
               {/* v2.2: 설정 진입 — 시장 선호도 여기로 이동. 잘 보이도록 라벨+테두리 강조 */}
               <Pressable
                 onPress={() => { void hapticLight(); setSettingsOpen(true) }}
@@ -752,6 +777,14 @@ function AppShell() {
       </View>
 
       {tabContent}
+
+      {/* ── 지수 펄스 — 선호 시장 지수를 회전 노출 (화면 하단 고정) ── */}
+      <IndexPulse
+        sections={sections}
+        marketPreference={marketPreference}
+        onPress={() => setActiveTab('today')}
+      />
+
       {overlays}
     </SafeAreaView>
   )

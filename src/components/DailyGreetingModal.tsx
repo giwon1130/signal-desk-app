@@ -108,7 +108,7 @@ export function DailyGreetingModal({ visible, fortune, onClose }: Props) {
             </View>
           ) : (
             <View style={{ backgroundColor: palette.surfaceAlt, borderRadius: 14, padding: 16, alignItems: 'center' }}>
-              <Text style={{ color: palette.inkMuted, fontSize: 13 }}>운세 데이터를 불러오는 중이야.</Text>
+              <Text style={{ color: palette.inkMuted, fontSize: 13 }}>운세 데이터를 불러오는 중입니다.</Text>
             </View>
           )}
 
@@ -144,7 +144,7 @@ export function DailyGreetingModal({ visible, fortune, onClose }: Props) {
             })}
           >
             <Text style={{ color: '#ffffff', fontSize: 14, fontWeight: '900' }}>
-              오늘도 좋은 투자 하자!
+              오늘도 좋은 투자 해요!
             </Text>
           </Pressable>
         </Pressable>

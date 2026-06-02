@@ -58,7 +58,7 @@ export function V2MigrationModal({ visible, currentPreference, onConfirm, onClos
           </View>
 
           <Text style={{ color: palette.inkSub, fontSize: 13, lineHeight: 19 }}>
-            시장 프로필에 따라 카드·종목·이벤트가 달라져요.
+            시장 프로필에 따라 카드·종목·이벤트가 달라집니다.
             지금 한 번 확인해 보세요 — 헤더에서 언제든 변경 가능.
           </Text>
 
