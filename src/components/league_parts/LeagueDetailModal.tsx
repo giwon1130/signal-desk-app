@@ -14,7 +14,7 @@ import type {
   LeaderboardEntry, LeagueDetail as LeagueDetailType, LeaguePosition, LeagueTrade,
 } from '../../types'
 import { PlaceTradeModal } from './PlaceTradeModal'
-import { fmtMoney, leagueStatusColor, leagueStatusLabel } from './leagueShared'
+import { fmtMoney, leagueShareMessage, leagueStatusColor, leagueStatusLabel } from './leagueShared'
 
 type Props = {
   visible: boolean
@@ -68,9 +68,7 @@ export function LeagueDetailModal({ visible, leagueId, myUserId, onClose, onLeft
   const handleShare = async () => {
     if (!detail) return
     try {
-      await Share.share({
-        message: `Signal Desk 리그 "${detail.league.name}" 참가 코드: ${detail.league.joinCode}`,
-      })
+      await Share.share({ message: leagueShareMessage(detail.league.name, detail.league.joinCode) })
     } catch { /* user 취소 */ }
   }
 

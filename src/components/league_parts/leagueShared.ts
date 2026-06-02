@@ -39,6 +39,30 @@ export function leagueStatusColor(s: LeagueStatus | string, palette: any): strin
   }
 }
 
+/** 배포된 웹 앱 베이스 — 리그 참가 링크 생성/공유용. */
+export const LEAGUE_WEB_BASE = 'https://giwon1130.github.io/signal-desk-app/'
+
+/** 코드가 담긴 참가 링크. 친구가 누르면 앱/웹에서 참가 모달이 자동으로 열린다. */
+export function leagueJoinLink(code: string): string {
+  return `${LEAGUE_WEB_BASE}?join=${encodeURIComponent(code)}`
+}
+
+/** 리그 코드 공유 메시지 (링크 포함). */
+export function leagueShareMessage(name: string, code: string): string {
+  return `Signal Desk 모의투자 "${name}" 같이 해요!\n참가 코드: ${code}\n${leagueJoinLink(code)}`
+}
+
+/**
+ * 들어온 URL 에서 참가 코드 추출.
+ * - 웹:  https://.../signal-desk-app/?join=S3QQ3
+ * - 앱:  signaldesk://join?code=S3QQ3  (or league/join)
+ */
+export function parseJoinCode(url: string | null | undefined): string | null {
+  if (!url) return null
+  const m = url.match(/[?&](?:join|code)=([A-Za-z0-9]+)/)
+  return m ? m[1].toUpperCase() : null
+}
+
 /** 참가 실패 사유를 사용자 문구로. 백엔드 LeagueService.join 메시지 기준. */
 export function joinErrorMessage(raw: string): string {
   const s = (raw || '').toLowerCase()

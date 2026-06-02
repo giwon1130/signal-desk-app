@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   ActivityIndicator,
   Alert,
+  Linking,
   Platform,
   Pressable,
   Text,
@@ -31,6 +32,8 @@ import { ReadingTab } from './src/tabs/ReadingTab'
 import { ComposePostModal } from './src/components/reading_parts/ComposePostModal'
 import { CreateLeagueModal } from './src/components/league_parts/CreateLeagueModal'
 import { LeagueDetailModal } from './src/components/league_parts/LeagueDetailModal'
+import { JoinLeagueModal } from './src/components/league_parts/JoinLeagueModal'
+import { parseJoinCode } from './src/components/league_parts/leagueShared'
 import { SettingsModal } from './src/components/SettingsModal'
 import { SystemStatusBanner } from './src/components/SystemStatusBanner'
 import { StocksTab } from './src/tabs/StocksTab'
@@ -123,6 +126,8 @@ function AppShell() {
   const [createLeagueOpen, setCreateLeagueOpen] = useState(false)
   const [leagueRefreshTick, setLeagueRefreshTick] = useState(0)
   const [activeLeagueId, setActiveLeagueId] = useState<string | null>(null)
+  // v2.1: 코드/링크로 참가 — 닉네임 입력 모달
+  const [joinModalCode, setJoinModalCode] = useState<string | null>(null)
   // v2.1: 통합 설정 모달
   const [settingsOpen, setSettingsOpen] = useState(false)
   // v2.2: 리딩 — 작성 모달 + 피드 새로고침 트리거
@@ -298,6 +303,30 @@ function AppShell() {
   }, [])
 
   usePushDeepLink(handleOpenDetail, handleNavigateToday, handleNavigateMarket, handleOpenLeagueFromPush)
+
+  // v2.1: 코드 입력 / 링크로 참가 요청 → 닉네임 모달 오픈.
+  const handleRequestJoin = useCallback((code: string) => {
+    setActiveTab('league')
+    setJoinModalCode(code)
+  }, [])
+
+  // v2.1: URL 딥링크(?join=CODE / signaldesk://join?code=CODE)로 들어오면 참가 모달 자동 오픈.
+  useEffect(() => {
+    const handle = (url: string | null) => {
+      const code = parseJoinCode(url)
+      if (code) {
+        setActiveTab('league')
+        setJoinModalCode(code)
+        // 웹: 처리 후 쿼리 제거 (새로고침 시 재오픈 방지).
+        if (Platform.OS === 'web' && typeof window !== 'undefined') {
+          try { window.history.replaceState({}, '', window.location.pathname) } catch { /* noop */ }
+        }
+      }
+    }
+    void Linking.getInitialURL().then(handle)
+    const sub = Linking.addEventListener('url', ({ url }) => handle(url))
+    return () => sub.remove()
+  }, [])
 
   // detailKey → 표준 스냅샷. 검색결과/관심종목/보유 어디서든 만들 수 있음.
   const detailContext = useMemo<StockDetailContext | null>(() => {
@@ -494,8 +523,7 @@ function AppShell() {
           refreshing={refreshing}
           onOpenLeague={(id) => setActiveLeagueId(id)}
           onCreateLeague={() => setCreateLeagueOpen(true)}
-          onJoinedLeague={() => setLeagueRefreshTick((t) => t + 1)}
-          toast={toast}
+          onRequestJoin={handleRequestJoin}
         />
       ) : null}
 
@@ -553,6 +581,17 @@ function AppShell() {
         leagueId={activeLeagueId}
         myUserId={user?.userId}
         onClose={() => setActiveLeagueId(null)}
+        toast={toast}
+      />
+      <JoinLeagueModal
+        visible={!!joinModalCode}
+        code={joinModalCode ?? ''}
+        onClose={() => setJoinModalCode(null)}
+        onJoined={(id) => {
+          setJoinModalCode(null)
+          setLeagueRefreshTick((t) => t + 1)
+          setActiveLeagueId(id)  // 참가 직후 바로 상세 진입
+        }}
         toast={toast}
       />
       <ComposePostModal
