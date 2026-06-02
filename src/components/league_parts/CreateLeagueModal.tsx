@@ -1,16 +1,17 @@
 /**
  * 리그 생성 모달 — Trading League.
  *
- * 호스트가 시장/통화/자본금/기간/공개여부 정함. 생성 즉시 OPEN 상태로 (참가 모집 가능).
- * spec: docs/mock-investment-game-spec.md
+ * 호스트가 시장/통화/자본금/기간/거래시간/공개여부/아바타 정함.
+ * 생성 즉시 open — 시작 시점이 지났으면 RUNNING, 아니면 OPEN(모집).
  */
 import { useMemo, useState } from 'react'
 import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Trophy, X } from 'lucide-react-native'
 import { useTheme } from '../../theme'
-import type { LeagueCurrency, LeagueVisibility, MarketScope } from '../../types'
+import type { LeagueCurrency, LeagueVisibility, MarketScope, TradingHours } from '../../types'
 import { createLeague, openLeague } from '../../api/league'
+import { LEAGUE_AVATARS } from './leagueShared'
 
 type Props = {
   visible: boolean
@@ -26,6 +27,12 @@ const DURATION_PRESETS: Array<{ label: string; days: number }> = [
   { label: '1달 (권장)', days: 30 },
   { label: '3달', days: 90 },
 ]
+type StartMode = 'NOW' | 'IN_1H' | 'TOMORROW_9'
+const START_PRESETS: Array<{ key: StartMode; label: string }> = [
+  { key: 'NOW', label: '지금 바로' },
+  { key: 'IN_1H', label: '1시간 후' },
+  { key: 'TOMORROW_9', label: '내일 오전 9시' },
+]
 
 export function CreateLeagueModal({ visible, onClose, onCreated, toast }: Props) {
   const { palette } = useTheme()
@@ -35,8 +42,11 @@ export function CreateLeagueModal({ visible, onClose, onCreated, toast }: Props)
   const [currency, setCurrency] = useState<LeagueCurrency>('KRW')
   const [capital, setCapital] = useState<number>(KRW_PRESETS[1])  // 5천만
   const [durationDays, setDurationDays] = useState<number>(30)
+  const [startMode, setStartMode] = useState<StartMode>('NOW')
+  const [tradingHours, setTradingHours] = useState<TradingHours>('MARKET_HOURS_ONLY')
   const [visibility, setVisibility] = useState<LeagueVisibility>('OPEN')
   const [hostNickname, setHostNickname] = useState('호스트')
+  const [avatar, setAvatar] = useState(LEAGUE_AVATARS[0])
   const [busy, setBusy] = useState(false)
 
   const presets = currency === 'KRW' ? KRW_PRESETS : USD_PRESETS
@@ -49,14 +59,24 @@ export function CreateLeagueModal({ visible, onClose, onCreated, toast }: Props)
 
   const { startedAt, endsAt } = useMemo(() => {
     const now = Date.now()
-    return {
-      startedAt: new Date(now).toISOString(),
-      endsAt: new Date(now + durationDays * 86400_000).toISOString(),
+    let start = now
+    if (startMode === 'IN_1H') start = now + 3600_000
+    else if (startMode === 'TOMORROW_9') {
+      const d = new Date(now)
+      d.setDate(d.getDate() + 1)
+      d.setHours(9, 0, 0, 0)
+      start = d.getTime()
     }
-  }, [durationDays])
+    return {
+      startedAt: new Date(start).toISOString(),
+      endsAt: new Date(start + durationDays * 86400_000).toISOString(),
+    }
+  }, [durationDays, startMode])
+
+  const valid = !busy && name.trim().length > 0 && hostNickname.trim().length > 0
 
   const handleSubmit = async () => {
-    if (busy || !name.trim() || !hostNickname.trim()) return
+    if (!valid) return
     setBusy(true)
     try {
       const league = await createLeague({
@@ -67,11 +87,11 @@ export function CreateLeagueModal({ visible, onClose, onCreated, toast }: Props)
         startedAt,
         endsAt,
         visibility,
-        tradingHours: 'MARKET_HOURS_ONLY',
+        tradingHours,
         hostNickname: hostNickname.trim(),
-        hostAvatarEmoji: '🦊',
+        hostAvatarEmoji: avatar,
       })
-      // 생성 즉시 OPEN 으로 — 참가 모집 시작.
+      // 생성 즉시 open — 시작 시점 지났으면 RUNNING, 아니면 OPEN(모집).
       await openLeague(league.id)
       toast?.show(`리그 생성 완료 — 코드 ${league.joinCode}`, 'success')
       onCreated(league.id)
@@ -79,6 +99,7 @@ export function CreateLeagueModal({ visible, onClose, onCreated, toast }: Props)
       // 폼 reset
       setName('')
       setHostNickname('호스트')
+      setStartMode('NOW')
     } catch (e: any) {
       toast?.show('리그 생성 실패', 'error')
     } finally {
@@ -99,7 +120,7 @@ export function CreateLeagueModal({ visible, onClose, onCreated, toast }: Props)
         }}>
           <Trophy size={20} color={palette.brandAccent} strokeWidth={2.5} />
           <Text style={{ flex: 1, color: palette.ink, fontSize: 17, fontWeight: '900' }}>새 리그 만들기</Text>
-          <Pressable onPress={onClose} hitSlop={20} accessibilityLabel="닫기">
+          <Pressable onPress={onClose} hitSlop={20} accessibilityRole="button" accessibilityLabel="닫기">
             <X size={20} color={palette.inkMuted} strokeWidth={2.5} />
           </Pressable>
         </View>
@@ -112,21 +133,39 @@ export function CreateLeagueModal({ visible, onClose, onCreated, toast }: Props)
               onChangeText={setName}
               placeholder="예: 5월 1주차"
               placeholderTextColor={palette.inkFaint}
-              maxLength={40}
+              maxLength={60}
               style={fieldStyle(palette)}
             />
           </Field>
 
-          {/* 호스트 닉네임 */}
+          {/* 호스트 닉네임 + 아바타 */}
           <Field label="내 닉네임" palette={palette}>
             <TextInput
               value={hostNickname}
               onChangeText={setHostNickname}
-              placeholder="게임 안 표시될 이름"
+              placeholder="게임에 표시될 이름"
               placeholderTextColor={palette.inkFaint}
               maxLength={20}
               style={fieldStyle(palette)}
             />
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
+              {LEAGUE_AVATARS.map((emo) => (
+                <Pressable
+                  key={emo}
+                  onPress={() => setAvatar(emo)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`아바타 ${emo}`}
+                  style={{
+                    width: 36, height: 36, borderRadius: 8,
+                    alignItems: 'center', justifyContent: 'center',
+                    backgroundColor: avatar === emo ? palette.brandAccent + '22' : palette.surfaceAlt,
+                    borderWidth: 1, borderColor: avatar === emo ? palette.brandAccent : palette.border,
+                  }}
+                >
+                  <Text style={{ fontSize: 19 }}>{emo}</Text>
+                </Pressable>
+              ))}
+            </View>
           </Field>
 
           {/* 시장 */}
@@ -166,6 +205,7 @@ export function CreateLeagueModal({ visible, onClose, onCreated, toast }: Props)
                 <Pressable
                   key={amt}
                   onPress={() => setCapital(amt)}
+                  accessibilityRole="button"
                   style={chipStyle(palette, capital === amt)}
                 >
                   <Text style={chipTextStyle(palette, capital === amt)}>
@@ -174,6 +214,19 @@ export function CreateLeagueModal({ visible, onClose, onCreated, toast }: Props)
                 </Pressable>
               ))}
             </View>
+          </Field>
+
+          {/* 시작 시점 */}
+          <Field label="시작 시점" palette={palette}>
+            <ChipGroup
+              options={START_PRESETS.map((s) => ({ key: s.key, label: s.label }))}
+              value={startMode}
+              onChange={setStartMode}
+              palette={palette}
+            />
+            <Text style={{ color: palette.inkFaint, fontSize: 11, marginTop: 6 }}>
+              {startMode === 'NOW' ? '만들자마자 거래 시작' : '시작 전엔 모집만 — 시작 시점에 자동 개시'}
+            </Text>
           </Field>
 
           {/* 기간 */}
@@ -185,7 +238,23 @@ export function CreateLeagueModal({ visible, onClose, onCreated, toast }: Props)
               palette={palette}
             />
             <Text style={{ color: palette.inkFaint, fontSize: 11, marginTop: 6 }}>
-              지금부터 {durationDays}일 후 자동 정산
+              시작 시점부터 {durationDays}일 후 자동 정산
+            </Text>
+          </Field>
+
+          {/* 거래 시간 */}
+          <Field label="거래 시간" palette={palette}>
+            <ChipGroup
+              options={[
+                { key: 'MARKET_HOURS_ONLY' as TradingHours, label: '장중에만' },
+                { key: 'ALWAYS' as TradingHours, label: '24시간' },
+              ]}
+              value={tradingHours}
+              onChange={setTradingHours}
+              palette={palette}
+            />
+            <Text style={{ color: palette.inkFaint, fontSize: 11, marginTop: 6 }}>
+              {tradingHours === 'MARKET_HOURS_ONLY' ? '실제 장 열린 시간에만 매매 가능' : '장 마감 후에도 마지막 시세로 매매 가능'}
             </Text>
           </Field>
 
@@ -213,15 +282,16 @@ export function CreateLeagueModal({ visible, onClose, onCreated, toast }: Props)
         }}>
           <Pressable
             onPress={() => void handleSubmit()}
-            disabled={busy || !name.trim() || !hostNickname.trim()}
+            disabled={!valid}
+            accessibilityRole="button"
             style={({ pressed }) => ({
               backgroundColor: pressed ? palette.brandAccent + 'cc' : palette.brandAccent,
               borderRadius: 12, paddingVertical: 14, alignItems: 'center',
-              opacity: busy || !name.trim() || !hostNickname.trim() ? 0.5 : 1,
+              opacity: valid ? 1 : 0.5,
             })}
           >
             <Text style={{ color: palette.bg, fontSize: 15, fontWeight: '800' }}>
-              {busy ? '만드는 중…' : '리그 만들기 + 모집 시작'}
+              {busy ? '만드는 중…' : startMode === 'NOW' ? '리그 만들기 + 바로 시작' : '리그 만들기 + 모집 시작'}
             </Text>
           </Pressable>
         </View>
@@ -257,6 +327,7 @@ function ChipGroup<T extends string | number>({
         <Pressable
           key={String(o.key)}
           onPress={() => onChange(o.key)}
+          accessibilityRole="button"
           style={chipStyle(palette, value === o.key)}
         >
           <Text style={chipTextStyle(palette, value === o.key)}>{o.label}</Text>

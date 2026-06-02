@@ -62,7 +62,11 @@ export async function joinLeague(joinCode: string, nickname: string, avatarEmoji
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ joinCode, nickname, avatarEmoji }),
   })
-  if (!r.ok) throw new Error('join-league-failed')
+  if (!r.ok) {
+    // 서버 에러 메시지 전달 (코드 없음/만석/종료 등 구분용).
+    const text = await r.text()
+    throw new Error(text || 'join-league-failed')
+  }
   const j = (await r.json()) as ApiResponse<LeagueDetail>
   return j.data
 }

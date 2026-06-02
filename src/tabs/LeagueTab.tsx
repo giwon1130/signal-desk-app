@@ -1,15 +1,18 @@
 /**
  * Trading League — 친구 모의투자 탭 홈.
  * v2.1 신규. 진입 시 내 참여 리그 목록 + '만들기'/'코드로 참가' 버튼.
- * 상세 화면 (리더보드 + 거래) 은 LeagueDetailModal — 다음 phase.
+ * 상세 화면 (리더보드 + 거래) 은 LeagueDetailModal.
  */
 import { useCallback, useEffect, useState } from 'react'
-import { Pressable, RefreshControl, ScrollView, Text, TextInput, View } from 'react-native'
-import { Plus, Trophy } from 'lucide-react-native'
+import { Pressable, RefreshControl, ScrollView, Share, Text, TextInput, View } from 'react-native'
+import { Plus, Share2, Trophy } from 'lucide-react-native'
 import { useStyles } from '../styles'
 import { useTheme } from '../theme'
 import type { League } from '../types'
 import { fetchMyLeagues, joinLeague } from '../api/league'
+import {
+  LEAGUE_AVATARS, fmtMoney, joinErrorMessage, leagueStatusColor, leagueStatusLabel,
+} from '../components/league_parts/leagueShared'
 
 type Props = {
   authToken: string | null
@@ -25,15 +28,21 @@ export function LeagueTab({ authToken, refreshing, onOpenLeague, onCreateLeague,
   const { palette } = useTheme()
   const [leagues, setLeagues] = useState<League[]>([])
   const [loading, setLoading] = useState(false)
+  const [loadError, setLoadError] = useState(false)
   const [joinCode, setJoinCode] = useState('')
+  const [nickname, setNickname] = useState('')
+  const [avatar, setAvatar] = useState(LEAGUE_AVATARS[0])
   const [joining, setJoining] = useState(false)
 
   const load = useCallback(async () => {
     if (!authToken) return
     setLoading(true)
+    setLoadError(false)
     try {
       const list = await fetchMyLeagues()
       setLeagues(list)
+    } catch {
+      setLoadError(true)
     } finally {
       setLoading(false)
     }
@@ -41,18 +50,19 @@ export function LeagueTab({ authToken, refreshing, onOpenLeague, onCreateLeague,
 
   useEffect(() => { void load() }, [load])
 
+  const canJoin = joinCode.trim().length >= 4 && nickname.trim().length > 0 && !joining
+
   const handleJoin = async () => {
-    if (!joinCode.trim() || joining) return
+    if (!canJoin) return
     setJoining(true)
     try {
-      // 닉네임은 일단 '나' — Phase G 에서 사용자 입력 모달 추가 가능.
-      const detail = await joinLeague(joinCode.trim().toUpperCase(), '나')
+      const detail = await joinLeague(joinCode.trim().toUpperCase(), nickname.trim(), avatar)
       toast?.show('리그 참가 완료', 'success')
       setJoinCode('')
       onJoinedLeague(detail.league.id)
       await load()
     } catch (e: any) {
-      toast?.show('참가 실패 — 코드 확인', 'error')
+      toast?.show(joinErrorMessage(e?.message || ''), 'error')
     } finally {
       setJoining(false)
     }
@@ -76,9 +86,11 @@ export function LeagueTab({ authToken, refreshing, onOpenLeague, onCreateLeague,
       </View>
 
       {/* 액션 */}
-      <View style={[styles.card, { gap: 10 }]}>
+      <View style={[styles.card, { gap: 12 }]}>
         <Pressable
           onPress={onCreateLeague}
+          accessibilityRole="button"
+          accessibilityLabel="새 리그 만들기"
           style={({ pressed }) => ({
             backgroundColor: pressed ? palette.brandAccent + 'cc' : palette.brandAccent,
             borderRadius: 10, paddingVertical: 12,
@@ -89,37 +101,76 @@ export function LeagueTab({ authToken, refreshing, onOpenLeague, onCreateLeague,
           <Text style={{ color: palette.bg, fontSize: 14, fontWeight: '800' }}>새 리그 만들기</Text>
         </Pressable>
 
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <View style={{ flex: 1 }}>
-            <TextInput
-              value={joinCode}
-              onChangeText={(v) => setJoinCode(v.toUpperCase())}
-              placeholder="참가 코드 (예: X7K2M)"
-              placeholderTextColor={palette.inkFaint}
-              autoCapitalize="characters"
-              autoCorrect={false}
-              maxLength={8}
-              style={{
-                backgroundColor: palette.surfaceAlt, color: palette.ink,
-                borderWidth: 1, borderColor: palette.border, borderRadius: 8,
-                paddingHorizontal: 12, paddingVertical: 10,
-                fontSize: 14, fontWeight: '700', letterSpacing: 2,
-              }}
-            />
+        {/* 코드로 참가 — 닉네임 + 아바타 + 코드 */}
+        <View style={{ gap: 8 }}>
+          <Text style={{ color: palette.inkMuted, fontSize: 11, fontWeight: '800', letterSpacing: 1 }}>
+            코드로 참가
+          </Text>
+          {/* 아바타 선택 */}
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+            {LEAGUE_AVATARS.slice(0, 8).map((emo) => (
+              <Pressable
+                key={emo}
+                onPress={() => setAvatar(emo)}
+                accessibilityRole="button"
+                accessibilityLabel={`아바타 ${emo}`}
+                style={{
+                  width: 34, height: 34, borderRadius: 8,
+                  alignItems: 'center', justifyContent: 'center',
+                  backgroundColor: avatar === emo ? palette.brandAccent + '22' : palette.surfaceAlt,
+                  borderWidth: 1, borderColor: avatar === emo ? palette.brandAccent : palette.border,
+                }}
+              >
+                <Text style={{ fontSize: 18 }}>{emo}</Text>
+              </Pressable>
+            ))}
           </View>
-          <Pressable
-            onPress={() => void handleJoin()}
-            disabled={!joinCode.trim() || joining}
-            style={({ pressed }) => ({
-              backgroundColor: pressed ? palette.blue + 'cc' : palette.blue,
-              borderRadius: 8, paddingHorizontal: 16, paddingVertical: 10,
-              opacity: !joinCode.trim() || joining ? 0.5 : 1,
-            })}
-          >
-            <Text style={{ color: palette.bg, fontSize: 13, fontWeight: '800' }}>
-              {joining ? '참가 중…' : '참가'}
-            </Text>
-          </Pressable>
+          <TextInput
+            value={nickname}
+            onChangeText={setNickname}
+            placeholder="게임에 표시될 내 닉네임"
+            placeholderTextColor={palette.inkFaint}
+            maxLength={20}
+            style={{
+              backgroundColor: palette.surfaceAlt, color: palette.ink,
+              borderWidth: 1, borderColor: palette.border, borderRadius: 8,
+              paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, fontWeight: '700',
+            }}
+          />
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <View style={{ flex: 1 }}>
+              <TextInput
+                value={joinCode}
+                onChangeText={(v) => setJoinCode(v.toUpperCase())}
+                placeholder="참가 코드 (예: X7K2M)"
+                placeholderTextColor={palette.inkFaint}
+                autoCapitalize="characters"
+                autoCorrect={false}
+                maxLength={5}
+                style={{
+                  backgroundColor: palette.surfaceAlt, color: palette.ink,
+                  borderWidth: 1, borderColor: palette.border, borderRadius: 8,
+                  paddingHorizontal: 12, paddingVertical: 10,
+                  fontSize: 14, fontWeight: '700', letterSpacing: 2,
+                }}
+              />
+            </View>
+            <Pressable
+              onPress={() => void handleJoin()}
+              disabled={!canJoin}
+              accessibilityRole="button"
+              accessibilityLabel="리그 참가"
+              style={({ pressed }) => ({
+                backgroundColor: pressed ? palette.blue + 'cc' : palette.blue,
+                borderRadius: 8, paddingHorizontal: 16, paddingVertical: 10,
+                opacity: canJoin ? 1 : 0.5,
+              })}
+            >
+              <Text style={{ color: palette.bg, fontSize: 13, fontWeight: '800' }}>
+                {joining ? '참가 중…' : '참가'}
+              </Text>
+            </Pressable>
+          </View>
         </View>
       </View>
 
@@ -129,7 +180,22 @@ export function LeagueTab({ authToken, refreshing, onOpenLeague, onCreateLeague,
           <Text style={styles.cardTitle}>내 리그</Text>
           <Text style={styles.metaText}>{leagues.length}개</Text>
         </View>
-        {leagues.length === 0 ? (
+        {loadError ? (
+          <View style={{ paddingVertical: 24, alignItems: 'center', gap: 8 }}>
+            <Text style={{ color: palette.inkMuted, fontSize: 12, fontWeight: '700' }}>불러오기 실패</Text>
+            <Pressable
+              onPress={() => void load()}
+              accessibilityRole="button"
+              style={({ pressed }) => ({
+                backgroundColor: pressed ? palette.surfaceAlt : palette.surface,
+                borderWidth: 1, borderColor: palette.border, borderRadius: 8,
+                paddingHorizontal: 16, paddingVertical: 8,
+              })}
+            >
+              <Text style={{ color: palette.ink, fontSize: 12, fontWeight: '800' }}>다시 시도</Text>
+            </Pressable>
+          </View>
+        ) : leagues.length === 0 ? (
           <View style={{ paddingVertical: 26, alignItems: 'center', gap: 6 }}>
             <Trophy size={28} color={palette.inkFaint} strokeWidth={1.8} />
             <Text style={{ color: palette.inkMuted, fontSize: 12, fontWeight: '700' }}>
@@ -149,14 +215,7 @@ export function LeagueTab({ authToken, refreshing, onOpenLeague, onCreateLeague,
 
 function LeagueRow({ league, onPress }: { league: League; onPress: () => void }) {
   const { palette } = useTheme()
-  const statusLabel =
-    league.status === 'DRAFT' ? '준비 중' :
-    league.status === 'OPEN' ? '모집 중' :
-    league.status === 'RUNNING' ? '진행 중' : '종료됨'
-  const statusColor =
-    league.status === 'RUNNING' ? palette.brandAccent :
-    league.status === 'OPEN' ? palette.blue :
-    league.status === 'FINISHED' ? palette.inkMuted : palette.orange
+  const statusColor = leagueStatusColor(league.status, palette)
 
   // 남은 시간 (RUNNING) or 시작까지 (OPEN)
   const targetMs = new Date(league.status === 'OPEN' ? league.startedAt : league.endsAt).getTime()
@@ -164,9 +223,19 @@ function LeagueRow({ league, onPress }: { league: League; onPress: () => void })
   const remainText = formatDuration(diff)
   const remainLabel = league.status === 'OPEN' ? '시작까지' : league.status === 'RUNNING' ? '남은 시간' : ''
 
+  const shareCode = async () => {
+    try {
+      await Share.share({
+        message: `Signal Desk 리그 "${league.name}" 참가 코드: ${league.joinCode}`,
+      })
+    } catch { /* 취소 */ }
+  }
+
   return (
     <Pressable
       onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`${league.name} 리그 열기`}
       style={({ pressed }) => ({
         flexDirection: 'row', alignItems: 'center', gap: 10,
         paddingVertical: 10, paddingHorizontal: 4,
@@ -177,16 +246,25 @@ function LeagueRow({ league, onPress }: { league: League; onPress: () => void })
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           <Text style={{ color: palette.ink, fontSize: 14, fontWeight: '800' }}>{league.name}</Text>
           <View style={{ backgroundColor: statusColor + '22', borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2 }}>
-            <Text style={{ color: statusColor, fontSize: 9, fontWeight: '800' }}>{statusLabel}</Text>
+            <Text style={{ color: statusColor, fontSize: 9, fontWeight: '800' }}>{leagueStatusLabel(league.status)}</Text>
           </View>
         </View>
         <Text style={{ color: palette.inkMuted, fontSize: 11 }}>
-          {league.currency} · {league.marketScope} · 자본금 {formatNumber(league.startingCapital)} · 코드 {league.joinCode}
+          {league.currency} · {league.marketScope} · 자본금 {fmtMoney(league.startingCapital, league.currency)} · 코드 {league.joinCode}
         </Text>
         {remainLabel && diff > 0 ? (
           <Text style={{ color: palette.inkFaint, fontSize: 10 }}>{remainLabel} {remainText}</Text>
         ) : null}
       </View>
+      <Pressable
+        onPress={() => void shareCode()}
+        hitSlop={10}
+        accessibilityRole="button"
+        accessibilityLabel="참가 코드 공유"
+        style={{ padding: 6 }}
+      >
+        <Share2 size={15} color={palette.inkSub} strokeWidth={2.5} />
+      </Pressable>
     </Pressable>
   )
 }
@@ -200,8 +278,4 @@ function formatDuration(ms: number): string {
   const min = Math.floor((sec % 3600) / 60)
   if (hr > 0) return `${hr}시간 ${min}분`
   return `${min}분`
-}
-
-function formatNumber(n: number): string {
-  return n.toLocaleString('ko-KR')
 }
