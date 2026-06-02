@@ -14,7 +14,7 @@ import type {
   LeaderboardEntry, LeagueDetail as LeagueDetailType, LeaguePosition, LeagueTrade,
 } from '../../types'
 import { PlaceTradeModal } from './PlaceTradeModal'
-import { fmtMoney, leagueShareMessage, leagueStatusColor, leagueStatusLabel } from './leagueShared'
+import { fmtMoney, fmtNum, leagueShareMessage, leagueStatusColor, leagueStatusLabel } from './leagueShared'
 
 type Props = {
   visible: boolean
@@ -256,7 +256,7 @@ export function LeagueDetailModal({ visible, leagueId, myUserId, onClose, onLeft
                         {p.returnPct == null ? '—' : `${up ? '+' : ''}${p.returnPct.toFixed(2)}%`}
                       </Text>
                       <Text style={{ color: palette.inkMuted, fontSize: 10 }}>
-                        평단 {p.averageCost.toFixed(2)}{p.currentPrice != null ? ` → ${p.currentPrice.toFixed(2)}` : ''}
+                        평단 {fmtNum(p.averageCost)}{p.currentPrice != null ? ` → ${fmtNum(p.currentPrice)}` : ''}
                       </Text>
                     </View>
                   </View>
@@ -287,7 +287,7 @@ export function LeagueDetailModal({ visible, leagueId, myUserId, onClose, onLeft
                         {trader?.nickname ?? '?'} · {t.side === 'BUY' ? '매수' : '매도'} {t.name}
                       </Text>
                       <Text style={{ color: palette.inkMuted, fontSize: 10 }}>
-                        {t.quantity}주 @ {t.originalPrice.toFixed(2)} {t.originalCurrency} · {timeAgo(t.executedAt)}
+                        {t.quantity}주 @ {fmtNum(t.originalPrice)} {t.originalCurrency} · {timeAgo(t.executedAt)}
                       </Text>
                     </View>
                     <Text style={{ color, fontSize: 11, fontWeight: '800' }}>

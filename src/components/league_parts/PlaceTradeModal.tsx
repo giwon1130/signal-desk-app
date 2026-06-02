@@ -10,7 +10,7 @@ import { useTheme } from '../../theme'
 import { placeTrade } from '../../api/league'
 import { searchStocks } from '../../api'
 import type { LeaguePosition, MarketScope, StockSearchResult, TradeSide } from '../../types'
-import { LEAGUE_FEE, MAX_POSITION_PCT, fmtMoney, tradeErrorMessage } from './leagueShared'
+import { LEAGUE_FEE, MAX_POSITION_PCT, fmtMoney, fmtNum, tradeErrorMessage } from './leagueShared'
 
 type Props = {
   visible: boolean
@@ -254,8 +254,8 @@ export function PlaceTradeModal({
                     >
                       <Text style={{ color: palette.ink, fontSize: 14, fontWeight: '700' }}>{item.name}</Text>
                       <Text style={{ color: palette.inkMuted, fontSize: 11 }}>
-                        {item.market} · {item.ticker} · 보유 {item.quantity}주 · 평단 {item.averageCost.toFixed(2)}
-                        {item.currentPrice != null ? ` · 현재 ${item.currentPrice.toFixed(2)}` : ''}
+                        {item.market} · {item.ticker} · 보유 {item.quantity}주 · 평단 {fmtNum(item.averageCost)}
+                        {item.currentPrice != null ? ` · 현재 ${fmtNum(item.currentPrice)}` : ''}
                       </Text>
                     </Pressable>
                   )}

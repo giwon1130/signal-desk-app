@@ -20,6 +20,11 @@ export function fmtMoney(value: number, currency: LeagueCurrency): string {
   return `${Math.round(value).toLocaleString('ko-KR')}원`
 }
 
+/** 가격 등 — 소수 2자리 + 천 단위 쉼표. 예: 355747.52 → "355,747.52" */
+export function fmtNum(value: number, decimals = 2): string {
+  return value.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals })
+}
+
 export function leagueStatusLabel(s: LeagueStatus | string): string {
   switch (s) {
     case 'DRAFT': return '준비 중'
