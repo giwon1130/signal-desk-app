@@ -12,9 +12,10 @@ import type {
   WatchlistResponse,
 } from './types'
 import { getMemoryToken } from './api/auth'
+import { API_BASE_URL } from './api/config'
 
-export const API_BASE_URL =
-  process.env.EXPO_PUBLIC_API_BASE_URL ?? 'https://signal-desk-api-production.up.railway.app'
+// 외부(다른 모듈)에서 `import { API_BASE_URL } from '../api'` 로 쓰던 것 호환 유지.
+export { API_BASE_URL }
 
 /** JWT 토큰이 있으면 Authorization 헤더를 자동 주입한 fetch */
 export function authedFetch(input: string, init: RequestInit = {}): Promise<Response> {
