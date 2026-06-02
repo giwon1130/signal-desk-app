@@ -13,5 +13,5 @@ export type MediaSummaryItem = {
   keyTickers: string[]
   sentiment: 'BULLISH' | 'BEARISH' | 'NEUTRAL'
   hasTranscript: boolean
-  source: 'YOUTUBE' | 'NEWS_DIGEST' | 'MORNING_BRIEF' | 'EVENING_BRIEF'
+  source: 'YOUTUBE' | 'NEWS_DIGEST' | 'MORNING_BRIEF' | 'MIDDAY_BRIEF' | 'CLOSE_BRIEF' | 'EVENING_BRIEF'
 }
