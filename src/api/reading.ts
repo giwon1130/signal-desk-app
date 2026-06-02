@@ -27,6 +27,18 @@ export async function applyForLeader(displayName: string, bio = ''): Promise<Lea
   return j.data
 }
 
+/** 리더 자격 — 권한 있는 계정만 '리더 되기' 노출. 미지원/실패 시 false(안전). */
+export async function fetchLeaderEligibility(): Promise<boolean> {
+  try {
+    const r = await authedFetch(`${base}/eligibility`)
+    if (!r.ok) return false
+    const j = (await r.json()) as ApiResponse<{ canLead: boolean }>
+    return j.success ? !!j.data?.canLead : false
+  } catch {
+    return false
+  }
+}
+
 export async function fetchMyLeader(): Promise<Leader | null> {
   const r = await authedFetch(`${base}/leader/me`)
   const j = (await r.json()) as ApiResponse<Leader | null>

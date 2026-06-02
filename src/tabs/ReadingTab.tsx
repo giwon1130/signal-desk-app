@@ -2,9 +2,10 @@
  * 리딩(Leading Call) 탭 홈 — 구독 리더들의 시황/콜 피드.
  *
  * 구성:
- *  - 리더 상태 카드: 미신청 → 이름+'리더 되기', PENDING → 승인 대기, SUSPENDED → 정지,
- *    APPROVED → 글쓰기 + 내 코드(공유)
- *  - 코드로 리더 구독 + 구독 중인 리더 목록(취소)
+ *  - 리더 섹션: 권한(canLead) 있는 계정에만 노출. 미신청 → 이름+'리더 되기',
+ *    PENDING → 승인 대기, SUSPENDED → 정지, APPROVED → 글쓰기 + 내 코드(공유).
+ *    이미 리더면 권한과 무관하게 상태 카드 표시.
+ *  - 리더 구독 섹션(누구나): 코드 입력 + 구독 중인 리더 목록(취소)
  *  - 피드: 구독 리더 + 본인 글 (PostCard 공용)
  */
 import { useCallback, useEffect, useState } from 'react'
@@ -13,7 +14,7 @@ import { Megaphone, PenLine, Plus, Share2, X } from 'lucide-react-native'
 import { useStyles } from '../styles'
 import { useTheme } from '../theme'
 import type { Leader, ReadingPost } from '../types'
-import { applyForLeader, fetchFeed, fetchFollowing, fetchMyLeader, subscribe, unsubscribe } from '../api/reading'
+import { applyForLeader, fetchFeed, fetchFollowing, fetchLeaderEligibility, fetchMyLeader, subscribe, unsubscribe } from '../api/reading'
 import { PostCard } from '../components/reading_parts/PostCard'
 import { readingShareMessage, subscribeErrorMessage } from '../components/reading_parts/readingShared'
 
@@ -32,6 +33,7 @@ export function ReadingTab({ authToken, refreshing, refreshTick, subscribeCode, 
   const { palette } = useTheme()
   const [feed, setFeed] = useState<ReadingPost[]>([])
   const [leader, setLeader] = useState<Leader | null>(null)
+  const [canLead, setCanLead] = useState(false)
   const [following, setFollowing] = useState<Leader[]>([])
   const [loading, setLoading] = useState(false)
   const [loadError, setLoadError] = useState(false)
@@ -44,8 +46,8 @@ export function ReadingTab({ authToken, refreshing, refreshTick, subscribeCode, 
     setLoading(true)
     setLoadError(false)
     try {
-      const [f, me, fol] = await Promise.all([fetchFeed(), fetchMyLeader(), fetchFollowing()])
-      setFeed(f); setLeader(me); setFollowing(fol)
+      const [f, me, fol, elig] = await Promise.all([fetchFeed(), fetchMyLeader(), fetchFollowing(), fetchLeaderEligibility()])
+      setFeed(f); setLeader(me); setFollowing(fol); setCanLead(elig)
     } catch {
       setLoadError(true)
     } finally {
@@ -124,94 +126,97 @@ export function ReadingTab({ authToken, refreshing, refreshTick, subscribeCode, 
         </Text>
       </View>
 
-      {/* 리더 상태 카드 */}
-      <View style={[styles.card, { gap: 10 }]}>
-        {!leader ? (
-          <>
-            <Text style={{ color: palette.inkMuted, fontSize: 12, lineHeight: 17 }}>
-              직접 콜을 쓰고 싶다면 리더가 되어보세요. 친구는 내 코드로 구독합니다.
-            </Text>
-            <TextInput
-              value={displayName}
-              onChangeText={setDisplayName}
-              placeholder="리더 이름 (구독자에게 보일 이름)"
-              placeholderTextColor={palette.inkFaint}
-              maxLength={20}
-              style={{
-                backgroundColor: palette.surfaceAlt, color: palette.ink,
-                borderWidth: 1, borderColor: palette.border, borderRadius: 8,
-                paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, fontWeight: '700',
-              }}
-            />
-            <Pressable
-              onPress={() => void handleBecomeLeader()}
-              disabled={busy}
-              accessibilityRole="button"
-              accessibilityLabel="리더 되기"
-              style={({ pressed }) => ({
-                backgroundColor: pressed ? palette.brandAccent + 'cc' : palette.brandAccent,
-                borderRadius: 10, paddingVertical: 12,
-                flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
-                opacity: busy ? 0.6 : 1,
-              })}
-            >
-              <PenLine size={14} color={palette.bg} strokeWidth={3} />
-              <Text style={{ color: palette.bg, fontSize: 14, fontWeight: '800' }}>리더 되기</Text>
-            </Pressable>
-          </>
-        ) : leader.status === 'PENDING' ? (
-          <Text style={{ color: palette.orange, fontSize: 13, fontWeight: '700' }}>
-            ⏳ 리더 승인 대기 중이에요.
-          </Text>
-        ) : leader.status === 'SUSPENDED' ? (
-          <View style={{ gap: 4 }}>
-            <Text style={{ color: palette.down, fontSize: 13, fontWeight: '800' }}>🚫 리더 권한이 정지되었어요.</Text>
-            <Text style={{ color: palette.inkMuted, fontSize: 12 }}>새 글 작성이 제한됩니다. 문의가 필요하면 운영자에게 연락해주세요.</Text>
-          </View>
-        ) : (
-          <>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Text style={{ color: palette.ink, fontSize: 14, fontWeight: '800' }}>{leader.displayName}</Text>
-              <Text style={{ color: palette.inkMuted, fontSize: 11 }}>구독자 {leader.followerCount}명</Text>
+      {/* 리더 섹션 — 이미 리더이거나 권한 있는 계정에만 */}
+      {leader ? (
+        <View style={[styles.card, { gap: 10 }]}>
+          {leader.status === 'PENDING' ? (
+            <Text style={{ color: palette.orange, fontSize: 13, fontWeight: '700' }}>⏳ 리더 승인 대기 중이에요.</Text>
+          ) : leader.status === 'SUSPENDED' ? (
+            <View style={{ gap: 4 }}>
+              <Text style={{ color: palette.down, fontSize: 13, fontWeight: '800' }}>🚫 리더 권한이 정지되었어요.</Text>
+              <Text style={{ color: palette.inkMuted, fontSize: 12 }}>새 글 작성이 제한됩니다. 문의가 필요하면 운영자에게 연락해주세요.</Text>
             </View>
-            {leader.inviteCode ? (
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <Text style={{ color: palette.inkMuted, fontSize: 12, flex: 1 }}>
-                  내 구독 코드 <Text style={{ color: palette.brandAccent, fontWeight: '900', letterSpacing: 2 }}>{leader.inviteCode}</Text>
-                </Text>
-                <Pressable
-                  onPress={() => void handleShareCode()}
-                  accessibilityRole="button"
-                  accessibilityLabel="구독 코드 공유"
-                  style={({ pressed }) => ({
-                    flexDirection: 'row', alignItems: 'center', gap: 4,
-                    backgroundColor: pressed ? palette.surface : palette.surfaceAlt,
-                    borderWidth: 1, borderColor: palette.border, borderRadius: 8,
-                    paddingHorizontal: 10, paddingVertical: 6,
-                  })}
-                >
-                  <Share2 size={12} color={palette.inkSub} strokeWidth={2.5} />
-                  <Text style={{ color: palette.inkSub, fontSize: 11, fontWeight: '800' }}>공유</Text>
-                </Pressable>
+          ) : (
+            <>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Text style={{ color: palette.ink, fontSize: 14, fontWeight: '800' }}>{leader.displayName}</Text>
+                <Text style={{ color: palette.inkMuted, fontSize: 11 }}>구독자 {leader.followerCount}명</Text>
               </View>
-            ) : null}
-            <Pressable
-              onPress={onCompose}
-              accessibilityRole="button"
-              accessibilityLabel="새 리딩 쓰기"
-              style={({ pressed }) => ({
-                backgroundColor: pressed ? palette.brandAccent + 'cc' : palette.brandAccent,
-                borderRadius: 10, paddingVertical: 12,
-                flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
-              })}
-            >
-              <Plus size={14} color={palette.bg} strokeWidth={3} />
-              <Text style={{ color: palette.bg, fontSize: 14, fontWeight: '800' }}>새 리딩 쓰기</Text>
-            </Pressable>
-          </>
-        )}
+              {leader.inviteCode ? (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Text style={{ color: palette.inkMuted, fontSize: 12, flex: 1 }}>
+                    내 구독 코드 <Text style={{ color: palette.brandAccent, fontWeight: '900', letterSpacing: 2 }}>{leader.inviteCode}</Text>
+                  </Text>
+                  <Pressable
+                    onPress={() => void handleShareCode()}
+                    accessibilityRole="button"
+                    accessibilityLabel="구독 코드 공유"
+                    style={({ pressed }) => ({
+                      flexDirection: 'row', alignItems: 'center', gap: 4,
+                      backgroundColor: pressed ? palette.surface : palette.surfaceAlt,
+                      borderWidth: 1, borderColor: palette.border, borderRadius: 8,
+                      paddingHorizontal: 10, paddingVertical: 6,
+                    })}
+                  >
+                    <Share2 size={12} color={palette.inkSub} strokeWidth={2.5} />
+                    <Text style={{ color: palette.inkSub, fontSize: 11, fontWeight: '800' }}>공유</Text>
+                  </Pressable>
+                </View>
+              ) : null}
+              <Pressable
+                onPress={onCompose}
+                accessibilityRole="button"
+                accessibilityLabel="새 리딩 쓰기"
+                style={({ pressed }) => ({
+                  backgroundColor: pressed ? palette.brandAccent + 'cc' : palette.brandAccent,
+                  borderRadius: 10, paddingVertical: 12,
+                  flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+                })}
+              >
+                <Plus size={14} color={palette.bg} strokeWidth={3} />
+                <Text style={{ color: palette.bg, fontSize: 14, fontWeight: '800' }}>새 리딩 쓰기</Text>
+              </Pressable>
+            </>
+          )}
+        </View>
+      ) : canLead ? (
+        <View style={[styles.card, { gap: 10 }]}>
+          <Text style={{ color: palette.inkMuted, fontSize: 12, lineHeight: 17 }}>
+            직접 콜을 쓰고 싶다면 리더가 되어보세요. 친구는 내 코드로 구독합니다.
+          </Text>
+          <TextInput
+            value={displayName}
+            onChangeText={setDisplayName}
+            placeholder="리더 이름 (구독자에게 보일 이름)"
+            placeholderTextColor={palette.inkFaint}
+            maxLength={20}
+            style={{
+              backgroundColor: palette.surfaceAlt, color: palette.ink,
+              borderWidth: 1, borderColor: palette.border, borderRadius: 8,
+              paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, fontWeight: '700',
+            }}
+          />
+          <Pressable
+            onPress={() => void handleBecomeLeader()}
+            disabled={busy}
+            accessibilityRole="button"
+            accessibilityLabel="리더 되기"
+            style={({ pressed }) => ({
+              backgroundColor: pressed ? palette.brandAccent + 'cc' : palette.brandAccent,
+              borderRadius: 10, paddingVertical: 12,
+              flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+              opacity: busy ? 0.6 : 1,
+            })}
+          >
+            <PenLine size={14} color={palette.bg} strokeWidth={3} />
+            <Text style={{ color: palette.bg, fontSize: 14, fontWeight: '800' }}>리더 되기</Text>
+          </Pressable>
+        </View>
+      ) : null}
 
-        {/* 코드로 구독 */}
+      {/* 리더 구독 — 누구나 */}
+      <View style={[styles.card, { gap: 10 }]}>
+        <Text style={{ color: palette.inkMuted, fontSize: 11, fontWeight: '800', letterSpacing: 1 }}>리더 구독</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <View style={{ flex: 1 }}>
             <TextInput
@@ -245,39 +250,38 @@ export function ReadingTab({ authToken, refreshing, refreshTick, subscribeCode, 
             <Text style={{ color: palette.bg, fontSize: 13, fontWeight: '800' }}>구독</Text>
           </Pressable>
         </View>
-      </View>
+        <Text style={{ color: palette.inkFaint, fontSize: 11 }}>
+          친구가 보낸 링크를 누르면 코드가 자동으로 채워져요.
+        </Text>
 
-      {/* 구독 중인 리더 */}
-      {following.length > 0 ? (
-        <View style={styles.card}>
-          <View style={styles.sectionHeaderRow}>
-            <Text style={styles.cardTitle}>구독 중인 리더</Text>
-            <Text style={styles.metaText}>{following.length}명</Text>
+        {/* 구독 중인 리더 */}
+        {following.length > 0 ? (
+          <View style={{ gap: 2, marginTop: 2 }}>
+            {following.map((l) => (
+              <View key={l.userId} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 8, borderTopWidth: 1, borderTopColor: palette.border }}>
+                <Pressable onPress={() => onOpenLeader?.(l.userId)} accessibilityRole="button" style={{ flex: 1 }}>
+                  <Text style={{ color: palette.ink, fontSize: 13, fontWeight: '800' }}>{l.displayName}</Text>
+                  <Text style={{ color: palette.inkMuted, fontSize: 10 }}>구독자 {l.followerCount}명</Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => void handleUnsubscribe(l)}
+                  hitSlop={8}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${l.displayName} 구독 취소`}
+                  style={({ pressed }) => ({
+                    flexDirection: 'row', alignItems: 'center', gap: 3,
+                    borderWidth: 1, borderColor: palette.border, borderRadius: 8,
+                    paddingHorizontal: 10, paddingVertical: 6, opacity: pressed ? 0.6 : 1,
+                  })}
+                >
+                  <X size={11} color={palette.inkMuted} strokeWidth={2.5} />
+                  <Text style={{ color: palette.inkMuted, fontSize: 11, fontWeight: '800' }}>구독 취소</Text>
+                </Pressable>
+              </View>
+            ))}
           </View>
-          {following.map((l) => (
-            <View key={l.userId} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 8 }}>
-              <Pressable onPress={() => onOpenLeader?.(l.userId)} accessibilityRole="button" style={{ flex: 1 }}>
-                <Text style={{ color: palette.ink, fontSize: 13, fontWeight: '800' }}>{l.displayName}</Text>
-                <Text style={{ color: palette.inkMuted, fontSize: 10 }}>구독자 {l.followerCount}명</Text>
-              </Pressable>
-              <Pressable
-                onPress={() => void handleUnsubscribe(l)}
-                hitSlop={8}
-                accessibilityRole="button"
-                accessibilityLabel={`${l.displayName} 구독 취소`}
-                style={({ pressed }) => ({
-                  flexDirection: 'row', alignItems: 'center', gap: 3,
-                  borderWidth: 1, borderColor: palette.border, borderRadius: 8,
-                  paddingHorizontal: 10, paddingVertical: 6, opacity: pressed ? 0.6 : 1,
-                })}
-              >
-                <X size={11} color={palette.inkMuted} strokeWidth={2.5} />
-                <Text style={{ color: palette.inkMuted, fontSize: 11, fontWeight: '800' }}>구독 취소</Text>
-              </Pressable>
-            </View>
-          ))}
-        </View>
-      ) : null}
+        ) : null}
+      </View>
 
       {/* 피드 */}
       <View style={styles.card}>
