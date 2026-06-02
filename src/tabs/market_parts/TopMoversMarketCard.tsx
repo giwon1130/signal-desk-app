@@ -1,4 +1,5 @@
-import { Pressable, Text, View } from 'react-native'
+import { useEffect, useRef, useState } from 'react'
+import { Animated, Pressable, Text, View } from 'react-native'
 import { Flame, Snowflake } from 'lucide-react-native'
 import { CollapsibleCard } from '../../components/CollapsibleCard'
 import { useStyles } from '../../styles'
@@ -31,7 +32,13 @@ export function TopMoversMarketCard({ topMovers, market, onOpenDetail }: Props) 
 
   const flag = isKr ? '🇰🇷' : '🇺🇸'
   const scope = isKr ? 'KOSPI · KOSDAQ' : 'NASDAQ · NYSE'
-  const head = gainers[0]
+
+  // 미리보기 회전 — 급등/급락 top3 를 번갈아(g0,l0,g1,l1,…) 페이드로 보여준다.
+  const rotating: RotItem[] = []
+  for (let i = 0; i < 3; i++) {
+    if (gainers[i]) rotating.push({ name: gainers[i].name, rate: gainers[i].changeRate, up: true })
+    if (losers[i]) rotating.push({ name: losers[i].name, rate: losers[i].changeRate, up: false })
+  }
 
   return (
     <CollapsibleCard
@@ -41,11 +48,7 @@ export function TopMoversMarketCard({ topMovers, market, onOpenDetail }: Props) 
           <Text style={[styles.metaText, { marginLeft: 6 }]}>{scope}</Text>
         </View>
       }
-      preview={
-        <Text style={[styles.metaText, { color: palette.up, fontWeight: '700' }]}>
-          {head ? `${head.name} ${formatSignedRate(head.changeRate)}` : '-'}
-        </Text>
-      }
+      preview={<RotatingPreview items={rotating} palette={palette} />}
     >
       <View style={{ flexDirection: 'row', gap: 10 }}>
         <Column title="급등" Icon={Flame} color={palette.up} items={gainers} market={market} onOpenDetail={onOpenDetail} palette={palette} />
@@ -53,6 +56,34 @@ export function TopMoversMarketCard({ topMovers, market, onOpenDetail }: Props) 
         <Column title="급락" Icon={Snowflake} color={palette.down} items={losers} market={market} onOpenDetail={onOpenDetail} palette={palette} />
       </View>
     </CollapsibleCard>
+  )
+}
+
+type RotItem = { name: string; rate: number; up: boolean }
+
+/** 급등/급락을 ~2.8초마다 페이드로 번갈아 보여주는 미리보기. */
+function RotatingPreview({ items, palette }: { items: RotItem[]; palette: any }) {
+  const [i, setI] = useState(0)
+  const opacity = useRef(new Animated.Value(1)).current
+
+  useEffect(() => {
+    if (items.length <= 1) return
+    const id = setInterval(() => {
+      Animated.timing(opacity, { toValue: 0, duration: 280, useNativeDriver: true }).start(() => {
+        setI((p) => (p + 1) % items.length)
+        Animated.timing(opacity, { toValue: 1, duration: 280, useNativeDriver: true }).start()
+      })
+    }, 2800)
+    return () => clearInterval(id)
+  }, [items.length, opacity])
+
+  if (items.length === 0) return <Text style={{ color: palette.inkFaint, fontSize: 12 }}>-</Text>
+  const cur = items[i] ?? items[0]
+  const color = cur.up ? palette.up : palette.down
+  return (
+    <Animated.Text style={{ opacity, color, fontSize: 12, fontWeight: '800', fontVariant: ['tabular-nums'] }} numberOfLines={1}>
+      {cur.name} {formatSignedRate(cur.rate)}
+    </Animated.Text>
   )
 }
 
