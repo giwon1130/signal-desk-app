@@ -42,10 +42,13 @@
       "backgroundColor": "#0a1628"
     },
     "scheme": "signaldesk",
+    "experiments": {
+      "baseUrl": "/signal-desk-app"
+    },
     "extra": {
       "googleClientIdIos": "496073748220-n9end3a963hj96nh6ru6ai3d54u8g72v.apps.googleusercontent.com",
       "googleClientIdAndroid": "",
-      "googleClientIdWeb": "496073748220-oavb78f6holdrlhlvqa6b1fcljih1g4u.apps.googleusercontent.com",
+      "googleClientIdWeb": "496073748220-lvagt9ir98pc3qc2lfqtglqbjem4ed2c.apps.googleusercontent.com",
       "eas": {
         "projectId": "891d142e-d493-43d3-a7b1-ac7bdcf23963"
       }

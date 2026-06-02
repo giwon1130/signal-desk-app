@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { API_BASE_URL } from '../api'
+import { API_BASE_URL } from './config'
 
 const TOKEN_KEY = 'signal:authToken'
 const USER_KEY  = 'signal:authUser'

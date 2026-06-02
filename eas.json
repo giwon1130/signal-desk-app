@@ -17,10 +17,22 @@
     "production": {
       "autoIncrement": true,
       "ios": { "resourceClass": "m-medium" }
+    },
+    "production-v2": {
+      "autoIncrement": true,
+      "ios": { "resourceClass": "m-medium" },
+      "channel": "v2-beta"
     }
   },
   "submit": {
     "production": {
+      "ios": {
+        "appleId": "gwim113000@gmail.com",
+        "ascAppId": "6770443767",
+        "appleTeamId": "776H9NV6HT"
+      }
+    },
+    "production-v2": {
       "ios": {
         "appleId": "gwim113000@gmail.com",
         "ascAppId": "6770443767",

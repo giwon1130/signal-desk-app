@@ -18,7 +18,6 @@ import {
 import { getPushAlertsEnabled, setPushAlertsEnabled } from '../api/pushDevice'
 import { getAlertPreferences, updateAlertPreferences, type AlertPreferences } from '../api/alertPreferences'
 import { AlertToggleRow } from './reminder_parts/AlertToggleRow'
-import { MarketPreferencePicker } from './reminder_parts/MarketPreferencePicker'
 import { MinutesBeforePicker } from './reminder_parts/MinutesBeforePicker'
 import { NotificationHistorySection } from './reminder_parts/NotificationHistorySection'
 
@@ -26,12 +25,11 @@ type Props = {
   visible: boolean
   authToken: string | null
   onClose: () => void
-  onMarketPreferenceChange?: (pref: 'KR' | 'US' | 'BOTH') => void
 }
 
 const MINUTES_OPTIONS = [5, 10, 15, 30, 60]
 
-export function ReminderSettingsModal({ visible, authToken, onClose, onMarketPreferenceChange }: Props) {
+export function ReminderSettingsModal({ visible, authToken, onClose }: Props) {
   const styles = useStyles()
   const { palette } = useTheme()
 
@@ -43,7 +41,7 @@ export function ReminderSettingsModal({ visible, authToken, onClose, onMarketPre
   const [history, setHistory] = useState<NotificationRecord[]>([])
   const [prefs, setPrefs] = useState<AlertPreferences>({
     krEnabled: true, usEnabled: false, premarketEnabled: true, compositeRiskEnabled: true,
-    marketPreference: 'BOTH', eveningBriefEnabled: false,
+    marketPreference: 'BOTH', eveningBriefEnabled: false, middayBriefEnabled: false, closeBriefEnabled: true,
   })
 
   // 모달 열릴 때마다 현재 저장값 hydrate
@@ -72,7 +70,6 @@ export function ReminderSettingsModal({ visible, authToken, onClose, onMarketPre
     const next = { ...prefs, ...patch }
     setPrefs(next)
     if (authToken) await updateAlertPreferences(authToken, next)
-    if (patch.marketPreference) onMarketPreferenceChange?.(patch.marketPreference)
   }
 
   const handleClearHistory = async () => {
@@ -94,27 +91,26 @@ export function ReminderSettingsModal({ visible, authToken, onClose, onMarketPre
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <SafeAreaView style={{ flex: 1 }} edges={['top', 'bottom']}>
         <Pressable style={styles.signalModalBackdrop} onPress={onClose}>
-        <Pressable style={[styles.signalModalCard, { maxHeight: '85%' }]} onPress={() => {}}>
+        {/* BUG fix(v2): card 를 Pressable 로 두면 자식 ScrollView 의 vertical swipe 가
+            가로채여 위아래 스크롤이 안 됨. View 로 바꾸면 backdrop 의 hit test 에서
+            card 영역은 backdrop 까지 propagate 안 돼서 outside click 닫기는 그대로 작동. */}
+        <View style={[styles.signalModalCard, { maxHeight: '85%' }]}>
           {/* 헤더는 ScrollView 밖 고정 — 콘텐츠가 길어 스크롤해도 닫기 버튼이 항상 보이게 */}
           <View style={styles.signalModalHeader}>
             <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <Bell size={18} color={palette.blue} strokeWidth={2.5} />
               <Text style={styles.signalModalTitle}>알림 설정</Text>
             </View>
-            <Pressable onPress={onClose} hitSlop={10} accessibilityLabel="닫기">
+            <Pressable onPress={onClose} hitSlop={20} accessibilityLabel="닫기">
               <X size={20} color={palette.inkMuted} strokeWidth={2.5} />
             </Pressable>
           </View>
-          <ScrollView style={{ flexShrink: 1 }} showsVerticalScrollIndicator={false}>
+          <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
             <Text style={[styles.signalModalSubtitle, { marginBottom: 12 }]}>
               장 시작은 로컬 알림, 급등락은 서버 푸시로 보내준다.
             </Text>
 
-            <MarketPreferencePicker
-              value={prefs.marketPreference}
-              disabled={togglesDisabled}
-              onChange={(m) => void updatePref({ marketPreference: m })}
-            />
+            {/* v2: 시장 선호는 헤더 MarketProfileChip 으로 이동. 알림 모달은 알림 전용. */}
 
             <AlertToggleRow
               title="📈 관심종목 급등락 알림"
@@ -145,8 +141,22 @@ export function ReminderSettingsModal({ visible, authToken, onClose, onMarketPre
               onValueChange={(v) => void updatePref({ premarketEnabled: v })}
             />
             <AlertToggleRow
-              title="🌆 미장 이브닝 브리프"
-              hint="06:30 KST · NY 마감 직후 NASDAQ/S&P · 주도주 · 실적"
+              title="☀️ 장중 브리프 알림"
+              hint="12:30 KST · 오전장 흐름·수급 점검 → 오후 대응"
+              value={prefs.middayBriefEnabled}
+              disabled={togglesDisabled}
+              onValueChange={(v) => void updatePref({ middayBriefEnabled: v })}
+            />
+            <AlertToggleRow
+              title="🔔 마감 브리프 알림"
+              hint="15:40 KST · 오늘 마감 정리 + 내일 관전 포인트"
+              value={prefs.closeBriefEnabled}
+              disabled={togglesDisabled}
+              onValueChange={(v) => void updatePref({ closeBriefEnabled: v })}
+            />
+            <AlertToggleRow
+              title="🌆 미국장 마감 브리프 (새벽)"
+              hint="새벽 06:30 KST · NY 마감 직후 NASDAQ/S&P · 주도주 · 실적"
               value={prefs.eveningBriefEnabled}
               disabled={togglesDisabled}
               onValueChange={(v) => void updatePref({ eveningBriefEnabled: v })}
@@ -189,7 +199,7 @@ export function ReminderSettingsModal({ visible, authToken, onClose, onMarketPre
               onClear={() => void handleClearHistory()}
             />
           </ScrollView>
-        </Pressable>
+        </View>
       </Pressable>
       </SafeAreaView>
     </Modal>

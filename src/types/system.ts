@@ -50,7 +50,16 @@ export type AlertHistoryItem = {
   sentAt: string
 }
 
-export type TabKey = 'today' | 'home' | 'market' | 'stocks' | 'ai'
+/**
+ * v2 탭 구조 — 4탭 (v2.1 League 추가).
+ * - 'today': 시장 무드 + 보유 모니터 + 공시 + 모닝 브리프
+ * - 'stocks': 종목 탐색 + 보유 + 관심
+ * - 'ai': AI 픽 + 숨은 시그널 + 마켓 인사이트
+ * - 'league': 친구 모의투자 (Trading League) — v2.1 신규
+ *
+ * v1 의 'home', 'market' 는 v2 에서 제거 (today 로 흡수).
+ */
+export type TabKey = 'today' | 'stocks' | 'ai' | 'league' | 'reading'
 export type LogFilter = 'ALL' | 'RECOMMEND' | 'RESULT'
 export type MarketKey = 'KR' | 'US'
 export type PeriodKey = 'D' | 'W' | 'M'

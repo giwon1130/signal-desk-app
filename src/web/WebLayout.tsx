@@ -49,6 +49,11 @@ type Props = {
   onTabChange: (key: TabKey) => void
   onLogout: () => void
   onOpenReminder: () => void
+  // v2.1: 통합 설정 모달 진입 (NarrowHeader 톱니에서 호출)
+  onOpenSettings: () => void
+  // v2: 시장 선호 헤더 칩
+  marketPreference: import('../api/alertPreferences').MarketPreference
+  onMarketPreferenceChange: (p: import('../api/alertPreferences').MarketPreference) => void
   // Phase 1 에서 추가: 글로벌 컨텍스트를 위한 데이터
   sections: MarketSectionsData | null
   summary?: import('../types').MarketSummaryData | null
@@ -63,7 +68,8 @@ type Props = {
 export function WebLayout(props: Props) {
   const {
     user, activeTab, isUp, lastSyncedAt,
-    onTabChange, onLogout, onOpenReminder,
+    onTabChange, onLogout, onOpenReminder, onOpenSettings,
+    marketPreference, onMarketPreferenceChange,
     sections, summary, fortune, watchlist, portfolio, aiRecommendation, onOpenDetail,
     children,
   } = props
@@ -82,15 +88,14 @@ export function WebLayout(props: Props) {
         <TickerRibbon
           sections={sections}
           sessions={sessions}
-          onClickIndex={() => onTabChange('market')}
+          onClickIndex={() => onTabChange('today')}
         />
         <NarrowHeader
           isUp={isUp}
           lastSyncedAt={lastSyncedAt}
-          onOpenReminder={onOpenReminder}
-          onToggleTheme={handleToggleTheme}
-          onLogout={onLogout}
-          isDark={isDark}
+          onOpenSettings={onOpenSettings}
+          marketPreference={marketPreference}
+          onMarketPreferenceChange={onMarketPreferenceChange}
         />
         <NarrowTabBar activeTab={activeTab} onTabChange={onTabChange} />
         <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 20 }}>
@@ -111,7 +116,7 @@ export function WebLayout(props: Props) {
       <TickerRibbon
         sections={sections}
         sessions={sessions}
-        onClickIndex={() => onTabChange('market')}
+        onClickIndex={() => onTabChange('today')}
       />
 
       <View style={{ flex: 1, flexDirection: 'row' }}>
@@ -143,7 +148,12 @@ export function WebLayout(props: Props) {
             maxWidth: showContext ? 1440 : 1200,
             alignSelf: 'center',
           }}>
-            <MainHeader activeTab={activeTab} lastSyncedAt={lastSyncedAt} />
+            <MainHeader
+              activeTab={activeTab}
+              lastSyncedAt={lastSyncedAt}
+              marketPreference={marketPreference}
+              onMarketPreferenceChange={onMarketPreferenceChange}
+            />
             {summary?.tradingDayStatus ? <TradingDayBanner status={summary.tradingDayStatus} /> : null}
             {children}
           </View>

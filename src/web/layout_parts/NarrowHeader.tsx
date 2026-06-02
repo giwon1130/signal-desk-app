@@ -1,15 +1,22 @@
 /**
- * 좁은 뷰포트(모바일 폭) 상단 헤더 — 브랜드 + LIVE 배지 + 알림/테마/로그아웃.
+ * 좁은 뷰포트(모바일 폭) 상단 헤더 — 브랜드 + LIVE 배지 + 시장 칩 + 톱니(통합 설정).
+ * v2.1: 종/Sun/로그아웃 3개 → 톱니 1개 (모바일 폭 단순화). 설정 모달이 다 처리.
  */
 import { Pressable, Text, View } from 'react-native'
-import { Bell, LogOut, Moon, Sun, TrendingUp } from 'lucide-react-native'
+import { Settings as SettingsIcon, TrendingUp } from 'lucide-react-native'
 import { useTheme } from '../../theme'
+import { MarketProfileChip } from '../../components/MarketProfileChip'
+import type { MarketPreference } from '../../api/alertPreferences'
 
 export function NarrowHeader({
-  isUp, lastSyncedAt, onOpenReminder, onToggleTheme, onLogout, isDark,
+  isUp, lastSyncedAt, onOpenSettings,
+  marketPreference, onMarketPreferenceChange,
 }: {
-  isUp: boolean; lastSyncedAt: string; onOpenReminder: () => void;
-  onToggleTheme: () => void; onLogout: () => void; isDark: boolean;
+  isUp: boolean
+  lastSyncedAt: string
+  onOpenSettings: () => void
+  marketPreference: MarketPreference
+  onMarketPreferenceChange: (p: MarketPreference) => void
 }) {
   const { palette } = useTheme()
   return (
@@ -43,17 +50,12 @@ export function NarrowHeader({
         </Text>
       </View>
       <View style={{ flex: 1 }} />
+      <MarketProfileChip value={marketPreference} onChange={onMarketPreferenceChange} />
       {lastSyncedAt ? (
         <Text style={{ color: palette.inkFaint, fontSize: 10, fontWeight: '600' }}>{lastSyncedAt}</Text>
       ) : null}
-      <Pressable onPress={onOpenReminder} style={({ pressed }) => [{ padding: 6, opacity: pressed ? 0.6 : 1 }]}>
-        <Bell size={15} color={palette.inkSub} />
-      </Pressable>
-      <Pressable onPress={onToggleTheme} style={({ pressed }) => [{ padding: 6, opacity: pressed ? 0.6 : 1 }]}>
-        {isDark ? <Sun size={15} color={palette.orange} /> : <Moon size={15} color={palette.inkSub} />}
-      </Pressable>
-      <Pressable onPress={onLogout} style={({ pressed }) => [{ padding: 6, opacity: pressed ? 0.6 : 1 }]}>
-        <LogOut size={15} color={palette.red} />
+      <Pressable onPress={onOpenSettings} style={({ pressed }) => [{ padding: 6, opacity: pressed ? 0.6 : 1 }]}>
+        <SettingsIcon size={15} color={palette.inkSub} />
       </Pressable>
     </View>
   )

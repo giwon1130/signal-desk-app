@@ -46,31 +46,33 @@ export type Palette = {
   headerOnDark: string
 }
 
+// ─── v2 라이트 팔레트 ──────────────────────────────────────────────────────
+// "대시보드 프로" 라이트 변종 — 단단한 grey, contrast 강화. v1 보다 또렷.
 const light: Palette = {
   scheme: 'light',
-  bg: '#f0f4f8',
+  bg: '#f5f7fa',
   surface: '#ffffff',
-  surfaceAlt: '#f8fafc',
-  border: '#e2e8f0',
-  borderLight: '#f1f5f9',
-  ink: '#0f172a',
-  inkSub: '#334155',
-  inkMuted: '#64748b',
-  inkFaint: '#94a3b8',
-  brand: '#1e3a5f',
-  brandAccent: '#60a5fa',
-  blue: '#3b82f6',
+  surfaceAlt: '#f0f4f9',
+  border: '#d4dae3',
+  borderLight: '#e8edf3',
+  ink: '#0a0d12',
+  inkSub: '#3a4256',
+  inkMuted: '#5a6478',
+  inkFaint: '#8b95a8',
+  brand: '#0a0d12',
+  brandAccent: '#16a34a',
+  blue: '#2563eb',
   blueSoft: '#dbeafe',
   blueDark: '#1d4ed8',
   teal: '#0d9488',
   tealSoft: '#ccfbf1',
-  up: '#ef4444',
+  up: '#dc2626',
   upSoft: '#fee2e2',
-  down: '#3b82f6',
+  down: '#2563eb',
   downSoft: '#dbeafe',
   green: '#16a34a',
   greenSoft: '#dcfce7',
-  orange: '#f59e0b',
+  orange: '#d97706',
   orangeSoft: '#fef3c7',
   purple: '#7c3aed',
   purpleSoft: '#ede9fe',
@@ -80,46 +82,48 @@ const light: Palette = {
   toastSuccessBg: '#dcfce7',
   toastErrorBg: '#fee2e2',
   toastInfoBg: '#f1f5f9',
-  shadowColor: '#0f172a',
+  shadowColor: '#0a0d12',
   headerSubtitle: '#93c5fd',
   headerOnDark: '#f8fafc',
 }
 
+// ─── v2 다크 팔레트 (기본) ─────────────────────────────────────────────────
+// "대시보드 프로" — Bloomberg/HTS 톤. 거의 검정 배경 + 푸른빛 grey + mint accent.
+// 야간 사용 (US 이브닝 브리프 06:30 KST, 미장 새벽 시간) 부담 최소화.
 const dark: Palette = {
   scheme: 'dark',
-  // toss-style soft dark — 코어 배경이 너무 검지 않도록 톤 다운
-  bg: '#17181c',
-  surface: '#1f2024',
-  surfaceAlt: '#26272d',
-  border: '#2c2d33',
-  borderLight: '#33343a',
-  ink: '#f1f5f9',
-  inkSub: '#d4d4d8',
-  inkMuted: '#a1a1aa',
-  inkFaint: '#71717a',
-  brand: '#0f172a',
-  brandAccent: '#60a5fa',
-  blue: '#3b82f6',
+  bg: '#0a0d12',           // 거의 검정, 미세한 푸른빛
+  surface: '#131820',       // 카드 배경
+  surfaceAlt: '#1c2330',    // hover/active/입력 필드
+  border: '#2a3445',        // 단단한 grey — 카드 경계 또렷
+  borderLight: '#1f2632',
+  ink: '#e8eef5',           // 본문 — 순백 대비 약간 부드럽게
+  inkSub: '#c5cdd9',        // 부제 / 강조 안된 본문
+  inkMuted: '#8b95a8',      // 메타 / 보조
+  inkFaint: '#5a6478',      // 미세 텍스트 / disabled
+  brand: '#0a0d12',         // flat — bg 와 동일
+  brandAccent: '#4ade80',   // mint — accent (US 상승)
+  blue: '#60a5fa',
   blueSoft: '#1e3a5f',
-  blueDark: '#60a5fa',
-  teal: '#14b8a6',
+  blueDark: '#3b82f6',
+  teal: '#5eead4',
   tealSoft: '#0f3530',
-  up: '#f87171',
+  up: '#f87171',            // KR 상승 = 빨강
   upSoft: '#3a0e0e',
-  down: '#60a5fa',
+  down: '#60a5fa',          // KR 하락 = 파랑
   downSoft: '#1e3a5f',
-  green: '#4ade80',
+  green: '#4ade80',         // US 상승 = 민트
   greenSoft: '#0f3520',
   orange: '#fbbf24',
   orangeSoft: '#3a2a0e',
-  purple: '#a78bfa',
+  purple: '#c084fc',        // AI 강조
   purpleSoft: '#2d1b69',
   red: '#f87171',
   redSoft: '#3a0e0e',
-  skeleton: '#2c2d33',
+  skeleton: '#1c2330',
   toastSuccessBg: '#0f3520',
   toastErrorBg: '#3a0e0e',
-  toastInfoBg: '#26272d',
+  toastInfoBg: '#1c2330',
   shadowColor: '#000000',
   headerSubtitle: '#93c5fd',
   headerOnDark: '#f8fafc',
@@ -159,7 +163,9 @@ type ThemeCtx = {
 const Ctx = createContext<ThemeCtx | null>(null)
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [mode,   setMode]   = useState<ThemeMode>('system')
+  // v2: default 'dark' (대시보드 프로 톤). 사용자가 설정에서 'system'/'light'/'dark' 선택 가능.
+  // 기존 v1 사용자는 AsyncStorage 에 저장된 값이 있으면 그대로 적용 (마이그레이션 무중단).
+  const [mode,   setMode]   = useState<ThemeMode>('dark')
   const [system, setSystem] = useState<'light' | 'dark'>(Appearance.getColorScheme() === 'dark' ? 'dark' : 'light')
 
   // 저장된 모드 로드
@@ -198,8 +204,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 export function useTheme(): ThemeCtx {
   const ctx = useContext(Ctx)
   if (!ctx) {
-    // 폴백: Provider 없이 호출되어도 안전하게 light 반환
-    return { palette: light, mode: 'system', setMode: () => {}, toggle: () => {} }
+    // 폴백: Provider 없이 호출되어도 안전하게 다크 반환 (v2 default)
+    return { palette: dark, mode: 'dark', setMode: () => {}, toggle: () => {} }
   }
   return ctx
 }

@@ -77,10 +77,10 @@ export function StockSearchSection({
       <TextInput
         value={stockSearch}
         onChangeText={onStockSearchChange}
-        placeholder="종목명, 티커, 섹터 검색"
+        placeholder="종목명, 티커, 섹터 검색 (예: 삼성, AAPL)"
         placeholderTextColor="#94a3b8"
         style={styles.searchInput}
-        autoCapitalize="characters"
+        autoCapitalize="none"
         autoCorrect={false}
       />
       <View style={styles.filterRow}>

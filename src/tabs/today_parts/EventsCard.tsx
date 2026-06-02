@@ -3,6 +3,7 @@ import { Calendar } from 'lucide-react-native'
 import type { MarketEvent } from '../../types'
 import { useStyles } from '../../styles'
 import { useTheme } from '../../theme'
+import { CollapsibleCard } from '../../components/CollapsibleCard'
 
 type Props = {
   events: MarketEvent[]
@@ -31,15 +32,26 @@ export function EventsCard({ events }: Props) {
 
   // 최대 5개만 보여줌
   const display = events.slice(0, 5)
+  const next = display[0]
 
   return (
-    <View style={styles.card}>
-      <View style={styles.cardTitleRow}>
-        <Calendar size={14} color={palette.blue} strokeWidth={2.5} />
-        <Text style={styles.cardTitle}>다가오는 이벤트</Text>
-        <Text style={[styles.metaText, { marginLeft: 'auto' }]}>{events.length}건</Text>
-      </View>
-      <View style={{ gap: 8, marginTop: 8 }}>
+    <CollapsibleCard
+      title={
+        <View style={styles.cardTitleRow}>
+          <Calendar size={14} color={palette.blue} strokeWidth={2.5} />
+          <Text style={styles.cardTitle}>다가오는 이벤트</Text>
+          <Text style={[styles.metaText, { marginLeft: 8 }]}>{events.length}건</Text>
+        </View>
+      }
+      preview={
+        next ? (
+          <Text style={styles.metaText} numberOfLines={1}>
+            {CATEGORY_ICON[next.category]} {formatDate(next.date)} {next.title}
+          </Text>
+        ) : undefined
+      }
+    >
+      <View style={{ gap: 8 }}>
         {display.map((event) => {
           const importanceColor =
             event.importance === 'HIGH' ? palette.down :
@@ -100,7 +112,7 @@ export function EventsCard({ events }: Props) {
           )
         })}
       </View>
-    </View>
+    </CollapsibleCard>
   )
 }
 
