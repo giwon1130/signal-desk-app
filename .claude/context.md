@@ -1,23 +1,22 @@
 # Context
 
-## ⏭ 다음 세션 인계
-이 레포 작업 이어갈 때 먼저 읽기:
-`/Users/g/workspace/work-history/active/claude/2026-05-19_signal-desk_session-handoff.md`
+## ⏭ 다음 작업 포커스 — v2.0.0 리팩토링
+현재 앱은 **v1 5탭(today/home/market/stocks/ai)** 그대로 운영 중. 아래 작업들은 전부 출시 완료:
+TodayTab 재배치 / AI 인사이트 허브(AITab) / Gemini 종합 인사이트 / 주요 이벤트 캘린더.
 
-다음 작업 순서 (사용자가 4-5-2-1 순으로 정함):
-1. TodayTab 재배치 (`src/tabs/TodayTab.tsx`)
-2. AI탭 A안 — "AI 인사이트 허브" (`src/tabs/AITab.tsx`)
-3. Gemini 종합 인사이트 (백엔드 `MarketInsightService` + 앱 AI탭 1번 카드)
-4. 주요 이벤트 캘린더 (FOMC/실적/공시)
+다음 메이저 작업은 **v1 5탭 → v2 3탭 리팩토링** (아직 시작 전, 드래프트 상태):
+- 스펙: [`docs/v2-spec.md`](../docs/v2-spec.md) — 정확한 드래프트, 착수 시 먼저 정독.
+- 그 전까지 v1에 얹은 출시 기능: marketPreference(KR/US/BOTH) 필터, EVENING_BRIEF 푸시+딥링크, 인트라데이/이브닝 브리프 토글.
 
-## ui scope
-- 시장 탭, 차트 탭, AI 로그 탭
-- 차트: 캔들/거래량/MA5/20/60
+## ui scope (v1, 현행)
+- 5탭: 오늘(today) / 홈(home) / 시장(market) / 종목(stocks) / AI(ai) — `App.tsx`
+- 차트: 캔들/거래량/MA5/20/60 (시장 탭)
 
 ## api
 - default: `https://signal-desk-api-production.up.railway.app` (`src/api.ts`)
 - local override: `EXPO_PUBLIC_API_BASE_URL=http://<PC-IP>:8091 npm start`
-- uses: `/api/v1/market/summary`, `/api/v1/market/sections`, `/api/v1/market/ai-recommendations`
+- 호출 코드: `src/api.ts`(market/workspace/검색/운세) + `src/api/`(ai·disclosures·events·insights·media·alertPreferences·pushDevice·auth·socialAuth)
+- 전체 엔드포인트 목록은 `README.md` API 의존 섹션 / `docs/엔지니어링/API명세.md` 참조
 
 ## runtime note
 - Expo 최신 스택은 Node 20.19.4+ 권장
@@ -60,10 +59,10 @@ npx eas submit --platform ios --latest --non-interactive
 - 자격증명(Distribution Cert, Provisioning Profile, ASC API Key) 전부 EAS 서버 저장 — 추가 입력 없음
 - `appVersionSource: remote` — buildNumber는 EAS가 자동 증가
 
-## TestFlight 현황 (2026-05-18)
+## TestFlight 현황 (2026-05-22)
 
-- 최근 production 빌드: **2026-05-18 Build #2** (신규 ASC 앱 첫 빌드, `92522068-...`), finished, auto-submit으로 TestFlight 자동 업로드
-- TestFlight 유효 기한: Build #2 + 90일 = **2026-08-16**
+- 최근 production 빌드: **Build #18 (2026-05-22)** — UX 피드백 반영 + 알림 모달 높이 수정. auto-submit으로 TestFlight 자동 업로드. (README와 일치)
+- TestFlight 유효 기한: 최신 빌드 + 90일
 - 테스터 그룹: Internal(≤100, 리뷰 X) / External(≤10000, Public Link 가능, 첫 빌드만 Beta App Review)
 
 ## 알려진 이슈 (해결 필요, 사용자 작업)

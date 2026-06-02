@@ -57,13 +57,36 @@ SignalDesk 클라이언트 — **Expo 하나로 iOS · Android · Web 을 모두
 ## API 의존
 
 ```
-GET  /api/v1/market/summary
+# 시장 (src/api.ts)
+GET  /health
+GET  /api/v1/market/summary            # newsSentiments·compositeRisk·watchAlerts·briefing 포함 (별도 news 엔드포인트 없음)
 GET  /api/v1/market/sections
-GET  /api/v1/market/news
 GET  /api/v1/market/ai-recommendations
+GET  /api/v1/market/top-movers?limit
+GET  /api/v1/market/stocks/search?q&market
+
+# AI / 인사이트 / 미디어 (src/api/*)
+GET  /api/v1/ai/picks                  # 오늘의 AI 픽 (공통)
+GET  /api/v1/ai/signals                # 숨은 시그널 (Bearer)
+GET  /api/v1/insights/today            # Gemini 시황 종합
+GET  /api/v1/media/summaries/latest    # 최신 모닝/이브닝 브리프
+GET  /api/v1/disclosures/recent?limit  # 보유/관심 KR 공시 (Bearer)
+GET  /api/v1/events/upcoming?days      # 주요 이벤트 캘린더
+
+# 워크스페이스 (Bearer)
 GET  /api/v1/workspace/watchlist       POST /api/v1/workspace/watchlist   DELETE .../{id}
 GET  /api/v1/workspace/portfolio       POST /api/v1/workspace/portfolio   DELETE .../{id}
-POST /auth/oauth/google                # idToken → 자체 JWT
+GET  /api/v1/workspace/fortune         # 오늘의 운세
+
+# 알림 / 디바이스 (Bearer)
+GET  /api/v1/me/alert-preferences      PUT  /api/v1/me/alert-preferences  # marketPreference·eveningBrief 등
+POST /api/v1/push/devices              DELETE /api/v1/push/devices/{token}
+GET  /api/v1/push/alerts?limit         # 알림 이력
+
+# 인증 (src/api/auth.ts)
+POST /auth/signup                      POST /auth/login
+POST /auth/oauth/google                POST /auth/oauth/kakao   # idToken/accessToken → 자체 JWT
+GET  /auth/me
 ```
 
 ## 실행

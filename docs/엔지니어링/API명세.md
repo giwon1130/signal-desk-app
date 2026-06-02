@@ -40,29 +40,35 @@
 
 ### 시장
 (stub)
-- `GET /api/v1/market/overview` — 풀 응답
-- `GET /api/v1/market/summary` — 요약 (`marketSessions`, `tradingDayStatus`, `briefing`, `newsSentiments`, `watchAlerts`, `alternativeSignals`)
+- `GET /health` — 헬스/스토어 모드
+- `GET /api/v1/market/summary` — 요약 (`marketSessions`, `tradingDayStatus`, `briefing`, `newsSentiments`, `watchAlerts`, `alternativeSignals`, `compositeRisk`). 뉴스는 별도 엔드포인트 없이 `newsSentiments` 로 내려옴.
 - `GET /api/v1/market/sections` — 한·미 시장 + 차트
-- `GET /api/v1/market/news`
 - `GET /api/v1/market/ai-recommendations` (Bearer optional)
-- `GET /api/v1/market/stocks/search?q=...&market=KR|US|ALL`
-- `GET /api/v1/market/movers?limit=10`
+- `GET /api/v1/market/stocks/search?q=...&market=KR|US|ALL&limit=20`
+- `GET /api/v1/market/top-movers?limit=10` — KR KOSPI·KOSDAQ(+US) 급등/급락
+
+### AI / 인사이트 / 미디어
+(stub)
+- `GET /api/v1/ai/picks` — 오늘의 AI 픽 (공통, 인증 불필요)
+- `GET /api/v1/ai/signals` (Bearer) — 숨은 시그널 (공시·수급·급등락)
+- `GET /api/v1/insights/today` — Gemini 시황 종합
+- `GET /api/v1/media/summaries/latest` — 최신 모닝/이브닝 브리프
+- `GET /api/v1/disclosures/recent?limit=30` (Bearer) — 보유/관심 KR DART 공시
+- `GET /api/v1/events/upcoming?days=14` — 주요 이벤트 캘린더 (FOMC/실적/공시)
 
 ### 워크스페이스 (Bearer 필요)
 (stub)
 - `GET / POST / DELETE /api/v1/workspace/watchlist[/{id}]`
 - `GET / POST / DELETE /api/v1/workspace/portfolio[/{id}]`
-- `GET / POST / DELETE /api/v1/workspace/paper/positions[/{id}]`
-- `GET / POST / DELETE /api/v1/workspace/paper/trades[/{id}]`
-- `GET / POST / DELETE /api/v1/workspace/ai/picks[/{id}]`
-- `GET / POST / DELETE /api/v1/workspace/ai/track-records[/{id}]`
+- `GET /api/v1/workspace/fortune` — 오늘의 운세 (userId + 날짜 시드)
 
-### 푸시 / 운세
+### 알림 / 디바이스 (Bearer 필요)
 (stub)
-- `POST /api/v1/push/devices` (Bearer) body `{ expoToken }`
-- `POST /api/v1/push/alerts/preferences` (Bearer) body `{ enabled }`
-- `GET /api/v1/push/alerts/history?limit=10` (Bearer)
-- `GET /api/v1/workspace/fortune`
+- `GET  /api/v1/me/alert-preferences` — 알림 선호 (`marketPreference`, `eveningBriefEnabled`, `compositeRiskEnabled` 등)
+- `PUT  /api/v1/me/alert-preferences` body = 위 선호 전체
+- `POST   /api/v1/push/devices` body `{ platform, expoToken }`
+- `DELETE /api/v1/push/devices/{expoToken}`
+- `GET    /api/v1/push/alerts?limit=30` — 알림 이력
 
 ### WebSocket 실시간 시세
 (stub)
