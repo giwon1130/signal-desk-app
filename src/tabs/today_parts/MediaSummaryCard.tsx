@@ -3,10 +3,12 @@ import { ExternalLink, Moon, Newspaper, Sunrise, Tv } from 'lucide-react-native'
 import { CollapsibleCard } from '../../components/CollapsibleCard'
 import { useStyles } from '../../styles'
 import { useTheme } from '../../theme'
-import type { MediaSummaryItem } from '../../types'
+import type { DailyBriefing, MediaSummaryItem } from '../../types'
+import { BriefingDetails } from './BriefingDetails'
 
 type Props = {
   item: MediaSummaryItem
+  briefing?: DailyBriefing | null   // 개인화(보유/관심/이벤트 + 액션) — 브리프 카드에 통합
   onTickerPress?: (ticker: string) => void
   defaultCollapsed?: boolean
 }
@@ -14,7 +16,7 @@ type Props = {
 const sentimentLabel = (s: MediaSummaryItem['sentiment']) =>
   s === 'BULLISH' ? '강세' : s === 'BEARISH' ? '약세' : '관망'
 
-export function MediaSummaryCard({ item, onTickerPress, defaultCollapsed }: Props) {
+export function MediaSummaryCard({ item, briefing, onTickerPress, defaultCollapsed }: Props) {
   const styles = useStyles()
   const { palette } = useTheme()
   const isMorningBrief = item.source === 'MORNING_BRIEF'
@@ -120,6 +122,9 @@ export function MediaSummaryCard({ item, onTickerPress, defaultCollapsed }: Prop
           </View>
         </View>
       ) : null}
+
+      {/* ── 개인화: 내 보유/관심/이벤트 + 액션 (브리핑 통합) ── */}
+      {briefing ? <BriefingDetails briefing={briefing} /> : null}
 
       {/* ── 영상 링크 (MORNING_BRIEF / NEWS_DIGEST 는 링크 없음) ── */}
       {!isBrief && !isDigest && item.videoUrl ? (

@@ -32,7 +32,7 @@ import { SentimentCard } from './today_parts/SentimentCard'
 import { toneColor } from './today_parts/helpers'
 import { CompositeRiskCard } from './market_parts/CompositeRiskCard'
 import { MarketSummaryMetrics } from './market_parts/MarketSummaryMetrics'
-import { TopMoversSection } from './market_parts/TopMoversSection'
+import { TopMoversMarketCard } from './market_parts/TopMoversMarketCard'
 import { WatchAlertList } from './market_parts/WatchAlertList'
 
 type Props = {
@@ -136,16 +136,19 @@ export function TodayTab({
         </View>
       ) : null}
 
-      {/* ── 브리프 (Hero) — 세션/거래일 상태 아래. 모닝/마감/이브닝 중 최신 자동 노출 ── */}
+      {/* ── 브리프 (Hero) — 세션/거래일 상태 아래. 시황(브리프) + 개인화(브리핑) 통합 ── */}
       {mediaSummary ? (
         <MediaSummaryCard
           item={mediaSummary}
+          briefing={summary?.briefing ?? null}
           defaultCollapsed={false}
           onTickerPress={(t) => {
             const isKr = /^\d{6}$/.test(t)
             onOpenDetail(isKr ? 'KR' : 'US', t)
           }}
         />
+      ) : summary?.briefing ? (
+        <BriefingCard briefing={summary.briefing} />
       ) : null}
 
       {/* ── 시장 무드 (v2): 합성 위험도 + 요약 지표 ── */}
@@ -162,18 +165,12 @@ export function TodayTab({
 
       {/* AI 추천(단타 픽)은 AI 탭으로 분리 (#6) — 오늘 탭은 오늘 시장/보유 상태만 */}
 
-      {/* ── 시장 발견 (v2): top movers — 프로필별 필터 ── */}
+      {/* ── 시장 발견 (v2): 급등락 — 시장별 1카드(급등|급락 좌우), 프로필별 필터 ── */}
       {showKr && topMovers ? (
-        <TopMoversSection topMovers={topMovers} kind="gainers" market="KR" onOpenDetail={onOpenDetail} />
-      ) : null}
-      {showKr && topMovers ? (
-        <TopMoversSection topMovers={topMovers} kind="losers" market="KR" onOpenDetail={onOpenDetail} />
+        <TopMoversMarketCard topMovers={topMovers} market="KR" onOpenDetail={onOpenDetail} />
       ) : null}
       {showUs && topMovers?.us ? (
-        <TopMoversSection topMovers={topMovers} kind="gainers" market="US" onOpenDetail={onOpenDetail} />
-      ) : null}
-      {showUs && topMovers?.us ? (
-        <TopMoversSection topMovers={topMovers} kind="losers" market="US" onOpenDetail={onOpenDetail} />
+        <TopMoversMarketCard topMovers={topMovers} market="US" onOpenDetail={onOpenDetail} />
       ) : null}
 
       {/* ── 관심종목 알림 (Market 탭에서 흡수) ── */}
@@ -182,8 +179,7 @@ export function TodayTab({
       {/* ── 다가오는 이벤트 (FOMC/실적/휴장) ── */}
       <EventsCard events={upcomingEvents} />
 
-      {/* ── 개인화 브리핑 ── */}
-      {summary?.briefing ? <BriefingCard briefing={summary.briefing} /> : null}
+      {/* 개인화 브리핑(보유/액션)은 브리프 카드에 통합 — 별도 카드 제거 */}
 
       {/* ── 뉴스 sentiment ── */}
       {(krSentiment || usSentiment) ? (
