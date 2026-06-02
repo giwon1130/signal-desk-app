@@ -129,13 +129,12 @@ export function ReminderSettingsModal({ visible, authToken, onClose }: Props) {
             {/* 브리프 그룹 */}
             <AlertGroup
               title="📰 브리프 알림"
-              subtitle="모닝 · 장중 · 마감 · 미국 마감"
-              master={prefs.premarketEnabled || prefs.middayBriefEnabled || prefs.closeBriefEnabled || prefs.eveningBriefEnabled}
+              subtitle="모닝 · 마감 · 미국 마감"
+              master={prefs.premarketEnabled || prefs.closeBriefEnabled || prefs.eveningBriefEnabled}
               disabled={togglesDisabled}
-              onToggleAll={(v) => void updatePref({ premarketEnabled: v, middayBriefEnabled: v, closeBriefEnabled: v, eveningBriefEnabled: v })}
+              onToggleAll={(v) => void updatePref({ premarketEnabled: v, closeBriefEnabled: v, eveningBriefEnabled: v })}
             >
               <AlertToggleRow compact title="🌅 모닝 브리프" hint="08:30 KST · 야간 미국장 + 보유 공시" value={prefs.premarketEnabled} disabled={togglesDisabled} onValueChange={(v) => void updatePref({ premarketEnabled: v })} />
-              <AlertToggleRow compact title="☀️ 장중 브리프" hint="12:30 KST · 오전장 흐름·수급" value={prefs.middayBriefEnabled} disabled={togglesDisabled} onValueChange={(v) => void updatePref({ middayBriefEnabled: v })} />
               <AlertToggleRow compact title="🔔 마감 브리프" hint="15:40 KST · 마감 정리 + 내일 관전" value={prefs.closeBriefEnabled} disabled={togglesDisabled} onValueChange={(v) => void updatePref({ closeBriefEnabled: v })} />
               <AlertToggleRow compact title="🌆 미국장 마감 브리프 (새벽)" hint="06:30 KST · NY 마감 직후 주도주·실적" value={prefs.eveningBriefEnabled} disabled={togglesDisabled} onValueChange={(v) => void updatePref({ eveningBriefEnabled: v })} />
             </AlertGroup>
