@@ -1,45 +1,53 @@
 /**
  * 리딩(Leading Call) 탭 홈 — 구독 리더들의 시황/콜 피드.
- * spec: docs/leading-call-spec.md
  *
  * 구성:
- *  - 리더 상태 카드: 미신청 → '리더 되기', PENDING → 승인 대기, APPROVED → 글쓰기 + 내 코드
- *  - 코드로 리더 구독
- *  - 피드: 구독 리더 + 본인 글 (콜 현재 수익률 색상 표시)
+ *  - 리더 상태 카드: 미신청 → 이름+'리더 되기', PENDING → 승인 대기, SUSPENDED → 정지,
+ *    APPROVED → 글쓰기 + 내 코드(공유)
+ *  - 코드로 리더 구독 + 구독 중인 리더 목록(취소)
+ *  - 피드: 구독 리더 + 본인 글 (PostCard 공용)
  */
 import { useCallback, useEffect, useState } from 'react'
-import { Pressable, RefreshControl, ScrollView, Text, TextInput, View } from 'react-native'
-import { Megaphone, PenLine, Plus, TrendingUp } from 'lucide-react-native'
+import { Pressable, RefreshControl, ScrollView, Share, Text, TextInput, View } from 'react-native'
+import { Megaphone, PenLine, Plus, Share2, X } from 'lucide-react-native'
 import { useStyles } from '../styles'
 import { useTheme } from '../theme'
-import type { Leader, ReadingCall, ReadingPost } from '../types'
-import { applyForLeader, fetchFeed, fetchMyLeader, subscribe } from '../api/reading'
+import type { Leader, ReadingPost } from '../types'
+import { applyForLeader, fetchFeed, fetchFollowing, fetchMyLeader, subscribe, unsubscribe } from '../api/reading'
+import { PostCard } from '../components/reading_parts/PostCard'
+import { readingShareMessage, subscribeErrorMessage } from '../components/reading_parts/readingShared'
 
 type Props = {
   authToken: string | null
   refreshing?: boolean
   refreshTick?: number
+  subscribeCode?: string | null        // 딥링크(?leader=)로 들어온 구독 코드
   onCompose: () => void
   onOpenLeader?: (leaderUserId: string) => void
   toast?: { show: (msg: string, type?: 'success' | 'error' | 'info') => void }
 }
 
-export function ReadingTab({ authToken, refreshing, refreshTick, onCompose, onOpenLeader, toast }: Props) {
+export function ReadingTab({ authToken, refreshing, refreshTick, subscribeCode, onCompose, onOpenLeader, toast }: Props) {
   const styles = useStyles()
   const { palette } = useTheme()
   const [feed, setFeed] = useState<ReadingPost[]>([])
   const [leader, setLeader] = useState<Leader | null>(null)
+  const [following, setFollowing] = useState<Leader[]>([])
   const [loading, setLoading] = useState(false)
+  const [loadError, setLoadError] = useState(false)
   const [code, setCode] = useState('')
+  const [displayName, setDisplayName] = useState('')
   const [busy, setBusy] = useState(false)
 
   const load = useCallback(async () => {
     if (!authToken) return
     setLoading(true)
+    setLoadError(false)
     try {
-      const [f, me] = await Promise.all([fetchFeed(), fetchMyLeader()])
-      setFeed(f)
-      setLeader(me)
+      const [f, me, fol] = await Promise.all([fetchFeed(), fetchMyLeader(), fetchFollowing()])
+      setFeed(f); setLeader(me); setFollowing(fol)
+    } catch {
+      setLoadError(true)
     } finally {
       setLoading(false)
     }
@@ -47,11 +55,14 @@ export function ReadingTab({ authToken, refreshing, refreshTick, onCompose, onOp
 
   useEffect(() => { void load() }, [load, refreshTick])
 
+  // 딥링크로 들어온 코드 prefill.
+  useEffect(() => { if (subscribeCode) setCode(subscribeCode) }, [subscribeCode])
+
   const handleBecomeLeader = async () => {
     if (busy) return
     setBusy(true)
     try {
-      const me = await applyForLeader('나의 리딩', '')
+      const me = await applyForLeader(displayName.trim() || '나의 리딩', '')
       setLeader(me)
       toast?.show(
         me.status === 'APPROVED' ? '리더 등록 완료!' : '리더 신청 완료 — 승인 대기',
@@ -72,11 +83,26 @@ export function ReadingTab({ authToken, refreshing, refreshTick, onCompose, onOp
       toast?.show(`${l.displayName}님 구독 완료`, 'success')
       setCode('')
       await load()
-    } catch {
-      toast?.show('구독 실패 — 코드 확인', 'error')
+    } catch (e: any) {
+      toast?.show(subscribeErrorMessage(e?.message || ''), 'error')
     } finally {
       setBusy(false)
     }
+  }
+
+  const handleUnsubscribe = async (l: Leader) => {
+    try {
+      await unsubscribe(l.userId)
+      toast?.show(`${l.displayName} 구독 취소`, 'info')
+      await load()
+    } catch {
+      toast?.show('구독 취소 실패', 'error')
+    }
+  }
+
+  const handleShareCode = async () => {
+    if (!leader?.inviteCode) return
+    try { await Share.share({ message: readingShareMessage(leader.displayName, leader.inviteCode) }) } catch { /* 취소 */ }
   }
 
   const isApproved = leader?.status === 'APPROVED'
@@ -105,9 +131,23 @@ export function ReadingTab({ authToken, refreshing, refreshTick, onCompose, onOp
             <Text style={{ color: palette.inkMuted, fontSize: 12, lineHeight: 17 }}>
               직접 콜을 쓰고 싶다면 리더가 되어보세요. 친구는 내 코드로 구독합니다.
             </Text>
+            <TextInput
+              value={displayName}
+              onChangeText={setDisplayName}
+              placeholder="리더 이름 (구독자에게 보일 이름)"
+              placeholderTextColor={palette.inkFaint}
+              maxLength={20}
+              style={{
+                backgroundColor: palette.surfaceAlt, color: palette.ink,
+                borderWidth: 1, borderColor: palette.border, borderRadius: 8,
+                paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, fontWeight: '700',
+              }}
+            />
             <Pressable
               onPress={() => void handleBecomeLeader()}
               disabled={busy}
+              accessibilityRole="button"
+              accessibilityLabel="리더 되기"
               style={({ pressed }) => ({
                 backgroundColor: pressed ? palette.brandAccent + 'cc' : palette.brandAccent,
                 borderRadius: 10, paddingVertical: 12,
@@ -123,6 +163,11 @@ export function ReadingTab({ authToken, refreshing, refreshTick, onCompose, onOp
           <Text style={{ color: palette.orange, fontSize: 13, fontWeight: '700' }}>
             ⏳ 리더 승인 대기 중이에요.
           </Text>
+        ) : leader.status === 'SUSPENDED' ? (
+          <View style={{ gap: 4 }}>
+            <Text style={{ color: palette.down, fontSize: 13, fontWeight: '800' }}>🚫 리더 권한이 정지되었어요.</Text>
+            <Text style={{ color: palette.inkMuted, fontSize: 12 }}>새 글 작성이 제한됩니다. 문의가 필요하면 운영자에게 연락해주세요.</Text>
+          </View>
         ) : (
           <>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -130,12 +175,30 @@ export function ReadingTab({ authToken, refreshing, refreshTick, onCompose, onOp
               <Text style={{ color: palette.inkMuted, fontSize: 11 }}>구독자 {leader.followerCount}명</Text>
             </View>
             {leader.inviteCode ? (
-              <Text style={{ color: palette.inkMuted, fontSize: 12 }}>
-                내 구독 코드 <Text style={{ color: palette.brandAccent, fontWeight: '900', letterSpacing: 2 }}>{leader.inviteCode}</Text>
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Text style={{ color: palette.inkMuted, fontSize: 12, flex: 1 }}>
+                  내 구독 코드 <Text style={{ color: palette.brandAccent, fontWeight: '900', letterSpacing: 2 }}>{leader.inviteCode}</Text>
+                </Text>
+                <Pressable
+                  onPress={() => void handleShareCode()}
+                  accessibilityRole="button"
+                  accessibilityLabel="구독 코드 공유"
+                  style={({ pressed }) => ({
+                    flexDirection: 'row', alignItems: 'center', gap: 4,
+                    backgroundColor: pressed ? palette.surface : palette.surfaceAlt,
+                    borderWidth: 1, borderColor: palette.border, borderRadius: 8,
+                    paddingHorizontal: 10, paddingVertical: 6,
+                  })}
+                >
+                  <Share2 size={12} color={palette.inkSub} strokeWidth={2.5} />
+                  <Text style={{ color: palette.inkSub, fontSize: 11, fontWeight: '800' }}>공유</Text>
+                </Pressable>
+              </View>
             ) : null}
             <Pressable
               onPress={onCompose}
+              accessibilityRole="button"
+              accessibilityLabel="새 리딩 쓰기"
               style={({ pressed }) => ({
                 backgroundColor: pressed ? palette.brandAccent + 'cc' : palette.brandAccent,
                 borderRadius: 10, paddingVertical: 12,
@@ -158,7 +221,8 @@ export function ReadingTab({ authToken, refreshing, refreshTick, onCompose, onOp
               placeholderTextColor={palette.inkFaint}
               autoCapitalize="characters"
               autoCorrect={false}
-              maxLength={8}
+              maxLength={5}
+              onSubmitEditing={() => void handleSubscribe()}
               style={{
                 backgroundColor: palette.surfaceAlt, color: palette.ink,
                 borderWidth: 1, borderColor: palette.border, borderRadius: 8,
@@ -170,6 +234,8 @@ export function ReadingTab({ authToken, refreshing, refreshTick, onCompose, onOp
           <Pressable
             onPress={() => void handleSubscribe()}
             disabled={!code.trim() || busy}
+            accessibilityRole="button"
+            accessibilityLabel="리더 구독"
             style={({ pressed }) => ({
               backgroundColor: pressed ? palette.blue + 'cc' : palette.blue,
               borderRadius: 8, paddingHorizontal: 16, paddingVertical: 10,
@@ -181,13 +247,53 @@ export function ReadingTab({ authToken, refreshing, refreshTick, onCompose, onOp
         </View>
       </View>
 
+      {/* 구독 중인 리더 */}
+      {following.length > 0 ? (
+        <View style={styles.card}>
+          <View style={styles.sectionHeaderRow}>
+            <Text style={styles.cardTitle}>구독 중인 리더</Text>
+            <Text style={styles.metaText}>{following.length}명</Text>
+          </View>
+          {following.map((l) => (
+            <View key={l.userId} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 8 }}>
+              <Pressable onPress={() => onOpenLeader?.(l.userId)} accessibilityRole="button" style={{ flex: 1 }}>
+                <Text style={{ color: palette.ink, fontSize: 13, fontWeight: '800' }}>{l.displayName}</Text>
+                <Text style={{ color: palette.inkMuted, fontSize: 10 }}>구독자 {l.followerCount}명</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => void handleUnsubscribe(l)}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel={`${l.displayName} 구독 취소`}
+                style={({ pressed }) => ({
+                  flexDirection: 'row', alignItems: 'center', gap: 3,
+                  borderWidth: 1, borderColor: palette.border, borderRadius: 8,
+                  paddingHorizontal: 10, paddingVertical: 6, opacity: pressed ? 0.6 : 1,
+                })}
+              >
+                <X size={11} color={palette.inkMuted} strokeWidth={2.5} />
+                <Text style={{ color: palette.inkMuted, fontSize: 11, fontWeight: '800' }}>구독 취소</Text>
+              </Pressable>
+            </View>
+          ))}
+        </View>
+      ) : null}
+
       {/* 피드 */}
       <View style={styles.card}>
         <View style={styles.sectionHeaderRow}>
           <Text style={styles.cardTitle}>피드</Text>
           <Text style={styles.metaText}>{feed.length}개</Text>
         </View>
-        {feed.length === 0 ? (
+        {loadError ? (
+          <View style={{ paddingVertical: 24, alignItems: 'center', gap: 8 }}>
+            <Text style={{ color: palette.inkMuted, fontSize: 12, fontWeight: '700' }}>불러오기 실패</Text>
+            <Pressable onPress={() => void load()} accessibilityRole="button"
+              style={({ pressed }) => ({ backgroundColor: pressed ? palette.surfaceAlt : palette.surface, borderWidth: 1, borderColor: palette.border, borderRadius: 8, paddingHorizontal: 16, paddingVertical: 8 })}>
+              <Text style={{ color: palette.ink, fontSize: 12, fontWeight: '800' }}>다시 시도</Text>
+            </Pressable>
+          </View>
+        ) : feed.length === 0 ? (
           <View style={{ paddingVertical: 26, alignItems: 'center', gap: 6 }}>
             <Megaphone size={28} color={palette.inkFaint} strokeWidth={1.8} />
             <Text style={{ color: palette.inkMuted, fontSize: 12, fontWeight: '700' }}>아직 리딩이 없어요</Text>
@@ -203,80 +309,4 @@ export function ReadingTab({ authToken, refreshing, refreshTick, onCompose, onOp
       </View>
     </ScrollView>
   )
-}
-
-function PostCard({ post, onPressLeader }: { post: ReadingPost; onPressLeader: () => void }) {
-  const { palette } = useTheme()
-  const when = formatWhen(post.createdAt)
-  return (
-    <View style={{ paddingVertical: 12, borderTopWidth: 1, borderTopColor: palette.border, gap: 8 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Pressable onPress={onPressLeader} hitSlop={6}>
-          <Text style={{ color: palette.brandAccent, fontSize: 12, fontWeight: '800' }}>{post.leaderName}</Text>
-        </Pressable>
-        <Text style={{ color: palette.inkFaint, fontSize: 10 }}>{when}</Text>
-      </View>
-      <Text style={{ color: palette.ink, fontSize: 15, fontWeight: '800' }}>{post.title}</Text>
-      {post.body ? (
-        <Text style={{ color: palette.inkMuted, fontSize: 13, lineHeight: 19 }}>{post.body}</Text>
-      ) : null}
-      {post.calls.length > 0 ? (
-        <View style={{ gap: 6, marginTop: 2 }}>
-          {post.calls.map((c) => <CallRow key={c.id} call={c} palette={palette} />)}
-        </View>
-      ) : null}
-    </View>
-  )
-}
-
-function CallRow({ call, palette }: { call: ReadingCall; palette: ReturnType<typeof useTheme>['palette'] }) {
-  const ret = call.returnPct
-  const up = (ret ?? 0) >= 0
-  const retColor = ret == null ? palette.inkFaint : up ? palette.brandAccent : palette.red ?? '#ef4444'
-  const flag = call.market === 'KR' ? '🇰🇷' : '🇺🇸'
-  const cur = call.entryCurrency === 'KRW' ? '₩' : '$'
-  const hit = call.status === 'HIT'
-  return (
-    <View style={{
-      flexDirection: 'row', alignItems: 'center', gap: 8,
-      backgroundColor: palette.surfaceAlt, borderRadius: 8,
-      paddingHorizontal: 10, paddingVertical: 8,
-    }}>
-      <Text style={{ fontSize: 12 }}>{flag}</Text>
-      <View style={{ flex: 1 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          <Text style={{ color: palette.ink, fontSize: 13, fontWeight: '800' }}>{call.name}</Text>
-          {hit ? (
-            <View style={{ backgroundColor: palette.brandAccent + '22', borderRadius: 4, paddingHorizontal: 5, paddingVertical: 1 }}>
-              <Text style={{ color: palette.brandAccent, fontSize: 9, fontWeight: '900' }}>적중</Text>
-            </View>
-          ) : null}
-        </View>
-        <Text style={{ color: palette.inkFaint, fontSize: 10 }}>
-          진입 {cur}{formatPrice(call.entryPrice)}
-          {call.targetReturnPct != null ? ` · 목표 ${call.targetReturnPct > 0 ? '+' : ''}${call.targetReturnPct}%` : ''}
-        </Text>
-      </View>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
-        {ret != null ? <TrendingUp size={12} color={retColor} strokeWidth={2.5} /> : null}
-        <Text style={{ color: retColor, fontSize: 13, fontWeight: '900' }}>
-          {ret == null ? '—' : `${up ? '+' : ''}${ret.toFixed(1)}%`}
-        </Text>
-      </View>
-    </View>
-  )
-}
-
-function formatPrice(n: number): string {
-  return n >= 1000 ? Math.round(n).toLocaleString('ko-KR') : n.toFixed(2)
-}
-
-function formatWhen(iso: string): string {
-  const diff = Date.now() - new Date(iso).getTime()
-  const min = Math.floor(diff / 60000)
-  if (min < 1) return '방금'
-  if (min < 60) return `${min}분 전`
-  const hr = Math.floor(min / 60)
-  if (hr < 24) return `${hr}시간 전`
-  return `${Math.floor(hr / 24)}일 전`
 }

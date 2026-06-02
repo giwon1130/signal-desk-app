@@ -46,7 +46,10 @@ export async function subscribe(inviteCode: string): Promise<Leader> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ inviteCode }),
   })
-  if (!r.ok) throw new Error('subscribe-failed')
+  if (!r.ok) {
+    const text = await r.text()
+    throw new Error(text || 'subscribe-failed')
+  }
   const j = (await r.json()) as ApiResponse<Leader>
   return j.data
 }
@@ -86,7 +89,10 @@ export async function publishPost(input: PublishPostInput): Promise<ReadingPost>
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
   })
-  if (!r.ok) throw new Error('publish-post-failed')
+  if (!r.ok) {
+    const text = await r.text()
+    throw new Error(text || 'publish-post-failed')
+  }
   const j = (await r.json()) as ApiResponse<ReadingPost>
   return j.data
 }

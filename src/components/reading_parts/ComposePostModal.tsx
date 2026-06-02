@@ -8,7 +8,7 @@
 import { useState } from 'react'
 import { ActivityIndicator, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { Megaphone, Search, X } from 'lucide-react-native'
+import { CheckSquare, Megaphone, Search, Square, X } from 'lucide-react-native'
 import { useTheme } from '../../theme'
 import type { CallInput, DetectedMention, PostVisibility } from '../../types'
 import { detectMentions, publishPost } from '../../api/reading'
@@ -40,6 +40,12 @@ export function ComposePostModal({ visible, onClose, onPublished, toast }: Props
 
   const handleClose = () => { reset(); onClose() }
 
+  // 본문이 바뀌면 이전 인식 결과는 무효 — stale 후보로 게시되는 것 방지.
+  const handleBodyChange = (v: string) => {
+    setBody(v)
+    if (detected) { setCandidates([]); setDetected(false) }
+  }
+
   const handleDetect = async () => {
     if (!body.trim() || detecting) return
     setDetecting(true)
@@ -63,18 +69,22 @@ export function ComposePostModal({ visible, onClose, onPublished, toast }: Props
 
   const handlePublish = async () => {
     if (!title.trim() || publishing) return
-    const calls: CallInput[] = candidates
-      .filter((c) => c.selected)
-      .map((c) => {
-        const t = c.targetText.trim()
-        const parsed = t === '' ? null : Number(t)
-        return {
-          market: c.market,
-          ticker: c.ticker,
-          name: c.name,
-          targetReturnPct: parsed != null && Number.isFinite(parsed) ? parsed : null,
-        }
-      })
+    const selected = candidates.filter((c) => c.selected)
+    // 목표% 가 비어있지 않은데 숫자가 아니면 막는다 (조용히 기본값 되는 것 방지).
+    const badTarget = selected.find((c) => c.targetText.trim() !== '' && !Number.isFinite(Number(c.targetText.trim())))
+    if (badTarget) {
+      toast?.show(`목표%가 숫자가 아니에요 — ${badTarget.name}`, 'error')
+      return
+    }
+    const calls: CallInput[] = selected.map((c) => {
+      const t = c.targetText.trim()
+      return {
+        market: c.market,
+        ticker: c.ticker,
+        name: c.name,
+        targetReturnPct: t === '' ? null : Number(t),
+      }
+    })
     setPublishing(true)
     try {
       await publishPost({ title: title.trim(), body: body.trim(), visibility, calls })
@@ -82,8 +92,11 @@ export function ComposePostModal({ visible, onClose, onPublished, toast }: Props
       reset()
       onPublished()
       onClose()
-    } catch {
-      toast?.show('게시 실패 — 시세 확인 후 재시도', 'error')
+    } catch (e: any) {
+      const raw = e?.message || ''
+      // 백엔드가 시세 못 가져온 종목을 알려주면 표시.
+      const m = raw.match(/price not available[^A-Za-z0-9]*(?:for\s+)?([A-Z]{2}:[A-Za-z0-9.]+)/i)
+      toast?.show(m ? `시세 확인 실패 — ${m[1]}` : '게시 실패 — 시세 확인 후 재시도', 'error')
     } finally {
       setPublishing(false)
     }
@@ -127,7 +140,7 @@ export function ComposePostModal({ visible, onClose, onPublished, toast }: Props
             <Text style={{ color: palette.inkMuted, fontSize: 12, fontWeight: '700' }}>본문</Text>
             <TextInput
               value={body}
-              onChangeText={setBody}
+              onChangeText={handleBodyChange}
               placeholder={'시황과 종목 의견을 자유롭게 적어주세요.\n종목명을 적거나 $005930, $AAPL 형태로 쓰면 자동 인식돼요.'}
               placeholderTextColor={palette.inkFaint}
               multiline
@@ -172,9 +185,11 @@ export function ComposePostModal({ visible, onClose, onPublished, toast }: Props
                       borderRadius: 10, paddingHorizontal: 10, paddingVertical: 8,
                     }}
                   >
-                    <Pressable onPress={() => toggle(i)} hitSlop={8} style={{ flex: 1 }}>
+                    <Pressable onPress={() => toggle(i)} hitSlop={8} accessibilityRole="checkbox" accessibilityState={{ checked: c.selected }} style={{ flex: 1 }}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                        <Text style={{ fontSize: 14 }}>{c.selected ? '☑️' : '⬜'}</Text>
+                        {c.selected
+                          ? <CheckSquare size={16} color={palette.brandAccent} strokeWidth={2.5} />
+                          : <Square size={16} color={palette.inkFaint} strokeWidth={2.5} />}
                         <Text style={{ color: palette.ink, fontSize: 13, fontWeight: '800' }}>
                           {c.market === 'KR' ? '🇰🇷' : '🇺🇸'} {c.name}
                         </Text>
@@ -201,6 +216,33 @@ export function ComposePostModal({ visible, onClose, onPublished, toast }: Props
               )}
             </View>
           ) : null}
+
+          {/* 공개 범위 */}
+          <View style={{ gap: 6 }}>
+            <Text style={{ color: palette.inkMuted, fontSize: 12, fontWeight: '700' }}>공개 범위</Text>
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              {([
+                { key: 'FOLLOWERS' as PostVisibility, label: '구독자만' },
+                { key: 'PUBLIC' as PostVisibility, label: '전체 공개' },
+              ]).map((o) => {
+                const active = visibility === o.key
+                return (
+                  <Pressable
+                    key={o.key}
+                    onPress={() => setVisibility(o.key)}
+                    accessibilityRole="button"
+                    style={{
+                      flex: 1, paddingVertical: 10, borderRadius: 8, alignItems: 'center',
+                      backgroundColor: active ? palette.brandAccent : palette.surfaceAlt,
+                      borderWidth: 1, borderColor: active ? palette.brandAccent : palette.border,
+                    }}
+                  >
+                    <Text style={{ color: active ? palette.bg : palette.inkSub, fontSize: 12, fontWeight: '800' }}>{o.label}</Text>
+                  </Pressable>
+                )
+              })}
+            </View>
+          </View>
 
           {/* 게시 */}
           <Pressable

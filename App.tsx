@@ -34,6 +34,8 @@ import { CreateLeagueModal } from './src/components/league_parts/CreateLeagueMod
 import { LeagueDetailModal } from './src/components/league_parts/LeagueDetailModal'
 import { JoinLeagueModal } from './src/components/league_parts/JoinLeagueModal'
 import { parseJoinCode } from './src/components/league_parts/leagueShared'
+import { LeaderProfileModal } from './src/components/reading_parts/LeaderProfileModal'
+import { parseLeaderCode } from './src/components/reading_parts/readingShared'
 import { SettingsModal } from './src/components/SettingsModal'
 import { SystemStatusBanner } from './src/components/SystemStatusBanner'
 import { StocksTab } from './src/tabs/StocksTab'
@@ -130,9 +132,11 @@ function AppShell() {
   const [joinModalCode, setJoinModalCode] = useState<string | null>(null)
   // v2.1: 통합 설정 모달
   const [settingsOpen, setSettingsOpen] = useState(false)
-  // v2.2: 리딩 — 작성 모달 + 피드 새로고침 트리거
+  // v2.2: 리딩 — 작성 모달 + 피드 새로고침 트리거 + 리더 프로필 + 구독 코드(딥링크)
   const [composeOpen, setComposeOpen] = useState(false)
   const [readingRefreshTick, setReadingRefreshTick] = useState(0)
+  const [activeLeaderId, setActiveLeaderId] = useState<string | null>(null)
+  const [readingSubscribeCode, setReadingSubscribeCode] = useState<string | null>(null)
 
   useEffect(() => {
     const tok = user?.token
@@ -313,14 +317,19 @@ function AppShell() {
   // v2.1: URL 딥링크(?join=CODE / signaldesk://join?code=CODE)로 들어오면 참가 모달 자동 오픈.
   useEffect(() => {
     const handle = (url: string | null) => {
-      const code = parseJoinCode(url)
-      if (code) {
+      const joinCode = parseJoinCode(url)
+      const leaderCode = parseLeaderCode(url)
+      if (joinCode) {
         setActiveTab('league')
-        setJoinModalCode(code)
-        // 웹: 처리 후 쿼리 제거 (새로고침 시 재오픈 방지).
-        if (Platform.OS === 'web' && typeof window !== 'undefined') {
-          try { window.history.replaceState({}, '', window.location.pathname) } catch { /* noop */ }
-        }
+        setJoinModalCode(joinCode)
+      } else if (leaderCode) {
+        // 리딩 리더 구독 링크 → 리딩 탭 + 코드 prefill.
+        setActiveTab('reading')
+        setReadingSubscribeCode(leaderCode)
+      }
+      // 웹: 처리 후 쿼리 제거 (새로고침 시 재오픈 방지).
+      if ((joinCode || leaderCode) && Platform.OS === 'web' && typeof window !== 'undefined') {
+        try { window.history.replaceState({}, '', window.location.pathname) } catch { /* noop */ }
       }
     }
     void Linking.getInitialURL().then(handle)
@@ -533,7 +542,9 @@ function AppShell() {
           authToken={user?.token ?? null}
           refreshing={refreshing}
           refreshTick={readingRefreshTick}
+          subscribeCode={readingSubscribeCode}
           onCompose={() => setComposeOpen(true)}
+          onOpenLeader={(id) => setActiveLeaderId(id)}
           toast={toast}
         />
       ) : null}
@@ -598,6 +609,14 @@ function AppShell() {
         visible={composeOpen}
         onClose={() => setComposeOpen(false)}
         onPublished={() => setReadingRefreshTick((t) => t + 1)}
+        toast={toast}
+      />
+      <LeaderProfileModal
+        visible={!!activeLeaderId}
+        leaderUserId={activeLeaderId}
+        myUserId={user?.userId}
+        onClose={() => setActiveLeaderId(null)}
+        onSubscribed={() => setReadingRefreshTick((t) => t + 1)}
         toast={toast}
       />
       <SettingsModal
