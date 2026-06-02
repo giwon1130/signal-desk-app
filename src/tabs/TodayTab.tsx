@@ -102,18 +102,6 @@ export function TodayTab({
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       contentContainerStyle={[styles.content, isWeb && styles.contentWeb]}
     >
-      {/* ── 브리프 (Hero, 맨 위) — 모닝/장중/마감/이브닝 중 최신 자동 노출 ── */}
-      {mediaSummary ? (
-        <MediaSummaryCard
-          item={mediaSummary}
-          defaultCollapsed={false}
-          onTickerPress={(t) => {
-            const isKr = /^\d{6}$/.test(t)
-            onOpenDetail(isKr ? 'KR' : 'US', t)
-          }}
-        />
-      ) : null}
-
       {/* ── 장 세션 상태 — 선택 시장만 (#5) ── */}
       {summary?.marketSessions?.length ? (
         <View style={[styles.todaySessionRow, isWeb && styles.cardFull]}>
@@ -146,6 +134,18 @@ export function TodayTab({
           <Text style={styles.tradingDayBannerAdvice}>{tradingDay.advice}</Text>
           <Text style={styles.tradingDayBannerNext}>다음 거래일: {tradingDay.nextTradingDay}</Text>
         </View>
+      ) : null}
+
+      {/* ── 브리프 (Hero) — 세션/거래일 상태 아래. 모닝/마감/이브닝 중 최신 자동 노출 ── */}
+      {mediaSummary ? (
+        <MediaSummaryCard
+          item={mediaSummary}
+          defaultCollapsed={false}
+          onTickerPress={(t) => {
+            const isKr = /^\d{6}$/.test(t)
+            onOpenDetail(isKr ? 'KR' : 'US', t)
+          }}
+        />
       ) : null}
 
       {/* ── 시장 무드 (v2): 합성 위험도 + 요약 지표 ── */}
