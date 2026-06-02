@@ -109,6 +109,21 @@ export function PlaceTradeModal({
 
   const blocked = busy || qty <= 0 || overQty || insufficientCash
 
+  // 빠른 비율 — 매수: 보유 현금 기준 최대 매수가능 수량의 %, 매도: 보유 수량의 %.
+  // (매수 100% 는 수수료까지 포함해 현금 안에서 살 수 있는 최대치)
+  const canQuickPct = !!selected && selected.price > 0 && (side === 'SELL' ? (selected.heldQty ?? 0) > 0 : sameCcy)
+  const applyPct = (pct: number) => {
+    if (!selected || selected.price <= 0) return
+    let q = 0
+    if (side === 'SELL') {
+      q = Math.floor((selected.heldQty ?? 0) * pct)
+    } else if (sameCcy) {
+      const maxAffordable = Math.floor(cashBalance / (selected.price * (1 + LEAGUE_FEE)))
+      q = Math.floor(maxAffordable * pct)
+    }
+    setQuantity(String(Math.max(0, q)))
+  }
+
   const handleConfirm = async () => {
     if (!selected || blocked) return
     setBusy(true)
@@ -290,6 +305,26 @@ export function PlaceTradeModal({
                   fontSize: 22, fontWeight: '900', textAlign: 'right',
                 }}
               />
+              {/* 빠른 비율 (25 / 50 / 전액) */}
+              {canQuickPct ? (
+                <View style={{ flexDirection: 'row', gap: 6 }}>
+                  {[{ l: '25%', p: 0.25 }, { l: '50%', p: 0.5 }, { l: '전액', p: 1 }].map((b) => (
+                    <Pressable
+                      key={b.l}
+                      onPress={() => applyPct(b.p)}
+                      accessibilityRole="button"
+                      accessibilityLabel={`${side === 'BUY' ? '매수' : '매도'} ${b.l}`}
+                      style={({ pressed }) => ({
+                        flex: 1, paddingVertical: 8, borderRadius: 8, alignItems: 'center',
+                        backgroundColor: pressed ? palette.surface : palette.surfaceAlt,
+                        borderWidth: 1, borderColor: palette.border,
+                      })}
+                    >
+                      <Text style={{ color: palette.inkSub, fontSize: 12, fontWeight: '800' }}>{b.l}</Text>
+                    </Pressable>
+                  ))}
+                </View>
+              ) : null}
               {/* 예상 금액 + 수수료 */}
               {selected.price > 0 && qty > 0 ? (
                 sameCcy ? (
