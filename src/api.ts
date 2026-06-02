@@ -47,31 +47,31 @@ export async function loadAllData(): Promise<LoadAllDataResult> {
       authedFetch(`${API_BASE_URL}/api/v1/market/portfolio`),
     ])
 
-  if (
-    !healthResponse.ok ||
-    !summaryResponse.ok ||
-    !sectionsResponse.ok ||
-    !aiResponse.ok ||
-    !watchlistResponse.ok ||
-    !portfolioResponse.ok
-  ) {
+  // 핵심(health/summary/sections)만 치명적 — 실패 시 전체 에러 화면.
+  // 나머지(ai/watchlist/portfolio)는 한 곳이 죽어도 빈값으로 강등해 앱이 멈추지 않게 한다.
+  if (!healthResponse.ok || !summaryResponse.ok || !sectionsResponse.ok) {
     throw new Error('fetch failed')
   }
 
   const healthJson = (await healthResponse.json()) as HealthResponse
   const summaryJson = (await summaryResponse.json()) as ApiResponse<MarketSummaryData>
   const sectionsJson = (await sectionsResponse.json()) as ApiResponse<MarketSectionsData>
-  const aiJson = (await aiResponse.json()) as ApiResponse<{ aiRecommendations: AiRecommendationData }>
-  const watchlistJson = (await watchlistResponse.json()) as ApiResponse<WatchlistResponse>
-  const portfolioJson = (await portfolioResponse.json()) as ApiResponse<PortfolioResponse>
+
+  const EMPTY_AI: AiRecommendationData = { generatedDate: '', summary: '', executionLogs: [], metrics: null }
+  const EMPTY_PORTFOLIO: PortfolioResponse['portfolio'] = {
+    totalCost: 0, totalValue: 0, totalProfit: 0, totalProfitRate: 0, positions: [],
+  }
+  const safe = async <T>(res: Response, pick: (j: any) => T, fallback: T): Promise<T> => {
+    try { return res.ok ? pick(await res.json()) : fallback } catch { return fallback }
+  }
 
   return {
     health: healthJson,
     summary: summaryJson.data,
     sections: sectionsJson.data,
-    aiRecommendation: aiJson.data.aiRecommendations,
-    watchlist: watchlistJson.data.watchlist,
-    portfolio: portfolioJson.data.portfolio,
+    aiRecommendation: await safe(aiResponse, (j) => j.data.aiRecommendations as AiRecommendationData, EMPTY_AI),
+    watchlist: await safe(watchlistResponse, (j) => j.data.watchlist as WatchItem[], []),
+    portfolio: await safe(portfolioResponse, (j) => j.data.portfolio as PortfolioResponse['portfolio'], EMPTY_PORTFOLIO),
   }
 }
 
@@ -81,7 +81,7 @@ export async function searchStocks(query: string, market: string): Promise<Stock
     `${API_BASE_URL}/api/v1/market/stocks/search?q=${encodeURIComponent(query)}${marketParam}&limit=20`,
   )
   if (!response.ok) {
-    throw new Error('stock-search-failed')
+    throw new Error((await response.text()) || 'stock-search-failed')
   }
   const result = (await response.json()) as ApiResponse<StockSearchResult[]>
   return result.data
@@ -92,7 +92,7 @@ export async function deleteFavoriteItem(id: string): Promise<void> {
     method: 'DELETE',
   })
   if (!response.ok) {
-    throw new Error('delete-favorite-failed')
+    throw new Error((await response.text()) || 'delete-favorite-failed')
   }
 }
 
@@ -123,7 +123,7 @@ export async function savePortfolioPosition(payload: {
     }),
   })
   if (!response.ok) {
-    throw new Error('save-portfolio-failed')
+    throw new Error((await response.text()) || 'save-portfolio-failed')
   }
 }
 
@@ -132,7 +132,7 @@ export async function deletePortfolioPosition(id: string): Promise<void> {
     method: 'DELETE',
   })
   if (!response.ok) {
-    throw new Error('delete-portfolio-failed')
+    throw new Error((await response.text()) || 'delete-portfolio-failed')
   }
 }
 
@@ -180,7 +180,7 @@ export async function saveWatchItemAlerts(item: {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(item),
   })
-  if (!response.ok) throw new Error('save-watch-alerts-failed')
+  if (!response.ok) throw new Error((await response.text()) || 'save-watch-alerts-failed')
 }
 
 export async function quickAddWatchItem(stock: {
@@ -210,6 +210,6 @@ export async function quickAddWatchItem(stock: {
     }),
   })
   if (!response.ok) {
-    throw new Error('quick-add-watch-failed')
+    throw new Error((await response.text()) || 'quick-add-watch-failed')
   }
 }

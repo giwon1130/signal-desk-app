@@ -22,7 +22,7 @@ export async function applyForLeader(displayName: string, bio = ''): Promise<Lea
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ displayName, bio }),
   })
-  if (!r.ok) throw new Error('apply-leader-failed')
+  if (!r.ok) throw new Error((await r.text()) || 'apply-leader-failed')
   const j = (await r.json()) as ApiResponse<Leader>
   return j.data
 }
@@ -67,7 +67,8 @@ export async function subscribe(inviteCode: string): Promise<Leader> {
 }
 
 export async function unsubscribe(leaderUserId: string): Promise<void> {
-  await authedFetch(`${base}/subscribe/${leaderUserId}`, { method: 'DELETE' })
+  const r = await authedFetch(`${base}/subscribe/${leaderUserId}`, { method: 'DELETE' })
+  if (!r.ok) throw new Error((await r.text()) || 'unsubscribe-failed')
 }
 
 export async function fetchFollowing(): Promise<Leader[]> {

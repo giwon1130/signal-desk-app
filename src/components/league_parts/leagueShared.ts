@@ -2,6 +2,7 @@
  * 리그 공용 상수/헬퍼 — 여러 league_parts 에서 중복되던 포맷/상태/에러 로직 통합.
  */
 import type { LeagueCurrency, LeagueStatus } from '../../types'
+import { apiErrorMessage } from '../../utils/apiError'
 
 /** 거래 수수료 0.3% (매수 시 추가 비용, 매도 시 수령액에서 차감). 백엔드 TradeService 와 동일. */
 export const LEAGUE_FEE = 0.003
@@ -74,7 +75,7 @@ export function joinErrorMessage(raw: string): string {
   if (s.includes('full')) return '인원이 가득 찼어요 (최대 10명)'
   if (s.includes('finished')) return '이미 종료된 리그예요'
   if (s.includes('not found')) return '코드를 찾을 수 없어요'
-  return '참가 실패 — 코드 확인'
+  return apiErrorMessage(raw, '참가 실패 — 코드 확인')
 }
 
 /** 체결 실패 사유를 사용자 문구로. 백엔드 TradeService 메시지 기준. */
@@ -87,5 +88,5 @@ export function tradeErrorMessage(raw: string): string {
   if (s.includes('not running')) return '아직 시작 안 됐거나 종료됨'
   if (s.includes('not a participant')) return '참가자가 아니에요'
   if (s.includes('marketscope') || s.includes('market not allowed')) return '이 리그에서 거래할 수 없는 시장이에요'
-  return '체결 실패'
+  return apiErrorMessage(raw, '체결 실패')
 }

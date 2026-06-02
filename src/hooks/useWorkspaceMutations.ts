@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react'
+import { apiErrorMessage } from '../utils/apiError'
 import {
   deleteFavoriteItem,
   deletePortfolioPosition,
@@ -50,9 +51,9 @@ export function useWorkspaceMutations(args: Args) {
       await fetchData()
       void hapticSuccess()
       toast.show(payload.id ? '보유 종목을 수정했어요' : '보유 종목으로 등록했어요', 'success')
-    } catch {
+    } catch (e) {
       void hapticError()
-      toast.show('저장에 실패했어요. 입력값을 확인해줘', 'error')
+      toast.show(apiErrorMessage(e, '저장에 실패했어요. 입력값을 확인해줘'), 'error')
       throw new Error('save-portfolio-failed')
     }
   }, [fetchData, toast])
@@ -63,9 +64,9 @@ export function useWorkspaceMutations(args: Args) {
       await fetchData()
       void hapticSuccess()
       toast.show('보유 종목을 삭제했어요', 'info')
-    } catch {
+    } catch (e) {
       void hapticError()
-      toast.show('삭제에 실패했어요', 'error')
+      toast.show(apiErrorMessage(e, '삭제에 실패했어요'), 'error')
     }
   }, [fetchData, toast])
 
@@ -75,9 +76,9 @@ export function useWorkspaceMutations(args: Args) {
       await fetchData()
       void hapticSuccess()
       toast.show('관심종목에 담았어요', 'success')
-    } catch {
+    } catch (e) {
       void hapticError()
-      toast.show('관심종목 추가에 실패했어요', 'error')
+      toast.show(apiErrorMessage(e, '관심종목 추가에 실패했어요'), 'error')
       throw new Error('quick-add-failed')
     }
   }, [fetchData, toast])
@@ -92,9 +93,9 @@ export function useWorkspaceMutations(args: Args) {
       void fetchData()
       void hapticSuccess()
       toast.show('관심종목에서 해제했어요', 'info')
-    } catch {
+    } catch (e) {
       void hapticError()
-      toast.show('해제에 실패했어요', 'error')
+      toast.show(apiErrorMessage(e, '해제에 실패했어요'), 'error')
     } finally {
       setFavoriteDeletingId('')
     }
@@ -113,9 +114,9 @@ export function useWorkspaceMutations(args: Args) {
       void fetchData()
       void hapticSuccess()
       toast.show('관심종목을 전부 해제했어요', 'info')
-    } catch {
+    } catch (e) {
       void hapticError()
-      toast.show('일괄 해제에 실패했어요', 'error')
+      toast.show(apiErrorMessage(e, '일괄 해제에 실패했어요'), 'error')
     } finally {
       setBulkDeletingWatch(false)
     }
@@ -157,9 +158,9 @@ export function useWorkspaceMutations(args: Args) {
       ))
       void hapticSuccess()
       toast.show('알림 설정을 저장했어.', 'success')
-    } catch {
+    } catch (e) {
       void hapticError()
-      toast.show('저장에 실패했어. 다시 시도해줘.', 'error')
+      toast.show(apiErrorMessage(e, '저장에 실패했어. 다시 시도해줘.'), 'error')
     }
   }, [setWatchlist, toast])
 

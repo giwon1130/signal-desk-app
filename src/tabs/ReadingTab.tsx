@@ -17,6 +17,7 @@ import type { Leader, ReadingPost } from '../types'
 import { applyForLeader, fetchFeed, fetchFollowing, fetchLeaderEligibility, fetchMyLeader, subscribe, unsubscribe } from '../api/reading'
 import { PostCard } from '../components/reading_parts/PostCard'
 import { readingShareMessage, subscribeErrorMessage } from '../components/reading_parts/readingShared'
+import { apiErrorMessage } from '../utils/apiError'
 
 type Props = {
   authToken: string | null
@@ -70,8 +71,8 @@ export function ReadingTab({ authToken, refreshing, refreshTick, subscribeCode, 
         me.status === 'APPROVED' ? '리더 등록 완료!' : '리더 신청 완료 — 승인 대기',
         me.status === 'APPROVED' ? 'success' : 'info',
       )
-    } catch {
-      toast?.show('리더 신청 실패', 'error')
+    } catch (e) {
+      toast?.show(apiErrorMessage(e, '리더 신청 실패'), 'error')
     } finally {
       setBusy(false)
     }
@@ -97,8 +98,8 @@ export function ReadingTab({ authToken, refreshing, refreshTick, subscribeCode, 
       await unsubscribe(l.userId)
       toast?.show(`${l.displayName} 구독 취소`, 'info')
       await load()
-    } catch {
-      toast?.show('구독 취소 실패', 'error')
+    } catch (e) {
+      toast?.show(apiErrorMessage(e, '구독 취소 실패'), 'error')
     }
   }
 

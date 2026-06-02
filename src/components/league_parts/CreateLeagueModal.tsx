@@ -12,6 +12,7 @@ import { useTheme } from '../../theme'
 import type { LeagueCurrency, LeagueVisibility, MarketScope, TradingHours } from '../../types'
 import { createLeague, openLeague } from '../../api/league'
 import { LEAGUE_AVATARS } from './leagueShared'
+import { apiErrorMessage } from '../../utils/apiError'
 
 type Props = {
   visible: boolean
@@ -101,7 +102,7 @@ export function CreateLeagueModal({ visible, onClose, onCreated, toast }: Props)
       setHostNickname('호스트')
       setStartMode('NOW')
     } catch (e: any) {
-      toast?.show('리그 생성 실패', 'error')
+      toast?.show(apiErrorMessage(e, '리그 생성 실패'), 'error')
     } finally {
       setBusy(false)
     }

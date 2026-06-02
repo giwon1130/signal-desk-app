@@ -44,14 +44,14 @@ export async function createLeague(input: CreateLeagueInput): Promise<League> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
   })
-  if (!r.ok) throw new Error('create-league-failed')
+  if (!r.ok) throw new Error((await r.text()) || 'create-league-failed')
   const j = (await r.json()) as ApiResponse<League>
   return j.data
 }
 
 export async function openLeague(id: string): Promise<League> {
   const r = await authedFetch(`${base}/${id}/open`, { method: 'POST' })
-  if (!r.ok) throw new Error('open-league-failed')
+  if (!r.ok) throw new Error((await r.text()) || 'open-league-failed')
   const j = (await r.json()) as ApiResponse<League>
   return j.data
 }
@@ -72,7 +72,8 @@ export async function joinLeague(joinCode: string, nickname: string, avatarEmoji
 }
 
 export async function leaveLeague(id: string): Promise<void> {
-  await authedFetch(`${base}/${id}/leave`, { method: 'DELETE' })
+  const r = await authedFetch(`${base}/${id}/leave`, { method: 'DELETE' })
+  if (!r.ok) throw new Error((await r.text()) || 'leave-league-failed')
 }
 
 export async function fetchLeagueDetail(id: string): Promise<LeagueDetail | null> {

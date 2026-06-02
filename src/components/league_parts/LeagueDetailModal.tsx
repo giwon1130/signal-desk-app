@@ -15,6 +15,7 @@ import type {
 } from '../../types'
 import { PlaceTradeModal } from './PlaceTradeModal'
 import { fmtMoney, fmtNum, leagueShareMessage, leagueStatusColor, leagueStatusLabel } from './leagueShared'
+import { apiErrorMessage } from '../../utils/apiError'
 
 type Props = {
   visible: boolean
@@ -80,8 +81,8 @@ export function LeagueDetailModal({ visible, leagueId, myUserId, onClose, onLeft
       toast?.show('리그에서 나갔어요', 'info')
       onLeft?.()
       onClose()
-    } catch {
-      toast?.show('나가기 실패', 'error')
+    } catch (e) {
+      toast?.show(apiErrorMessage(e, '나가기 실패'), 'error')
     } finally {
       setLeaving(false)
     }

@@ -3,6 +3,7 @@
  * (league_parts/leagueShared 와 동일한 패턴)
  */
 import type { CallCurrency, CallStatus } from '../../types'
+import { apiErrorMessage } from '../../utils/apiError'
 
 /** 진입가/현재가 — 통화별 포맷. KRW=정수+원, USD=$+소수2자리, 둘 다 천 단위 쉼표. */
 export function fmtPrice(value: number, currency: CallCurrency): string {
@@ -58,5 +59,5 @@ export function subscribeErrorMessage(raw: string): string {
   if (s.includes('self') || s.includes('yourself') || s.includes('own')) return '내 코드는 구독할 수 없어요'
   if (s.includes('approved')) return '아직 승인된 리더가 아니에요'
   if (s.includes('not found') || s.includes('invalid')) return '코드를 찾을 수 없어요'
-  return '구독 실패 — 코드 확인'
+  return apiErrorMessage(raw, '구독 실패 — 코드 확인')
 }
