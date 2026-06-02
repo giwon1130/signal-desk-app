@@ -15,12 +15,13 @@ type Entry =
   | { kind: 'stock'; id: string; label: string; hint: string; market: string; ticker: string; name: string }
   | { kind: 'action'; id: string; label: string; hint: string; run: () => void }
 
-// v2.1: 'league' 추가.
+// v2.1: 'league' 추가. 'reading' — PC 작성용 리딩(종목 콜 공유).
 const TAB_ENTRIES: Array<{ tab: TabKey; label: string; hint: string }> = [
   { tab: 'today', label: '오늘', hint: '시장 무드 · 모닝/이브닝 브리프 · 보유 모니터' },
   { tab: 'stocks', label: '종목', hint: '검색 · 관심 · 보유' },
   { tab: 'ai', label: 'AI', hint: 'AI 추천 · 숨은 시그널 · 인사이트' },
   { tab: 'league', label: '리그', hint: '친구 모의투자 — 시즌별 경쟁' },
+  { tab: 'reading', label: '리딩', hint: '종목 콜 공유 · 리더 되기 · 구독' },
 ]
 
 export function CommandPalette({ watchlist, onNavigateTab, onOpenDetail, onOpenReminder }: Props) {
