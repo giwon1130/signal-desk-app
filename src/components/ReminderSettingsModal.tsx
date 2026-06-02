@@ -18,6 +18,7 @@ import {
 import { getPushAlertsEnabled, setPushAlertsEnabled } from '../api/pushDevice'
 import { getAlertPreferences, updateAlertPreferences, type AlertPreferences } from '../api/alertPreferences'
 import { AlertToggleRow } from './reminder_parts/AlertToggleRow'
+import { AlertGroup } from './reminder_parts/AlertGroup'
 import { MinutesBeforePicker } from './reminder_parts/MinutesBeforePicker'
 import { NotificationHistorySection } from './reminder_parts/NotificationHistorySection'
 
@@ -114,82 +115,66 @@ export function ReminderSettingsModal({ visible, authToken, onClose }: Props) {
 
             {/* v2: 시장 선호는 헤더 MarketProfileChip 으로 이동. 알림 모달은 알림 전용. */}
 
-            <AlertToggleRow
-              title="📈 관심종목 급등락 알림"
-              hint="±5% 감지 시 푸시 (서버 발송)"
-              value={pushOn}
-              disabled={togglesDisabled}
-              onValueChange={(v) => void handlePush(v)}
-            />
-            <AlertToggleRow
-              title="🇰🇷 한국장 watch 알림"
-              hint="09:00~15:30 KST, 거래일에만"
-              value={prefs.krEnabled}
-              disabled={togglesDisabled}
-              onValueChange={(v) => void updatePref({ krEnabled: v })}
-            />
-            <AlertToggleRow
-              title="🇺🇸 미국장 watch 알림"
-              hint="22:30~05:00 KST, 거래일에만 (디폴트 OFF)"
-              value={prefs.usEnabled}
-              disabled={togglesDisabled}
-              onValueChange={(v) => void updatePref({ usEnabled: v })}
-            />
-            <AlertToggleRow
-              title="🌅 모닝 브리프 알림"
-              hint="08:30 KST · 야간 미국장 + 보유 종목 공시 통합"
-              value={prefs.premarketEnabled}
-              disabled={togglesDisabled}
-              onValueChange={(v) => void updatePref({ premarketEnabled: v })}
-            />
-            <AlertToggleRow
-              title="☀️ 장중 브리프 알림"
-              hint="12:30 KST · 오전장 흐름·수급 점검 → 오후 대응"
-              value={prefs.middayBriefEnabled}
-              disabled={togglesDisabled}
-              onValueChange={(v) => void updatePref({ middayBriefEnabled: v })}
-            />
-            <AlertToggleRow
-              title="🔔 마감 브리프 알림"
-              hint="15:40 KST · 오늘 마감 정리 + 내일 관전 포인트"
-              value={prefs.closeBriefEnabled}
-              disabled={togglesDisabled}
-              onValueChange={(v) => void updatePref({ closeBriefEnabled: v })}
-            />
-            <AlertToggleRow
-              title="🌆 미국장 마감 브리프 (새벽)"
-              hint="새벽 06:30 KST · NY 마감 직후 NASDAQ/S&P · 주도주 · 실적"
-              value={prefs.eveningBriefEnabled}
-              disabled={togglesDisabled}
-              onValueChange={(v) => void updatePref({ eveningBriefEnabled: v })}
-            />
-            <AlertToggleRow
-              title="⚠️ 시장 위험도 알림"
-              hint="합성 위험도 8/10 이상일 때 · 08:32 KST"
-              value={prefs.compositeRiskEnabled}
-              disabled={togglesDisabled}
-              onValueChange={(v) => void updatePref({ compositeRiskEnabled: v })}
-            />
-            <AlertToggleRow
-              title="🇰🇷 한국장 시작"
-              hint="매일 09:00 KST"
-              value={krOn}
-              disabled={!hydrated}
-              onValueChange={(v) => void handleKr(v)}
-            />
-            <AlertToggleRow
-              title="🇺🇸 미국장 시작"
-              hint="평일 22:30/23:30 KST (서머타임 자동)"
-              value={usOn}
-              disabled={!hydrated}
-              onValueChange={(v) => void handleUs(v)}
-            />
+            {/* 종목 급등락 (서버 푸시) — 단독 */}
+            <View style={{ borderTopWidth: 1, borderTopColor: palette.border }}>
+              <AlertToggleRow
+                title="📈 관심종목 급등락 알림"
+                hint="±5% 감지 시 푸시 (서버 발송)"
+                value={pushOn}
+                disabled={togglesDisabled}
+                onValueChange={(v) => void handlePush(v)}
+              />
+            </View>
 
-            <MinutesBeforePicker
-              value={minutes}
-              options={MINUTES_OPTIONS}
-              onChange={(m) => void handleMinutes(m)}
-            />
+            {/* 브리프 그룹 */}
+            <AlertGroup
+              title="📰 브리프 알림"
+              subtitle="모닝 · 장중 · 마감 · 미국 마감"
+              master={prefs.premarketEnabled || prefs.middayBriefEnabled || prefs.closeBriefEnabled || prefs.eveningBriefEnabled}
+              disabled={togglesDisabled}
+              onToggleAll={(v) => void updatePref({ premarketEnabled: v, middayBriefEnabled: v, closeBriefEnabled: v, eveningBriefEnabled: v })}
+            >
+              <AlertToggleRow compact title="🌅 모닝 브리프" hint="08:30 KST · 야간 미국장 + 보유 공시" value={prefs.premarketEnabled} disabled={togglesDisabled} onValueChange={(v) => void updatePref({ premarketEnabled: v })} />
+              <AlertToggleRow compact title="☀️ 장중 브리프" hint="12:30 KST · 오전장 흐름·수급" value={prefs.middayBriefEnabled} disabled={togglesDisabled} onValueChange={(v) => void updatePref({ middayBriefEnabled: v })} />
+              <AlertToggleRow compact title="🔔 마감 브리프" hint="15:40 KST · 마감 정리 + 내일 관전" value={prefs.closeBriefEnabled} disabled={togglesDisabled} onValueChange={(v) => void updatePref({ closeBriefEnabled: v })} />
+              <AlertToggleRow compact title="🌆 미국장 마감 브리프 (새벽)" hint="06:30 KST · NY 마감 직후 주도주·실적" value={prefs.eveningBriefEnabled} disabled={togglesDisabled} onValueChange={(v) => void updatePref({ eveningBriefEnabled: v })} />
+            </AlertGroup>
+
+            {/* 관심종목 watch 그룹 */}
+            <AlertGroup
+              title="👀 관심종목 watch 알림"
+              subtitle="장중 가격 감시 알림"
+              master={prefs.krEnabled || prefs.usEnabled}
+              disabled={togglesDisabled}
+              onToggleAll={(v) => void updatePref({ krEnabled: v, usEnabled: v })}
+            >
+              <AlertToggleRow compact title="🇰🇷 한국장" hint="09:00~15:30 KST, 거래일에만" value={prefs.krEnabled} disabled={togglesDisabled} onValueChange={(v) => void updatePref({ krEnabled: v })} />
+              <AlertToggleRow compact title="🇺🇸 미국장" hint="22:30~05:00 KST, 거래일에만" value={prefs.usEnabled} disabled={togglesDisabled} onValueChange={(v) => void updatePref({ usEnabled: v })} />
+            </AlertGroup>
+
+            {/* 장 시작 그룹 (로컬 알림) */}
+            <AlertGroup
+              title="⏰ 장 시작 알림"
+              subtitle="장 열리기 전 디바이스 알림"
+              master={krOn || usOn}
+              disabled={!hydrated}
+              onToggleAll={(v) => { void handleKr(v); void handleUs(v) }}
+            >
+              <AlertToggleRow compact title="🇰🇷 한국장 시작" hint="매일 09:00 KST" value={krOn} disabled={!hydrated} onValueChange={(v) => void handleKr(v)} />
+              <AlertToggleRow compact title="🇺🇸 미국장 시작" hint="평일 22:30/23:30 KST (서머타임 자동)" value={usOn} disabled={!hydrated} onValueChange={(v) => void handleUs(v)} />
+              <MinutesBeforePicker value={minutes} options={MINUTES_OPTIONS} onChange={(m) => void handleMinutes(m)} />
+            </AlertGroup>
+
+            {/* 시장 위험도 — 단독 */}
+            <View style={{ borderTopWidth: 1, borderTopColor: palette.border }}>
+              <AlertToggleRow
+                title="⚠️ 시장 위험도 알림"
+                hint="합성 위험도 8/10 이상 · 08:32 KST"
+                value={prefs.compositeRiskEnabled}
+                disabled={togglesDisabled}
+                onValueChange={(v) => void updatePref({ compositeRiskEnabled: v })}
+              />
+            </View>
 
             <Text style={styles.signalModalDisclaimer}>
               장 시작 알림은 디바이스 로컬 예약, 급등락 알림은 서버에서 Expo 푸시로 발송한다.
