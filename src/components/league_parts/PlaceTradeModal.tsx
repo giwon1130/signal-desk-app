@@ -95,6 +95,7 @@ export function PlaceTradeModal({
   const fee = notional * LEAGUE_FEE
   const buyCost = notional + fee          // 매수 총비용
   const sellProceeds = notional - fee     // 매도 수령액
+  const remainingCash = side === 'BUY' ? cashBalance - buyCost : cashBalance + sellProceeds // 체결 후 잔여 현금
 
   // 검증
   const overQty = side === 'SELL' && selected?.heldQty != null && qty > selected.heldQty
@@ -337,6 +338,13 @@ export function PlaceTradeModal({
                       palette={palette}
                       strong
                     />
+                    <View style={{ height: 1, backgroundColor: palette.border, marginVertical: 3 }} />
+                    <Row
+                      label="체결 후 잔여 현금"
+                      value={fmtMoney(remainingCash, currency)}
+                      palette={palette}
+                      danger={remainingCash < 0}
+                    />
                   </View>
                 ) : (
                   <View style={{ gap: 3, marginTop: 2 }}>
@@ -414,11 +422,12 @@ export function PlaceTradeModal({
   )
 }
 
-function Row({ label, value, palette, faint, strong }: { label: string; value: string; palette: any; faint?: boolean; strong?: boolean }) {
+function Row({ label, value, palette, faint, strong, danger }: { label: string; value: string; palette: any; faint?: boolean; strong?: boolean; danger?: boolean }) {
+  const valueColor = danger ? palette.down : faint ? palette.inkMuted : palette.ink
   return (
     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
       <Text style={{ color: faint ? palette.inkFaint : palette.inkMuted, fontSize: 12, fontWeight: '700' }}>{label}</Text>
-      <Text style={{ color: faint ? palette.inkMuted : palette.ink, fontSize: strong ? 16 : 13, fontWeight: strong ? '900' : '800' }}>{value}</Text>
+      <Text style={{ color: valueColor, fontSize: strong ? 16 : 13, fontWeight: strong ? '900' : '800' }}>{value}</Text>
     </View>
   )
 }

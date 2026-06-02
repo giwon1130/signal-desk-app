@@ -202,6 +202,24 @@ export function LeagueDetailModal({ visible, leagueId, myUserId, onClose, onLeft
           </View>
           ) : null}
 
+          {/* 내 자산 — 현금 + 총자산 */}
+          {league && me ? (
+            <View style={{ flexDirection: 'row', gap: 10 }}>
+              <View style={{ flex: 1, backgroundColor: palette.surface, borderRadius: 12, borderWidth: 1, borderColor: palette.border, padding: 12, gap: 3 }}>
+                <Text style={{ color: palette.inkMuted, fontSize: 10, fontWeight: '800', letterSpacing: 1 }}>내 현금</Text>
+                <Text style={{ color: palette.ink, fontSize: 16, fontWeight: '900', fontVariant: ['tabular-nums'] }}>
+                  {fmtMoney(me.cashBalance, league.currency)}
+                </Text>
+              </View>
+              <View style={{ flex: 1, backgroundColor: palette.surface, borderRadius: 12, borderWidth: 1, borderColor: palette.border, padding: 12, gap: 3 }}>
+                <Text style={{ color: palette.inkMuted, fontSize: 10, fontWeight: '800', letterSpacing: 1 }}>총자산</Text>
+                <Text style={{ color: palette.ink, fontSize: 16, fontWeight: '900', fontVariant: ['tabular-nums'] }}>
+                  {fmtMoney(me.totalAssets, league.currency)}
+                </Text>
+              </View>
+            </View>
+          ) : null}
+
           {/* 거래 액션 */}
           {canTrade ? (
             <Pressable
