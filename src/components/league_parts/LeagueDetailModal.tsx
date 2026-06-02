@@ -11,7 +11,7 @@ import {
   fetchLeaderboard, fetchLeagueDetail, fetchMyPositions, fetchTradeFeed, leaveLeague,
 } from '../../api/league'
 import type {
-  LeaderboardEntry, LeagueDetail as LeagueDetailType, LeaguePosition, LeagueTrade,
+  LeaderboardEntry, LeagueDetail as LeagueDetailType, LeaguePosition, LeagueTrade, MarketSessionStatus,
 } from '../../types'
 import { PlaceTradeModal } from './PlaceTradeModal'
 import { fmtMoney, fmtNum, leagueShareMessage, leagueStatusColor, leagueStatusLabel } from './leagueShared'
@@ -21,12 +21,13 @@ type Props = {
   visible: boolean
   leagueId: string | null
   myUserId?: string
+  marketSessions?: MarketSessionStatus[]
   onClose: () => void
   onLeft?: () => void
   toast?: { show: (msg: string, type?: 'success' | 'error' | 'info') => void }
 }
 
-export function LeagueDetailModal({ visible, leagueId, myUserId, onClose, onLeft, toast }: Props) {
+export function LeagueDetailModal({ visible, leagueId, myUserId, marketSessions, onClose, onLeft, toast }: Props) {
   const { palette } = useTheme()
   const insets = useSafeAreaInsets()
   const [detail, setDetail] = useState<LeagueDetailType | null>(null)
@@ -332,6 +333,8 @@ export function LeagueDetailModal({ visible, leagueId, myUserId, onClose, onLeft
             currency={league.currency}
             marketScope={league.marketScope}
             totalAssets={me?.totalAssets ?? 0}
+            tradingHours={league.tradingHours}
+            marketSessions={marketSessions ?? []}
             onClose={() => setTradeOpen(false)}
             onTraded={() => { void load() }}
             toast={toast}

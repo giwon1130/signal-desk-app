@@ -9,7 +9,7 @@ import { ArrowDownToLine, ArrowUpFromLine, Search, X } from 'lucide-react-native
 import { useTheme } from '../../theme'
 import { placeTrade } from '../../api/league'
 import { searchStocks } from '../../api'
-import type { LeaguePosition, MarketScope, StockSearchResult, TradeSide } from '../../types'
+import type { LeaguePosition, MarketScope, MarketSessionStatus, StockSearchResult, TradeSide, TradingHours } from '../../types'
 import { LEAGUE_FEE, MAX_POSITION_PCT, fmtMoney, fmtNum, tradeErrorMessage } from './leagueShared'
 
 type Props = {
@@ -20,6 +20,8 @@ type Props = {
   currency: 'KRW' | 'USD'
   marketScope: MarketScope
   totalAssets: number                    // league 통화 — 30% 비중 기준
+  tradingHours: TradingHours             // 장중에만 / 24시간
+  marketSessions: MarketSessionStatus[]  // KR/US 개장 여부 (장 마감 안내용)
   onClose: () => void
   onTraded: () => void
   toast?: { show: (msg: string, type?: 'success' | 'error' | 'info') => void }
@@ -36,7 +38,7 @@ type Selected = {
 }
 
 export function PlaceTradeModal({
-  visible, leagueId, positions, cashBalance, currency, marketScope, totalAssets, onClose, onTraded, toast,
+  visible, leagueId, positions, cashBalance, currency, marketScope, totalAssets, tradingHours, marketSessions, onClose, onTraded, toast,
 }: Props) {
   const { palette } = useTheme()
   const insets = useSafeAreaInsets()
@@ -108,7 +110,12 @@ export function PlaceTradeModal({
     return (heldValue + notional) / totalAssets > MAX_POSITION_PCT
   }, [side, sameCcy, selected, qty, totalAssets, positions, notional])
 
-  const blocked = busy || qty <= 0 || overQty || insufficientCash
+  // 선택 종목 시장의 개장 여부 (백엔드 marketSessions 권위값). 없으면 열린 것으로 간주.
+  const marketClosed = !!selected && marketSessions.find((s) => s.market === selected.market)?.isOpen === false
+  // 장중에만 리그는 마감 시 막힘(백엔드도 거부). 24시간 리그는 마지막 시세로 허용 + 안내만.
+  const hoursBlocked = marketClosed && tradingHours === 'MARKET_HOURS_ONLY'
+
+  const blocked = busy || qty <= 0 || overQty || insufficientCash || hoursBlocked
 
   // 빠른 비율 — 매수: 보유 현금 기준 최대 매수가능 수량의 %, 매도: 보유 수량의 %.
   // (매수 100% 는 수수료까지 포함해 현금 안에서 살 수 있는 최대치)
@@ -291,6 +298,24 @@ export function PlaceTradeModal({
                 <Text style={{ color: palette.inkFaint, fontSize: 11, marginTop: 2 }}>보유 {selected.heldQty}주</Text>
               ) : null}
             </View>
+
+            {/* 장 마감 안내 */}
+            {marketClosed ? (
+              <View style={{
+                backgroundColor: (hoursBlocked ? palette.down : palette.orange) + '1a',
+                borderRadius: 10, borderWidth: 1, borderColor: (hoursBlocked ? palette.down : palette.orange) + '55',
+                paddingHorizontal: 12, paddingVertical: 10, gap: 2,
+              }}>
+                <Text style={{ color: hoursBlocked ? palette.down : palette.orange, fontSize: 12, fontWeight: '900' }}>
+                  🌙 {selected.market === 'KR' ? '한국장' : '미국장'} 마감
+                </Text>
+                <Text style={{ color: palette.inkMuted, fontSize: 11, lineHeight: 16 }}>
+                  {hoursBlocked
+                    ? '이 리그는 장중에만 거래돼요. 장이 열린 뒤 다시 시도해줘.'
+                    : '지금은 장이 끝나서 마지막 시세로 체결돼요. 정상 거래는 장이 열린 뒤에 하는 걸 추천해 🙂'}
+                </Text>
+              </View>
+            ) : null}
 
             <View style={{ gap: 6 }}>
               <Text style={{ color: palette.inkMuted, fontSize: 11, fontWeight: '800', letterSpacing: 1 }}>수량</Text>

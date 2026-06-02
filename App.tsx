@@ -591,6 +591,7 @@ function AppShell() {
         visible={!!activeLeagueId}
         leagueId={activeLeagueId}
         myUserId={user?.userId}
+        marketSessions={summary?.marketSessions ?? []}
         onClose={() => setActiveLeagueId(null)}
         toast={toast}
       />

@@ -44,7 +44,7 @@ export function CreateLeagueModal({ visible, onClose, onCreated, toast }: Props)
   const [capital, setCapital] = useState<number>(KRW_PRESETS[1])  // 5천만
   const [durationDays, setDurationDays] = useState<number>(30)
   const [startMode, setStartMode] = useState<StartMode>('NOW')
-  const [tradingHours, setTradingHours] = useState<TradingHours>('MARKET_HOURS_ONLY')
+  const [tradingHours, setTradingHours] = useState<TradingHours>('ALWAYS')
   const [visibility, setVisibility] = useState<LeagueVisibility>('OPEN')
   const [hostNickname, setHostNickname] = useState('호스트')
   const [avatar, setAvatar] = useState(LEAGUE_AVATARS[0])
@@ -247,15 +247,17 @@ export function CreateLeagueModal({ visible, onClose, onCreated, toast }: Props)
           <Field label="거래 시간" palette={palette}>
             <ChipGroup
               options={[
+                { key: 'ALWAYS' as TradingHours, label: '24시간 (마지막 시세)' },
                 { key: 'MARKET_HOURS_ONLY' as TradingHours, label: '장중에만' },
-                { key: 'ALWAYS' as TradingHours, label: '24시간' },
               ]}
               value={tradingHours}
               onChange={setTradingHours}
               palette={palette}
             />
             <Text style={{ color: palette.inkFaint, fontSize: 11, marginTop: 6 }}>
-              {tradingHours === 'MARKET_HOURS_ONLY' ? '실제 장 열린 시간에만 매매 가능' : '장 마감 후에도 마지막 시세로 매매 가능'}
+              {tradingHours === 'MARKET_HOURS_ONLY'
+                ? '실제 장 열린 시간에만 매매 가능 (정석)'
+                : '장 마감 후에도 마지막 시세로 매매 가능 — 미국 종목도 낮에 거래 OK'}
             </Text>
           </Field>
 
