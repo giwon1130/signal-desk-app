@@ -4,7 +4,7 @@ import { fetchAiPicks, fetchHiddenSignals } from '../api/ai'
 import { fetchRecentDisclosures } from '../api/disclosures'
 import { fetchUpcomingEvents } from '../api/events'
 import { fetchMarketInsight } from '../api/insights'
-import { fetchLatestMediaSummary, fetchRecentMediaSummaries } from '../api/media'
+import { fetchRecentMediaSummaries } from '../api/media'
 import { fetchAlertHistory } from '../api/pushDevice'
 import { fetchSystemStatus, type SystemStatus } from '../api/system'
 import { formatSyncStamp } from '../utils'
@@ -38,7 +38,6 @@ export function useMarketSnapshot(authToken: string | null, enabled: boolean) {
   const [fortune, setFortune] = useState<DailyFortune | null>(null)
   const [topMovers, setTopMovers] = useState<TopMoversResponse | null>(null)
   const [moverReasons, setMoverReasons] = useState<MoverReason[]>([])
-  const [mediaSummary, setMediaSummary] = useState<MediaSummaryItem | null>(null)
   const [mediaSummaries, setMediaSummaries] = useState<MediaSummaryItem[]>([])
   const [marketInsight, setMarketInsight] = useState<MarketInsightData | null>(null)
   const [upcomingEvents, setUpcomingEvents] = useState<MarketEvent[]>([])
@@ -72,7 +71,6 @@ export function useMarketSnapshot(authToken: string | null, enabled: boolean) {
       void fetchDailyFortune().then(setFortune)
       void fetchTopMovers(10).then(setTopMovers)
       void fetchMoverReasons().then(setMoverReasons)
-      void fetchLatestMediaSummary().then(setMediaSummary)
       void fetchRecentMediaSummaries(6).then(setMediaSummaries)
       void fetchMarketInsight().then(setMarketInsight)
       void fetchUpcomingEvents(14).then(setUpcomingEvents)
@@ -105,7 +103,6 @@ export function useMarketSnapshot(authToken: string | null, enabled: boolean) {
     fortune,
     topMovers,
     moverReasons,
-    mediaSummary,
     mediaSummaries,
     marketInsight,
     upcomingEvents,

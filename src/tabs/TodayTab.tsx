@@ -23,7 +23,6 @@ import {
   formatSignedRate,
   getSessionPalette,
 } from '../utils'
-import { BriefingCard } from './today_parts/BriefingCard'
 import { BriefHero } from './today_parts/BriefHero'
 import { NewsHero } from './today_parts/NewsHero'
 import { DisclosureCard } from './today_parts/DisclosureCard'
@@ -38,7 +37,6 @@ type Props = {
   positions: HoldingPosition[]
   alertHistory: AlertHistoryItem[]
   fortune: DailyFortune | null
-  mediaSummary: MediaSummaryItem | null
   mediaSummaries: MediaSummaryItem[]
   upcomingEvents: MarketEvent[]
   disclosures: DisclosureItem[]
@@ -56,7 +54,6 @@ export function TodayTab({
   positions,
   alertHistory,
   fortune,
-  mediaSummary,
   mediaSummaries,
   upcomingEvents,
   disclosures,
@@ -138,18 +135,16 @@ export function TodayTab({
         </View>
       ) : null}
 
-      {/* ── 브리프 Hero — 세션/거래일 상태 아래. 최근 뉴스(모닝/마감/종합) 회전 + 개인화(브리핑) 통합 ── */}
-      {(mediaSummaries.length > 0 || mediaSummary) ? (
+      {/* ── 브리프 Hero — 세션/거래일 상태 아래. 최신 브리프 1건 + 개인화(브리핑) 통합 ── */}
+      {(mediaSummaries.length > 0 || summary?.briefing) ? (
         <BriefHero
-          items={mediaSummaries.length > 0 ? mediaSummaries : (mediaSummary ? [mediaSummary] : [])}
+          items={mediaSummaries}
           briefing={summary?.briefing ?? null}
           onTickerPress={(t) => {
             const isKr = /^\d{6}$/.test(t)
             onOpenDetail(isKr ? 'KR' : 'US', t)
           }}
         />
-      ) : summary?.briefing ? (
-        <BriefingCard briefing={summary.briefing} />
       ) : null}
 
       {/* ── 오늘의 뉴스 — 헤드라인 회전(KR/US 번갈아). 브리프 바로 아래로 상단 배치 ── */}
