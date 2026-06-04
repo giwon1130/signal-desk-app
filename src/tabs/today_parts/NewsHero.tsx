@@ -37,7 +37,7 @@ export function NewsHero({ sentiments }: Props) {
     const out: Item[] = []
     const max = Math.max(0, ...lists.map((l) => l.length))
     for (let k = 0; k < max; k++) for (const l of lists) if (l[k]) out.push(l[k])
-    return out.slice(0, 12)
+    return out.slice(0, 20)
   }, [sentiments])
 
   const fadeTo = (next: number) => {
