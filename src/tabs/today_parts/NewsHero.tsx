@@ -9,7 +9,7 @@ import { ChevronLeft, ChevronRight, Newspaper } from 'lucide-react-native'
 import { useTheme } from '../../theme'
 import type { NewsSentiment } from '../../types'
 import { formatRelativeOrShortTime } from '../../utils'
-import { toneColor } from './helpers'
+import { sentimentArrow, toneColor } from './helpers'
 
 type Props = {
   sentiments: NewsSentiment[]
@@ -76,7 +76,7 @@ export function NewsHero({ sentiments }: Props) {
               backgroundColor: palette.surfaceAlt, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 4,
             }}>
               <Text style={{ fontSize: 11, fontWeight: '800', color: palette.inkMuted }}>{s.market === 'KR' ? '🇰🇷' : '🇺🇸'}</Text>
-              <Text style={{ fontSize: 11, fontWeight: '900', color: accent }}>{s.label} {s.score}</Text>
+              <Text style={{ fontSize: 11, fontWeight: '900', color: accent }}>{sentimentArrow(s.label)} {s.label} {s.score}</Text>
             </View>
           )
         })}

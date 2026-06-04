@@ -3,7 +3,7 @@ import { useStyles } from '../../styles'
 import { useTheme } from '../../theme'
 import type { NewsSentiment } from '../../types'
 import { formatRelativeOrShortTime } from '../../utils'
-import { toneColor } from './helpers'
+import { sentimentArrow, toneColor } from './helpers'
 
 export function SentimentCard({ sentiment }: { sentiment: NewsSentiment }) {
   const styles = useStyles()
@@ -15,7 +15,7 @@ export function SentimentCard({ sentiment }: { sentiment: NewsSentiment }) {
     <View style={styles.todaySentimentCard}>
       <View style={styles.todaySentimentHead}>
         <Text style={styles.todaySentimentMarket}>{sentiment.market === 'KR' ? '🇰🇷 한국' : '🇺🇸 미국'}</Text>
-        <Text style={[styles.todaySentimentLabel, { color: accent }]}>{sentiment.label}</Text>
+        <Text style={[styles.todaySentimentLabel, { color: accent }]}>{sentimentArrow(sentiment.label)} {sentiment.label}</Text>
         <Text style={[styles.todaySentimentScore, { color: accent }]}>{sentiment.score}</Text>
       </View>
       <View style={styles.todaySentimentBarTrack}>

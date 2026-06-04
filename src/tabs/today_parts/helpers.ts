@@ -3,6 +3,10 @@ import type { UserPickStatus } from '../../types'
 export const toneColor = (tone: string) =>
   tone === '긍정' ? '#dc2626' : tone === '부정' ? '#2563eb' : '#94a3b8'
 
+/** 심리 라벨 → 방향 화살표. 긍정=▲(강세·좋음), 부정=▼(약세·나쁨), 중립=·. 색은 toneColor와 동일 규칙. */
+export const sentimentArrow = (label: string) =>
+  label === '긍정' ? '▲' : label === '부정' ? '▼' : '·'
+
 export const slotLabel = (slot: string | undefined) => {
   switch (slot) {
     case 'PRE_MARKET': return '장 전'
