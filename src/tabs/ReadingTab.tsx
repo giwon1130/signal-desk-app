@@ -16,6 +16,7 @@ import { useTheme } from '../theme'
 import type { Leader, ReadingPost } from '../types'
 import { applyForLeader, fetchFeed, fetchFollowing, fetchLeaderEligibility, fetchMyLeader, subscribe, unsubscribe } from '../api/reading'
 import { PostCard } from '../components/reading_parts/PostCard'
+import { Entrance } from '../components/effects'
 import { readingShareMessage, subscribeErrorMessage } from '../components/reading_parts/readingShared'
 import { apiErrorMessage } from '../utils/apiError'
 
@@ -307,8 +308,10 @@ export function ReadingTab({ authToken, refreshing, refreshTick, subscribeCode, 
             </Text>
           </View>
         ) : (
-          feed.map((p) => (
-            <PostCard key={p.id} post={p} onPressLeader={() => onOpenLeader?.(p.leaderUserId)} />
+          feed.map((p, i) => (
+            <Entrance key={p.id} index={i}>
+              <PostCard post={p} onPressLeader={() => onOpenLeader?.(p.leaderUserId)} />
+            </Entrance>
           ))
         )}
       </View>

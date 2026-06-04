@@ -1,11 +1,12 @@
 /**
  * 리딩 글 카드 — 피드(ReadingTab)와 리더 프로필(LeaderProfileModal) 공용.
  */
-import { Pressable, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
 import { TrendingUp } from 'lucide-react-native'
 import { useTheme } from '../../theme'
 import type { ReadingCall, ReadingPost } from '../../types'
 import { callStatusBadge, fmtPct, fmtPrice, returnColor } from './readingShared'
+import { GradientBackground, PressableScale, glow } from '../effects'
 
 export function PostCard({ post, onPressLeader, showLeader = true }: {
   post: ReadingPost
@@ -18,9 +19,16 @@ export function PostCard({ post, onPressLeader, showLeader = true }: {
     <View style={{ paddingVertical: 12, borderTopWidth: 1, borderTopColor: palette.border, gap: 8 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
         {showLeader ? (
-          <Pressable onPress={onPressLeader} hitSlop={6} accessibilityRole="button" accessibilityLabel={`${post.leaderName} 프로필`}>
-            <Text style={{ color: palette.brandAccent, fontSize: 12, fontWeight: '800' }}>{post.leaderName}</Text>
-          </Pressable>
+          <PressableScale onPress={onPressLeader} accessibilityLabel={`${post.leaderName} 프로필`} scaleTo={0.93} style={{ borderRadius: 999 }}>
+            <View style={[
+              { flexDirection: 'row', alignItems: 'center', gap: 5, paddingLeft: 7, paddingRight: 10, paddingVertical: 4, borderRadius: 999, overflow: 'hidden' },
+              glow(palette.brandAccent, 8, 0.55),
+            ]}>
+              <GradientBackground colors={[{ offset: '0', color: palette.brandAccent }, { offset: '1', color: palette.blue }]} radius={999} />
+              <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#ffffff' }} />
+              <Text style={{ color: '#ffffff', fontSize: 12, fontWeight: '900' }}>{post.leaderName}</Text>
+            </View>
+          </PressableScale>
         ) : null}
         <View style={{
           backgroundColor: (isPublic ? palette.blue : palette.inkMuted) + '22',
@@ -52,13 +60,18 @@ function CallRow({ call, palette }: { call: ReadingCall; palette: any }) {
   const flag = call.market === 'KR' ? '🇰🇷' : '🇺🇸'
   const badge = callStatusBadge(call.status, palette)
   const closed = call.status === 'CLOSED'
+  const big = ret != null && Math.abs(ret) >= 5   // 큰 수익/손실은 글로우로 "팡"
   return (
-    <View style={{
-      flexDirection: 'row', alignItems: 'center', gap: 8,
-      backgroundColor: palette.surfaceAlt, borderRadius: 8,
-      paddingHorizontal: 10, paddingVertical: 8,
-      opacity: closed ? 0.6 : 1,
-    }}>
+    <View style={[
+      {
+        flexDirection: 'row', alignItems: 'center', gap: 8,
+        backgroundColor: palette.surfaceAlt, borderRadius: 8,
+        borderLeftWidth: 3, borderLeftColor: retColor,
+        paddingHorizontal: 10, paddingVertical: 8,
+        opacity: closed ? 0.6 : 1,
+      },
+      big && !closed ? glow(retColor, 8, 0.45) : null,
+    ]}>
       <Text style={{ fontSize: 12 }}>{flag}</Text>
       <View style={{ flex: 1 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>

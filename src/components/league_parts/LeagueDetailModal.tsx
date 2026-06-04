@@ -5,7 +5,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Modal, Pressable, RefreshControl, ScrollView, Share, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { ChevronRight, Crown, LogOut, Share2, Trophy, X } from 'lucide-react-native'
+import { Crown, LogOut, Share2, Trophy, X } from 'lucide-react-native'
 import { useTheme } from '../../theme'
 import {
   fetchLeaderboard, fetchLeagueDetail, fetchMyPositions, fetchTradeFeed, leaveLeague,
@@ -15,6 +15,7 @@ import type {
 } from '../../types'
 import { PlaceTradeModal } from './PlaceTradeModal'
 import { MemberPortfolioModal } from './MemberPortfolioModal'
+import { LeaderboardCard } from './LeaderboardCard'
 import { fmtMoney, fmtNum, leagueShareMessage, leagueStatusColor, leagueStatusLabel } from './leagueShared'
 import { apiErrorMessage } from '../../utils/apiError'
 
@@ -161,56 +162,14 @@ export function LeagueDetailModal({ visible, leagueId, myUserId, marketSessions,
             </View>
           ) : null}
 
-          {/* 리더보드 */}
+          {/* 리더보드 — 시상대(상위3) + 순차 진입 */}
           {league ? (
-          <View style={{ backgroundColor: palette.surface, borderRadius: 12, borderWidth: 1, borderColor: palette.border, padding: 12, gap: 8 }}>
-            <Text style={{ color: palette.inkMuted, fontSize: 10, fontWeight: '800', letterSpacing: 1 }}>
-              리더보드 ({leaderboard.length}명)
-            </Text>
-            {leaderboard.map((e) => {
-              const isMe = e.userId === myUserId
-              const retColor = e.returnRate >= 0 ? palette.up : palette.down
-              // 공개 리그면 모든 참가자, 비공개면 본인만 드릴다운 (백엔드가 가시성 강제).
-              const canDrill = league.visibility === 'OPEN' || isMe
-              return (
-                <Pressable
-                  key={e.userId}
-                  onPress={canDrill ? () => setSelectedMember(e) : undefined}
-                  accessibilityRole={canDrill ? 'button' : undefined}
-                  accessibilityLabel={canDrill ? `${e.nickname} 포트폴리오 보기` : undefined}
-                  style={({ pressed }) => ({
-                    flexDirection: 'row', alignItems: 'center', gap: 10,
-                    backgroundColor: isMe ? palette.brandAccent + '11' : 'transparent',
-                    paddingHorizontal: 8, paddingVertical: 8, borderRadius: 8,
-                    opacity: pressed && canDrill ? 0.6 : 1,
-                  })}
-                >
-                  <View style={{ width: 28, alignItems: 'center' }}>
-                    {e.rank === 1 ? <Crown size={16} color="#fbbf24" strokeWidth={2.5} /> :
-                      <Text style={{ color: palette.inkMuted, fontSize: 13, fontWeight: '800' }}>{e.rank}</Text>}
-                  </View>
-                  <Text style={{ fontSize: 18 }}>{e.avatarEmoji}</Text>
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ color: palette.ink, fontSize: 13, fontWeight: '800' }}>
-                      {e.nickname}{isMe ? ' (나)' : ''}
-                    </Text>
-                    <Text style={{ color: palette.inkMuted, fontSize: 10 }}>
-                      평가 {fmtMoney(e.totalAssets, league.currency)} · 보유 {e.positionCount}종목
-                    </Text>
-                  </View>
-                  <Text style={{ color: retColor, fontSize: 14, fontWeight: '900', fontVariant: ['tabular-nums'] }}>
-                    {e.returnRate >= 0 ? '+' : ''}{(e.returnRate * 100).toFixed(2)}%
-                  </Text>
-                  {canDrill && !isMe ? <ChevronRight size={15} color={palette.inkFaint} strokeWidth={2.5} /> : null}
-                </Pressable>
-              )
-            })}
-            {leaderboard.length === 0 ? (
-              <Text style={{ color: palette.inkFaint, fontSize: 11, textAlign: 'center', paddingVertical: 14 }}>
-                {loading ? '불러오는 중…' : '아직 참가자가 없습니다'}
-              </Text>
-            ) : null}
-          </View>
+            <LeaderboardCard
+              leaderboard={leaderboard}
+              league={league}
+              myUserId={myUserId}
+              onSelectMember={setSelectedMember}
+            />
           ) : null}
 
           {/* 내 자산 — 현금 + 총자산 */}

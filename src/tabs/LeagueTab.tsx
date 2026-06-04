@@ -9,6 +9,7 @@ import { useStyles } from '../styles'
 import { useTheme } from '../theme'
 import type { League } from '../types'
 import { fetchMyLeagues } from '../api/league'
+import { Entrance } from '../components/effects'
 import {
   fmtMoney, leagueShareMessage, leagueStatusColor, leagueStatusLabel,
 } from '../components/league_parts/leagueShared'
@@ -156,7 +157,11 @@ export function LeagueTab({ authToken, refreshing, onOpenLeague, onCreateLeague,
             </Text>
           </View>
         ) : (
-          leagues.map((l) => <LeagueRow key={l.id} league={l} onPress={() => onOpenLeague(l.id)} />)
+          leagues.map((l, i) => (
+            <Entrance key={l.id} index={i}>
+              <LeagueRow league={l} onPress={() => onOpenLeague(l.id)} />
+            </Entrance>
+          ))
         )}
       </View>
     </ScrollView>
