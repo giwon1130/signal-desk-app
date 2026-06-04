@@ -16,7 +16,7 @@ import { useTheme } from '../theme'
 import type { Leader, ReadingPost } from '../types'
 import { applyForLeader, fetchFeed, fetchFollowing, fetchLeaderEligibility, fetchMyLeader, subscribe, unsubscribe } from '../api/reading'
 import { PostCard } from '../components/reading_parts/PostCard'
-import { Entrance } from '../components/effects'
+import { Entrance, GradientBackground, glow } from '../components/effects'
 import { readingShareMessage, subscribeErrorMessage } from '../components/reading_parts/readingShared'
 import { apiErrorMessage } from '../utils/apiError'
 
@@ -117,14 +117,21 @@ export function ReadingTab({ authToken, refreshing, refreshTick, subscribeCode, 
       refreshControl={<RefreshControl refreshing={!!refreshing || loading} onRefresh={load} />}
       contentContainerStyle={styles.content}
     >
-      {/* 헤더 */}
-      <View style={{ paddingHorizontal: 4, paddingVertical: 4, gap: 4 }}>
+      {/* 헤더 — 그라데이션 히어로 */}
+      <View style={[{ borderRadius: 18, overflow: 'hidden', padding: 16, gap: 7 }, glow(palette.brandAccent, 16, 0.45)]}>
+        <GradientBackground
+          colors={[{ offset: '0', color: palette.brandAccent }, { offset: '0.55', color: palette.blue }, { offset: '1', color: '#4f46e5' }]}
+          radius={18} x1="0" y1="0" x2="1" y2="1"
+        />
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <Megaphone size={18} color={palette.brandAccent} strokeWidth={2.5} />
-          <Text style={{ color: palette.ink, fontSize: 18, fontWeight: '900' }}>리딩</Text>
+          <Megaphone size={20} color="#ffffff" strokeWidth={2.6} />
+          <Text style={{ color: '#ffffff', fontSize: 20, fontWeight: '900', letterSpacing: 0.5 }}>리딩</Text>
         </View>
-        <Text style={{ color: palette.inkMuted, fontSize: 12, lineHeight: 17 }}>
-          종목·시황을 정리해 공유하면, 글 속 종목이 그 시점 가격으로 박제됩니다. 오르면 "거봐 내가 말했지?" 알림이 갑니다.
+        <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: '900', lineHeight: 22 }}>
+          콜을 기록으로 남기세요.
+        </Text>
+        <Text style={{ color: '#ffffffd0', fontSize: 12.5, lineHeight: 18, fontWeight: '600' }}>
+          종목을 공유하면 진입가가 자동 박제되고, 이후 수익률이 그대로 추적됩니다. 구독자는 검증된 콜만 받아봅니다.
         </Text>
       </View>
 
