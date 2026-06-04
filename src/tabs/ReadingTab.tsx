@@ -126,6 +126,14 @@ export function ReadingTab({ authToken, refreshing, refreshTick, subscribeCode, 
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <Megaphone size={20} color="#ffffff" strokeWidth={2.6} />
           <Text style={{ color: '#ffffff', fontSize: 20, fontWeight: '900', letterSpacing: 0.5 }}>리딩</Text>
+          <View style={{ flex: 1 }} />
+          <View style={[
+            { flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: '#ffffff', borderRadius: 999, paddingHorizontal: 9, paddingVertical: 4 },
+            glow('#fbbf24', 9, 0.8),
+          ]}>
+            <Text style={{ fontSize: 11 }}>🎉</Text>
+            <Text style={{ color: '#b45309', fontSize: 11, fontWeight: '900' }}>오픈 이벤트 · 무료</Text>
+          </View>
         </View>
         <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: '900', lineHeight: 22 }}>
           콜을 기록으로 남기세요.
@@ -225,7 +233,12 @@ export function ReadingTab({ authToken, refreshing, refreshTick, subscribeCode, 
 
       {/* 리더 구독 — 누구나 */}
       <View style={[styles.card, { gap: 10 }]}>
-        <Text style={{ color: palette.inkMuted, fontSize: 11, fontWeight: '800', letterSpacing: 1 }}>리더 구독</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <Text style={{ color: palette.inkMuted, fontSize: 11, fontWeight: '800', letterSpacing: 1 }}>리더 구독</Text>
+          <View style={{ backgroundColor: palette.brandAccent + '22', borderRadius: 4, paddingHorizontal: 6, paddingVertical: 1 }}>
+            <Text style={{ color: palette.brandAccent, fontSize: 9, fontWeight: '900' }}>지금 무료</Text>
+          </View>
+        </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <View style={{ flex: 1 }}>
             <TextInput
@@ -259,8 +272,8 @@ export function ReadingTab({ authToken, refreshing, refreshTick, subscribeCode, 
             <Text style={{ color: palette.bg, fontSize: 13, fontWeight: '800' }}>구독</Text>
           </Pressable>
         </View>
-        <Text style={{ color: palette.inkFaint, fontSize: 11 }}>
-          친구가 보낸 링크를 누르면 코드가 자동으로 채워집니다.
+        <Text style={{ color: palette.inkFaint, fontSize: 11, lineHeight: 16 }}>
+          리더 구독은 정식 오픈 시 유료로 전환될 예정이에요. 지금은 오픈 이벤트 기간이라 무료로 구독할 수 있습니다. 친구가 보낸 링크를 누르면 코드가 자동으로 채워집니다.
         </Text>
 
         {/* 구독 중인 리더 */}
