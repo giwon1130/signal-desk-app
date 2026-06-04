@@ -9,6 +9,7 @@
  *  - 피드: 구독 리더 + 본인 글 (PostCard 공용)
  */
 import { useCallback, useEffect, useState } from 'react'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { Pressable, RefreshControl, ScrollView, Share, Text, TextInput, View } from 'react-native'
 import { Megaphone, PenLine, Plus, Share2, X } from 'lucide-react-native'
 import { useStyles } from '../styles'
@@ -17,6 +18,7 @@ import type { Leader, ReadingPost } from '../types'
 import { applyForLeader, fetchFeed, fetchFollowing, fetchLeaderEligibility, fetchMyLeader, subscribe, unsubscribe } from '../api/reading'
 import { PostCard } from '../components/reading_parts/PostCard'
 import { Entrance, GradientBackground, glow } from '../components/effects'
+import { ReadingEventModal } from '../components/reading_parts/ReadingEventModal'
 import { readingShareMessage, subscribeErrorMessage } from '../components/reading_parts/readingShared'
 import { apiErrorMessage } from '../utils/apiError'
 
@@ -42,6 +44,20 @@ export function ReadingTab({ authToken, refreshing, refreshTick, subscribeCode, 
   const [code, setCode] = useState('')
   const [displayName, setDisplayName] = useState('')
   const [busy, setBusy] = useState(false)
+  const [showEvent, setShowEvent] = useState(false)
+
+  // 리딩 첫 진입 시 오픈 이벤트(무료) 안내 모달 — 1회만 (AsyncStorage 플래그).
+  useEffect(() => {
+    let alive = true
+    AsyncStorage.getItem('signal:reading:eventSeen')
+      .then((v) => { if (alive && v !== 'true') setShowEvent(true) })
+      .catch(() => {})
+    return () => { alive = false }
+  }, [])
+  const closeEvent = () => {
+    setShowEvent(false)
+    void AsyncStorage.setItem('signal:reading:eventSeen', 'true').catch(() => {})
+  }
 
   const load = useCallback(async () => {
     if (!authToken) return
@@ -112,6 +128,7 @@ export function ReadingTab({ authToken, refreshing, refreshTick, subscribeCode, 
   const isApproved = leader?.status === 'APPROVED'
 
   return (
+    <>
     <ScrollView
       style={styles.scroll}
       refreshControl={<RefreshControl refreshing={!!refreshing || loading} onRefresh={load} />}
@@ -336,5 +353,7 @@ export function ReadingTab({ authToken, refreshing, refreshTick, subscribeCode, 
         )}
       </View>
     </ScrollView>
+    <ReadingEventModal visible={showEvent} monthlyPriceWon={9900} onClose={closeEvent} />
+    </>
   )
 }
