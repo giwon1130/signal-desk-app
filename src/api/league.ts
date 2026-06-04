@@ -121,3 +121,10 @@ export async function fetchMyPositions(leagueId: string): Promise<LeaguePosition
   const j = (await r.json()) as ApiResponse<LeaguePosition[]>
   return j.success ? j.data : []
 }
+
+/** 특정 참가자의 현재 보유 (동료 포트폴리오 드릴다운). 공개 리그에서만 타인 조회 가능. */
+export async function fetchMemberPositions(leagueId: string, userId: string): Promise<LeaguePosition[]> {
+  const r = await authedFetch(`${base}/${leagueId}/trades/positions/${userId}`)
+  const j = (await r.json()) as ApiResponse<LeaguePosition[]>
+  return j.success ? j.data : []
+}

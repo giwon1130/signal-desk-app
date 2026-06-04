@@ -5,7 +5,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Modal, Pressable, RefreshControl, ScrollView, Share, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { Crown, LogOut, Share2, Trophy, X } from 'lucide-react-native'
+import { ChevronRight, Crown, LogOut, Share2, Trophy, X } from 'lucide-react-native'
 import { useTheme } from '../../theme'
 import {
   fetchLeaderboard, fetchLeagueDetail, fetchMyPositions, fetchTradeFeed, leaveLeague,
@@ -14,6 +14,7 @@ import type {
   LeaderboardEntry, LeagueDetail as LeagueDetailType, LeaguePosition, LeagueTrade, MarketSessionStatus,
 } from '../../types'
 import { PlaceTradeModal } from './PlaceTradeModal'
+import { MemberPortfolioModal } from './MemberPortfolioModal'
 import { fmtMoney, fmtNum, leagueShareMessage, leagueStatusColor, leagueStatusLabel } from './leagueShared'
 import { apiErrorMessage } from '../../utils/apiError'
 
@@ -38,6 +39,7 @@ export function LeagueDetailModal({ visible, leagueId, myUserId, marketSessions,
   const [loadError, setLoadError] = useState(false)
   const [tradeOpen, setTradeOpen] = useState(false)
   const [leaving, setLeaving] = useState(false)
+  const [selectedMember, setSelectedMember] = useState<LeaderboardEntry | null>(null)
 
   const load = useCallback(async () => {
     if (!leagueId) return
@@ -168,14 +170,20 @@ export function LeagueDetailModal({ visible, leagueId, myUserId, marketSessions,
             {leaderboard.map((e) => {
               const isMe = e.userId === myUserId
               const retColor = e.returnRate >= 0 ? palette.up : palette.down
+              // 공개 리그면 모든 참가자, 비공개면 본인만 드릴다운 (백엔드가 가시성 강제).
+              const canDrill = league.visibility === 'OPEN' || isMe
               return (
-                <View
+                <Pressable
                   key={e.userId}
-                  style={{
+                  onPress={canDrill ? () => setSelectedMember(e) : undefined}
+                  accessibilityRole={canDrill ? 'button' : undefined}
+                  accessibilityLabel={canDrill ? `${e.nickname} 포트폴리오 보기` : undefined}
+                  style={({ pressed }) => ({
                     flexDirection: 'row', alignItems: 'center', gap: 10,
                     backgroundColor: isMe ? palette.brandAccent + '11' : 'transparent',
                     paddingHorizontal: 8, paddingVertical: 8, borderRadius: 8,
-                  }}
+                    opacity: pressed && canDrill ? 0.6 : 1,
+                  })}
                 >
                   <View style={{ width: 28, alignItems: 'center' }}>
                     {e.rank === 1 ? <Crown size={16} color="#fbbf24" strokeWidth={2.5} /> :
@@ -193,7 +201,8 @@ export function LeagueDetailModal({ visible, leagueId, myUserId, marketSessions,
                   <Text style={{ color: retColor, fontSize: 14, fontWeight: '900', fontVariant: ['tabular-nums'] }}>
                     {e.returnRate >= 0 ? '+' : ''}{(e.returnRate * 100).toFixed(2)}%
                   </Text>
-                </View>
+                  {canDrill && !isMe ? <ChevronRight size={15} color={palette.inkFaint} strokeWidth={2.5} /> : null}
+                </Pressable>
               )
             })}
             {leaderboard.length === 0 ? (
@@ -338,6 +347,17 @@ export function LeagueDetailModal({ visible, leagueId, myUserId, marketSessions,
             onClose={() => setTradeOpen(false)}
             onTraded={() => { void load() }}
             toast={toast}
+          />
+        ) : null}
+
+        {/* 동료 포트폴리오 드릴다운 — 리더보드 행 탭 시 */}
+        {league ? (
+          <MemberPortfolioModal
+            visible={!!selectedMember}
+            leagueId={leagueId}
+            member={selectedMember}
+            currency={league.currency}
+            onClose={() => setSelectedMember(null)}
           />
         ) : null}
       </View>
