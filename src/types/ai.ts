@@ -17,6 +17,8 @@ export type AiPick = {
   expectedReturnRate: number | null
   confidence: number
   riskNote: string
+  changeRate?: number | null   // 후보의 당일 등락률 (근거 노출)
+  flowTag?: string | null       // 수급 태그 (외인/기관 순매수)
 }
 
 export type AiPicksData = {

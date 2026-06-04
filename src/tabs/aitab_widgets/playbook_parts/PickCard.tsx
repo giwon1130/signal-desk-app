@@ -38,6 +38,7 @@ export function PickCard({ pick, palette, inWatch, onOpenDetail, onQuickAdd }: P
         <Text style={{ color: palette.inkFaint, fontSize: 9, fontWeight: '800', letterSpacing: 0.6 }}>{pick.market}</Text>
         <Text style={{ color: palette.inkMuted, fontSize: 11, fontWeight: '700' }}>{pick.ticker}</Text>
         <View style={{ flex: 1 }} />
+        <Text style={{ color: palette.inkFaint, fontSize: 9, fontWeight: '700' }}>AI 추정</Text>
         <Text style={{ color: palette.purple, fontSize: 10, fontWeight: '800' }}>
           확신 {pick.confidence}%
         </Text>
@@ -50,6 +51,23 @@ export function PickCard({ pick, palette, inWatch, onOpenDetail, onQuickAdd }: P
       <Text numberOfLines={1} style={{ color: palette.ink, fontSize: 14, fontWeight: '800' }}>
         {pick.name}
       </Text>
+      {/* 근거 데이터 — 당일 등락률 + 수급 태그 (왜 골랐는지 투명하게) */}
+      {(pick.changeRate != null || pick.flowTag) ? (
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
+          {pick.changeRate != null ? (
+            <View style={{ backgroundColor: simpleDelta(pick.changeRate, palette) + '1f', borderRadius: 5, paddingHorizontal: 6, paddingVertical: 2 }}>
+              <Text style={{ color: simpleDelta(pick.changeRate, palette), fontSize: 9, fontWeight: '800' }}>
+                당일 {formatSignedRate(pick.changeRate)}
+              </Text>
+            </View>
+          ) : null}
+          {pick.flowTag ? (
+            <View style={{ backgroundColor: palette.blueSoft, borderRadius: 5, paddingHorizontal: 6, paddingVertical: 2 }}>
+              <Text style={{ color: palette.blue, fontSize: 9, fontWeight: '800' }}>{pick.flowTag}</Text>
+            </View>
+          ) : null}
+        </View>
+      ) : null}
       <Text numberOfLines={3} style={{ color: palette.inkMuted, fontSize: 11, lineHeight: 15 }}>
         {pick.reason || '—'}
       </Text>
