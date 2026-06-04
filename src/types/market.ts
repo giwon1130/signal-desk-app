@@ -146,6 +146,8 @@ export type MarketSummaryData = {
   marketSummary: SummaryMetric[]
   alternativeSignals: AlternativeSignal[]
   compositeRisk?: CompositeRiskSignal
+  compositeRiskKr?: CompositeRiskSignal
+  compositeRiskUs?: CompositeRiskSignal
   watchAlerts: WatchAlert[]
   marketSessions: MarketSessionStatus[]
   newsSentiments?: NewsSentiment[]

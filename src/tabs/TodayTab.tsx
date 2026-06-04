@@ -153,7 +153,12 @@ export function TodayTab({
       ) : null}
 
       {/* ── 오늘 시장 분위기 — 위험도 + 요약 지표 통합, 쉬운 용어 ── */}
-      <MarketMoodCard risk={summary?.compositeRisk ?? null} metrics={filteredMetrics} />
+      <MarketMoodCard
+        krRisk={summary?.compositeRiskKr ?? summary?.compositeRisk ?? null}
+        usRisk={summary?.compositeRiskUs ?? summary?.compositeRisk ?? null}
+        metrics={filteredMetrics}
+        marketPreference={marketPreference}
+      />
 
       {/* ── 보유 종목 모니터 (보유 있는 사용자 최우선) ── */}
       {positions.length > 0 ? (

@@ -5,14 +5,19 @@ import { useStyles } from '../../styles'
 import type { CompositeRiskSignal, SummaryMetric } from '../../types'
 import { getCompositeRiskPalette, getRiskScoreColor } from '../../utils'
 
+type MarketPref = 'KR' | 'US' | 'BOTH'
+
 type Props = {
-  risk: CompositeRiskSignal | null
+  krRisk: CompositeRiskSignal | null
+  usRisk: CompositeRiskSignal | null
   metrics: SummaryMetric[]
+  marketPreference: MarketPref
 }
 
 /**
- * 오늘 시장 분위기 — 기존 "종합 위험도" + "시장 요약 지표"를 한 카드로 통합.
- * 1~10 분위기 점수(hero) + 세부 지표를 하나로 묶고, 어려운 용어는 쉬운 말로 바꿔 보여준다.
+ * 오늘 시장 분위기 — 한국/미국 투자자 관점으로 분리한 위험도.
+ * 시장 선호가 BOTH 면 KR/US 탭으로 전환, KR/US 면 해당 시장만 노출.
+ * 위험도(hero) + 시장별 구성요소·요약 지표를 하나로 묶고 어려운 용어는 쉬운 말로 바꿔 보여준다.
  */
 
 // 어려운 지표명 → 쉬운 말. 백엔드 라벨을 화면에서만 친근하게 치환.
@@ -31,13 +36,29 @@ const FRIENDLY_LABEL: Record<string, string> = {
 }
 const friendly = (label: string) => FRIENDLY_LABEL[label] ?? FRIENDLY_LABEL[label.trim()] ?? label
 
+// 요약 지표가 어느 시장 소속인지 — 선택 탭에 맞는 것만 노출.
+const METRIC_MARKET: Record<string, 'KR' | 'US'> = {
+  'Fear Meter': 'US',
+  'US Heat': 'US',
+  'KR Heat': 'KR',
+  'Flow Bias': 'KR',
+}
+
 type Indicator = { label: string; score: number; state: string; detail: string }
 
-export function MarketMoodCard({ risk, metrics }: Props) {
+export function MarketMoodCard({ krRisk, usRisk, metrics, marketPreference }: Props) {
   const styles = useStyles()
   const [open, setOpen] = useState(false)
+  const [tab, setTab] = useState<'KR' | 'US'>('KR')
 
-  // 세부 지표 통합 — 위험도 구성요소 우선, 겹치지 않는 요약 지표를 뒤에 덧붙임(쉬운 이름으로 중복 제거).
+  const showKr = marketPreference !== 'US'
+  const showUs = marketPreference !== 'KR'
+  const bothShown = showKr && showUs
+  // 선호가 한쪽이면 그쪽 고정, BOTH 면 탭 상태를 따른다.
+  const activeTab: 'KR' | 'US' = !showKr ? 'US' : !showUs ? 'KR' : tab
+  const risk = activeTab === 'KR' ? krRisk : usRisk
+
+  // 세부 지표 통합 — 위험도 구성요소 우선, 겹치지 않는 요약 지표(선택 시장 소속)를 뒤에.
   const indicators: Indicator[] = []
   const seen = new Set<string>()
   for (const c of risk?.components ?? []) {
@@ -47,6 +68,7 @@ export function MarketMoodCard({ risk, metrics }: Props) {
     indicators.push({ label, score: c.score, state: c.state, detail: c.detail })
   }
   for (const m of metrics) {
+    if ((METRIC_MARKET[m.label] ?? activeTab) !== activeTab) continue
     const label = friendly(m.label)
     if (seen.has(label)) continue
     seen.add(label)
@@ -92,6 +114,33 @@ export function MarketMoodCard({ risk, metrics }: Props) {
           ) : null}
         </View>
 
+        {/* KR/US 탭 — 시장 선호가 BOTH 일 때만 노출 */}
+        {bothShown ? (
+          <View style={{ flexDirection: 'row', gap: 6, marginBottom: 2 }}>
+            {(['KR', 'US'] as const).map((m) => {
+              const active = activeTab === m
+              return (
+                <Pressable
+                  key={m}
+                  onPress={() => setTab(m)}
+                  accessibilityRole="button"
+                  accessibilityLabel={m === 'KR' ? '한국 시장 분위기' : '미국 시장 분위기'}
+                  style={{
+                    flexDirection: 'row', alignItems: 'center',
+                    paddingHorizontal: 12, paddingVertical: 5, borderRadius: 999,
+                    backgroundColor: active ? '#2563eb22' : 'transparent',
+                    borderWidth: 1, borderColor: active ? '#2563eb' : '#3341552a',
+                  }}
+                >
+                  <Text style={{ fontSize: 12, fontWeight: '800', color: active ? '#2563eb' : '#94a3b8' }}>
+                    {m === 'KR' ? '🇰🇷 한국' : '🇺🇸 미국'}
+                  </Text>
+                </Pressable>
+              )
+            })}
+          </View>
+        ) : null}
+
         {risk && palette ? (
           <View style={styles.riskHeroRow}>
             <View style={[styles.riskScoreBox, { backgroundColor: palette.backgroundColor, borderColor: palette.borderColor }]}>
@@ -111,7 +160,7 @@ export function MarketMoodCard({ risk, metrics }: Props) {
 
         {risk?.personalImpact ? <Text style={styles.riskPersonalImpact}>{risk.personalImpact}</Text> : null}
 
-        <Text style={styles.riskFootnote}>시장 신호·변동성·뉴스를 종합한 참고 지표입니다</Text>
+        <Text style={styles.riskFootnote}>한국·미국 시장을 각각 변동성·뉴스로 종합한 참고 지표입니다</Text>
       </Pressable>
 
       {risk ? (
@@ -120,7 +169,9 @@ export function MarketMoodCard({ risk, metrics }: Props) {
             <Pressable style={styles.signalModalCard} onPress={(e) => e.stopPropagation()}>
               <View style={styles.signalModalHeader}>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.signalModalTitle}>오늘 시장 분위기 {risk.score}/10</Text>
+                  <Text style={styles.signalModalTitle}>
+                    {activeTab === 'KR' ? '🇰🇷 한국' : '🇺🇸 미국'} 시장 분위기 {risk.score}/10
+                  </Text>
                   <Text style={styles.signalModalSubtitle}>{risk.level} · 100점 환산 {risk.score100}점</Text>
                 </View>
                 <Pressable onPress={() => setOpen(false)} hitSlop={12}>
