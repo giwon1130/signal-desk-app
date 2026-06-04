@@ -18,7 +18,7 @@ export function NewsWidget({ summary, palette }: { summary: MarketSummaryData | 
       if (kr[i]) merged.push({ market: 'KR', h: kr[i] })
       if (us[i]) merged.push({ market: 'US', h: us[i] })
     }
-    return merged.slice(0, 10)
+    return merged.slice(0, 20)
   }, [summary])
 
   return (

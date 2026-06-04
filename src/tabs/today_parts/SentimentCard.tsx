@@ -27,7 +27,7 @@ export function SentimentCard({ sentiment }: { sentiment: NewsSentiment }) {
         <Text style={styles.todaySentimentMeta}>부정 {sentiment.negativeCount}</Text>
       </View>
       <Text style={styles.todaySentimentRationale}>{sentiment.rationale}</Text>
-      {sentiment.highlights.slice(0, Platform.OS === 'web' ? 12 : 6).map((h, i) => {
+      {sentiment.highlights.slice(0, Platform.OS === 'web' ? 15 : 12).map((h, i) => {
         const when = formatRelativeOrShortTime(h.publishedAt)
         return (
           <Pressable
