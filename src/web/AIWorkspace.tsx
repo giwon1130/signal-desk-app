@@ -35,6 +35,7 @@ import type {
 import { useTheme, type Palette } from '../theme'
 import { Playbook } from './widgets/AIPlaybook'
 import { Scorecard } from './widgets/AIScorecard'
+import { Entrance, glow } from './web_effects'
 
 type Mode = 'playbook' | 'scorecard'
 
@@ -53,18 +54,20 @@ export function AIWorkspace({ aiRecommendation, summary, watchlist, onOpenDetail
   return (
     <ScrollView style={{ flex: 1 }} contentContainerStyle={{ gap: 14, paddingBottom: 20 }}>
       <Header mode={mode} onChange={setMode} palette={palette} />
-      {mode === 'playbook' ? (
-        <Playbook
-          aiRecommendation={aiRecommendation}
-          summary={summary}
-          watchlist={watchlist}
-          palette={palette}
-          onOpenDetail={onOpenDetail}
-          onQuickAddWatch={onQuickAddWatch}
-        />
-      ) : (
-        <Scorecard aiRecommendation={aiRecommendation} palette={palette} onOpenDetail={onOpenDetail} />
-      )}
+      <Entrance key={mode} delay={20}>
+        {mode === 'playbook' ? (
+          <Playbook
+            aiRecommendation={aiRecommendation}
+            summary={summary}
+            watchlist={watchlist}
+            palette={palette}
+            onOpenDetail={onOpenDetail}
+            onQuickAddWatch={onQuickAddWatch}
+          />
+        ) : (
+          <Scorecard aiRecommendation={aiRecommendation} palette={palette} onOpenDetail={onOpenDetail} />
+        )}
+      </Entrance>
     </ScrollView>
   )
 }
@@ -84,14 +87,14 @@ function Header({ mode, onChange, palette }: { mode: Mode; onChange: (m: Mode) =
           <Pressable
             key={t.key}
             onPress={() => onChange(t.key)}
-            style={{
+            style={[{
               flexDirection: 'row', alignItems: 'center', gap: 8,
               paddingHorizontal: 14, paddingVertical: 10,
               borderRadius: 10,
               backgroundColor: active ? palette.blue : palette.surface,
               borderWidth: 1,
               borderColor: active ? palette.blue : palette.border,
-            }}
+            }, active ? glow(palette.blue, 0.3, 14) : null]}
           >
             {React.cloneElement(t.icon as any, { color: active ? '#ffffff' : palette.inkSub })}
             <Text style={{ color: active ? '#ffffff' : palette.ink, fontSize: 13, fontWeight: '800' }}>

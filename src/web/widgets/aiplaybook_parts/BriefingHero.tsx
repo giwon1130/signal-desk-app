@@ -2,6 +2,7 @@ import { Text, View } from 'react-native'
 import { Flame } from 'lucide-react-native'
 import type { MarketSummaryData } from '../../../types'
 import { type Palette } from '../../../theme'
+import { GradientCard, withAlpha } from '../../web_effects'
 
 type Props = {
   summary: MarketSummaryData | null
@@ -24,16 +25,17 @@ export function BriefingHero({ summary, palette }: Props) {
   const narrative = briefing?.narrative ?? ''
 
   return (
-    <View
-      style={{
-        backgroundColor: palette.surface,
-        borderRadius: 14,
-        borderWidth: 1,
-        borderColor: palette.border,
-        padding: 18,
-        gap: 10,
-      }}
+    <GradientCard
+      radius={16}
+      glowColor={palette.orange}
+      glowOpacity={0.2}
+      images={[
+        `linear-gradient(135deg, ${palette.orangeSoft}, ${palette.surface} 62%)`,
+        `radial-gradient(circle at 95% 4%, ${withAlpha(palette.orange, 0.18)}, transparent 50%)`,
+      ]}
+      style={{ borderWidth: 1, borderColor: palette.border, padding: 18 }}
     >
+      <View style={{ gap: 10 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         <Flame size={14} color={palette.orange} strokeWidth={2.5} />
         <Text style={{ color: palette.inkFaint, fontSize: 10, fontWeight: '800', letterSpacing: 2 }}>
@@ -89,7 +91,8 @@ export function BriefingHero({ summary, palette }: Props) {
           ) : null}
         </View>
       ) : null}
-    </View>
+      </View>
+    </GradientCard>
   )
 }
 

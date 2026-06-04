@@ -9,8 +9,10 @@ import type {
   TopMoversResponse,
   WatchItem,
 } from '../types'
+import { Sparkles } from 'lucide-react-native'
 import { useTheme, type Palette } from '../theme'
 import { webGrid } from './shared'
+import { GradientCard, Entrance, withAlpha } from './web_effects'
 import { SectorPerformanceWidget } from './widgets/SectorPerformanceWidget'
 import { CompositeRiskWidget } from './widgets/CompositeRiskWidget'
 import { TopMoversWidget } from './widgets/TopMoversWidget'
@@ -52,53 +54,63 @@ export function HomeDashboard(props: Props) {
   const { palette } = useTheme()
   return (
     <ScrollView style={{ flex: 1 }} contentContainerStyle={{ gap: 14, paddingBottom: 20 }}>
-      <MoodHero summary={props.summary} palette={palette} />
+      <Entrance delay={0}>
+        <MoodHero summary={props.summary} palette={palette} />
+      </Entrance>
 
       {/* 3-열 위젯 스트립 */}
-      <View
-        style={[
-          { gap: 14 },
-          webGrid('minmax(0, 2fr) minmax(0, 2fr) minmax(0, 1.2fr)'),
-        ]}
-      >
-        <PortfolioWidget
-          portfolio={props.portfolio}
-          onOpenDetail={props.onOpenDetail}
-          palette={palette}
-        />
-        <NewsWidget summary={props.summary} palette={palette} />
-        <WatchAlertsWidget summary={props.summary} palette={palette} onOpenDetail={props.onOpenDetail} />
-      </View>
+      <Entrance delay={70}>
+        <View
+          style={[
+            { gap: 14 },
+            webGrid('minmax(0, 2fr) minmax(0, 2fr) minmax(0, 1.2fr)'),
+          ]}
+        >
+          <PortfolioWidget
+            portfolio={props.portfolio}
+            onOpenDetail={props.onOpenDetail}
+            palette={palette}
+          />
+          <NewsWidget summary={props.summary} palette={palette} />
+          <WatchAlertsWidget summary={props.summary} palette={palette} onOpenDetail={props.onOpenDetail} />
+        </View>
+      </Entrance>
 
       {/* Sector + 종합 위험도 행 */}
-      <View style={[{ gap: 14 }, webGrid('minmax(0, 1.6fr) minmax(0, 1fr)')]}>
-        <SectorPerformanceWidget
-          positions={props.positions}
-          watchlist={props.watchlist}
-          palette={palette}
-          onOpenDetail={props.onOpenDetail}
-        />
-        <CompositeRiskWidget summary={props.summary} palette={palette} />
-      </View>
+      <Entrance delay={140}>
+        <View style={[{ gap: 14 }, webGrid('minmax(0, 1.6fr) minmax(0, 1fr)')]}>
+          <SectorPerformanceWidget
+            positions={props.positions}
+            watchlist={props.watchlist}
+            palette={palette}
+            onOpenDetail={props.onOpenDetail}
+          />
+          <CompositeRiskWidget summary={props.summary} palette={palette} />
+        </View>
+      </Entrance>
 
-      <PicksRow
-        aiRecommendation={props.aiRecommendation}
-        palette={palette}
-        onOpenDetail={props.onOpenDetail}
-      />
+      <Entrance delay={210}>
+        <PicksRow
+          aiRecommendation={props.aiRecommendation}
+          palette={palette}
+          onOpenDetail={props.onOpenDetail}
+        />
+      </Entrance>
 
-      <View style={[{ gap: 14 }, webGrid('minmax(0, 1.6fr) minmax(0, 1fr)')]}>
-        <TopMoversWidget
-          topMovers={props.topMovers}
-          palette={palette}
-          onOpenDetail={props.onOpenDetail}
-        />
-        <AlertTimelineWidget
-          history={props.alertHistory}
-          palette={palette}
-          onOpenDetail={props.onOpenDetail}
-        />
-      </View>
+      <Entrance delay={280}>
+        <View style={[{ gap: 14 }, webGrid('minmax(0, 1.6fr) minmax(0, 1fr)')]}>
+          <TopMoversWidget
+            topMovers={props.topMovers}
+            palette={palette}
+            onOpenDetail={props.onOpenDetail}
+          />
+          <AlertTimelineWidget
+            history={props.alertHistory}
+            palette={palette}
+            onOpenDetail={props.onOpenDetail}
+          />
+        </View>
+      </Entrance>
     </ScrollView>
   )
 }
@@ -112,33 +124,37 @@ function MoodHero({ summary, palette }: { summary: MarketSummaryData | null; pal
   const status   = summary?.marketStatus ?? ''
 
   return (
-    <View
-      style={{
-        backgroundColor: palette.surface,
-        borderRadius: 14,
-        borderWidth: 1,
-        borderColor: palette.border,
-        padding: 18,
-        gap: 12,
-        ...(webGrid('minmax(0, 1fr) auto auto') as object),
-      }}
+    <GradientCard
+      radius={16}
+      glowColor={palette.purple}
+      glowOpacity={0.22}
+      images={[
+        `linear-gradient(135deg, ${palette.purpleSoft}, ${palette.surface} 62%)`,
+        `radial-gradient(circle at 94% 4%, ${withAlpha(palette.purple, 0.20)}, transparent 52%)`,
+      ]}
+      style={{ borderWidth: 1, borderColor: palette.border, padding: 18 }}
     >
-      <View style={{ gap: 4 }}>
-        <Text style={{ color: palette.inkFaint, fontSize: 10, fontWeight: '800', letterSpacing: 2 }}>
-          TODAY · MARKET MOOD
-        </Text>
-        <Text style={{ color: palette.ink, fontSize: 22, fontWeight: '800', lineHeight: 28 }}>
-          {headline}
-        </Text>
-        {status ? (
-          <Text style={{ color: palette.inkMuted, fontSize: 12, fontWeight: '600' }}>
-            {status}
+      <View style={[{ gap: 12 }, webGrid('minmax(0, 1fr) auto auto') as object]}>
+        <View style={{ gap: 5 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <Sparkles size={13} color={palette.purple} strokeWidth={2.5} />
+            <Text style={{ color: palette.purple, fontSize: 10, fontWeight: '800', letterSpacing: 2 }}>
+              TODAY · MARKET MOOD
+            </Text>
+          </View>
+          <Text style={{ color: palette.ink, fontSize: 23, fontWeight: '900', lineHeight: 29 }}>
+            {headline}
           </Text>
-        ) : null}
+          {status ? (
+            <Text style={{ color: palette.inkMuted, fontSize: 12, fontWeight: '600' }}>
+              {status}
+            </Text>
+          ) : null}
+        </View>
+        <SentimentGauge label="KR" data={kr ?? null} palette={palette} />
+        <SentimentGauge label="US" data={us ?? null} palette={palette} />
       </View>
-      <SentimentGauge label="KR" data={kr ?? null} palette={palette} />
-      <SentimentGauge label="US" data={us ?? null} palette={palette} />
-    </View>
+    </GradientCard>
   )
 }
 
@@ -150,13 +166,13 @@ function SentimentGauge({ label, data, palette }: { label: string; data: NewsSen
   return (
     <View
       style={{
-        minWidth: 130,
+        minWidth: 132,
         paddingHorizontal: 14,
-        paddingVertical: 10,
-        borderRadius: 10,
-        backgroundColor: palette.surfaceAlt,
+        paddingVertical: 11,
+        borderRadius: 12,
+        backgroundColor: withAlpha(color, 0.1),
         borderWidth: 1,
-        borderColor: palette.border,
+        borderColor: withAlpha(color, 0.32),
         alignItems: 'center',
         gap: 2,
       }}
@@ -164,7 +180,7 @@ function SentimentGauge({ label, data, palette }: { label: string; data: NewsSen
       <Text style={{ color: palette.inkFaint, fontSize: 9, fontWeight: '800', letterSpacing: 1.5 }}>
         {label} SENTIMENT
       </Text>
-      <Text style={{ color, fontSize: 28, fontWeight: '900', fontVariant: ['tabular-nums'] }}>
+      <Text style={{ color, fontSize: 30, fontWeight: '900', fontVariant: ['tabular-nums'], lineHeight: 34 }}>
         {Math.round(score)}
       </Text>
       <Text style={{ color, fontSize: 11, fontWeight: '800' }}>{tone}</Text>

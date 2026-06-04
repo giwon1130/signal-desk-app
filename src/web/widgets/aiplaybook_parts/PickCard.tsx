@@ -5,6 +5,7 @@ import type { RecommendationExecutionLog } from '../../../types'
 import { type Palette } from '../../../theme'
 import { formatPrice, formatSignedRate } from '../../../utils'
 import { deltaColor } from '../../shared'
+import { glow } from '../../web_effects'
 
 type Props = {
   log: RecommendationExecutionLog
@@ -34,7 +35,7 @@ export function PickCard({ log, palette, inWatch, marketClosed, onOpenDetail, on
           borderColor: hovered ? palette.blue : palette.border,
           padding: 12,
           gap: 6,
-        }]
+        }, hovered ? glow(palette.blue, 0.28, 16) : null]
       }}
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -63,6 +64,9 @@ export function PickCard({ log, palette, inWatch, marketClosed, onOpenDetail, on
         {log.rationale || '—'}
       </Text>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <View style={{ backgroundColor: palette.purpleSoft, borderRadius: 4, paddingHorizontal: 6, paddingVertical: 1 }}>
+          <Text style={{ color: palette.purple, fontSize: 9, fontWeight: '800', letterSpacing: 0.3 }}>AI 추정</Text>
+        </View>
         {log.confidence != null ? (
           <Text style={{ color: palette.purple, fontSize: 10, fontWeight: '800' }}>
             확신 {Math.round(log.confidence * 100)}%
