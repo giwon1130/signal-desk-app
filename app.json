@@ -2,7 +2,7 @@
   "expo": {
     "name": "signal-desk-app",
     "slug": "signal-desk-app",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -15,6 +15,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.giwon.signaldesk",
+      "buildNumber": "1",
       "infoPlist": {
         "NSUserNotificationsUsageDescription": "장 시작과 단타 픽 업데이트 시점을 알려드려요.",
         "ITSAppUsesNonExemptEncryption": false
