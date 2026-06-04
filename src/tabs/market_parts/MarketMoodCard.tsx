@@ -19,9 +19,10 @@ type Props = {
 const FRIENDLY_LABEL: Record<string, string> = {
   'PizzINT 종합': '시장 신호 종합',
   PizzINT: '시장 신호 종합',
-  'CBOE VIX': '변동성(공포지수)',
-  'VIX 변동성': '변동성(공포지수)',
-  VIX: '변동성(공포지수)',
+  'CBOE VIX': '美 변동성(VIX)',
+  'VIX 변동성': '美 변동성(VIX)',
+  VIX: '美 변동성(VIX)',
+  '한국 지수 변동': '한국 지수 변동',
   '뉴스 키워드': '뉴스 분위기',
   'Fear Meter': '공포·탐욕',
   'KR Heat': '한국 과열도',
