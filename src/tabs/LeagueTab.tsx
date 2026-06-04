@@ -4,12 +4,12 @@
  */
 import { useCallback, useEffect, useState } from 'react'
 import { Pressable, RefreshControl, ScrollView, Share, Text, TextInput, View } from 'react-native'
-import { Plus, Share2, Trophy } from 'lucide-react-native'
+import { ChevronRight, Plus, Share2, Trophy } from 'lucide-react-native'
 import { useStyles } from '../styles'
 import { useTheme } from '../theme'
 import type { League } from '../types'
 import { fetchMyLeagues } from '../api/league'
-import { Entrance } from '../components/effects'
+import { Entrance, GradientBackground, PressableScale, glow } from '../components/effects'
 import {
   fmtMoney, leagueShareMessage, leagueStatusColor, leagueStatusLabel,
 } from '../components/league_parts/leagueShared'
@@ -60,32 +60,36 @@ export function LeagueTab({ authToken, refreshing, onOpenLeague, onCreateLeague,
       refreshControl={<RefreshControl refreshing={!!refreshing || loading} onRefresh={load} />}
       contentContainerStyle={styles.content}
     >
-      {/* 헤더 */}
-      <View style={{ paddingHorizontal: 4, paddingVertical: 4, gap: 4 }}>
+      {/* 헤더 — 그라데이션 히어로 (트로피 골드) */}
+      <View style={[{ borderRadius: 18, overflow: 'hidden', padding: 16, gap: 7 }, glow('#f59e0b', 16, 0.4)]}>
+        <GradientBackground
+          colors={[{ offset: '0', color: '#f59e0b' }, { offset: '0.55', color: '#ea580c' }, { offset: '1', color: '#9a3412' }]}
+          radius={18} x1="0" y1="0" x2="1" y2="1"
+        />
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <Trophy size={18} color={palette.brandAccent} strokeWidth={2.5} />
-          <Text style={{ color: palette.ink, fontSize: 18, fontWeight: '900' }}>친구 모의투자</Text>
+          <Trophy size={20} color="#ffffff" strokeWidth={2.5} />
+          <Text style={{ color: '#ffffff', fontSize: 20, fontWeight: '900', letterSpacing: 0.5 }}>친구 모의투자</Text>
         </View>
-        <Text style={{ color: palette.inkMuted, fontSize: 12, lineHeight: 17 }}>
-          자본금·기간 정해놓고 친구들과 수익률 1등 가리기. 매수가는 실시간 시세로 잠깁니다.
+        <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: '900', lineHeight: 22 }}>
+          친구들과 수익률 1등을 가려보세요.
+        </Text>
+        <Text style={{ color: '#ffffffd0', fontSize: 12.5, lineHeight: 18, fontWeight: '600' }}>
+          자본금·기간을 정해놓고 모의로 경쟁합니다. 매수가는 실시간 시세로 잠기고, 마감엔 시상대에서 순위가 갈립니다.
         </Text>
       </View>
 
       {/* 액션 */}
       <View style={[styles.card, { gap: 12 }]}>
-        <Pressable
-          onPress={onCreateLeague}
-          accessibilityRole="button"
-          accessibilityLabel="새 리그 만들기"
-          style={({ pressed }) => ({
-            backgroundColor: pressed ? palette.brandAccent + 'cc' : palette.brandAccent,
-            borderRadius: 10, paddingVertical: 12,
-            flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
-          })}
-        >
-          <Plus size={14} color={palette.bg} strokeWidth={3} />
-          <Text style={{ color: palette.bg, fontSize: 14, fontWeight: '800' }}>새 리그 만들기</Text>
-        </Pressable>
+        <PressableScale onPress={onCreateLeague} accessibilityLabel="새 리그 만들기" style={{ borderRadius: 12, overflow: 'hidden' }}>
+          <View style={[
+            { paddingVertical: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 12, overflow: 'hidden' },
+            glow(palette.brandAccent, 12, 0.5),
+          ]}>
+            <GradientBackground colors={[{ offset: '0', color: palette.brandAccent }, { offset: '1', color: palette.blue }]} radius={12} x1="0" y1="0" x2="1" y2="0" />
+            <Plus size={15} color="#ffffff" strokeWidth={3} />
+            <Text style={{ color: '#ffffff', fontSize: 15, fontWeight: '900' }}>새 리그 만들기</Text>
+          </View>
+        </PressableScale>
 
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <View style={{ flex: 1 }}>
@@ -183,30 +187,42 @@ function LeagueRow({ league, onPress }: { league: League; onPress: () => void })
     } catch { /* 취소 */ }
   }
 
+  const running = league.status === 'RUNNING'
   return (
-    <Pressable
+    <PressableScale
       onPress={onPress}
-      accessibilityRole="button"
       accessibilityLabel={`${league.name} 리그 열기`}
-      style={({ pressed }) => ({
-        flexDirection: 'row', alignItems: 'center', gap: 10,
-        paddingVertical: 10, paddingHorizontal: 4,
-        opacity: pressed ? 0.6 : 1,
-      })}
+      style={[
+        {
+          flexDirection: 'row', alignItems: 'center', gap: 10,
+          backgroundColor: palette.surfaceAlt, borderRadius: 12,
+          borderLeftWidth: 3, borderLeftColor: statusColor,
+          paddingVertical: 12, paddingHorizontal: 12, marginBottom: 8,
+        },
+        running ? glow(statusColor, 8, 0.32) : null,
+      ]}
     >
+      <View style={{ width: 34, height: 34, borderRadius: 10, backgroundColor: statusColor + '22', alignItems: 'center', justifyContent: 'center' }}>
+        <Trophy size={16} color={statusColor} strokeWidth={2.5} />
+      </View>
       <View style={{ flex: 1, gap: 3 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          <Text style={{ color: palette.ink, fontSize: 14, fontWeight: '800' }}>{league.name}</Text>
-          <View style={{ backgroundColor: statusColor + '22', borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2 }}>
-            <Text style={{ color: statusColor, fontSize: 9, fontWeight: '800' }}>{leagueStatusLabel(league.status)}</Text>
+          <Text style={{ color: palette.ink, fontSize: 14, fontWeight: '800' }} numberOfLines={1}>{league.name}</Text>
+          <View style={[
+            { backgroundColor: statusColor + '22', borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2 },
+            running ? glow(statusColor, 6, 0.5) : null,
+          ]}>
+            <Text style={{ color: statusColor, fontSize: 9, fontWeight: '900' }}>{leagueStatusLabel(league.status)}</Text>
           </View>
         </View>
-        <Text style={{ color: palette.inkMuted, fontSize: 11 }}>
-          {league.currency} · {league.marketScope} · 자본금 {fmtMoney(league.startingCapital, league.currency)} · 코드 {league.joinCode}
+        <Text style={{ color: palette.inkMuted, fontSize: 11 }} numberOfLines={1}>
+          {league.currency} · {league.marketScope} · 자본금 {fmtMoney(league.startingCapital, league.currency)}
         </Text>
         {remainLabel && diff > 0 ? (
-          <Text style={{ color: palette.inkFaint, fontSize: 10 }}>{remainLabel} {remainText}</Text>
-        ) : null}
+          <Text style={{ color: palette.inkFaint, fontSize: 10 }}>{remainLabel} {remainText} · 코드 {league.joinCode}</Text>
+        ) : (
+          <Text style={{ color: palette.inkFaint, fontSize: 10 }}>코드 {league.joinCode}</Text>
+        )}
       </View>
       <Pressable
         onPress={() => void shareCode()}
@@ -217,7 +233,8 @@ function LeagueRow({ league, onPress }: { league: League; onPress: () => void })
       >
         <Share2 size={15} color={palette.inkSub} strokeWidth={2.5} />
       </Pressable>
-    </Pressable>
+      <ChevronRight size={16} color={palette.inkFaint} strokeWidth={2.5} />
+    </PressableScale>
   )
 }
 
