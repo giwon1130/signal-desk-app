@@ -164,7 +164,6 @@ export function StockDetailModal({
   }
 
   return (
-    <>
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <SafeAreaView style={{ flex: 1 }} edges={['top', 'bottom']}>
       <KeyboardAvoidingView
@@ -259,14 +258,13 @@ export function StockDetailModal({
         </Pressable>
       </KeyboardAvoidingView>
       </SafeAreaView>
+      <SeasonalityModal
+        visible={seasonalityOpen}
+        market={context.base.market}
+        ticker={context.base.ticker}
+        name={context.base.name}
+        onClose={() => setSeasonalityOpen(false)}
+      />
     </Modal>
-    <SeasonalityModal
-      visible={seasonalityOpen}
-      market={context.base.market}
-      ticker={context.base.ticker}
-      name={context.base.name}
-      onClose={() => setSeasonalityOpen(false)}
-    />
-    </>
   )
 }

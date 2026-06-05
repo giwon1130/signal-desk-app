@@ -11,7 +11,7 @@ export function modalStyles(C: Palette): StyleObj {
       alignItems: 'center', justifyContent: 'center', paddingHorizontal: 20,
     },
     signalModalCard: {
-      width: '100%', maxWidth: 520, backgroundColor: C.surface,
+      width: '100%', maxWidth: 520, maxHeight: '88%', backgroundColor: C.surface,
       borderRadius: 16, padding: 18, ...shadow.lg,
     },
     signalModalHeader: {
