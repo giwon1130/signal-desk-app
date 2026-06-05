@@ -3,7 +3,7 @@ import { Modal, Pressable, ScrollView, Text, View } from 'react-native'
 import { Info, Thermometer, X } from 'lucide-react-native'
 import { useStyles } from '../../styles'
 import type { CompositeRiskSignal, SummaryMetric } from '../../types'
-import { getCompositeRiskPalette, getRiskScoreColor } from '../../utils'
+import { getRiskScoreColor } from '../../utils'
 
 type MarketPref = 'KR' | 'US' | 'BOTH'
 
@@ -43,6 +43,18 @@ const METRIC_MARKET: Record<string, 'KR' | 'US'> = {
   'KR Heat': 'KR',
   'Flow Bias': 'KR',
 }
+
+// 미세미세 스타일 5단계 — 위험도(0~100, 높을수록 위험)별 이모지·색·직설 가이드.
+// 백엔드 level(안정/관망/주의/경계/고위험)에 1:1 매핑해 라벨 일관 유지.
+type MiseLevel = { emoji: string; action: string; color: string; bg: string }
+const MISE: Record<string, MiseLevel> = {
+  안정: { emoji: '😎', action: '진입하기 무난한 날 — 계획대로 진행하세요', color: '#15803d', bg: '#dcfce7' },
+  관망: { emoji: '🙂', action: '평소 페이스 유지 — 무리한 추격만 피하면 돼요', color: '#0d9488', bg: '#d1fae5' },
+  주의: { emoji: '😐', action: '분할·소액으로 신중하게 — 손절선 먼저 정해두세요', color: '#b45309', bg: '#fef3c7' },
+  경계: { emoji: '😟', action: '신규 진입은 자제 — 보유 비중·리스크부터 점검', color: '#c2410c', bg: '#ffedd5' },
+  고위험: { emoji: '😱', action: '지금은 쉬어가기 — 진입 보류, 현금·관리 우선', color: '#b91c1c', bg: '#fee2e2' },
+}
+const miseOf = (level: string): MiseLevel => MISE[level] ?? MISE['주의']
 
 type Indicator = { label: string; score: number; state: string; detail: string }
 
@@ -91,7 +103,7 @@ export function MarketMoodCard({ krRisk, usRisk, metrics, marketPreference }: Pr
     )
   }
 
-  const palette = risk ? getCompositeRiskPalette(risk.score) : null
+  const mise = risk ? miseOf(risk.level) : null
   const asOf = risk?.asOf?.slice(0, 16).replace('T', ' ') ?? ''
 
   return (
@@ -103,7 +115,7 @@ export function MarketMoodCard({ krRisk, usRisk, metrics, marketPreference }: Pr
       >
         <View style={styles.sectionHeaderRow}>
           <View style={styles.cardTitleRow}>
-            <Thermometer size={14} color={palette?.accent ?? '#f59e0b'} strokeWidth={2.5} />
+            <Thermometer size={14} color={mise?.color ?? '#f59e0b'} strokeWidth={2.5} />
             <Text style={styles.cardTitle}>오늘 시장 분위기</Text>
           </View>
           {risk ? (
@@ -141,16 +153,21 @@ export function MarketMoodCard({ krRisk, usRisk, metrics, marketPreference }: Pr
           </View>
         ) : null}
 
-        {risk && palette ? (
-          <View style={styles.riskHeroRow}>
-            <View style={[styles.riskScoreBox, { backgroundColor: palette.backgroundColor, borderColor: palette.borderColor }]}>
-              <Text style={[styles.riskScoreValue, { color: palette.accent }]}>{risk.score}</Text>
-              <Text style={[styles.riskScoreOutOf, { color: palette.accent }]}>/ 10</Text>
-              <Text style={[styles.riskLevelBadge, { backgroundColor: palette.badgeBackgroundColor, color: palette.badgeTextColor }]}>
-                {risk.level}
-              </Text>
+        {risk && mise ? (
+          <View style={{
+            flexDirection: 'row', alignItems: 'center', gap: 13,
+            backgroundColor: mise.bg, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 13,
+            marginTop: 4, marginBottom: 2,
+          }}>
+            <Text style={{ fontSize: 42 }}>{mise.emoji}</Text>
+            <View style={{ flex: 1, gap: 3 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
+                <Text style={{ fontSize: 32, fontWeight: '900', color: mise.color, fontVariant: ['tabular-nums'] }}>{risk.score100}</Text>
+                <Text style={{ fontSize: 12, fontWeight: '800', color: mise.color, opacity: 0.6, marginLeft: 2 }}>/100</Text>
+                <Text style={{ fontSize: 17, fontWeight: '900', color: mise.color, marginLeft: 8 }}>{risk.level}</Text>
+              </View>
+              <Text style={{ fontSize: 12.5, fontWeight: '700', color: '#475569', lineHeight: 17 }}>{mise.action}</Text>
             </View>
-            <Text style={styles.riskHeadline}>{risk.headline}</Text>
           </View>
         ) : null}
 
@@ -170,9 +187,9 @@ export function MarketMoodCard({ krRisk, usRisk, metrics, marketPreference }: Pr
               <View style={styles.signalModalHeader}>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.signalModalTitle}>
-                    {activeTab === 'KR' ? '🇰🇷 한국' : '🇺🇸 미국'} 시장 분위기 {risk.score}/10
+                    {activeTab === 'KR' ? '🇰🇷 한국' : '🇺🇸 미국'} 시장 분위기 {risk.score100}/100
                   </Text>
-                  <Text style={styles.signalModalSubtitle}>{risk.level} · 100점 환산 {risk.score100}점</Text>
+                  <Text style={styles.signalModalSubtitle}>{mise?.emoji} {risk.level} · 위험할수록 100에 가까움</Text>
                 </View>
                 <Pressable onPress={() => setOpen(false)} hitSlop={12}>
                   <X size={18} color="#64748b" />
