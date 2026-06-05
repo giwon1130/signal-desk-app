@@ -49,6 +49,7 @@ import { AIWorkspace } from './src/web/AIWorkspace'
 import { StockDetailModal, type StockDetailContext } from './src/components/StockDetailModal'
 import { ReminderSettingsModal } from './src/components/ReminderSettingsModal'
 import { getAlertPreferences, updateAlertPreferences, type MarketPreference } from './src/api/alertPreferences'
+import { markAlertsRead, deleteAlert as deleteAlertApi, clearAllAlerts } from './src/api/pushDevice'
 import { DailyGreetingModal } from './src/components/DailyGreetingModal'
 import { LoadingScreen } from './src/components/LoadingScreen'
 import { getFortuneGreetingShownDate, markFortuneGreetingShown } from './src/utils/fortuneGreeting'
@@ -91,7 +92,7 @@ function AppShell() {
   const {
     summary, sections, aiRecommendation, watchlist, portfolio, fortune, topMovers, moverReasons,
     mediaSummaries, marketInsight, upcomingEvents, disclosures, aiPicks, hiddenSignals, alertHistory, apiHealth, systemStatus, lastSyncedAt, loading, refreshing, error, refresh,
-    fetchData, setLoading, setWatchlist, setPortfolio,
+    fetchData, setLoading, setWatchlist, setPortfolio, setAlertHistory,
   } = market
   const search = useStockSearch()
   const {
@@ -135,6 +136,34 @@ function AppShell() {
   // v2.1: 통합 설정 모달
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [alertsOpen, setAlertsOpen] = useState(false)
+  // 알림함 열람 시점의 '안 읽음' id 스냅샷 — 열면 서버에서 읽음 처리되지만 이번 세션엔 점 표시 유지.
+  const [alertUnreadIds, setAlertUnreadIds] = useState<Set<string>>(new Set())
+  const unreadAlertCount = alertHistory.reduce((n, a) => (a.readAt ? n : n + 1), 0)
+
+  const handleOpenAlerts = () => {
+    void hapticLight()
+    setAlertUnreadIds(new Set(alertHistory.filter((a) => !a.readAt).map((a) => a.id)))
+    setAlertsOpen(true)
+    if (alertHistory.some((a) => !a.readAt)) {
+      const token = user?.token
+      if (token) void markAlertsRead(token)
+      const now = new Date().toISOString()
+      setAlertHistory((prev) => prev.map((a) => (a.readAt ? a : { ...a, readAt: now })))
+    }
+  }
+
+  const handleDeleteAlert = (id: string) => {
+    const token = user?.token
+    if (token) void deleteAlertApi(token, id)
+    setAlertHistory((prev) => prev.filter((a) => a.id !== id))
+  }
+
+  const handleClearAlerts = () => {
+    const token = user?.token
+    if (token) void clearAllAlerts(token)
+    setAlertHistory([])
+    setAlertsOpen(false)
+  }
   // v2.2: 리딩 — 작성 모달 + 피드 새로고침 트리거 + 리더 프로필 + 구독 코드(딥링크)
   const [composeOpen, setComposeOpen] = useState(false)
   const [readingRefreshTick, setReadingRefreshTick] = useState(0)
@@ -576,8 +605,11 @@ function AppShell() {
       <RecentAlertsModal
         visible={alertsOpen}
         alerts={alertHistory}
+        unreadIds={alertUnreadIds}
         onClose={() => setAlertsOpen(false)}
         onOpenDetail={handleOpenDetail}
+        onDelete={handleDeleteAlert}
+        onClearAll={handleClearAlerts}
       />
       <V2MigrationModal
         visible={v2MigrationOpen}
@@ -718,15 +750,15 @@ function AppShell() {
               </View>
               {/* 최근 받은 알림 — 종 아이콘. 미수신 시에도 진입은 가능 */}
               <Pressable
-                onPress={() => { void hapticLight(); setAlertsOpen(true) }}
+                onPress={handleOpenAlerts}
                 style={({ pressed }) => [styles.headerIconBtn, pressed && { opacity: 0.6 }]}
                 accessibilityLabel="최근 받은 알림"
                 hitSlop={6}
               >
                 <Bell size={18} color={palette.orange ?? '#ea580c'} strokeWidth={2.4} />
-                {alertHistory.length > 0 ? (
+                {unreadAlertCount > 0 ? (
                   <View style={styles.headerIconBadge}>
-                    <Text style={styles.headerIconBadgeText}>{alertHistory.length > 9 ? '9+' : alertHistory.length}</Text>
+                    <Text style={styles.headerIconBadgeText}>{unreadAlertCount > 9 ? '9+' : unreadAlertCount}</Text>
                   </View>
                 ) : null}
               </Pressable>

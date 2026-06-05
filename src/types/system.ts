@@ -41,13 +41,18 @@ export type DailyFortune = {
 }
 
 export type AlertHistoryItem = {
+  id: string
   market: string
   ticker: string
   name: string
-  direction: 'UP' | 'DOWN'
+  direction: 'UP' | 'DOWN' | 'PRICE_ABOVE' | 'PRICE_BELOW' | 'VOLUME_SPIKE'
   changeRate: number
+  /** '왜 움직였나' 한 줄 사유 (급등락 알림에만, 없을 수 있음) */
+  reason?: string | null
   alertDate: string
   sentAt: string
+  /** 읽은 시각. null/없음 = 안 읽음 */
+  readAt?: string | null
 }
 
 /**

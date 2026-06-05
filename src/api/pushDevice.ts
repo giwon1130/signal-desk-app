@@ -98,3 +98,45 @@ export async function fetchAlertHistory(authToken: string, limit = 30): Promise<
     return []
   }
 }
+
+/** 알림함 열람 시 — 본인의 모든 알림을 읽음 처리. 반환: 갱신 건수. */
+export async function markAlertsRead(authToken: string): Promise<number> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/push/alerts/read`, {
+      method: 'POST',
+      headers: { Accept: 'application/json', Authorization: `Bearer ${authToken}` },
+    })
+    const json = (await res.json()) as ApiResponse<number>
+    return json.success ? json.data ?? 0 : 0
+  } catch {
+    return 0
+  }
+}
+
+/** 개별 알림 삭제. */
+export async function deleteAlert(authToken: string, id: string): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/push/alerts/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+      headers: { Accept: 'application/json', Authorization: `Bearer ${authToken}` },
+    })
+    const json = (await res.json()) as ApiResponse<boolean>
+    return json.success ? json.data ?? false : false
+  } catch {
+    return false
+  }
+}
+
+/** 전체 알림 삭제. 반환: 삭제 건수. */
+export async function clearAllAlerts(authToken: string): Promise<number> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/push/alerts`, {
+      method: 'DELETE',
+      headers: { Accept: 'application/json', Authorization: `Bearer ${authToken}` },
+    })
+    const json = (await res.json()) as ApiResponse<number>
+    return json.success ? json.data ?? 0 : 0
+  } catch {
+    return 0
+  }
+}

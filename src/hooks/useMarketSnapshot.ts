@@ -121,5 +121,6 @@ export function useMarketSnapshot(authToken: string | null, enabled: boolean) {
     setLoading,
     setWatchlist,
     setPortfolio,
+    setAlertHistory,
   }
 }
