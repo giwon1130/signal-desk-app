@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { X } from 'lucide-react-native'
+import { CalendarRange, ChevronRight, X } from 'lucide-react-native'
 import { useStyles } from '../styles'
 import { useTheme } from '../theme'
 import type {
@@ -25,6 +25,7 @@ import { WatchToggle } from './stock_detail/WatchToggle'
 import { WatchAlertForm } from './stock_detail/WatchAlertForm'
 import { PortfolioForm } from './stock_detail/PortfolioForm'
 import { QuickStats } from './stock_detail/QuickStats'
+import { SeasonalityModal } from './SeasonalityModal'
 
 export type StockDetailContext = {
   /** 표준 스냅샷 — 검색 결과/관심종목/보유 어디서든 만들어 넘길 수 있음 */
@@ -72,6 +73,7 @@ export function StockDetailModal({
   const [stopLossPriceInput, setStopLossPriceInput] = useState('')
   const [portfolioSaving, setPortfolioSaving] = useState(false)
   const [alertSaving, setAlertSaving]         = useState(false)
+  const [seasonalityOpen, setSeasonalityOpen] = useState(false)
   const [toggling, setToggling]             = useState(false)
 
   const baseKey = context ? `${context.base.market}:${context.base.ticker}` : ''
@@ -162,6 +164,7 @@ export function StockDetailModal({
   }
 
   return (
+    <>
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <SafeAreaView style={{ flex: 1 }} edges={['top', 'bottom']}>
       <KeyboardAvoidingView
@@ -199,6 +202,24 @@ export function StockDetailModal({
                 toggling={toggling}
                 onToggle={() => void handleToggle()}
               />
+
+              {/* 시즈널리티 진입 */}
+              <Pressable
+                onPress={() => setSeasonalityOpen(true)}
+                style={({ pressed }) => ({
+                  flexDirection: 'row', alignItems: 'center', gap: 9,
+                  backgroundColor: palette.purpleSoft ?? palette.surfaceAlt,
+                  borderRadius: 11, paddingHorizontal: 13, paddingVertical: 12, marginTop: 10,
+                  opacity: pressed ? 0.7 : 1,
+                })}
+              >
+                <CalendarRange size={17} color={palette.purple ?? '#7c3aed'} strokeWidth={2.4} />
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: palette.ink, fontSize: 13.5, fontWeight: '800' }}>시즈널리티 — 월별 패턴</Text>
+                  <Text style={{ color: palette.inkMuted, fontSize: 11 }}>역사적으로 어느 달에 강하고 약했는지</Text>
+                </View>
+                <ChevronRight size={17} color={palette.inkFaint} strokeWidth={2.4} />
+              </Pressable>
 
               {hasWatch && context.watchItem ? (
                 // 보유 + US는 알림 트리거가 PortfolioForm 목표/손절가뿐 (거래량 알림이 KR 전용)
@@ -239,5 +260,13 @@ export function StockDetailModal({
       </KeyboardAvoidingView>
       </SafeAreaView>
     </Modal>
+    <SeasonalityModal
+      visible={seasonalityOpen}
+      market={context.base.market}
+      ticker={context.base.ticker}
+      name={context.base.name}
+      onClose={() => setSeasonalityOpen(false)}
+    />
+    </>
   )
 }
