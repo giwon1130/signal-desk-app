@@ -6,7 +6,7 @@
  */
 import { useEffect, useState } from 'react'
 import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native'
-import { CalendarRange, ChevronRight } from 'lucide-react-native'
+import { CalendarRange, ChevronRight, Layers } from 'lucide-react-native'
 import { useTheme } from '../theme'
 import type {
   AiPicksData,
@@ -19,6 +19,7 @@ import type {
 import { HiddenSignals } from './aitab_widgets/HiddenSignals'
 import { Playbook } from './aitab_widgets/Playbook'
 import { SeasonalityRulesModal } from '../components/SeasonalityRulesModal'
+import { SectorRotationModal } from '../components/SectorRotationModal'
 import { listSeasonalityRules } from '../api/backtest'
 
 type Props = {
@@ -38,6 +39,7 @@ export function AITab({
 }: Props) {
   const { palette } = useTheme()
   const [rulesOpen, setRulesOpen] = useState(false)
+  const [sectorOpen, setSectorOpen] = useState(false)
   const [rulesCount, setRulesCount] = useState<number | null>(null)
   useEffect(() => { void listSeasonalityRules().then((r) => setRulesCount(r.length)) }, [rulesOpen])
 
@@ -71,6 +73,24 @@ export function AITab({
         <ChevronRight size={18} color={palette.inkFaint} strokeWidth={2.4} />
       </Pressable>
 
+      {/* ── 섹터 로테이션 ── */}
+      <Pressable
+        onPress={() => setSectorOpen(true)}
+        style={({ pressed }) => ({
+          flexDirection: 'row', alignItems: 'center', gap: 10,
+          backgroundColor: palette.tealSoft ?? palette.surfaceAlt,
+          borderRadius: 12, paddingHorizontal: 14, paddingVertical: 13,
+          opacity: pressed ? 0.8 : 1,
+        })}
+      >
+        <Layers size={18} color={palette.teal ?? '#0d9488'} strokeWidth={2.4} />
+        <View style={{ flex: 1 }}>
+          <Text style={{ color: palette.ink, fontSize: 14, fontWeight: '800' }}>섹터 로테이션</Text>
+          <Text style={{ color: palette.inkMuted, fontSize: 11 }}>이번 달 강한 섹터 + 연간 히트맵</Text>
+        </View>
+        <ChevronRight size={18} color={palette.inkFaint} strokeWidth={2.4} />
+      </Pressable>
+
       {/* ── 마켓 브리핑 + 액션 + AI 픽 ── */}
       <Playbook
         aiPicks={aiPicks}
@@ -90,6 +110,7 @@ export function AITab({
       />
     </ScrollView>
     <SeasonalityRulesModal visible={rulesOpen} onClose={() => setRulesOpen(false)} onOpenDetail={onOpenDetail} />
+    <SectorRotationModal visible={sectorOpen} onClose={() => setSectorOpen(false)} />
     </>
   )
 }

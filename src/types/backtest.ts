@@ -39,6 +39,11 @@ export type SeasonalityReport = {
   caveats: string[]
 }
 
+/** 섹터 로테이션. */
+export type SectorMonth = { month: number; meanPct: number; winRatePct: number; tier: SeasonalityTier }
+export type SectorSeasonality = { key: string; name: string; etf: string; historyYears: number; monthly: SectorMonth[] }
+export type SectorRotationReport = { market: string; asOf: string; currentMonth: number; sectors: SectorSeasonality[] }
+
 /** 저장한 시즌 규칙(알고리즘 포트폴리오). */
 export type SeasonalityRule = {
   id: string

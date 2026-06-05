@@ -1,7 +1,20 @@
 import { API_BASE_URL, authedFetch } from '../api'
-import type { SeasonalityReport, SeasonalityRule } from '../types/backtest'
+import type { SeasonalityReport, SeasonalityRule, SectorRotationReport } from '../types/backtest'
 
 type ApiResponse<T> = { success: boolean; data: T | null }
+
+/** 섹터 로테이션 매트릭스 (공개). */
+export async function fetchSectorRotation(market: string): Promise<SectorRotationReport | null> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/backtest/sector-rotation?market=${encodeURIComponent(market)}`, {
+      headers: { Accept: 'application/json' },
+    })
+    const json = (await res.json()) as ApiResponse<SectorRotationReport>
+    return json.success ? json.data : null
+  } catch {
+    return null
+  }
+}
 
 /** 종목 시즈널리티 리포트 (공개 — 인증 불필요). */
 export async function fetchSeasonality(
