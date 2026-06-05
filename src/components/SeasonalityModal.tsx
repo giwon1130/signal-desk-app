@@ -99,7 +99,7 @@ export function SeasonalityModal({ visible, market, ticker, name, onClose }: Pro
             <View style={{ paddingVertical: 56, alignItems: 'center', gap: 6 }}>
               <CalendarRange size={26} color={palette.inkFaint} strokeWidth={1.8} />
               <Text style={{ color: palette.inkMuted, fontSize: 13, fontWeight: '700' }}>분석할 데이터가 부족합니다</Text>
-              <Text style={{ color: palette.inkFaint, fontSize: 11 }}>상장 기간이 짧거나(US 위주) 히스토리를 못 불러왔어요</Text>
+              <Text style={{ color: palette.inkFaint, fontSize: 11 }}>상장 기간이 짧거나 데이터가 없는 종목이에요</Text>
             </View>
           ) : (
             <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8 }}>
