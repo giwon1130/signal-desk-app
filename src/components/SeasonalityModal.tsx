@@ -6,10 +6,10 @@
 import { useEffect, useState } from 'react'
 import { ActivityIndicator, Modal, Pressable, ScrollView, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { Bookmark, BookmarkCheck, CalendarRange, X } from 'lucide-react-native'
+import { Bookmark, BookmarkCheck, CalendarRange, FlaskConical, Minus, Plus, X } from 'lucide-react-native'
 import { useTheme, type Palette } from '../theme'
-import type { MonthStat, SeasonalityReport, SeasonalityRuleCard, SeasonalityTier } from '../types/backtest'
-import { deleteSeasonalityRule, fetchSeasonality, listSeasonalityRules, saveSeasonalityRule } from '../api/backtest'
+import type { CustomBacktestResult, MonthStat, SeasonalityReport, SeasonalityRuleCard, SeasonalityTier } from '../types/backtest'
+import { deleteSeasonalityRule, fetchCustomBacktest, fetchSeasonality, listSeasonalityRules, saveSeasonalityRule } from '../api/backtest'
 
 type Props = { visible: boolean; market: string; ticker: string; name?: string; onClose: () => void }
 
@@ -169,6 +169,9 @@ export function SeasonalityModal({ visible, market, ticker, name, onClose }: Pro
                 </Text>
               ) : null}
 
+              {/* 내 가설 검증 (가설 빌더) */}
+              <CustomBuilder market={market} ticker={ticker} name={report.name} palette={palette} />
+
               {/* 정직 배너 */}
               {report.caveats.map((c, i) => (
                 <Text key={i} style={{ color: palette.inkFaint, fontSize: 10.5, lineHeight: 15, marginTop: i === 0 ? 6 : 2 }}>⚠️ {c}</Text>
@@ -192,6 +195,73 @@ function MonthCell({ m, palette }: { m: MonthStat; palette: Palette }) {
       </View>
       <Text style={{ color: c, fontSize: 14, fontWeight: '900', marginTop: 2 }}>{signed(m.meanPct, 1)}%</Text>
       <Text style={{ color: palette.inkFaint, fontSize: 9.5 }}>승률 {m.winRatePct.toFixed(0)}% · {m.sampleYears}년</Text>
+    </View>
+  )
+}
+
+const MONTH_PRESETS = [
+  { label: '여름강세 6/25→7/25', v: { em: 6, ed: 25, xm: 7, xd: 25 } },
+  { label: '산타랠리 11/25→12/24', v: { em: 11, ed: 25, xm: 12, xd: 24 } },
+  { label: '1월효과 12/20→1/31', v: { em: 12, ed: 20, xm: 1, xd: 31 } },
+]
+const TIER_LABEL: Record<string, string> = { STRONG: '🟢 뚜렷', WEAK: '🟡 약함', NOISE: '⚪ 노이즈' }
+
+function Stepper({ value, min, max, suffix, onChange, palette }: { value: number; min: number; max: number; suffix: string; onChange: (v: number) => void; palette: Palette }) {
+  const btn = { width: 24, height: 24, borderRadius: 6, alignItems: 'center' as const, justifyContent: 'center' as const, backgroundColor: palette.bg, borderWidth: 1, borderColor: palette.border }
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+      <Pressable onPress={() => onChange(value <= min ? max : value - 1)} hitSlop={6} style={btn}><Minus size={12} color={palette.inkMuted} strokeWidth={2.5} /></Pressable>
+      <Text style={{ minWidth: 30, textAlign: 'center', color: palette.ink, fontSize: 13, fontWeight: '800' }}>{value}{suffix}</Text>
+      <Pressable onPress={() => onChange(value >= max ? min : value + 1)} hitSlop={6} style={btn}><Plus size={12} color={palette.inkMuted} strokeWidth={2.5} /></Pressable>
+    </View>
+  )
+}
+
+function CustomBuilder({ market, ticker, name, palette }: { market: string; ticker: string; name: string; palette: Palette }) {
+  const [cw, setCw] = useState({ em: 6, ed: 25, xm: 7, xd: 25 })
+  const [result, setResult] = useState<CustomBacktestResult | null | undefined>(undefined)
+  const [loading, setLoading] = useState(false)
+  const run = async () => {
+    setLoading(true); setResult(undefined)
+    const r = await fetchCustomBacktest(market, ticker, name, cw.em, cw.ed, cw.xm, cw.xd)
+    setResult(r); setLoading(false)
+  }
+  return (
+    <View style={{ backgroundColor: palette.surfaceAlt ?? palette.surface, borderRadius: 12, padding: 12, marginBottom: 14 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+        <FlaskConical size={14} color={palette.purple ?? '#7c3aed'} strokeWidth={2.4} />
+        <Text style={{ color: palette.ink, fontSize: 13, fontWeight: '800' }}>내 가설 검증</Text>
+      </View>
+      <Text style={{ color: palette.inkFaint, fontSize: 10.5, marginBottom: 8 }}>매년 진입일에 사서 청산일에 판다면? 직접 윈도우를 정해 검증</Text>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 5, marginBottom: 10 }}>
+        {MONTH_PRESETS.map((p) => (
+          <Pressable key={p.label} onPress={() => setCw(p.v)} style={{ backgroundColor: palette.bg, borderRadius: 7, paddingHorizontal: 8, paddingVertical: 4, borderWidth: 1, borderColor: palette.border }}>
+            <Text style={{ color: palette.inkSub, fontSize: 10, fontWeight: '700' }}>{p.label}</Text>
+          </Pressable>
+        ))}
+      </View>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+        <Text style={{ width: 32, color: palette.up, fontSize: 12, fontWeight: '800' }}>진입</Text>
+        <Stepper value={cw.em} min={1} max={12} suffix="월" onChange={(v) => setCw((s) => ({ ...s, em: v }))} palette={palette} />
+        <Stepper value={cw.ed} min={1} max={31} suffix="일" onChange={(v) => setCw((s) => ({ ...s, ed: v }))} palette={palette} />
+      </View>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+        <Text style={{ width: 32, color: palette.down, fontSize: 12, fontWeight: '800' }}>청산</Text>
+        <Stepper value={cw.xm} min={1} max={12} suffix="월" onChange={(v) => setCw((s) => ({ ...s, xm: v }))} palette={palette} />
+        <Stepper value={cw.xd} min={1} max={31} suffix="일" onChange={(v) => setCw((s) => ({ ...s, xd: v }))} palette={palette} />
+      </View>
+      <Pressable onPress={() => void run()} disabled={loading} style={{ backgroundColor: palette.purple ?? '#7c3aed', borderRadius: 9, paddingVertical: 10, alignItems: 'center', opacity: loading ? 0.6 : 1 }}>
+        <Text style={{ color: '#fff', fontSize: 13, fontWeight: '800' }}>{loading ? '검증 중…' : '검증'}</Text>
+      </Pressable>
+      {result === undefined ? null : result === null ? (
+        <Text style={{ color: palette.inkMuted, fontSize: 11, marginTop: 10, textAlign: 'center' }}>표본이 부족하거나 데이터가 없어요 (최소 3년)</Text>
+      ) : (
+        <View style={{ marginTop: 10, gap: 4 }}>
+          <Text style={{ color: palette.ink, fontSize: 12, fontWeight: '800' }}>{result.window} · {TIER_LABEL[result.tier] ?? result.tier}</Text>
+          <Text style={{ color: palette.inkSub, fontSize: 11.5, lineHeight: 16 }}>평균 {signed(result.meanPct, 2)}% · 승률 {result.winRatePct.toFixed(0)}% · {result.sampleYears}년 · 비용후 {signed(result.netAfterCostPct, 2)}%</Text>
+          <Text style={{ color: palette.inkFaint, fontSize: 10.5 }}>최악 {signed(result.worstYearPct, 1)}% · 최고 {signed(result.bestYearPct, 1)}%</Text>
+        </View>
+      )}
     </View>
   )
 }

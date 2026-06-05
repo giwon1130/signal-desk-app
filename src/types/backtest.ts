@@ -39,6 +39,25 @@ export type SeasonalityReport = {
   caveats: string[]
 }
 
+/** 가설 빌더 — 커스텀 윈도우 백테스트. */
+export type YearReturn = { year: number; returnPct: number }
+export type CustomBacktestResult = {
+  market: string
+  ticker: string
+  name: string
+  window: string
+  meanPct: number
+  medianPct: number
+  winRatePct: number
+  sampleYears: number
+  worstYearPct: number
+  bestYearPct: number
+  netAfterCostPct: number
+  tier: SeasonalityTier
+  costPct: number
+  perYear: YearReturn[]
+}
+
 /** 섹터 로테이션. */
 export type SectorMonth = { month: number; meanPct: number; winRatePct: number; tier: SeasonalityTier }
 export type SectorSeasonality = { key: string; name: string; etf: string; historyYears: number; monthly: SectorMonth[] }

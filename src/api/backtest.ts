@@ -1,7 +1,26 @@
 import { API_BASE_URL, authedFetch } from '../api'
-import type { SeasonalityReport, SeasonalityRule, SectorRotationReport } from '../types/backtest'
+import type { CustomBacktestResult, SeasonalityReport, SeasonalityRule, SectorRotationReport } from '../types/backtest'
 
 type ApiResponse<T> = { success: boolean; data: T | null }
+
+/** 가설 빌더 — 커스텀 윈도우(진입일~청산일) 백테스트 (공개). */
+export async function fetchCustomBacktest(
+  market: string, ticker: string, name: string,
+  entryMonth: number, entryDay: number, exitMonth: number, exitDay: number,
+): Promise<CustomBacktestResult | null> {
+  try {
+    const q = new URLSearchParams({
+      market, ticker, name,
+      entryMonth: String(entryMonth), entryDay: String(entryDay),
+      exitMonth: String(exitMonth), exitDay: String(exitDay),
+    })
+    const res = await fetch(`${API_BASE_URL}/api/v1/backtest/custom?${q.toString()}`, { headers: { Accept: 'application/json' } })
+    const json = (await res.json()) as ApiResponse<CustomBacktestResult>
+    return json.success ? json.data : null
+  } catch {
+    return null
+  }
+}
 
 /** 섹터 로테이션 매트릭스 (공개). */
 export async function fetchSectorRotation(market: string): Promise<SectorRotationReport | null> {
