@@ -38,3 +38,17 @@ export type SeasonalityReport = {
   highlights: SeasonalityRuleCard[]
   caveats: string[]
 }
+
+/** 저장한 시즌 규칙(알고리즘 포트폴리오). */
+export type SeasonalityRule = {
+  id: string
+  market: string
+  ticker: string
+  name: string
+  kind: 'BUY_MONTH' | 'AVOID_MONTH'
+  month: number
+  meanPct: number | null
+  winRatePct: number | null
+  sampleYears: number | null
+  createdAt: string
+}

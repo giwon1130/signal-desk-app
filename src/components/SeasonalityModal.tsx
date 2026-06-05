@@ -6,10 +6,10 @@
 import { useEffect, useState } from 'react'
 import { ActivityIndicator, Modal, Pressable, ScrollView, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { CalendarRange, X } from 'lucide-react-native'
+import { Bookmark, BookmarkCheck, CalendarRange, X } from 'lucide-react-native'
 import { useTheme, type Palette } from '../theme'
-import type { MonthStat, SeasonalityReport, SeasonalityTier } from '../types/backtest'
-import { fetchSeasonality } from '../api/backtest'
+import type { MonthStat, SeasonalityReport, SeasonalityRuleCard, SeasonalityTier } from '../types/backtest'
+import { deleteSeasonalityRule, fetchSeasonality, listSeasonalityRules, saveSeasonalityRule } from '../api/backtest'
 
 type Props = { visible: boolean; market: string; ticker: string; name?: string; onClose: () => void }
 
@@ -23,18 +23,50 @@ export function SeasonalityModal({ visible, market, ticker, name, onClose }: Pro
   const [report, setReport] = useState<SeasonalityReport | null>(null)
   const [loading, setLoading] = useState(false)
   const [err, setErr] = useState(false)
+  // 저장된 규칙: key=`${kind}:${month}` → ruleId
+  const [savedMap, setSavedMap] = useState<Record<string, string>>({})
+  const [savingKey, setSavingKey] = useState<string | null>(null)
 
   useEffect(() => {
     if (!visible) return
     let alive = true
-    setLoading(true); setErr(false); setReport(null)
+    setLoading(true); setErr(false); setReport(null); setSavedMap({})
     fetchSeasonality(market, ticker, name).then((r) => {
       if (!alive) return
       if (r) setReport(r); else setErr(true)
       setLoading(false)
     })
+    listSeasonalityRules().then((rules) => {
+      if (!alive) return
+      const map: Record<string, string> = {}
+      rules
+        .filter((rl) => rl.ticker === ticker && rl.market.toUpperCase() === market.toUpperCase())
+        .forEach((rl) => { map[`${rl.kind}:${rl.month}`] = rl.id })
+      setSavedMap(map)
+    })
     return () => { alive = false }
   }, [visible, market, ticker, name])
+
+  const toggleSave = async (h: SeasonalityRuleCard) => {
+    if (!report || h.month == null || savingKey) return
+    const key = `${h.kind}:${h.month}`
+    setSavingKey(key)
+    try {
+      if (savedMap[key]) {
+        const ok = await deleteSeasonalityRule(savedMap[key])
+        if (ok) setSavedMap((m) => { const n = { ...m }; delete n[key]; return n })
+      } else {
+        const stat = report.monthly.find((m) => m.month === h.month)
+        const saved = await saveSeasonalityRule({
+          market, ticker, name: report.name, kind: h.kind, month: h.month,
+          meanPct: stat?.meanPct ?? null, winRatePct: stat?.winRatePct ?? null, sampleYears: stat?.sampleYears ?? null,
+        })
+        if (saved) setSavedMap((m) => ({ ...m, [key]: saved.id }))
+      }
+    } finally {
+      setSavingKey(null)
+    }
+  }
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
@@ -75,13 +107,35 @@ export function SeasonalityModal({ visible, market, ticker, name, onClose }: Pro
               {report.highlights.length > 0 ? (
                 <View style={{ gap: 8, marginBottom: 16 }}>
                   <Text style={{ color: palette.inkMuted, fontSize: 11, fontWeight: '800', letterSpacing: 0.4 }}>핵심 패턴 (🟢 뚜렷한 것만)</Text>
+                  <Text style={{ color: palette.inkFaint, fontSize: 10.5, marginTop: -3 }}>저장하면 그 달이 다가올 때 푸시로 알려드려요</Text>
                   {report.highlights.map((h, i) => {
                     const buy = h.kind === 'BUY_MONTH'
                     const c = buy ? palette.up : palette.down
+                    const key = `${h.kind}:${h.month}`
+                    const saved = !!savedMap[key]
                     return (
                       <View key={i} style={{ backgroundColor: (buy ? palette.upSoft : palette.downSoft) ?? palette.surfaceAlt, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, borderLeftWidth: 3, borderLeftColor: c }}>
-                        <Text style={{ color: c, fontSize: 13.5, fontWeight: '900' }}>{h.title}</Text>
-                        <Text style={{ color: palette.inkSub, fontSize: 11.5, lineHeight: 16, marginTop: 2 }}>{h.detail}</Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
+                          <View style={{ flex: 1 }}>
+                            <Text style={{ color: c, fontSize: 13.5, fontWeight: '900' }}>{h.title}</Text>
+                            <Text style={{ color: palette.inkSub, fontSize: 11.5, lineHeight: 16, marginTop: 2 }}>{h.detail}</Text>
+                          </View>
+                          <Pressable
+                            onPress={() => void toggleSave(h)}
+                            disabled={savingKey === key}
+                            hitSlop={6}
+                            style={{
+                              flexDirection: 'row', alignItems: 'center', gap: 3,
+                              paddingHorizontal: 8, paddingVertical: 5, borderRadius: 7,
+                              backgroundColor: saved ? c + '22' : palette.bg,
+                              borderWidth: 1, borderColor: saved ? c : palette.border,
+                              opacity: savingKey === key ? 0.5 : 1,
+                            }}
+                          >
+                            {saved ? <BookmarkCheck size={12} color={c} strokeWidth={2.5} /> : <Bookmark size={12} color={palette.inkMuted} strokeWidth={2.5} />}
+                            <Text style={{ color: saved ? c : palette.inkMuted, fontSize: 10.5, fontWeight: '800' }}>{saved ? '저장됨' : '저장'}</Text>
+                          </Pressable>
+                        </View>
                       </View>
                     )
                   })}
