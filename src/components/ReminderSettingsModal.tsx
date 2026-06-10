@@ -5,22 +5,18 @@ import { Bell, X } from 'lucide-react-native'
 import { useStyles } from '../styles'
 import { useTheme } from '../theme'
 import {
-  clearNotificationHistory,
   getKrOpenEnabled,
   getMinutesBefore,
-  getNotificationHistory,
   getUsOpenEnabled,
   setKrOpenEnabled,
   setMinutesBefore,
   setUsOpenEnabled,
-  type NotificationRecord,
 } from '../hooks/useMarketReminder'
 import { getPushAlertsEnabled, setPushAlertsEnabled } from '../api/pushDevice'
 import { getAlertPreferences, updateAlertPreferences, type AlertPreferences } from '../api/alertPreferences'
 import { AlertToggleRow } from './reminder_parts/AlertToggleRow'
 import { AlertGroup } from './reminder_parts/AlertGroup'
 import { MinutesBeforePicker } from './reminder_parts/MinutesBeforePicker'
-import { NotificationHistorySection } from './reminder_parts/NotificationHistorySection'
 
 type Props = {
   visible: boolean
@@ -39,7 +35,6 @@ export function ReminderSettingsModal({ visible, authToken, onClose }: Props) {
   const [usOn, setUsOn] = useState(true)
   const [minutes, setMinutes] = useState(10)
   const [hydrated, setHydrated] = useState(false)
-  const [history, setHistory] = useState<NotificationRecord[]>([])
   const [prefs, setPrefs] = useState<AlertPreferences>({
     krEnabled: true, usEnabled: false, premarketEnabled: true, compositeRiskEnabled: true,
     marketPreference: 'BOTH', eveningBriefEnabled: false, middayBriefEnabled: false, closeBriefEnabled: true,
@@ -49,19 +44,17 @@ export function ReminderSettingsModal({ visible, authToken, onClose }: Props) {
   useEffect(() => {
     if (!visible) return
     void (async () => {
-      const [p, a, b, c, h, sp] = await Promise.all([
+      const [p, a, b, c, sp] = await Promise.all([
         getPushAlertsEnabled(),
         getKrOpenEnabled(),
         getUsOpenEnabled(),
         getMinutesBefore(),
-        getNotificationHistory(),
         authToken ? getAlertPreferences(authToken) : Promise.resolve(prefs),
       ])
       setPushOn(p)
       setKrOn(a)
       setUsOn(b)
       setMinutes(c)
-      setHistory(h)
       setPrefs(sp)
       setHydrated(true)
     })()
@@ -71,11 +64,6 @@ export function ReminderSettingsModal({ visible, authToken, onClose }: Props) {
     const next = { ...prefs, ...patch }
     setPrefs(next)
     if (authToken) await updateAlertPreferences(authToken, next)
-  }
-
-  const handleClearHistory = async () => {
-    await clearNotificationHistory()
-    setHistory([])
   }
 
   const handlePush = async (v: boolean) => {
@@ -179,11 +167,6 @@ export function ReminderSettingsModal({ visible, authToken, onClose }: Props) {
               장 시작 알림은 디바이스 로컬 예약, 급등락 알림은 서버에서 Expo 푸시로 발송한다.
               알림을 끄면 서버에서 이 기기 토큰을 제거해서 더 이상 푸시가 안 온다.
             </Text>
-
-            <NotificationHistorySection
-              history={history}
-              onClear={() => void handleClearHistory()}
-            />
           </ScrollView>
         </View>
       </Pressable>
