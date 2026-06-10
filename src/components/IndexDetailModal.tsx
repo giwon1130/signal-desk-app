@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
-import { Modal, ScrollView, useWindowDimensions } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { Modal, ScrollView, View, useWindowDimensions } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Activity } from 'lucide-react-native'
 import { ChartSection } from '../tabs/market_parts/ChartSection'
 import { ModalHeader } from './ModalHeader'
@@ -23,6 +23,7 @@ type Props = {
  */
 export function IndexDetailModal({ visible, sections, initialMarket, initialLabel, onClose }: Props) {
   const { palette } = useTheme()
+  const insets = useSafeAreaInsets()
   const sel = useChartSelection(sections)
   const { width } = useWindowDimensions()
   const chartWidth = Math.max(280, Math.min(width, 600) - 56)
@@ -37,7 +38,9 @@ export function IndexDetailModal({ visible, sections, initialMarket, initialLabe
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="fullScreen" onRequestClose={onClose}>
-      <SafeAreaView style={{ flex: 1, backgroundColor: palette.bg }} edges={['top', 'bottom']}>
+      {/* Modal 내부에선 SafeAreaView 가 top inset 을 못 받는 경우가 있어 useSafeAreaInsets 로 직접 패딩
+          (SettingsModal 등 다른 풀스크린 모달과 동일 패턴). */}
+      <View style={{ flex: 1, backgroundColor: palette.bg, paddingTop: insets.top, paddingBottom: insets.bottom }}>
         <ModalHeader icon={Activity} title="지수" onClose={onClose} />
         <ScrollView contentContainerStyle={{ padding: 14, paddingBottom: 32 }} showsVerticalScrollIndicator={false}>
           <ChartSection
@@ -53,7 +56,7 @@ export function IndexDetailModal({ visible, sections, initialMarket, initialLabe
             onSelectedIndexLabelChange={sel.setSelectedIndexLabel}
           />
         </ScrollView>
-      </SafeAreaView>
+      </View>
     </Modal>
   )
 }
