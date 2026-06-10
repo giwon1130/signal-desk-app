@@ -7,7 +7,8 @@
 import { useMemo, useState } from 'react'
 import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { Trophy, X } from 'lucide-react-native'
+import { Trophy } from 'lucide-react-native'
+import { ModalHeader } from '../ModalHeader'
 import { useTheme } from '../../theme'
 import type { LeagueCurrency, LeagueVisibility, MarketScope, TradingHours } from '../../types'
 import { createLeague, openLeague } from '../../api/league'
@@ -112,19 +113,7 @@ export function CreateLeagueModal({ visible, onClose, onCreated, toast }: Props)
     <Modal visible={visible} animationType="slide" presentationStyle="fullScreen" onRequestClose={onClose}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1, backgroundColor: palette.bg }}>
       <View style={{ flex: 1, paddingTop: insets.top, paddingBottom: insets.bottom }}>
-        {/* 헤더 */}
-        <View style={{
-          flexDirection: 'row', alignItems: 'center',
-          paddingHorizontal: 16, paddingVertical: 14,
-          borderBottomWidth: 1, borderBottomColor: palette.border,
-          gap: 10,
-        }}>
-          <Trophy size={20} color={palette.brandAccent} strokeWidth={2.5} />
-          <Text style={{ flex: 1, color: palette.ink, fontSize: 17, fontWeight: '900' }}>새 리그 만들기</Text>
-          <Pressable onPress={onClose} hitSlop={20} accessibilityRole="button" accessibilityLabel="닫기">
-            <X size={20} color={palette.inkMuted} strokeWidth={2.5} />
-          </Pressable>
-        </View>
+        <ModalHeader icon={Trophy} title="새 리그 만들기" onClose={onClose} />
 
         <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 18, gap: 20 }}>
           {/* 리그 이름 */}

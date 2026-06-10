@@ -8,7 +8,8 @@
 import { useState } from 'react'
 import { ActivityIndicator, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { CheckSquare, Megaphone, Search, Square, X } from 'lucide-react-native'
+import { CheckSquare, Megaphone, Search, Square } from 'lucide-react-native'
+import { ModalHeader } from '../ModalHeader'
 import { useTheme } from '../../theme'
 import type { CallInput, DetectedMention, PostVisibility } from '../../types'
 import { detectMentions, publishPost } from '../../api/reading'
@@ -108,18 +109,7 @@ export function ComposePostModal({ visible, onClose, onPublished, toast }: Props
     <Modal visible={visible} animationType="slide" presentationStyle="fullScreen" onRequestClose={handleClose}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1, backgroundColor: palette.bg }}>
       <View style={{ flex: 1, paddingTop: insets.top, paddingBottom: insets.bottom }}>
-        {/* 헤더 */}
-        <View style={{
-          flexDirection: 'row', alignItems: 'center',
-          paddingHorizontal: 16, paddingVertical: 14,
-          borderBottomWidth: 1, borderBottomColor: palette.border, gap: 10,
-        }}>
-          <Megaphone size={20} color={palette.brandAccent} strokeWidth={2.5} />
-          <Text style={{ flex: 1, color: palette.ink, fontSize: 17, fontWeight: '900' }}>새 리딩 쓰기</Text>
-          <Pressable onPress={handleClose} hitSlop={20} accessibilityLabel="닫기">
-            <X size={20} color={palette.inkMuted} strokeWidth={2.5} />
-          </Pressable>
-        </View>
+        <ModalHeader icon={Megaphone} title="새 리딩 쓰기" onClose={handleClose} />
 
         <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 18, gap: 18 }} keyboardShouldPersistTaps="handled">
           {/* 제목 */}

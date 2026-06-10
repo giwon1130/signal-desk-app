@@ -19,7 +19,7 @@ export type AlertPreferences = {
   quietEndHour: number     // 0~23 (KST)
 }
 
-const DEFAULT: AlertPreferences = {
+export const DEFAULT_ALERT_PREFERENCES: AlertPreferences = {
   krEnabled: true,
   usEnabled: false,
   premarketEnabled: true,
@@ -42,10 +42,10 @@ export async function getAlertPreferences(authToken: string): Promise<AlertPrefe
         Authorization: `Bearer ${authToken}`,
       },
     })
-    if (!res.ok) return DEFAULT
+    if (!res.ok) return DEFAULT_ALERT_PREFERENCES
     return (await res.json()) as AlertPreferences
   } catch {
-    return DEFAULT
+    return DEFAULT_ALERT_PREFERENCES
   }
 }
 

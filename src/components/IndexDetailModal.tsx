@@ -1,8 +1,9 @@
 import { useEffect } from 'react'
-import { Modal, Pressable, ScrollView, Text, View, useWindowDimensions } from 'react-native'
+import { Modal, ScrollView, useWindowDimensions } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Activity, X } from 'lucide-react-native'
+import { Activity } from 'lucide-react-native'
 import { ChartSection } from '../tabs/market_parts/ChartSection'
+import { ModalHeader } from './ModalHeader'
 import { useChartSelection } from '../hooks/useChartSelection'
 import { useTheme } from '../theme'
 import type { MarketKey, MarketSectionsData } from '../types'
@@ -37,19 +38,7 @@ export function IndexDetailModal({ visible, sections, initialMarket, initialLabe
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="fullScreen" onRequestClose={onClose}>
       <SafeAreaView style={{ flex: 1, backgroundColor: palette.bg }} edges={['top', 'bottom']}>
-        <View
-          style={{
-            flexDirection: 'row', alignItems: 'center', gap: 10,
-            paddingHorizontal: 16, paddingVertical: 12,
-            borderBottomWidth: 1, borderBottomColor: palette.border,
-          }}
-        >
-          <Activity size={18} color={palette.brandAccent} strokeWidth={2.5} />
-          <Text style={{ flex: 1, color: palette.ink, fontSize: 17, fontWeight: '900' }}>지수</Text>
-          <Pressable onPress={onClose} hitSlop={20} accessibilityLabel="닫기">
-            <X size={20} color={palette.inkMuted} strokeWidth={2.5} />
-          </Pressable>
-        </View>
+        <ModalHeader icon={Activity} title="지수" onClose={onClose} />
         <ScrollView contentContainerStyle={{ padding: 14, paddingBottom: 32 }} showsVerticalScrollIndicator={false}>
           <ChartSection
             activeSection={sel.activeSection}

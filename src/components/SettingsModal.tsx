@@ -9,10 +9,11 @@
  */
 import { Modal, Pressable, ScrollView, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { Bell, LogOut, Settings as SettingsIcon, Trash2, X } from 'lucide-react-native'
+import { Bell, LogOut, Settings as SettingsIcon, Trash2 } from 'lucide-react-native'
 import { useStyles } from '../styles'
 import { useTheme } from '../theme'
 import type { MarketPreference } from '../api/alertPreferences'
+import { ModalHeader } from './ModalHeader'
 import { MarketPreferencePicker } from './reminder_parts/MarketPreferencePicker'
 
 type ThemeMode = 'system' | 'light' | 'dark'
@@ -42,18 +43,7 @@ export function SettingsModal({
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="fullScreen" onRequestClose={onClose}>
       <View style={{ flex: 1, backgroundColor: palette.bg, paddingTop: insets.top, paddingBottom: insets.bottom }}>
-        {/* 헤더 */}
-        <View style={{
-          flexDirection: 'row', alignItems: 'center',
-          paddingHorizontal: 16, paddingVertical: 12,
-          borderBottomWidth: 1, borderBottomColor: palette.border, gap: 10,
-        }}>
-          <SettingsIcon size={18} color={palette.brandAccent} strokeWidth={2.5} />
-          <Text style={{ flex: 1, color: palette.ink, fontSize: 17, fontWeight: '900' }}>설정</Text>
-          <Pressable onPress={onClose} hitSlop={20} accessibilityLabel="닫기">
-            <X size={20} color={palette.inkMuted} strokeWidth={2.5} />
-          </Pressable>
-        </View>
+        <ModalHeader icon={SettingsIcon} title="설정" onClose={onClose} />
 
         <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 14, gap: 18 }}>
           {/* 계정 정보 카드 */}

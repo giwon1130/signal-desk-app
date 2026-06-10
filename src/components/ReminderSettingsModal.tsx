@@ -13,7 +13,7 @@ import {
   setUsOpenEnabled,
 } from '../hooks/useMarketReminder'
 import { getPushAlertsEnabled, setPushAlertsEnabled } from '../api/pushDevice'
-import { getAlertPreferences, updateAlertPreferences, type AlertPreferences } from '../api/alertPreferences'
+import { DEFAULT_ALERT_PREFERENCES, getAlertPreferences, updateAlertPreferences, type AlertPreferences } from '../api/alertPreferences'
 import { AlertToggleRow } from './reminder_parts/AlertToggleRow'
 import { AlertGroup } from './reminder_parts/AlertGroup'
 import { MinutesBeforePicker } from './reminder_parts/MinutesBeforePicker'
@@ -35,11 +35,7 @@ export function ReminderSettingsModal({ visible, authToken, onClose }: Props) {
   const [usOn, setUsOn] = useState(true)
   const [minutes, setMinutes] = useState(10)
   const [hydrated, setHydrated] = useState(false)
-  const [prefs, setPrefs] = useState<AlertPreferences>({
-    krEnabled: true, usEnabled: false, premarketEnabled: true, compositeRiskEnabled: true,
-    marketPreference: 'BOTH', eveningBriefEnabled: false, middayBriefEnabled: false, closeBriefEnabled: true,
-    volumeAlertEnabled: true, quietHoursEnabled: false, quietStartHour: 22, quietEndHour: 7,
-  })
+  const [prefs, setPrefs] = useState<AlertPreferences>(DEFAULT_ALERT_PREFERENCES)
 
   // 모달 열릴 때마다 현재 저장값 hydrate
   useEffect(() => {
@@ -181,7 +177,7 @@ export function ReminderSettingsModal({ visible, authToken, onClose }: Props) {
                 title="🌙 방해금지 시간"
                 hint={
                   prefs.quietHoursEnabled
-                    ? `${pad2(prefs.quietStartHour)}:00 ~ ${pad2(prefs.quietEndHour)}:00 푸시 보류`
+                    ? `${String(prefs.quietStartHour).padStart(2, '0')}:00 ~ ${String(prefs.quietEndHour).padStart(2, '0')}:00 푸시 보류`
                     : '야간 시간대 푸시 보류'
                 }
                 value={prefs.quietHoursEnabled}
@@ -221,10 +217,6 @@ export function ReminderSettingsModal({ visible, authToken, onClose }: Props) {
   )
 }
 
-function pad2(n: number): string {
-  return n < 10 ? `0${n}` : String(n)
-}
-
 /** 0~23시 순환 스테퍼. */
 function HourStepper({
   label, hour, disabled, onChange,
@@ -250,7 +242,7 @@ function HourStepper({
       <Text style={{ color: palette.inkMuted, fontSize: 12, fontWeight: '800', width: 36 }}>{label}</Text>
       {btn('−', -1)}
       <Text style={{ color: palette.ink, fontSize: 15, fontWeight: '900', width: 56, textAlign: 'center', fontVariant: ['tabular-nums'] }}>
-        {pad2(hour)}:00
+        {String(hour).padStart(2, '0')}:00
       </Text>
       {btn('+', +1)}
     </View>

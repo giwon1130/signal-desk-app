@@ -5,7 +5,8 @@
 import { useEffect, useState } from 'react'
 import { KeyboardAvoidingView, Modal, Platform, Pressable, Text, TextInput, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { Trophy, X } from 'lucide-react-native'
+import { Trophy } from 'lucide-react-native'
+import { ModalHeader } from '../ModalHeader'
 import { useTheme } from '../../theme'
 import { joinLeague } from '../../api/league'
 import { LEAGUE_AVATARS, joinErrorMessage } from './leagueShared'
@@ -52,18 +53,7 @@ export function JoinLeagueModal({ visible, code, onClose, onJoined, toast }: Pro
     <Modal visible={visible} animationType="slide" presentationStyle="fullScreen" onRequestClose={onClose}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1, backgroundColor: palette.bg }}>
       <View style={{ flex: 1, paddingTop: insets.top, paddingBottom: insets.bottom }}>
-        {/* 헤더 */}
-        <View style={{
-          flexDirection: 'row', alignItems: 'center',
-          paddingHorizontal: 16, paddingVertical: 14,
-          borderBottomWidth: 1, borderBottomColor: palette.border, gap: 10,
-        }}>
-          <Trophy size={20} color={palette.brandAccent} strokeWidth={2.5} />
-          <Text style={{ flex: 1, color: palette.ink, fontSize: 17, fontWeight: '900' }}>리그 참가</Text>
-          <Pressable onPress={onClose} hitSlop={20} accessibilityRole="button" accessibilityLabel="닫기">
-            <X size={20} color={palette.inkMuted} strokeWidth={2.5} />
-          </Pressable>
-        </View>
+        <ModalHeader icon={Trophy} title="리그 참가" onClose={onClose} />
 
         <View style={{ padding: 18, gap: 20 }}>
           <Text style={{ color: palette.inkMuted, fontSize: 13, lineHeight: 19 }}>

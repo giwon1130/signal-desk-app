@@ -5,7 +5,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Modal, Pressable, RefreshControl, ScrollView, Share, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { Megaphone, Share2, X } from 'lucide-react-native'
+import { Megaphone, Share2 } from 'lucide-react-native'
+import { ModalHeader } from '../ModalHeader'
 import { useTheme } from '../../theme'
 import { fetchLeaderProfile, subscribe } from '../../api/reading'
 import type { LeaderProfile } from '../../types'
@@ -71,25 +72,17 @@ export function LeaderProfileModal({ visible, leaderUserId, myUserId, onClose, o
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="fullScreen" onRequestClose={onClose}>
       <View style={{ flex: 1, backgroundColor: palette.bg, paddingTop: insets.top, paddingBottom: insets.bottom }}>
-        {/* 헤더 */}
-        <View style={{
-          flexDirection: 'row', alignItems: 'center',
-          paddingHorizontal: 16, paddingVertical: 12,
-          borderBottomWidth: 1, borderBottomColor: palette.border, gap: 10,
-        }}>
-          <Megaphone size={18} color={palette.brandAccent} strokeWidth={2.5} />
-          <Text style={{ flex: 1, color: palette.ink, fontSize: 16, fontWeight: '900' }} numberOfLines={1}>
-            {leader?.displayName ?? '리더'}
-          </Text>
-          {leader?.inviteCode ? (
+        <ModalHeader
+          icon={Megaphone}
+          title={leader?.displayName ?? '리더'}
+          titleNumberOfLines={1}
+          onClose={onClose}
+          right={leader?.inviteCode ? (
             <Pressable onPress={() => void handleShare()} hitSlop={8} accessibilityRole="button" accessibilityLabel="구독 코드 공유" style={{ padding: 4 }}>
               <Share2 size={16} color={palette.inkSub} strokeWidth={2.5} />
             </Pressable>
-          ) : null}
-          <Pressable onPress={onClose} hitSlop={10} accessibilityRole="button" accessibilityLabel="닫기">
-            <X size={20} color={palette.inkMuted} strokeWidth={2.5} />
-          </Pressable>
-        </View>
+          ) : undefined}
+        />
 
         <ScrollView
           style={{ flex: 1 }}
