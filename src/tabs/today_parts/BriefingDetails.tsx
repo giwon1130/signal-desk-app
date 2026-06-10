@@ -37,9 +37,15 @@ export function BriefingDetails({ briefing }: { briefing: DailyBriefing }) {
             <Text style={styles.briefingContextChipValue}>{briefing.context.marketMood}</Text>
           </View>
           {briefing.context.keyEvent ? (
-            <View style={styles.briefingContextChip}>
+            <View style={[styles.briefingContextChip, { maxWidth: '100%' }]}>
               <Text style={styles.briefingContextChipLabel}>이벤트</Text>
-              <Text style={styles.briefingContextChipValue}>{briefing.context.keyEvent}</Text>
+              <Text
+                style={[styles.briefingContextChipValue, { flexShrink: 1 }]}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
+                {briefing.context.keyEvent}
+              </Text>
             </View>
           ) : null}
         </View>
