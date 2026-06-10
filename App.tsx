@@ -39,6 +39,7 @@ import { parseLeaderCode } from './src/components/reading_parts/readingShared'
 import { SettingsModal } from './src/components/SettingsModal'
 import { SystemStatusBanner } from './src/components/SystemStatusBanner'
 import { IndexPulse } from './src/components/IndexPulse'
+import { IndexDetailModal } from './src/components/IndexDetailModal'
 import { RecentAlertsModal } from './src/components/RecentAlertsModal'
 import { StocksTab } from './src/tabs/StocksTab'
 import { TodayTab } from './src/tabs/TodayTab'
@@ -61,6 +62,7 @@ import { useMarketSnapshot } from './src/hooks/useMarketSnapshot'
 import { useStockSearch } from './src/hooks/useStockSearch'
 import { useWorkspaceMutations } from './src/hooks/useWorkspaceMutations'
 import type {
+  MarketKey,
   StockSearchResult,
   TabKey,
 } from './src/types'
@@ -113,6 +115,7 @@ function AppShell() {
 
   // ── 종목 상세 모달 (어느 탭에서든 같은 모달) ──────
   const [detailKey, setDetailKey] = useState('')        // 'MARKET:TICKER' or ''
+  const [indexDetail, setIndexDetail] = useState<{ market: MarketKey; label: string } | null>(null)
   const [detailFallbackName, setDetailFallbackName] = useState('')
 
   // ── 알림 설정 모달 ──────
@@ -835,7 +838,15 @@ function AppShell() {
       <IndexPulse
         sections={sections}
         marketPreference={marketPreference}
-        onPress={() => setActiveTab('today')}
+        onPress={(market, label) => { void hapticLight(); setIndexDetail({ market, label }) }}
+      />
+
+      <IndexDetailModal
+        visible={!!indexDetail}
+        sections={sections}
+        initialMarket={indexDetail?.market ?? 'KR'}
+        initialLabel={indexDetail?.label ?? ''}
+        onClose={() => setIndexDetail(null)}
       />
 
       {overlays}

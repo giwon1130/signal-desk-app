@@ -2,16 +2,17 @@ import { useEffect, useRef, useState } from 'react'
 import { Animated, Pressable, Text, View } from 'react-native'
 import { Activity } from 'lucide-react-native'
 import { useTheme } from '../theme'
-import type { MarketSectionsData } from '../types'
+import type { MarketKey, MarketSectionsData } from '../types'
 import { formatNumber, formatSignedRate } from '../utils'
 
 type Props = {
   sections: MarketSectionsData | null
   marketPreference: 'KR' | 'US' | 'BOTH'
-  onPress?: () => void
+  /** 현재 보이는 지수(시장/라벨)로 상세 열기. */
+  onPress?: (market: MarketKey, label: string) => void
 }
 
-type Idx = { label: string; value: number; changeRate: number }
+type Idx = { market: MarketKey; label: string; value: number; changeRate: number }
 
 /**
  * 상단 지수 펄스 — 선호 시장 지수(코스피/코스닥/나스닥/S&P)를 ~2.8초마다
@@ -25,8 +26,8 @@ export function IndexPulse({ sections, marketPreference, onPress }: Props) {
   const showKr = marketPreference !== 'US'
   const showUs = marketPreference !== 'KR'
   const items: Idx[] = []
-  if (showKr) for (const it of sections?.koreaMarket?.indices ?? []) items.push({ label: it.label, value: it.value, changeRate: it.changeRate })
-  if (showUs) for (const it of sections?.usMarket?.indices ?? []) items.push({ label: it.label, value: it.value, changeRate: it.changeRate })
+  if (showKr) for (const it of sections?.koreaMarket?.indices ?? []) items.push({ market: 'KR', label: it.label, value: it.value, changeRate: it.changeRate })
+  if (showUs) for (const it of sections?.usMarket?.indices ?? []) items.push({ market: 'US', label: it.label, value: it.value, changeRate: it.changeRate })
 
   useEffect(() => {
     if (items.length <= 1) return
@@ -45,7 +46,7 @@ export function IndexPulse({ sections, marketPreference, onPress }: Props) {
 
   return (
     <Pressable
-      onPress={onPress}
+      onPress={() => onPress?.(cur.market, cur.label)}
       disabled={!onPress}
       accessibilityRole={onPress ? 'button' : undefined}
       style={{
