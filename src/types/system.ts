@@ -13,12 +13,17 @@ export type HealthResponse = {
   storeMode: string
 }
 
+/** 공시 중요도 — 보유 종목 주가 영향 기준. 백엔드 제목 분류기와 1:1. */
+export type DisclosureImportance = 'HIGH' | 'MEDIUM' | 'LOW'
+
 export type DisclosureItem = {
   rceptNo: string
   corpName: string
   stockCode: string
   reportNm: string
   rceptDt: string
+  /** 주가영향 중요도. 구버전 API 호환 위해 optional — 없으면 MEDIUM 취급. */
+  importance?: DisclosureImportance
 }
 
 export type DailyFortune = {
