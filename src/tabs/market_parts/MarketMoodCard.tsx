@@ -28,12 +28,17 @@ const FRIENDLY_LABEL: Record<string, string> = {
   'VIX 변동성': '美 변동성(VIX)',
   VIX: '美 변동성(VIX)',
   '한국 지수 변동': '한국 지수 변동',
-  '뉴스 키워드': '뉴스 분위기',
+  '뉴스 키워드': '뉴스 위험도',
   'Fear Meter': '공포·탐욕',
-  'KR Heat': '한국 과열도',
-  'US Heat': '미국 과열도',
+  'KR Heat': '한국 강도',
+  'US Heat': '미국 강도',
+  'KR Overheat': '한국 과열도',
   'Flow Bias': '외국인·기관 수급',
 }
+
+// 위험도(높을수록 나쁨)가 아니라 '강도/모멘텀'(50=중립, 높을수록 강세)인 지표.
+// 같은 0~100 바라도 색·해석 축이 달라 구분 표시한다.
+const MOMENTUM_LABELS = new Set(['한국 강도', '미국 강도'])
 const friendly = (label: string) => FRIENDLY_LABEL[label] ?? FRIENDLY_LABEL[label.trim()] ?? label
 
 // 요약 지표가 어느 시장 소속인지 — 선택 탭에 맞는 것만 노출.
@@ -41,6 +46,7 @@ const METRIC_MARKET: Record<string, 'KR' | 'US'> = {
   'Fear Meter': 'US',
   'US Heat': 'US',
   'KR Heat': 'KR',
+  'KR Overheat': 'KR',
   'Flow Bias': 'KR',
 }
 
@@ -56,7 +62,7 @@ const MISE: Record<string, MiseLevel> = {
 }
 const miseOf = (level: string): MiseLevel => MISE[level] ?? MISE['주의']
 
-type Indicator = { label: string; score: number; state: string; detail: string }
+type Indicator = { label: string; score: number; state: string; detail: string; momentum?: boolean }
 
 export function MarketMoodCard({ krRisk, usRisk, metrics, marketPreference }: Props) {
   const styles = useStyles()
@@ -84,7 +90,7 @@ export function MarketMoodCard({ krRisk, usRisk, metrics, marketPreference }: Pr
     const label = friendly(m.label)
     if (seen.has(label)) continue
     seen.add(label)
-    indicators.push({ label, score: m.score, state: m.state, detail: m.note })
+    indicators.push({ label, score: m.score, state: m.state, detail: m.note, momentum: MOMENTUM_LABELS.has(label) })
   }
 
   if (!risk && indicators.length === 0) {
@@ -229,14 +235,23 @@ export function MarketMoodCard({ krRisk, usRisk, metrics, marketPreference }: Pr
   )
 }
 
+// 강도/모멘텀 색축: 50=중립, 높을수록 강세(초록)·낮을수록 약세(빨강). 위험도(getRiskScoreColor)와 반대.
+function momentumColor(score: number) {
+  if (score >= 60) return '#16a34a'
+  if (score <= 40) return '#dc2626'
+  return '#d97706'
+}
+
 function IndicatorRow({ indicator }: { indicator: Indicator }) {
   const styles = useStyles()
-  const color = getRiskScoreColor(indicator.score)
+  const color = indicator.momentum ? momentumColor(indicator.score) : getRiskScoreColor(indicator.score)
   const pct = Math.max(0, Math.min(100, indicator.score))
   return (
     <View style={styles.riskComponentRow}>
       <View style={styles.riskComponentHead}>
-        <Text style={[styles.riskComponentLabel, { flex: 1 }]} numberOfLines={1}>{indicator.label}</Text>
+        <Text style={[styles.riskComponentLabel, { flex: 1 }]} numberOfLines={1}>
+          {indicator.label}{indicator.momentum ? ' · 50중립' : ''}
+        </Text>
         <Text style={[styles.riskComponentScore, { color }]}>{Math.round(indicator.score)}</Text>
       </View>
       <View style={styles.riskTrack}>
