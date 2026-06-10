@@ -18,8 +18,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 const KR_ENABLED_KEY      = 'reminder.krOpen.enabled'
 const US_ENABLED_KEY      = 'reminder.usOpen.enabled'
 const MINUTES_BEFORE_KEY  = 'reminder.minutesBefore'
-const HISTORY_KEY         = 'reminder.history'
-const HISTORY_CAP         = 30
 
 // 알림 식별자 (덮어쓰기 위함). 평일 5개로 쪼개므로 prefix 만 두고 weekday suffix 붙임.
 const KR_OPEN_ID = 'reminder.krOpen'
@@ -229,45 +227,11 @@ async function purgeLegacyDailyReminders() {
   for (const id of LEGACY_DAILY_IDS) {
     await Notifications.cancelScheduledNotificationAsync(id).catch(() => {})
   }
+  // 구버전의 로컬 알림 히스토리 저장분 정리 — 기능 제거됨(헤더 종 = 서버 이력으로 일원화).
+  await AsyncStorage.removeItem('reminder.history').catch(() => {})
 }
 
-// ── 알림 히스토리 ──────────────────────────────────────
-//
-// 사용자가 헤더 종 모달에서 "최근 알림이 뭐 떴지?" 확인할 수 있게 로컬 기록.
-// expo-notifications 의 addNotificationReceivedListener 는 앱이 포그라운드/백그라운드
-// 활성 상태일 때만 발화. 앱 완전 종료 상태에서 울린 알림은 못 잡음 — 한계로 명시.
-
-export type NotificationRecord = {
-  id: string         // notification request identifier
-  title: string
-  body: string
-  firedAt: number    // epoch ms
-}
-
-export async function getNotificationHistory(): Promise<NotificationRecord[]> {
-  try {
-    const raw = await AsyncStorage.getItem(HISTORY_KEY)
-    if (!raw) return []
-    const parsed = JSON.parse(raw)
-    return Array.isArray(parsed) ? parsed : []
-  } catch {
-    return []
-  }
-}
-
-export async function clearNotificationHistory() {
-  await AsyncStorage.removeItem(HISTORY_KEY)
-}
-
-async function appendNotificationRecord(record: NotificationRecord) {
-  const history = await getNotificationHistory()
-  // 최신이 위로. 중복 id 는 갱신.
-  const filtered = history.filter((r) => r.id !== record.id)
-  const next = [record, ...filtered].slice(0, HISTORY_CAP)
-  await AsyncStorage.setItem(HISTORY_KEY, JSON.stringify(next))
-}
-
-/** 앱 부팅 시 1회 호출 — 권한 확인 + 레거시 정리 + 켜진 알림들 다시 예약 + 히스토리 리스너. */
+/** 앱 부팅 시 1회 호출 — 권한 확인 + 레거시 정리 + 켜진 알림들 다시 예약. */
 export function useMarketReminderBootstrap(enabled: boolean) {
   useEffect(() => {
     if (!enabled) return
@@ -281,18 +245,5 @@ export function useMarketReminderBootstrap(enabled: boolean) {
         // 권한 거부/시뮬레이터 등 실패는 조용히 무시
       }
     })()
-
-    // 알림 수신 리스너 — 앱이 살아있을 때 기록.
-    const sub = Notifications.addNotificationReceivedListener((notification) => {
-      const req = notification.request
-      const content = req.content
-      void appendNotificationRecord({
-        id: req.identifier,
-        title: typeof content.title === 'string' ? content.title : '',
-        body:  typeof content.body  === 'string' ? content.body  : '',
-        firedAt: Date.now(),
-      }).catch(() => { /* noop */ })
-    })
-    return () => sub.remove()
   }, [enabled])
 }
