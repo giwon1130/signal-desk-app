@@ -9,7 +9,7 @@
  */
 import { Modal, Pressable, ScrollView, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { Bell, LogOut, Settings as SettingsIcon, X } from 'lucide-react-native'
+import { Bell, LogOut, Settings as SettingsIcon, Trash2, X } from 'lucide-react-native'
 import { useStyles } from '../styles'
 import { useTheme } from '../theme'
 import type { MarketPreference } from '../api/alertPreferences'
@@ -28,11 +28,12 @@ type Props = {
   onThemeChange: (m: ThemeMode) => void
   onOpenReminder: () => void
   onLogout: () => void
+  onDeleteAccount: () => void
 }
 
 export function SettingsModal({
   visible, user, marketPreference, themeMode, authToken,
-  onClose, onMarketPreferenceChange, onThemeChange, onOpenReminder, onLogout,
+  onClose, onMarketPreferenceChange, onThemeChange, onOpenReminder, onLogout, onDeleteAccount,
 }: Props) {
   const styles = useStyles()
   const { palette } = useTheme()
@@ -130,7 +131,7 @@ export function SettingsModal({
             <View style={{ flex: 1 }}>
               <Text style={{ color: palette.ink, fontSize: 14, fontWeight: '800' }}>알림 설정</Text>
               <Text style={{ color: palette.inkMuted, fontSize: 11 }}>
-                급등락·모닝/이브닝·합성 위험도·장 시작·히스토리
+                급등락·거래량·브리프·위험도·장 시작·방해금지
               </Text>
             </View>
             <Text style={{ color: palette.inkFaint, fontSize: 14 }}>›</Text>
@@ -149,6 +150,20 @@ export function SettingsModal({
             <LogOut size={15} color={palette.red} strokeWidth={2.5} />
             <Text style={{ color: palette.red, fontSize: 14, fontWeight: '800' }}>로그아웃</Text>
           </Pressable>
+
+          {/* 회원 탈퇴 */}
+          {user ? (
+            <Pressable
+              onPress={onDeleteAccount}
+              style={({ pressed }) => ({
+                opacity: pressed ? 0.6 : 1,
+                paddingVertical: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+              })}
+            >
+              <Trash2 size={13} color={palette.inkFaint} strokeWidth={2.5} />
+              <Text style={{ color: palette.inkFaint, fontSize: 12, fontWeight: '700' }}>회원 탈퇴</Text>
+            </Pressable>
+          ) : null}
         </ScrollView>
       </View>
     </Modal>

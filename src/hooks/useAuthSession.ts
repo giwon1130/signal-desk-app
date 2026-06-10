@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import {
   type AuthUser,
+  apiDeleteAccount,
   apiMe,
   clearAuth,
   loadStoredAuth,
@@ -58,5 +59,15 @@ export function useAuthSession() {
     setUser(null)
   }, [])
 
-  return { authChecked, user, handleAuthDone, handleLogout }
+  /** 회원 탈퇴 — 서버 삭제 성공 후 로컬 세션 정리. 실패 시 throw (호출부에서 안내). */
+  const handleDeleteAccount = useCallback(async () => {
+    const token = user?.token
+    if (!token) return
+    await apiDeleteAccount(token)
+    await clearAuth()
+    setMemoryToken(null)
+    setUser(null)
+  }, [user?.token])
+
+  return { authChecked, user, handleAuthDone, handleLogout, handleDeleteAccount }
 }

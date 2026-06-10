@@ -85,7 +85,7 @@ function AppShell() {
   useEffect(() => { webBootstrap(palette.bg) }, [palette.bg])
 
   // ── 인증 ─────────────────────────────────────
-  const { authChecked, user, handleAuthDone, handleLogout } = useAuthSession()
+  const { authChecked, user, handleAuthDone, handleLogout, handleDeleteAccount } = useAuthSession()
 
   const [activeTab, setActiveTab] = useState<TabKey>('today')
   const market = useMarketSnapshot(user?.token ?? null, !!user)
@@ -271,6 +271,27 @@ function AppShell() {
       { text: '로그아웃', style: 'destructive', onPress: () => void handleLogout() },
     ])
   }, [handleLogout])
+
+  const confirmDeleteAccount = useCallback(() => {
+    Alert.alert(
+      '회원 탈퇴',
+      '계정과 모든 데이터(관심종목·보유·알림 설정·기록)가 영구 삭제됩니다. 되돌릴 수 없어요. 정말 탈퇴할까요?',
+      [
+        { text: '취소', style: 'cancel' },
+        {
+          text: '탈퇴',
+          style: 'destructive',
+          onPress: () => void (async () => {
+            try {
+              await handleDeleteAccount()
+            } catch (e) {
+              Alert.alert('오류', e instanceof Error ? e.message : '계정 삭제에 실패했습니다.')
+            }
+          })(),
+        },
+      ],
+    )
+  }, [handleDeleteAccount])
 
   // 로그인 후 1회: 권한 요청 + 켜진 알림 다시 예약
   useMarketReminderBootstrap(!!user)
@@ -673,6 +694,7 @@ function AppShell() {
         onThemeChange={(m) => setMode(m)}
         onOpenReminder={() => setReminderOpen(true)}
         onLogout={() => { setSettingsOpen(false); confirmLogout() }}
+        onDeleteAccount={() => { setSettingsOpen(false); confirmDeleteAccount() }}
       />
       <DailyGreetingModal
         visible={greetingOpen}

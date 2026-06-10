@@ -38,6 +38,7 @@ export function ReminderSettingsModal({ visible, authToken, onClose }: Props) {
   const [prefs, setPrefs] = useState<AlertPreferences>({
     krEnabled: true, usEnabled: false, premarketEnabled: true, compositeRiskEnabled: true,
     marketPreference: 'BOTH', eveningBriefEnabled: false, middayBriefEnabled: false, closeBriefEnabled: true,
+    volumeAlertEnabled: true, quietHoursEnabled: false, quietStartHour: 22, quietEndHour: 7,
   })
 
   // 모달 열릴 때마다 현재 저장값 hydrate
@@ -114,6 +115,17 @@ export function ReminderSettingsModal({ visible, authToken, onClose }: Props) {
               />
             </View>
 
+            {/* 거래량 급증 알림 — 전역 토글 (종목별 설정과 별개) */}
+            <View style={{ borderTopWidth: 1, borderTopColor: palette.border }}>
+              <AlertToggleRow
+                title="🔥 거래량 급증 알림"
+                hint="평소 대비 2배 이상 · 보유/관심 전 종목 적용"
+                value={prefs.volumeAlertEnabled}
+                disabled={togglesDisabled}
+                onValueChange={(v) => void updatePref({ volumeAlertEnabled: v })}
+              />
+            </View>
+
             {/* 브리프 그룹 */}
             <AlertGroup
               title="📰 브리프 알림"
@@ -163,6 +175,40 @@ export function ReminderSettingsModal({ visible, authToken, onClose }: Props) {
               />
             </View>
 
+            {/* 방해금지 — 야간 푸시 보류 */}
+            <View style={{ borderTopWidth: 1, borderTopColor: palette.border }}>
+              <AlertToggleRow
+                title="🌙 방해금지 시간"
+                hint={
+                  prefs.quietHoursEnabled
+                    ? `${pad2(prefs.quietStartHour)}:00 ~ ${pad2(prefs.quietEndHour)}:00 푸시 보류`
+                    : '야간 시간대 푸시 보류'
+                }
+                value={prefs.quietHoursEnabled}
+                disabled={togglesDisabled}
+                onValueChange={(v) => void updatePref({ quietHoursEnabled: v })}
+              />
+              {prefs.quietHoursEnabled ? (
+                <View style={{ paddingHorizontal: 4, paddingBottom: 10, gap: 8 }}>
+                  <HourStepper
+                    label="시작"
+                    hour={prefs.quietStartHour}
+                    disabled={togglesDisabled}
+                    onChange={(h) => void updatePref({ quietStartHour: h })}
+                  />
+                  <HourStepper
+                    label="종료"
+                    hour={prefs.quietEndHour}
+                    disabled={togglesDisabled}
+                    onChange={(h) => void updatePref({ quietEndHour: h })}
+                  />
+                  <Text style={{ color: palette.inkFaint, fontSize: 10 }}>
+                    KST 기준 · 자정을 넘겨도 됨(예: 22시~7시). 이 시간대엔 알림이 오지 않아요.
+                  </Text>
+                </View>
+              ) : null}
+            </View>
+
             <Text style={styles.signalModalDisclaimer}>
               장 시작 알림은 디바이스 로컬 예약, 급등락 알림은 서버에서 Expo 푸시로 발송한다.
               알림을 끄면 서버에서 이 기기 토큰을 제거해서 더 이상 푸시가 안 온다.
@@ -172,5 +218,41 @@ export function ReminderSettingsModal({ visible, authToken, onClose }: Props) {
       </Pressable>
       </SafeAreaView>
     </Modal>
+  )
+}
+
+function pad2(n: number): string {
+  return n < 10 ? `0${n}` : String(n)
+}
+
+/** 0~23시 순환 스테퍼. */
+function HourStepper({
+  label, hour, disabled, onChange,
+}: { label: string; hour: number; disabled?: boolean; onChange: (h: number) => void }) {
+  const { palette } = useTheme()
+  const step = (delta: number) => onChange((hour + delta + 24) % 24)
+  const btn = (text: string, delta: number) => (
+    <Pressable
+      onPress={() => !disabled && step(delta)}
+      hitSlop={8}
+      style={({ pressed }) => ({
+        width: 34, height: 34, borderRadius: 8,
+        borderWidth: 1, borderColor: palette.border,
+        backgroundColor: pressed ? palette.surfaceAlt : palette.surface,
+        alignItems: 'center', justifyContent: 'center', opacity: disabled ? 0.4 : 1,
+      })}
+    >
+      <Text style={{ color: palette.ink, fontSize: 18, fontWeight: '800' }}>{text}</Text>
+    </Pressable>
+  )
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+      <Text style={{ color: palette.inkMuted, fontSize: 12, fontWeight: '800', width: 36 }}>{label}</Text>
+      {btn('−', -1)}
+      <Text style={{ color: palette.ink, fontSize: 15, fontWeight: '900', width: 56, textAlign: 'center', fontVariant: ['tabular-nums'] }}>
+        {pad2(hour)}:00
+      </Text>
+      {btn('+', +1)}
+    </View>
   )
 }

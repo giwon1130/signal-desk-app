@@ -76,3 +76,12 @@ export async function apiMe(token: string): Promise<AuthUser> {
   if (!res.ok) throw new Error('토큰이 만료되었습니다.')
   return await res.json() as AuthUser
 }
+
+/** 회원 탈퇴 — 본인 계정 + 모든 데이터 영구 삭제. 성공 시 호출부에서 로그아웃 처리. */
+export async function apiDeleteAccount(token: string): Promise<void> {
+  const res = await fetch(`${API_BASE_URL}/auth/account`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!res.ok) throw new Error('계정 삭제에 실패했습니다. 잠시 후 다시 시도해 주세요.')
+}

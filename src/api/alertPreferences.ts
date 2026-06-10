@@ -11,6 +11,12 @@ export type AlertPreferences = {
   eveningBriefEnabled: boolean
   middayBriefEnabled: boolean
   closeBriefEnabled: boolean
+  /** 거래량 급증 알림 전역 토글 (종목별 설정과 별개, 켜면 전 종목 적용) */
+  volumeAlertEnabled: boolean
+  /** 방해금지: 켜면 야간 시간대 푸시 보류 */
+  quietHoursEnabled: boolean
+  quietStartHour: number   // 0~23 (KST)
+  quietEndHour: number     // 0~23 (KST)
 }
 
 const DEFAULT: AlertPreferences = {
@@ -22,6 +28,10 @@ const DEFAULT: AlertPreferences = {
   eveningBriefEnabled: false,
   middayBriefEnabled: false,
   closeBriefEnabled: true,
+  volumeAlertEnabled: true,
+  quietHoursEnabled: false,
+  quietStartHour: 22,
+  quietEndHour: 7,
 }
 
 export async function getAlertPreferences(authToken: string): Promise<AlertPreferences> {
