@@ -4,7 +4,7 @@ import { Bell } from 'lucide-react-native'
 import { useStyles } from '../../styles'
 import { useTheme } from '../../theme'
 import type { WatchItem } from '../../types'
-import { formatPrice } from '../../utils'
+import { formatPrice, parsePriceInput } from '../../utils'
 
 type Props = {
   watchItem: WatchItem
@@ -27,8 +27,8 @@ export function WatchAlertForm({ watchItem, onSave, saving, hasPortfolio = false
   const [volumeAlert, setVolumeAlert] = useState(watchItem.volumeAlert ?? false)
 
   const handleSave = () => {
-    const below = alertBelowInput ? Number(alertBelowInput.replace(/[^0-9]/g, '')) || null : null
-    const above = alertAboveInput ? Number(alertAboveInput.replace(/[^0-9]/g, '')) || null : null
+    const below = alertBelowInput ? Math.round(parsePriceInput(alertBelowInput)) || null : null
+    const above = alertAboveInput ? Math.round(parsePriceInput(alertAboveInput)) || null : null
     onSave(below, above, volumeAlert)
   }
 

@@ -57,7 +57,7 @@ export function PortfolioForm({
             placeholder="예: 84200"
             placeholderTextColor="#94a3b8"
             style={styles.searchInput}
-            keyboardType="number-pad"
+            keyboardType="decimal-pad"
           />
         </View>
         <View style={{ flex: 1 }}>
@@ -81,7 +81,7 @@ export function PortfolioForm({
             placeholder="예: 95000"
             placeholderTextColor="#94a3b8"
             style={styles.searchInput}
-            keyboardType="number-pad"
+            keyboardType="decimal-pad"
           />
         </View>
         <View style={{ flex: 1 }}>
@@ -92,7 +92,7 @@ export function PortfolioForm({
             placeholder="예: 75000"
             placeholderTextColor="#94a3b8"
             style={styles.searchInput}
-            keyboardType="number-pad"
+            keyboardType="decimal-pad"
           />
         </View>
       </View>

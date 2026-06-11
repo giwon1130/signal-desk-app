@@ -19,6 +19,7 @@ import type {
   WatchItem,
 } from '../types'
 import { useLivePrices } from '../hooks/useLivePrices'
+import { parsePriceInput } from '../utils'
 import { PriceHero } from './stock_detail/PriceHero'
 import { AiContextRow } from './stock_detail/AiContextRow'
 import { WatchToggle } from './stock_detail/WatchToggle'
@@ -112,12 +113,13 @@ export function StockDetailModal({
 
   const handleSave = async () => {
     if (!context) return
-    const buy = Number(buyPriceInput.replace(/[^0-9]/g, ''))
+    // 소수점 보존 파싱 — 기존 [^0-9] 제거 방식은 "412.43" 이 41243(100배)이 되는 버그.
+    const buy = Math.round(parsePriceInput(buyPriceInput))
     const qty = Number(quantityInput.replace(/[^0-9]/g, ''))
     if (!buy || !qty) return
     setPortfolioSaving(true)
-    const target = targetPriceInput ? Number(targetPriceInput.replace(/[^0-9]/g, '')) : null
-    const stopLoss = stopLossPriceInput ? Number(stopLossPriceInput.replace(/[^0-9]/g, '')) : null
+    const target = targetPriceInput ? Math.round(parsePriceInput(targetPriceInput)) : null
+    const stopLoss = stopLossPriceInput ? Math.round(parsePriceInput(stopLossPriceInput)) : null
     try {
       await onSavePortfolio({
         id: context.portfolioPosition?.id,
