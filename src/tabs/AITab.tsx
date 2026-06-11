@@ -4,7 +4,7 @@
  * 단일 스크롤: 마켓 브리핑 → 나에게 맞춘 액션 → 오늘의 AI 픽 → 숨은 시그널.
  * AI 픽은 Gemini 종목 추천, 숨은 시그널은 보유/관심 종목의 공시·수급·급등락 실데이터.
  */
-import { useEffect, useState } from 'react'
+import { memo, useEffect, useState } from 'react'
 import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native'
 import { CalendarRange, ChevronRight, Layers } from 'lucide-react-native'
 import { useTheme } from '../theme'
@@ -34,7 +34,8 @@ type Props = {
   onQuickAddWatch: (stock: StockSearchResult) => Promise<void>
 }
 
-export function AITab({
+// memo: AppShell 재렌더(다른 탭 상태 변화 등)에 끌려 다시 그리지 않도록.
+export const AITab = memo(function AITab({
   aiPicks, hiddenSignals, summary, watchlist, marketInsight, refreshing, onRefresh, onOpenDetail, onQuickAddWatch,
 }: Props) {
   const { palette } = useTheme()
@@ -113,4 +114,4 @@ export function AITab({
     <SectorRotationModal visible={sectorOpen} onClose={() => setSectorOpen(false)} />
     </>
   )
-}
+})

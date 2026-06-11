@@ -8,7 +8,7 @@
  *  - 리더 구독 섹션(누구나): 코드 입력 + 구독 중인 리더 목록(취소)
  *  - 피드: 구독 리더 + 본인 글 (PostCard 공용)
  */
-import { useCallback, useEffect, useState } from 'react'
+import { memo, useCallback, useEffect, useState } from 'react'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { Pressable, RefreshControl, ScrollView, Share, Text, TextInput, View } from 'react-native'
 import { Megaphone, PenLine, Plus, Share2, X } from 'lucide-react-native'
@@ -32,7 +32,8 @@ type Props = {
   toast?: { show: (msg: string, type?: 'success' | 'error' | 'info') => void }
 }
 
-export function ReadingTab({ authToken, refreshing, refreshTick, subscribeCode, onCompose, onOpenLeader, toast }: Props) {
+// memo: AppShell 재렌더(다른 탭 상태 변화 등)에 끌려 다시 그리지 않도록.
+export const ReadingTab = memo(function ReadingTab({ authToken, refreshing, refreshTick, subscribeCode, onCompose, onOpenLeader, toast }: Props) {
   const styles = useStyles()
   const { palette } = useTheme()
   const [feed, setFeed] = useState<ReadingPost[]>([])
@@ -356,4 +357,4 @@ export function ReadingTab({ authToken, refreshing, refreshTick, subscribeCode, 
     <ReadingEventModal visible={showEvent} monthlyPriceWon={9900} onClose={closeEvent} />
     </>
   )
-}
+})

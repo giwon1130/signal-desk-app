@@ -47,7 +47,8 @@ type Props = {
   onQuickAddWatch: (stock: StockSearchResult) => Promise<void>
 }
 
-export function AIWorkspace({ aiRecommendation, summary, watchlist, onOpenDetail, onQuickAddWatch }: Props) {
+// memo: AppShell 재렌더(다른 탭 상태 변화 등)에 끌려 다시 그리지 않도록.
+export const AIWorkspace = React.memo(function AIWorkspace({ aiRecommendation, summary, watchlist, onOpenDetail, onQuickAddWatch }: Props) {
   const { palette } = useTheme()
   const [mode, setMode] = useState<Mode>('playbook')
 
@@ -70,7 +71,7 @@ export function AIWorkspace({ aiRecommendation, summary, watchlist, onOpenDetail
       </Entrance>
     </ScrollView>
   )
-}
+})
 
 /* ── Header: 서브탭 토글 ──────────────────────────────── */
 

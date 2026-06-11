@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { memo, useMemo, useState } from 'react'
 import { Platform, RefreshControl, ScrollView } from 'react-native'
 import { useStyles } from '../styles'
 import type {
@@ -37,7 +37,8 @@ type Props = {
   onDeleteAllFavorites: () => void
 }
 
-export function StocksTab({
+// memo: AppShell 재렌더(다른 탭 상태 변화 등)에 끌려 다시 그리지 않도록.
+export const StocksTab = memo(function StocksTab({
   watchlist,
   portfolio,
   stockSearch,
@@ -162,4 +163,4 @@ export function StocksTab({
       />
     </ScrollView>
   )
-}
+})

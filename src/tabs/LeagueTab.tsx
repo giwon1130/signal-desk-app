@@ -2,7 +2,7 @@
  * Trading League — 친구 모의투자 탭 홈.
  * 내 참여 리그 목록 + '만들기' + 코드로 참가(닉네임은 참가 모달에서).
  */
-import { useCallback, useEffect, useState } from 'react'
+import { memo, useCallback, useEffect, useState } from 'react'
 import { Pressable, RefreshControl, ScrollView, Share, Text, TextInput, View } from 'react-native'
 import { ChevronRight, Plus, Share2, Trophy } from 'lucide-react-native'
 import { useStyles } from '../styles'
@@ -22,7 +22,8 @@ type Props = {
   onRequestJoin: (code: string) => void
 }
 
-export function LeagueTab({ authToken, refreshing, onOpenLeague, onCreateLeague, onRequestJoin }: Props) {
+// memo: AppShell 재렌더(다른 탭 상태 변화 등)에 끌려 다시 그리지 않도록.
+export const LeagueTab = memo(function LeagueTab({ authToken, refreshing, onOpenLeague, onCreateLeague, onRequestJoin }: Props) {
   const styles = useStyles()
   const { palette } = useTheme()
   const [leagues, setLeagues] = useState<League[]>([])
@@ -170,7 +171,7 @@ export function LeagueTab({ authToken, refreshing, onOpenLeague, onCreateLeague,
       </View>
     </ScrollView>
   )
-}
+})
 
 function LeagueRow({ league, onPress }: { league: League; onPress: () => void }) {
   const { palette } = useTheme()

@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { Platform, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native'
 import {
   Bell,
@@ -49,7 +50,8 @@ type Props = {
   onRefresh: () => Promise<void>
 }
 
-export function TodayTab({
+// memo: AppShell 재렌더(검색 키스트로크 등)에 끌려 다시 그리지 않도록.
+export const TodayTab = memo(function TodayTab({
   summary,
   positions,
   alertHistory,
@@ -226,4 +228,4 @@ export function TodayTab({
       {/* 투자 운세는 탭에서 제외 — 설정/별도 진입 없이 노출 안 함 */}
     </ScrollView>
   )
-}
+})

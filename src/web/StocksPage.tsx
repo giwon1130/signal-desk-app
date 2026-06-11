@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { memo, useMemo, useState } from 'react'
 import { Alert, View } from 'react-native'
 import type { HoldingPosition, PortfolioSummary, StockMarketFilter, StockSearchResult, WatchItem } from '../types'
 import { useTheme } from '../theme'
@@ -31,7 +31,8 @@ type Props = {
   onDeleteAllFavorites: () => void
 }
 
-export function StocksPage(props: Props) {
+// memo: AppShell 재렌더(다른 탭 상태 변화 등)에 끌려 다시 그리지 않도록.
+export const StocksPage = memo(function StocksPage(props: Props) {
   const { palette } = useTheme()
   const {
     watchlist, portfolio, stockSearch, stockMarketFilter, stockResults, stockSearchLoading,
@@ -218,4 +219,4 @@ export function StocksPage(props: Props) {
       />
     </View>
   )
-}
+})

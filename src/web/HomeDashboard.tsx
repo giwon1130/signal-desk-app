@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { ScrollView, Text, View } from 'react-native'
 import type {
   AiRecommendationData,
@@ -50,7 +51,8 @@ type Props = {
   onOpenDetail: (market: string, ticker: string, name?: string) => void
 }
 
-export function HomeDashboard(props: Props) {
+// memo: AppShell 재렌더(검색 키스트로크 등)에 끌려 다시 그리지 않도록.
+export const HomeDashboard = memo(function HomeDashboard(props: Props) {
   const { palette } = useTheme()
   return (
     <ScrollView style={{ flex: 1 }} contentContainerStyle={{ gap: 14, paddingBottom: 20 }}>
@@ -113,7 +115,7 @@ export function HomeDashboard(props: Props) {
       </Entrance>
     </ScrollView>
   )
-}
+})
 
 /* ── MoodHero (센티먼트 + 마켓 상태) ───────────────────── */
 

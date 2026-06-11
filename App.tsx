@@ -286,6 +286,16 @@ function AppShell() {
     setDetailFallbackName('')
   }, [])
 
+  // memo 된 탭/페이지 컴포넌트 대응 — 인라인 람다를 useCallback 으로 호이스팅 (참조 안정 유지).
+  const handleDeleteFavoriteVoid = useCallback((id: string) => void handleDeleteFavorite(id), [handleDeleteFavorite])
+  const handleDeleteAllFavoritesVoid = useCallback(() => void handleDeleteAllFavorites(), [handleDeleteAllFavorites])
+  const handleOpenLeague = useCallback((id: string) => league.setActiveLeagueId(id), [league.setActiveLeagueId])
+  const handleCreateLeague = useCallback(() => league.setCreateLeagueOpen(true), [league.setCreateLeagueOpen])
+  const handleCompose = useCallback(() => reading.setComposeOpen(true), [reading.setComposeOpen])
+  const handleOpenLeader = useCallback((id: string) => reading.setActiveLeaderId(id), [reading.setActiveLeaderId])
+  // memo prop 안정화 — portfolio 가 null 인 동안 매 렌더 새 [] 가 만들어지지 않도록.
+  const portfolioPositions = useMemo(() => portfolio?.positions ?? [], [portfolio?.positions])
+
   const handleNavigateToday = useCallback(() => {
     setActiveTab('today')
   }, [])
@@ -415,7 +425,7 @@ function AppShell() {
           <HomeDashboard
             summary={summary}
             aiRecommendation={filteredAiRecommendation}
-            positions={portfolio?.positions ?? []}
+            positions={portfolioPositions}
             watchlist={watchlist}
             alertHistory={alertHistory}
             topMovers={topMovers}
@@ -425,7 +435,7 @@ function AppShell() {
         ) : (
           <TodayTab
             summary={summary}
-            positions={portfolio?.positions ?? []}
+            positions={portfolioPositions}
             alertHistory={alertHistory}
             fortune={fortune}
             mediaSummaries={mediaSummaries}
@@ -459,8 +469,8 @@ function AppShell() {
             onStockMarketFilterChange={setStockMarketFilter}
             onOpenDetail={handleOpenDetail}
             onQuickAddWatch={handleQuickAddWatch}
-            onDeleteFavorite={(id) => void handleDeleteFavorite(id)}
-            onDeleteAllFavorites={() => void handleDeleteAllFavorites()}
+            onDeleteFavorite={handleDeleteFavoriteVoid}
+            onDeleteAllFavorites={handleDeleteAllFavoritesVoid}
           />
         ) : (
           <StocksTab
@@ -478,8 +488,8 @@ function AppShell() {
             onStockMarketFilterChange={setStockMarketFilter}
             onOpenDetail={handleOpenDetail}
             onQuickAddWatch={handleQuickAddWatch}
-            onDeleteFavorite={(id) => void handleDeleteFavorite(id)}
-            onDeleteAllFavorites={() => void handleDeleteAllFavorites()}
+            onDeleteFavorite={handleDeleteFavoriteVoid}
+            onDeleteAllFavorites={handleDeleteAllFavoritesVoid}
           />
         )
       ) : null}
@@ -514,8 +524,8 @@ function AppShell() {
           key={league.leagueRefreshTick}
           authToken={user?.token ?? null}
           refreshing={refreshing}
-          onOpenLeague={(id) => league.setActiveLeagueId(id)}
-          onCreateLeague={() => league.setCreateLeagueOpen(true)}
+          onOpenLeague={handleOpenLeague}
+          onCreateLeague={handleCreateLeague}
           onRequestJoin={league.handleRequestJoin}
         />
       ) : null}
@@ -527,8 +537,8 @@ function AppShell() {
           refreshing={refreshing}
           refreshTick={reading.readingRefreshTick}
           subscribeCode={reading.readingSubscribeCode}
-          onCompose={() => reading.setComposeOpen(true)}
-          onOpenLeader={(id) => reading.setActiveLeaderId(id)}
+          onCompose={handleCompose}
+          onOpenLeader={handleOpenLeader}
           toast={toast}
         />
       ) : null}
