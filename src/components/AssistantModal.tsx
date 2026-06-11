@@ -10,6 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { RotateCcw, Send, Sparkles, X } from 'lucide-react-native'
 import { useTheme } from '../theme'
 import { askAssistant } from '../api/assistant'
+import { requestPro } from '../api/plan'
 
 type Props = { visible: boolean; onClose: () => void }
 type Msg = { role: 'user' | 'assistant'; text: string; isError?: boolean }
@@ -29,6 +30,9 @@ export function AssistantModal({ visible, onClose }: Props) {
   const [asking, setAsking] = useState(false)
   // 오늘 남은 질문 수 — 서버 응답에 실려 옴 (무제한이면 null 유지)
   const [quota, setQuota] = useState<{ remaining: number; limit: number } | null>(null)
+  // 한도 도달 → PRO 신청 CTA 노출
+  const [showProCta, setShowProCta] = useState(false)
+  const [proRequesting, setProRequesting] = useState(false)
 
   const send = async (raw?: string) => {
     const q = (raw ?? input).trim()
@@ -43,6 +47,8 @@ export function AssistantModal({ visible, onClose }: Props) {
         .map((m) => ({ role: m.role, text: m.text }))
       const { answer, error, remaining, dailyLimit } = await askAssistant(q, history)
       if (remaining != null && dailyLimit != null) setQuota({ remaining, limit: dailyLimit })
+      const limitHit = !answer && remaining === 0 && /한도/.test(error ?? '')
+      if (limitHit) setShowProCta(true)
       setMessages((m) => [...m, answer
         ? { role: 'assistant', text: answer }
         : { role: 'assistant', text: error ?? '답변을 만들지 못했어요.', isError: true }])
@@ -50,6 +56,16 @@ export function AssistantModal({ visible, onClose }: Props) {
       setAsking(false)
       setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 80)
     }
+  }
+
+  const handleProRequest = async () => {
+    if (proRequesting) return
+    setProRequesting(true)
+    const { message } = await requestPro()
+    setMessages((m) => [...m, { role: 'assistant', text: `💎 ${message}` }])
+    setShowProCta(false)
+    setProRequesting(false)
+    setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 80)
   }
 
   return (
@@ -132,6 +148,24 @@ export function AssistantModal({ visible, onClose }: Props) {
                   <ActivityIndicator size="small" color={palette.purple ?? '#7c3aed'} />
                   <Text style={{ color: palette.inkMuted, fontSize: 12 }}>데이터 확인하고 답변 만드는 중…</Text>
                 </View>
+              ) : null}
+
+              {/* 한도 도달 → PRO 신청 CTA */}
+              {showProCta ? (
+                <Pressable
+                  onPress={() => void handleProRequest()}
+                  disabled={proRequesting}
+                  style={({ pressed }) => ({
+                    alignSelf: 'flex-start',
+                    backgroundColor: palette.purple ?? '#7c3aed',
+                    borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10,
+                    opacity: pressed || proRequesting ? 0.6 : 1,
+                  })}
+                >
+                  <Text style={{ color: '#fff', fontSize: 12.5, fontWeight: '800' }}>
+                    {proRequesting ? '신청 중...' : '💎 PRO 신청하기 — 하루 100회로 늘리기'}
+                  </Text>
+                </Pressable>
               ) : null}
             </ScrollView>
 

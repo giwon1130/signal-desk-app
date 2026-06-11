@@ -37,6 +37,33 @@ export async function fetchAdminUsers(): Promise<AdminUser[]> {
   } catch { return [] }
 }
 
+export type PlanRequest = {
+  userId: string
+  email: string
+  nickname: string
+  plan: string
+  requestedAt: string
+}
+
+export async function fetchPlanRequests(): Promise<PlanRequest[]> {
+  try {
+    const res = await authedFetch(`${API_BASE_URL}/api/v1/admin/plan-requests`, { headers: { Accept: 'application/json' } })
+    const json = (await res.json()) as ApiResponse<PlanRequest[]>
+    return json.success ? json.data ?? [] : []
+  } catch { return [] }
+}
+
+export async function resolvePlanRequest(userId: string, action: 'approve' | 'dismiss'): Promise<boolean> {
+  try {
+    const res = await authedFetch(`${API_BASE_URL}/api/v1/admin/plan-requests/${encodeURIComponent(userId)}/${action}`, {
+      method: 'POST',
+      headers: { Accept: 'application/json' },
+    })
+    const json = (await res.json()) as ApiResponse<boolean>
+    return json.success && !!json.data
+  } catch { return false }
+}
+
 export async function changeUserPlan(userId: string, plan: 'FREE' | 'PRO'): Promise<boolean> {
   try {
     const res = await authedFetch(`${API_BASE_URL}/api/v1/admin/users/${encodeURIComponent(userId)}/plan`, {

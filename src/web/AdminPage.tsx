@@ -8,23 +8,37 @@ import { RefreshCcw, ShieldCheck } from 'lucide-react-native'
 import { useTheme, type Palette } from '../theme'
 import { webGrid } from './shared'
 import {
-  changeUserPlan, fetchAdminOverview, fetchAdminUsers,
-  type AdminOverview, type AdminUser,
+  changeUserPlan, fetchAdminOverview, fetchAdminUsers, fetchPlanRequests, resolvePlanRequest,
+  type AdminOverview, type AdminUser, type PlanRequest,
 } from '../api/admin'
 
 export function AdminPage() {
   const { palette } = useTheme()
   const [overview, setOverview] = useState<AdminOverview | null>(null)
   const [users, setUsers] = useState<AdminUser[]>([])
+  const [requests, setRequests] = useState<PlanRequest[]>([])
   const [loading, setLoading] = useState(false)
   const [changingId, setChangingId] = useState('')
 
   const load = async () => {
     setLoading(true)
-    const [o, u] = await Promise.all([fetchAdminOverview(), fetchAdminUsers()])
-    setOverview(o); setUsers(u); setLoading(false)
+    const [o, u, r] = await Promise.all([fetchAdminOverview(), fetchAdminUsers(), fetchPlanRequests()])
+    setOverview(o); setUsers(u); setRequests(r); setLoading(false)
   }
   useEffect(() => { void load() }, [])
+
+  const handleResolve = async (req: PlanRequest, action: 'approve' | 'dismiss') => {
+    if (changingId) return
+    setChangingId(req.userId)
+    const ok = await resolvePlanRequest(req.userId, action)
+    if (ok) {
+      setRequests((list) => list.filter((x) => x.userId !== req.userId))
+      if (action === 'approve') {
+        setUsers((list) => list.map((x) => (x.id === req.userId ? { ...x, plan: 'PRO' } : x)))
+      }
+    }
+    setChangingId('')
+  }
 
   const togglePlan = async (u: AdminUser) => {
     if (changingId) return
@@ -70,6 +84,47 @@ export function AdminPage() {
               </View>
             ))}
           </View>
+
+          {/* PRO 신청 대기 — 있을 때만 표시 */}
+          {requests.length > 0 ? (
+            <View style={{ backgroundColor: (palette.purpleSoft ?? palette.surface), borderRadius: 12, borderWidth: 1, borderColor: palette.purple ?? '#7c3aed', padding: 14, gap: 4 }}>
+              <Text style={{ color: palette.purple ?? '#7c3aed', fontSize: 11, fontWeight: '800', letterSpacing: 0.4, marginBottom: 6 }}>
+                💎 PRO 신청 대기 ({requests.length})
+              </Text>
+              {requests.map((r) => (
+                <View key={r.userId} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: palette.border }}>
+                  <View style={{ flex: 1, minWidth: 0 }}>
+                    <Text numberOfLines={1} style={{ color: palette.ink, fontSize: 13, fontWeight: '700' }}>
+                      {r.nickname} <Text style={{ color: palette.inkMuted, fontWeight: '500' }}>{r.email}</Text>
+                    </Text>
+                    <Text style={{ color: palette.inkFaint, fontSize: 10.5 }}>신청 {r.requestedAt.slice(0, 16).replace('T', ' ')}</Text>
+                  </View>
+                  <Pressable
+                    onPress={() => void handleResolve(r, 'approve')}
+                    disabled={changingId === r.userId}
+                    style={({ pressed }) => ({
+                      paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8,
+                      backgroundColor: palette.purple ?? '#7c3aed',
+                      opacity: pressed || changingId === r.userId ? 0.6 : 1,
+                    })}
+                  >
+                    <Text style={{ color: '#fff', fontSize: 11, fontWeight: '800' }}>승인</Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => void handleResolve(r, 'dismiss')}
+                    disabled={changingId === r.userId}
+                    style={({ pressed }) => ({
+                      paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8,
+                      backgroundColor: palette.surfaceAlt, borderWidth: 1, borderColor: palette.border,
+                      opacity: pressed || changingId === r.userId ? 0.6 : 1,
+                    })}
+                  >
+                    <Text style={{ color: palette.inkSub, fontSize: 11, fontWeight: '800' }}>보류</Text>
+                  </Pressable>
+                </View>
+              ))}
+            </View>
+          ) : null}
 
           {/* 사용자 목록 */}
           <View style={{ backgroundColor: palette.surface, borderRadius: 12, borderWidth: 1, borderColor: palette.border, padding: 14, gap: 4 }}>

@@ -7,6 +7,7 @@
  *  - 알림 설정 진입 (별도 ReminderSettingsModal)
  *  - 계정 정보 / 로그아웃
  */
+import { useEffect, useState } from 'react'
 import { Modal, Pressable, ScrollView, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Bell, LogOut, Settings as SettingsIcon, Trash2 } from 'lucide-react-native'
@@ -15,12 +16,13 @@ import { useTheme } from '../theme'
 import type { MarketPreference } from '../api/alertPreferences'
 import { ModalHeader } from './ModalHeader'
 import { MarketPreferencePicker } from './reminder_parts/MarketPreferencePicker'
+import { fetchMyPlanRequest, requestPro, type PlanRequestStatus } from '../api/plan'
 
 type ThemeMode = 'system' | 'light' | 'dark'
 
 type Props = {
   visible: boolean
-  user: { nickname?: string | null; email?: string | null } | null
+  user: { nickname?: string | null; email?: string | null; plan?: string } | null
   marketPreference: MarketPreference
   themeMode: ThemeMode
   authToken: string | null
@@ -63,6 +65,9 @@ export function SettingsModal({
               ) : null}
             </View>
           ) : null}
+
+          {/* 플랜 — PRO 신청 (결제 전 수동 승인 퍼널) */}
+          {user && authToken ? <PlanSection plan={user.plan ?? 'FREE'} palette={palette} /> : null}
 
           {/* 시장 선호 — 헤더 칩과 동기 (둘 다에서 변경 가능) */}
           <Section title="시장 선호" palette={palette}>
@@ -157,6 +162,72 @@ export function SettingsModal({
         </ScrollView>
       </View>
     </Modal>
+  )
+}
+
+/** 플랜 카드 — 현재 플랜 + PRO 혜택 + 신청 버튼(신청됨이면 검토 중 표시). */
+function PlanSection({ plan, palette }: { plan: string; palette: any }) {
+  const [status, setStatus] = useState<PlanRequestStatus>(null)
+  const [busy, setBusy] = useState(false)
+  const [message, setMessage] = useState('')
+  const pro = plan === 'PRO'
+
+  useEffect(() => {
+    if (pro) return
+    let alive = true
+    void fetchMyPlanRequest().then((s) => { if (alive) setStatus(s) })
+    return () => { alive = false }
+  }, [pro])
+
+  const handleRequest = async () => {
+    if (busy) return
+    setBusy(true)
+    const { ok, message: msg } = await requestPro()
+    if (ok) setStatus('PENDING')
+    setMessage(msg)
+    setBusy(false)
+  }
+
+  return (
+    <View style={{
+      backgroundColor: pro ? (palette.purpleSoft ?? palette.surface) : palette.surface,
+      borderRadius: 12, borderWidth: 1,
+      borderColor: pro ? (palette.purple ?? '#7c3aed') : palette.border,
+      padding: 14, gap: 6,
+    }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+        <Text style={{ color: palette.inkMuted, fontSize: 10, fontWeight: '800', letterSpacing: 1 }}>플랜</Text>
+        <View style={{ backgroundColor: pro ? (palette.purple ?? '#7c3aed') : palette.surfaceAlt, borderRadius: 6, paddingHorizontal: 7, paddingVertical: 2 }}>
+          <Text style={{ color: pro ? '#fff' : palette.inkSub, fontSize: 10.5, fontWeight: '900' }}>{pro ? '💎 PRO' : 'FREE'}</Text>
+        </View>
+      </View>
+      {pro ? (
+        <Text style={{ color: palette.inkSub, fontSize: 12 }}>시데 AI 하루 100회 등 PRO 혜택 이용 중이에요.</Text>
+      ) : (
+        <>
+          <Text style={{ color: palette.inkSub, fontSize: 12, lineHeight: 17 }}>
+            PRO 가 되면 시데 AI에게 하루 100회까지 물어볼 수 있어요. (FREE 10회)
+          </Text>
+          {status === 'PENDING' ? (
+            <Text style={{ color: palette.purple ?? '#7c3aed', fontSize: 12, fontWeight: '800' }}>
+              ⏳ 신청 검토 중 — 승인되면 알림으로 알려드려요
+            </Text>
+          ) : (
+            <Pressable
+              onPress={() => void handleRequest()}
+              disabled={busy}
+              style={{
+                backgroundColor: palette.purple ?? '#7c3aed', borderRadius: 9,
+                paddingVertical: 9, alignItems: 'center', opacity: busy ? 0.6 : 1, marginTop: 2,
+              }}
+            >
+              <Text style={{ color: '#fff', fontSize: 13, fontWeight: '800' }}>{busy ? '신청 중...' : 'PRO 신청하기'}</Text>
+            </Pressable>
+          )}
+          {message ? <Text style={{ color: palette.inkMuted, fontSize: 11 }}>{message}</Text> : null}
+        </>
+      )}
+    </View>
   )
 }
 
