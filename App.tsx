@@ -10,14 +10,11 @@ import {
   View,
 } from 'react-native'
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context'
-import { BarChart3, Bell, Bot, Megaphone, Settings as SettingsIcon, Sunrise, Trophy } from 'lucide-react-native'
 import { WebLayout } from './src/web/WebLayout'
 import { useStyles } from './src/styles'
 import { ThemeProvider, useTheme } from './src/theme'
-import { Toast } from './src/components/Toast'
 import { AuthScreen } from './src/components/AuthScreen'
 import { OnboardingScreen } from './src/components/OnboardingScreen'
-import { V2MigrationModal } from './src/components/V2MigrationModal'
 import {
   getOnboardingCompleted, markOnboardingCompleted,
   getV2MigrationShown, markV2MigrationShown,
@@ -29,31 +26,24 @@ import { hapticLight } from './src/utils/haptics'
 import { AITab } from './src/tabs/AITab'
 import { LeagueTab } from './src/tabs/LeagueTab'
 import { ReadingTab } from './src/tabs/ReadingTab'
-import { ComposePostModal } from './src/components/reading_parts/ComposePostModal'
-import { CreateLeagueModal } from './src/components/league_parts/CreateLeagueModal'
-import { LeagueDetailModal } from './src/components/league_parts/LeagueDetailModal'
-import { JoinLeagueModal } from './src/components/league_parts/JoinLeagueModal'
 import { parseJoinCode } from './src/components/league_parts/leagueShared'
-import { LeaderProfileModal } from './src/components/reading_parts/LeaderProfileModal'
 import { parseLeaderCode } from './src/components/reading_parts/readingShared'
-import { SettingsModal } from './src/components/SettingsModal'
 import { SystemStatusBanner } from './src/components/SystemStatusBanner'
 import { IndexPulse } from './src/components/IndexPulse'
 import { IndexDetailModal } from './src/components/IndexDetailModal'
-import { RecentAlertsModal } from './src/components/RecentAlertsModal'
+import { GlobalOverlays } from './src/components/GlobalOverlays'
+import { NativeShellChrome } from './src/components/NativeShellChrome'
 import { StocksTab } from './src/tabs/StocksTab'
 import { TodayTab } from './src/tabs/TodayTab'
 import { HomeDashboard } from './src/web/HomeDashboard'
 import { StocksPage } from './src/web/StocksPage'
-import { CommandPalette } from './src/web/CommandPalette'
 import { AIWorkspace } from './src/web/AIWorkspace'
-import { StockDetailModal, type StockDetailContext } from './src/components/StockDetailModal'
-import { ReminderSettingsModal } from './src/components/ReminderSettingsModal'
+import type { StockDetailContext } from './src/components/StockDetailModal'
 import { getAlertPreferences, syncMarketPreference, type MarketPreference } from './src/api/alertPreferences'
-import { markAlertsRead, deleteAlert as deleteAlertApi, clearAllAlerts } from './src/api/pushDevice'
-import { DailyGreetingModal } from './src/components/DailyGreetingModal'
-import { LoadingScreen } from './src/components/LoadingScreen'
 import { getFortuneGreetingShownDate, markFortuneGreetingShown } from './src/utils/fortuneGreeting'
+import { useAlertsInbox } from './src/hooks/useAlertsInbox'
+import { useLeagueOrchestration } from './src/hooks/useLeagueOrchestration'
+import { useReadingOrchestration } from './src/hooks/useReadingOrchestration'
 import { useMarketReminderBootstrap } from './src/hooks/useMarketReminder'
 import { usePushDeepLink } from './src/hooks/usePushDeepLink'
 import { useAuthSession } from './src/hooks/useAuthSession'
@@ -67,19 +57,10 @@ import type {
   TabKey,
 } from './src/types'
 
-// v2.2: 5탭 (today/stocks/ai/league/reading). reading 은 종목·시황 콜 공유 신규.
-const TABS: Array<{ key: TabKey; label: string; Icon: typeof Sunrise }> = [
-  { key: 'today',   label: '오늘', Icon: Sunrise },
-  { key: 'stocks',  label: '종목', Icon: BarChart3 },
-  { key: 'ai',      label: 'AI',   Icon: Bot },
-  { key: 'league',  label: '리그', Icon: Trophy },
-  { key: 'reading', label: '리딩', Icon: Megaphone },
-]
-
 function AppShell() {
   // v2: useWindowDimensions 은 chartWidth 부재로 미사용 — Phase 4+ 차트 복귀 시 부활.
   const styles = useStyles()
-  const { palette, mode, setMode } = useTheme()
+  const { palette } = useTheme()
   const toast = useToast()
 
   // 웹: viewport meta + body 배경 + safe-area 패딩 1회 세팅.
@@ -130,48 +111,14 @@ function AppShell() {
   const [onboardingState, setOnboardingState] = useState<'loading' | 'show' | 'done'>('loading')
   // v1 → v2 마이그레이션 모달 — 1회 노출 후 마크.
   const [v2MigrationOpen, setV2MigrationOpen] = useState(false)
-  // v2.1: 리그 생성 모달 + 리그 탭 새로고침 트리거 + 리그 상세 모달
-  const [createLeagueOpen, setCreateLeagueOpen] = useState(false)
-  const [leagueRefreshTick, setLeagueRefreshTick] = useState(0)
-  const [activeLeagueId, setActiveLeagueId] = useState<string | null>(null)
-  // v2.1: 코드/링크로 참가 — 닉네임 입력 모달
-  const [joinModalCode, setJoinModalCode] = useState<string | null>(null)
+  // v2.1: 리그 오케스트레이션 — 생성/상세/참가 모달 + 새로고침 트리거.
+  const league = useLeagueOrchestration(setActiveTab)
   // v2.1: 통합 설정 모달
   const [settingsOpen, setSettingsOpen] = useState(false)
-  const [alertsOpen, setAlertsOpen] = useState(false)
-  // 알림함 열람 시점의 '안 읽음' id 스냅샷 — 열면 서버에서 읽음 처리되지만 이번 세션엔 점 표시 유지.
-  const [alertUnreadIds, setAlertUnreadIds] = useState<Set<string>>(new Set())
-  const unreadAlertCount = alertHistory.reduce((n, a) => (a.readAt ? n : n + 1), 0)
-
-  const handleOpenAlerts = () => {
-    void hapticLight()
-    setAlertUnreadIds(new Set(alertHistory.filter((a) => !a.readAt).map((a) => a.id)))
-    setAlertsOpen(true)
-    if (alertHistory.some((a) => !a.readAt)) {
-      const token = user?.token
-      if (token) void markAlertsRead(token)
-      const now = new Date().toISOString()
-      setAlertHistory((prev) => prev.map((a) => (a.readAt ? a : { ...a, readAt: now })))
-    }
-  }
-
-  const handleDeleteAlert = (id: string) => {
-    const token = user?.token
-    if (token) void deleteAlertApi(token, id)
-    setAlertHistory((prev) => prev.filter((a) => a.id !== id))
-  }
-
-  const handleClearAlerts = () => {
-    const token = user?.token
-    if (token) void clearAllAlerts(token)
-    setAlertHistory([])
-    setAlertsOpen(false)
-  }
-  // v2.2: 리딩 — 작성 모달 + 피드 새로고침 트리거 + 리더 프로필 + 구독 코드(딥링크)
-  const [composeOpen, setComposeOpen] = useState(false)
-  const [readingRefreshTick, setReadingRefreshTick] = useState(0)
-  const [activeLeaderId, setActiveLeaderId] = useState<string | null>(null)
-  const [readingSubscribeCode, setReadingSubscribeCode] = useState<string | null>(null)
+  // 알림함 — 열람/삭제/전체 비우기 + 안 읽음 카운트.
+  const alerts = useAlertsInbox({ token: user?.token ?? null, alertHistory, setAlertHistory })
+  // v2.2: 리딩 오케스트레이션 — 작성/리더 프로필 모달 + 구독 코드(딥링크) + 새로고침 트리거.
+  const reading = useReadingOrchestration()
 
   useEffect(() => {
     const tok = user?.token
@@ -348,19 +295,7 @@ function AppShell() {
     setActiveTab('today')
   }, [])
 
-  // v2.1: League 푸시 deep link — 리그 탭 + 상세 모달 자동 진입.
-  const handleOpenLeagueFromPush = useCallback((leagueId: string) => {
-    setActiveTab('league')
-    setActiveLeagueId(leagueId)
-  }, [])
-
-  usePushDeepLink(handleOpenDetail, handleNavigateToday, handleNavigateMarket, handleOpenLeagueFromPush)
-
-  // v2.1: 코드 입력 / 링크로 참가 요청 → 닉네임 모달 오픈.
-  const handleRequestJoin = useCallback((code: string) => {
-    setActiveTab('league')
-    setJoinModalCode(code)
-  }, [])
+  usePushDeepLink(handleOpenDetail, handleNavigateToday, handleNavigateMarket, league.handleOpenLeagueFromPush)
 
   // v2.1: URL 딥링크(?join=CODE / signaldesk://join?code=CODE)로 들어오면 참가 모달 자동 오픈.
   useEffect(() => {
@@ -368,12 +303,11 @@ function AppShell() {
       const joinCode = parseJoinCode(url)
       const leaderCode = parseLeaderCode(url)
       if (joinCode) {
-        setActiveTab('league')
-        setJoinModalCode(joinCode)
+        league.handleRequestJoin(joinCode)
       } else if (leaderCode) {
         // 리딩 리더 구독 링크 → 리딩 탭 + 코드 prefill.
         setActiveTab('reading')
-        setReadingSubscribeCode(leaderCode)
+        reading.setReadingSubscribeCode(leaderCode)
       }
       // 웹: 처리 후 쿼리 제거 (새로고침 시 재오픈 방지).
       if ((joinCode || leaderCode) && Platform.OS === 'web' && typeof window !== 'undefined') {
@@ -577,12 +511,12 @@ function AppShell() {
       {/* v2.1: 친구 모의투자 (Trading League). 상세/거래 모달은 Phase G+ */}
       {!loading && !error && activeTab === 'league' ? (
         <LeagueTab
-          key={leagueRefreshTick}
+          key={league.leagueRefreshTick}
           authToken={user?.token ?? null}
           refreshing={refreshing}
-          onOpenLeague={(id) => setActiveLeagueId(id)}
-          onCreateLeague={() => setCreateLeagueOpen(true)}
-          onRequestJoin={handleRequestJoin}
+          onOpenLeague={(id) => league.setActiveLeagueId(id)}
+          onCreateLeague={() => league.setCreateLeagueOpen(true)}
+          onRequestJoin={league.handleRequestJoin}
         />
       ) : null}
 
@@ -591,10 +525,10 @@ function AppShell() {
         <ReadingTab
           authToken={user?.token ?? null}
           refreshing={refreshing}
-          refreshTick={readingRefreshTick}
-          subscribeCode={readingSubscribeCode}
-          onCompose={() => setComposeOpen(true)}
-          onOpenLeader={(id) => setActiveLeaderId(id)}
+          refreshTick={reading.readingRefreshTick}
+          subscribeCode={reading.readingSubscribeCode}
+          onCompose={() => reading.setComposeOpen(true)}
+          onOpenLeader={(id) => reading.setActiveLeaderId(id)}
           toast={toast}
         />
       ) : null}
@@ -603,116 +537,40 @@ function AppShell() {
 
   // 전역 모달 — 웹/네이티브 공유
   const overlays = (
-    <>
-      <Toast visible={toast.visible} message={toast.message} type={toast.type} />
-      <StockDetailModal
-        visible={!!detailKey}
-        onClose={handleCloseDetail}
-        context={detailContext}
-        onToggleWatch={handleToggleWatchInDetail}
-        onSaveWatchAlerts={handleSaveWatchAlerts}
-        onSavePortfolio={handleSavePortfolio}
-        onDeletePortfolio={(id) => void handleDeletePortfolio(id)}
-      />
-      <ReminderSettingsModal
-        visible={reminderOpen}
-        authToken={user?.token ?? null}
-        onClose={() => setReminderOpen(false)}
-      />
-      <RecentAlertsModal
-        visible={alertsOpen}
-        alerts={alertHistory}
-        unreadIds={alertUnreadIds}
-        onClose={() => setAlertsOpen(false)}
-        onOpenDetail={handleOpenDetail}
-        onDelete={handleDeleteAlert}
-        onClearAll={handleClearAlerts}
-      />
-      <V2MigrationModal
-        visible={v2MigrationOpen}
-        currentPreference={marketPreference}
-        onConfirm={(p) => void handleV2MigrationConfirm(p)}
-        onClose={() => {
-          setV2MigrationOpen(false)
-          void markV2MigrationShown()
-        }}
-      />
-      <CreateLeagueModal
-        visible={createLeagueOpen}
-        onClose={() => setCreateLeagueOpen(false)}
-        onCreated={(id) => {
-          setLeagueRefreshTick((t) => t + 1)
-          setActiveLeagueId(id)  // 만든 직후 바로 상세 진입
-        }}
-        toast={toast}
-      />
-      <LeagueDetailModal
-        visible={!!activeLeagueId}
-        leagueId={activeLeagueId}
-        myUserId={user?.userId}
-        marketSessions={summary?.marketSessions ?? []}
-        onClose={() => setActiveLeagueId(null)}
-        toast={toast}
-      />
-      <JoinLeagueModal
-        visible={!!joinModalCode}
-        code={joinModalCode ?? ''}
-        onClose={() => setJoinModalCode(null)}
-        onJoined={(id) => {
-          setJoinModalCode(null)
-          setLeagueRefreshTick((t) => t + 1)
-          setActiveLeagueId(id)  // 참가 직후 바로 상세 진입
-        }}
-        toast={toast}
-      />
-      <ComposePostModal
-        visible={composeOpen}
-        onClose={() => setComposeOpen(false)}
-        onPublished={() => setReadingRefreshTick((t) => t + 1)}
-        toast={toast}
-      />
-      <LeaderProfileModal
-        visible={!!activeLeaderId}
-        leaderUserId={activeLeaderId}
-        myUserId={user?.userId}
-        onClose={() => setActiveLeaderId(null)}
-        onSubscribed={() => setReadingRefreshTick((t) => t + 1)}
-        toast={toast}
-      />
-      <SettingsModal
-        visible={settingsOpen}
-        user={user}
-        marketPreference={marketPreference}
-        themeMode={mode}
-        authToken={user?.token ?? null}
-        onClose={() => setSettingsOpen(false)}
-        onMarketPreferenceChange={handleMarketPreferenceChange}
-        onThemeChange={(m) => setMode(m)}
-        onOpenReminder={() => setReminderOpen(true)}
-        onLogout={() => { setSettingsOpen(false); confirmLogout() }}
-        onDeleteAccount={() => { setSettingsOpen(false); confirmDeleteAccount() }}
-      />
-      <DailyGreetingModal
-        visible={greetingOpen}
-        fortune={fortune ?? null}
-        onClose={() => setGreetingOpen(false)}
-      />
-      {Platform.OS === 'web' ? (
-        <CommandPalette
-          watchlist={watchlist}
-          onNavigateTab={handleTabChange}
-          onOpenDetail={handleOpenDetail}
-          onOpenReminder={() => setReminderOpen(true)}
-        />
-      ) : null}
-
-      {/* 로딩 오버레이 — 헤더·탭바 포함 전체를 덮어 로딩 중 탭 전환 차단 (#1) */}
-      {loading ? (
-        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 100 }}>
-          <LoadingScreen />
-        </View>
-      ) : null}
-    </>
+    <GlobalOverlays
+      user={user}
+      toast={toast}
+      loading={loading}
+      marketPreference={marketPreference}
+      summary={summary}
+      fortune={fortune}
+      watchlist={watchlist}
+      alertHistory={alertHistory}
+      detailKey={detailKey}
+      detailContext={detailContext}
+      onCloseDetail={handleCloseDetail}
+      onToggleWatch={handleToggleWatchInDetail}
+      onSaveWatchAlerts={handleSaveWatchAlerts}
+      onSavePortfolio={handleSavePortfolio}
+      onDeletePortfolio={handleDeletePortfolio}
+      onOpenDetail={handleOpenDetail}
+      onNavigateTab={handleTabChange}
+      reminderOpen={reminderOpen}
+      setReminderOpen={setReminderOpen}
+      alerts={alerts}
+      v2MigrationOpen={v2MigrationOpen}
+      setV2MigrationOpen={setV2MigrationOpen}
+      onV2MigrationConfirm={handleV2MigrationConfirm}
+      league={league}
+      reading={reading}
+      settingsOpen={settingsOpen}
+      setSettingsOpen={setSettingsOpen}
+      onMarketPreferenceChange={handleMarketPreferenceChange}
+      onLogout={confirmLogout}
+      onDeleteAccount={confirmDeleteAccount}
+      greetingOpen={greetingOpen}
+      setGreetingOpen={setGreetingOpen}
+    />
   )
 
   // ── 웹: 사이드바 레이아웃 ──
@@ -751,79 +609,17 @@ function AppShell() {
     <SafeAreaView style={styles.container}>
       <StatusBar style={isDark ? 'light' : 'light'} />
 
-      {/* ── 헤더 ─────────────────────────────────────── */}
-      <View style={styles.headerWrap}>
-        <View style={styles.headerGradient}>
-          <View style={styles.headerTopRow}>
-            <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8, flexShrink: 1 }}>
-              <Text style={styles.headerTitle} numberOfLines={1}>투자 대시보드</Text>
-              <Text style={styles.brand}>SIGNAL</Text>
-            </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <View style={[styles.headerStatusPill, isUp ? styles.headerStatusPillUp : styles.headerStatusPillDown]}>
-                <View style={[styles.headerStatusDot, isUp ? styles.headerStatusDotUp : styles.headerStatusDotDown]} />
-                <Text style={[styles.headerStatusText, isUp ? styles.headerStatusTextUp : styles.headerStatusTextDown]}>
-                  {isUp ? 'LIVE' : 'OFF'}
-                </Text>
-              </View>
-              {/* 최근 받은 알림 — 종 아이콘. 미수신 시에도 진입은 가능 */}
-              <Pressable
-                onPress={handleOpenAlerts}
-                style={({ pressed }) => [styles.headerIconBtn, pressed && { opacity: 0.6 }]}
-                accessibilityLabel="최근 받은 알림"
-                hitSlop={6}
-              >
-                <Bell size={18} color={palette.orange ?? '#ea580c'} strokeWidth={2.4} />
-                {unreadAlertCount > 0 ? (
-                  <View style={styles.headerIconBadge}>
-                    <Text style={styles.headerIconBadgeText}>{unreadAlertCount > 9 ? '9+' : unreadAlertCount}</Text>
-                  </View>
-                ) : null}
-              </Pressable>
-              {/* v2.2: 설정 진입 — 시장 선호도 여기로 이동. 잘 보이도록 라벨+테두리 강조 */}
-              <Pressable
-                onPress={() => { void hapticLight(); setSettingsOpen(true) }}
-                style={({ pressed }) => [styles.themeToggleBtn, pressed && { opacity: 0.6 }]}
-                accessibilityLabel="설정"
-              >
-                <SettingsIcon size={18} color={palette.blue} strokeWidth={2.4} />
-                <Text style={{ color: palette.blue, fontSize: 11, fontWeight: '800' }}>설정</Text>
-              </Pressable>
-            </View>
-          </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 6, gap: 8 }}>
-            {/* v2.2: 시장 선호는 설정으로 이동 — 현재 선택만 작게 표시 */}
-            <Text style={[styles.headerSubtitle, { flexShrink: 0 }]}>
-              {marketPreference === 'KR' ? '🇰🇷 한국장' : marketPreference === 'US' ? '🇺🇸 미국장' : '🌐 한국·미국'}
-            </Text>
-            <Text style={[styles.headerSubtitle, { flexShrink: 1, textAlign: 'right' }]}>
-              {lastSyncedAt ? `${lastSyncedAt}` : '오늘 하루를 한 화면에서'}
-            </Text>
-          </View>
-        </View>
-      </View>
-
-      {/* ── 탭 바 ────────────────────────────────────── */}
-      <View style={styles.tabBar}>
-        {TABS.map(({ key, label, Icon }) => {
-          const active = activeTab === key
-          return (
-            <Pressable
-              key={key}
-              onPress={() => handleTabChange(key)}
-              style={({ pressed }) => [styles.tabItem, active && styles.tabItemActive, pressed && styles.tabItemPressed]}
-            >
-              <Icon
-                size={20}
-                color={active ? palette.blue : palette.inkFaint}
-                strokeWidth={active ? 2.5 : 1.8}
-              />
-              <Text style={[styles.tabLabel, active && styles.tabLabelActive]}>{label}</Text>
-              {active && <View style={styles.tabActiveBar} />}
-            </Pressable>
-          )
-        })}
-      </View>
+      {/* ── 헤더 + 탭 바 (네이티브 셸 크롬) ── */}
+      <NativeShellChrome
+        isUp={isUp}
+        lastSyncedAt={lastSyncedAt}
+        marketPreference={marketPreference}
+        unreadAlertCount={alerts.unreadAlertCount}
+        activeTab={activeTab}
+        onOpenAlerts={alerts.handleOpenAlerts}
+        onOpenSettings={() => { void hapticLight(); setSettingsOpen(true) }}
+        onTabChange={handleTabChange}
+      />
 
       {tabContent}
 
