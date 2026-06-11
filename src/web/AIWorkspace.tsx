@@ -25,8 +25,11 @@
  */
 import React, { useState } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
-import { BookOpen, Sparkles, Trophy } from 'lucide-react-native'
+import { BookOpen, CalendarRange, Layers, Sparkles, Trophy } from 'lucide-react-native'
 import { AssistantModal } from '../components/AssistantModal'
+import { SeasonalityRulesModal } from '../components/SeasonalityRulesModal'
+import { SectorRotationModal } from '../components/SectorRotationModal'
+import { webGrid } from './shared'
 import type {
   AiRecommendationData,
   MarketSummaryData,
@@ -44,35 +47,64 @@ type Props = {
   aiRecommendation: AiRecommendationData | null
   summary: MarketSummaryData | null
   watchlist: WatchItem[]
+  marketPreference?: 'KR' | 'US' | 'BOTH'
   onOpenDetail: (market: string, ticker: string, name?: string) => void
   onQuickAddWatch: (stock: StockSearchResult) => Promise<void>
 }
 
 // memo: AppShell 재렌더(다른 탭 상태 변화 등)에 끌려 다시 그리지 않도록.
-export const AIWorkspace = React.memo(function AIWorkspace({ aiRecommendation, summary, watchlist, onOpenDetail, onQuickAddWatch }: Props) {
+export const AIWorkspace = React.memo(function AIWorkspace({ aiRecommendation, summary, watchlist, marketPreference = 'BOTH', onOpenDetail, onQuickAddWatch }: Props) {
   const { palette } = useTheme()
   const [mode, setMode] = useState<Mode>('playbook')
   const [assistantOpen, setAssistantOpen] = useState(false)
+  const [rulesOpen, setRulesOpen] = useState(false)
+  const [sectorOpen, setSectorOpen] = useState(false)
+
+  // 네이티브 AITab 과 동일한 도구 진입 3종 — 데스크톱은 한 행에.
+  const tools = [
+    {
+      key: 'assistant', icon: <Sparkles size={18} color={palette.blue} strokeWidth={2.4} />,
+      bg: palette.blueSoft ?? palette.surfaceAlt,
+      title: '시데 AI에게 물어보기', desc: '내 보유·관심 종목과 오늘 시장을 알고 답하는 비서',
+      onPress: () => setAssistantOpen(true),
+    },
+    {
+      key: 'rules', icon: <CalendarRange size={18} color={palette.purple ?? '#7c3aed'} strokeWidth={2.4} />,
+      bg: palette.purpleSoft ?? palette.surfaceAlt,
+      title: '내 시즌 규칙', desc: '저장한 시즈널 패턴 + 트리거 알림 관리',
+      onPress: () => setRulesOpen(true),
+    },
+    {
+      key: 'sector', icon: <Layers size={18} color={palette.teal ?? '#0d9488'} strokeWidth={2.4} />,
+      bg: palette.tealSoft ?? palette.surfaceAlt,
+      title: '섹터 로테이션', desc: '이번 달 강한 섹터 + 연간 히트맵',
+      onPress: () => setSectorOpen(true),
+    },
+  ]
 
   return (
     <ScrollView style={{ flex: 1 }} contentContainerStyle={{ gap: 14, paddingBottom: 20 }}>
-      {/* ── 시데 AI 비서 — 내 데이터를 아는 질문/답변 (네이티브 AITab 과 동일 진입) ── */}
-      <Pressable
-        onPress={() => setAssistantOpen(true)}
-        style={({ pressed }) => ({
-          flexDirection: 'row', alignItems: 'center', gap: 10,
-          backgroundColor: palette.blueSoft ?? palette.surfaceAlt,
-          borderRadius: 12, paddingHorizontal: 14, paddingVertical: 13,
-          borderWidth: 1, borderColor: palette.border,
-          opacity: pressed ? 0.8 : 1,
-        })}
-      >
-        <Sparkles size={18} color={palette.blue} strokeWidth={2.4} />
-        <View style={{ flex: 1 }}>
-          <Text style={{ color: palette.ink, fontSize: 14, fontWeight: '800' }}>시데 AI에게 물어보기</Text>
-          <Text style={{ color: palette.inkMuted, fontSize: 11 }}>내 보유·관심 종목과 오늘 시장을 알고 답하는 비서</Text>
-        </View>
-      </Pressable>
+      <View style={[{ gap: 12 }, webGrid('minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr)')]}>
+        {tools.map((t) => (
+          <Pressable
+            key={t.key}
+            onPress={t.onPress}
+            style={({ pressed }) => ({
+              flexDirection: 'row', alignItems: 'center', gap: 10,
+              backgroundColor: t.bg,
+              borderRadius: 12, paddingHorizontal: 14, paddingVertical: 13,
+              borderWidth: 1, borderColor: palette.border,
+              opacity: pressed ? 0.8 : 1,
+            })}
+          >
+            {t.icon}
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: palette.ink, fontSize: 14, fontWeight: '800' }}>{t.title}</Text>
+              <Text style={{ color: palette.inkMuted, fontSize: 11 }} numberOfLines={1}>{t.desc}</Text>
+            </View>
+          </Pressable>
+        ))}
+      </View>
 
       <Header mode={mode} onChange={setMode} palette={palette} />
       <Entrance key={mode} delay={20}>
@@ -90,6 +122,12 @@ export const AIWorkspace = React.memo(function AIWorkspace({ aiRecommendation, s
         )}
       </Entrance>
       <AssistantModal visible={assistantOpen} onClose={() => setAssistantOpen(false)} />
+      <SeasonalityRulesModal visible={rulesOpen} onClose={() => setRulesOpen(false)} onOpenDetail={onOpenDetail} />
+      <SectorRotationModal
+        visible={sectorOpen}
+        onClose={() => setSectorOpen(false)}
+        initialMarket={marketPreference === 'KR' ? 'KR' : 'US'}
+      />
     </ScrollView>
   )
 })

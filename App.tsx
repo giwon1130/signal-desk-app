@@ -424,12 +424,16 @@ function AppShell() {
         Platform.OS === 'web' ? (
           <HomeDashboard
             summary={summary}
-            aiRecommendation={filteredAiRecommendation}
             positions={portfolioPositions}
             watchlist={watchlist}
             alertHistory={alertHistory}
             topMovers={topMovers}
             portfolio={portfolio}
+            mediaSummaries={mediaSummaries}
+            moverReasons={moverReasons}
+            upcomingEvents={filteredUpcomingEvents}
+            disclosures={disclosures}
+            marketPreference={marketPreference}
             onOpenDetail={handleOpenDetail}
           />
         ) : (
@@ -500,6 +504,7 @@ function AppShell() {
             aiRecommendation={filteredAiRecommendation}
             summary={summary}
             watchlist={watchlist}
+            marketPreference={marketPreference}
             onOpenDetail={handleOpenDetail}
             onQuickAddWatch={handleQuickAddWatch}
           />

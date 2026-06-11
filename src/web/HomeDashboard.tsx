@@ -1,15 +1,19 @@
 import { memo } from 'react'
 import { ScrollView, Text, View } from 'react-native'
 import type {
-  AiRecommendationData,
   AlertHistoryItem,
+  DisclosureItem,
   HoldingPosition,
+  MarketEvent,
   MarketSummaryData,
+  MediaSummaryItem,
+  MoverReason,
   NewsSentiment,
   PortfolioSummary,
   TopMoversResponse,
   WatchItem,
 } from '../types'
+import type { MarketPreference } from '../api/alertPreferences'
 import { Sparkles } from 'lucide-react-native'
 import { useTheme, type Palette } from '../theme'
 import { webGrid } from './shared'
@@ -21,47 +25,74 @@ import { AlertTimelineWidget } from './widgets/AlertTimelineWidget'
 import { WatchAlertsWidget } from './widgets/WatchAlertsWidget'
 import { PortfolioWidget } from './widgets/PortfolioWidget'
 import { NewsWidget } from './widgets/NewsWidget'
-import { PicksRow } from './widgets/PicksRow'
+import { BriefHero } from '../tabs/today_parts/BriefHero'
+import { SeasonRulesCard } from '../tabs/today_parts/SeasonRulesCard'
+import { DisclosureCard } from '../tabs/today_parts/DisclosureCard'
+import { EventsCard } from '../tabs/today_parts/EventsCard'
 
 /**
- * 웹 전용 홈 대시보드 — Phase 2.
+ * 웹 전용 홈 대시보드 — 데스크톱 그리드 + 네이티브 v2 카드 재사용.
  *
- * Today 탭의 모바일 카드 스택 대신, 실제 데스크톱 주식 대시보드처럼
- * 한 화면에 여러 위젯이 동시에 보이는 구조.
+ * 네이티브 '오늘' 탭 개편(브리프 히어로·시즌 규칙·공시·이벤트)과 동일 콘텐츠를
+ * 데스크톱 밀도로 배치. AI 픽은 AI 탭으로 분리(네이티브 #6 원칙과 동일).
  *
- * 레퍼런스: Yahoo Finance home, Toss증권 웹 홈, Investing.com dashboard.
- *
- * 레이아웃 (CSS Grid, 12-col 기준):
- *   row1 full:  MoodHero (센티먼트 게이지 KR+US + 마켓 상태)
- *   row2 2fr/2fr/1.2fr: Portfolio / News / WatchAlerts
- *   row3 full:  PicksRow (AI 추천 + 단타)
- *   row4 2fr/1fr: TopMovers / AlertTimeline
- *
- * 좁아지면 자동으로 컬럼이 접힘 (CSS grid auto-fit).
+ * 레이아웃 (CSS Grid):
+ *   row1 full:        MoodHero (헤드라인 + 센티먼트 게이지 — 선호 시장만)
+ *   row2 2fr/1fr:     BriefHero(모닝/장중/마감 브리프) / 시즌·이벤트 열
+ *   row3 2fr/2fr/1.2fr: Portfolio / News / WatchAlerts
+ *   row4 1.6fr/1fr:   SectorPerformance / CompositeRisk
+ *   row5 1.6fr/1fr:   TopMovers(사유·선호 반영) / AlertTimeline + 공시
  */
 
 type Props = {
   summary: MarketSummaryData | null
-  aiRecommendation: AiRecommendationData | null
   positions: HoldingPosition[]
   watchlist: WatchItem[]
   alertHistory: AlertHistoryItem[]
   topMovers: TopMoversResponse | null
   portfolio: PortfolioSummary | null
+  mediaSummaries: MediaSummaryItem[]
+  moverReasons: MoverReason[]
+  upcomingEvents: MarketEvent[]
+  disclosures: DisclosureItem[]
+  marketPreference: MarketPreference
   onOpenDetail: (market: string, ticker: string, name?: string) => void
 }
 
 // memo: AppShell 재렌더(검색 키스트로크 등)에 끌려 다시 그리지 않도록.
 export const HomeDashboard = memo(function HomeDashboard(props: Props) {
   const { palette } = useTheme()
+  const showBrief = props.mediaSummaries.length > 0 || !!props.summary?.briefing
   return (
     <ScrollView style={{ flex: 1 }} contentContainerStyle={{ gap: 14, paddingBottom: 20 }}>
       <Entrance delay={0}>
-        <MoodHero summary={props.summary} palette={palette} />
+        <MoodHero summary={props.summary} marketPreference={props.marketPreference} palette={palette} />
+      </Entrance>
+
+      {/* 브리프 + 시즌/이벤트 열 */}
+      <Entrance delay={60}>
+        <View style={[{ gap: 14 }, webGrid('minmax(0, 2fr) minmax(0, 1fr)')]}>
+          <View style={{ gap: 14 }}>
+            {showBrief ? (
+              <BriefHero
+                items={props.mediaSummaries}
+                briefing={props.summary?.briefing ?? null}
+                onTickerPress={(t) => {
+                  const isKr = /^\d{6}$/.test(t)
+                  props.onOpenDetail(isKr ? 'KR' : 'US', t)
+                }}
+              />
+            ) : null}
+          </View>
+          <View style={{ gap: 14 }}>
+            <SeasonRulesCard onOpenDetail={props.onOpenDetail} />
+            <EventsCard events={props.upcomingEvents} />
+          </View>
+        </View>
       </Entrance>
 
       {/* 3-열 위젯 스트립 */}
-      <Entrance delay={70}>
+      <Entrance delay={120}>
         <View
           style={[
             { gap: 14 },
@@ -79,7 +110,7 @@ export const HomeDashboard = memo(function HomeDashboard(props: Props) {
       </Entrance>
 
       {/* Sector + 종합 위험도 행 */}
-      <Entrance delay={140}>
+      <Entrance delay={180}>
         <View style={[{ gap: 14 }, webGrid('minmax(0, 1.6fr) minmax(0, 1fr)')]}>
           <SectorPerformanceWidget
             positions={props.positions}
@@ -91,26 +122,25 @@ export const HomeDashboard = memo(function HomeDashboard(props: Props) {
         </View>
       </Entrance>
 
-      <Entrance delay={210}>
-        <PicksRow
-          aiRecommendation={props.aiRecommendation}
-          palette={palette}
-          onOpenDetail={props.onOpenDetail}
-        />
-      </Entrance>
+      {/* AI 픽은 AI 탭으로 분리 — 홈은 시장/보유 상태에 집중 (네이티브 #6 원칙) */}
 
-      <Entrance delay={280}>
+      <Entrance delay={240}>
         <View style={[{ gap: 14 }, webGrid('minmax(0, 1.6fr) minmax(0, 1fr)')]}>
           <TopMoversWidget
             topMovers={props.topMovers}
+            moverReasons={props.moverReasons}
+            marketPreference={props.marketPreference}
             palette={palette}
             onOpenDetail={props.onOpenDetail}
           />
-          <AlertTimelineWidget
-            history={props.alertHistory}
-            palette={palette}
-            onOpenDetail={props.onOpenDetail}
-          />
+          <View style={{ gap: 14 }}>
+            <AlertTimelineWidget
+              history={props.alertHistory}
+              palette={palette}
+              onOpenDetail={props.onOpenDetail}
+            />
+            <DisclosureCard disclosures={props.disclosures} onOpenDetail={props.onOpenDetail} />
+          </View>
         </View>
       </Entrance>
     </ScrollView>
@@ -119,9 +149,11 @@ export const HomeDashboard = memo(function HomeDashboard(props: Props) {
 
 /* ── MoodHero (센티먼트 + 마켓 상태) ───────────────────── */
 
-function MoodHero({ summary, palette }: { summary: MarketSummaryData | null; palette: Palette }) {
-  const kr = summary?.newsSentiments?.find((s) => s.market === 'KR')
-  const us = summary?.newsSentiments?.find((s) => s.market === 'US')
+function MoodHero({ summary, marketPreference, palette }: { summary: MarketSummaryData | null; marketPreference: MarketPreference; palette: Palette }) {
+  const showKr = marketPreference !== 'US'
+  const showUs = marketPreference !== 'KR'
+  const kr = showKr ? summary?.newsSentiments?.find((s) => s.market === 'KR') : undefined
+  const us = showUs ? summary?.newsSentiments?.find((s) => s.market === 'US') : undefined
   const headline = summary?.summary ?? '오늘의 시장 데이터를 불러오는 중…'
   const status   = summary?.marketStatus ?? ''
 
@@ -153,8 +185,8 @@ function MoodHero({ summary, palette }: { summary: MarketSummaryData | null; pal
             </Text>
           ) : null}
         </View>
-        <SentimentGauge label="KR" data={kr ?? null} palette={palette} />
-        <SentimentGauge label="US" data={us ?? null} palette={palette} />
+        {showKr ? <SentimentGauge label="KR" data={kr ?? null} palette={palette} /> : null}
+        {showUs ? <SentimentGauge label="US" data={us ?? null} palette={palette} /> : null}
       </View>
     </GradientCard>
   )
