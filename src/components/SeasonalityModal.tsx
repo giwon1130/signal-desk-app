@@ -27,11 +27,13 @@ export function SeasonalityModal({ visible, market, ticker, name, onClose }: Pro
   const [savedMap, setSavedMap] = useState<Record<string, string>>({})
   const [savingKey, setSavingKey] = useState<string | null>(null)
   const [saveError, setSaveError] = useState('')
+  // 히트맵 셀 탭 → 상세 패널 (STRONG 하이라이트가 아닌 달도 확인·저장 가능하게)
+  const [selectedMonth, setSelectedMonth] = useState<number | null>(null)
 
   useEffect(() => {
     if (!visible) return
     let alive = true
-    setLoading(true); setErr(false); setReport(null); setSavedMap({})
+    setLoading(true); setErr(false); setReport(null); setSavedMap({}); setSelectedMonth(null)
     fetchSeasonality(market, ticker, name).then((r) => {
       if (!alive) return
       if (r) setReport(r); else setErr(true)
@@ -48,9 +50,10 @@ export function SeasonalityModal({ visible, market, ticker, name, onClose }: Pro
     return () => { alive = false }
   }, [visible, market, ticker, name])
 
-  const toggleSave = async (h: SeasonalityRuleCard) => {
-    if (!report || h.month == null || savingKey) return
-    const key = `${h.kind}:${h.month}`
+  /** 하이라이트 카드·히트맵 상세 공용 — (kind, month) 규칙 저장/해제 토글. */
+  const toggleSave = async (kind: 'BUY_MONTH' | 'AVOID_MONTH', month: number | null) => {
+    if (!report || month == null || savingKey) return
+    const key = `${kind}:${month}`
     setSavingKey(key)
     setSaveError('')
     try {
@@ -59,9 +62,9 @@ export function SeasonalityModal({ visible, market, ticker, name, onClose }: Pro
         if (ok) setSavedMap((m) => { const n = { ...m }; delete n[key]; return n })
         else setSaveError('삭제하지 못했어요 — 잠시 후 다시 시도해 주세요')
       } else {
-        const stat = report.monthly.find((m) => m.month === h.month)
+        const stat = report.monthly.find((m) => m.month === month)
         const saved = await saveSeasonalityRule({
-          market, ticker, name: report.name, kind: h.kind, month: h.month,
+          market, ticker, name: report.name, kind, month,
           meanPct: stat?.meanPct ?? null, winRatePct: stat?.winRatePct ?? null, sampleYears: stat?.sampleYears ?? null,
         })
         if (saved) setSavedMap((m) => ({ ...m, [key]: saved.id }))
@@ -128,7 +131,7 @@ export function SeasonalityModal({ visible, market, ticker, name, onClose }: Pro
                             <Text style={{ color: palette.inkSub, fontSize: 11.5, lineHeight: 16, marginTop: 2 }}>{h.detail}</Text>
                           </View>
                           <Pressable
-                            onPress={() => void toggleSave(h)}
+                            onPress={() => void toggleSave(h.kind, h.month)}
                             disabled={savingKey === key}
                             hitSlop={6}
                             style={{
@@ -150,10 +153,29 @@ export function SeasonalityModal({ visible, market, ticker, name, onClose }: Pro
               ) : null}
 
               {/* 월별 히트맵 */}
-              <Text style={{ color: palette.inkMuted, fontSize: 11, fontWeight: '800', letterSpacing: 0.4, marginBottom: 8 }}>월별 (전부 표시 · 등급)</Text>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginBottom: 16 }}>
-                {report.monthly.map((m) => <MonthCell key={m.month} m={m} palette={palette} />)}
+              <Text style={{ color: palette.inkMuted, fontSize: 11, fontWeight: '800', letterSpacing: 0.4, marginBottom: 2 }}>월별 (전부 표시 · 등급)</Text>
+              <Text style={{ color: palette.inkFaint, fontSize: 10.5, marginBottom: 8 }}>달을 누르면 상세 · 어느 달이든 규칙으로 저장 가능</Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginBottom: 8 }}>
+                {report.monthly.map((m) => (
+                  <MonthCell
+                    key={m.month}
+                    m={m}
+                    palette={palette}
+                    selected={selectedMonth === m.month}
+                    onPress={() => setSelectedMonth((cur) => (cur === m.month ? null : m.month))}
+                  />
+                ))}
               </View>
+              {selectedMonth != null ? (
+                <MonthDetailPanel
+                  stat={report.monthly.find((m) => m.month === selectedMonth)!}
+                  palette={palette}
+                  savedMap={savedMap}
+                  savingKey={savingKey}
+                  onToggleSave={(kind, month) => void toggleSave(kind, month)}
+                />
+              ) : null}
+              <View style={{ marginBottom: 8 }} />
 
               {/* 요일·주말 */}
               <Text style={{ color: palette.inkMuted, fontSize: 11, fontWeight: '800', letterSpacing: 0.4, marginBottom: 8 }}>요일 · 주말</Text>
@@ -191,17 +213,73 @@ export function SeasonalityModal({ visible, market, ticker, name, onClose }: Pro
   )
 }
 
-function MonthCell({ m, palette }: { m: MonthStat; palette: Palette }) {
+function MonthCell({ m, palette, selected, onPress }: { m: MonthStat; palette: Palette; selected: boolean; onPress: () => void }) {
   const c = retColor(m.meanPct, palette)
   const bg = (m.meanPct > 0 ? palette.upSoft : m.meanPct < 0 ? palette.downSoft : palette.surfaceAlt) ?? palette.surfaceAlt
   return (
-    <View style={{ width: '31.5%', backgroundColor: bg, borderRadius: 9, paddingVertical: 8, paddingHorizontal: 8, opacity: m.tier === 'NOISE' ? 0.55 : 1 }}>
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => ({
+        width: '31.5%', backgroundColor: bg, borderRadius: 9, paddingVertical: 8, paddingHorizontal: 8,
+        opacity: pressed ? 0.7 : m.tier === 'NOISE' && !selected ? 0.55 : 1,
+        borderWidth: selected ? 1.5 : 0, borderColor: palette.ink,
+      })}
+    >
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
         <Text style={{ fontSize: 10 }}>{TIER_DOT[m.tier]}</Text>
         <Text style={{ color: palette.ink, fontSize: 12, fontWeight: '800' }}>{m.month}월</Text>
       </View>
       <Text style={{ color: c, fontSize: 14, fontWeight: '900', marginTop: 2 }}>{signed(m.meanPct, 1)}%</Text>
       <Text style={{ color: palette.inkFaint, fontSize: 9.5 }}>승률 {m.winRatePct.toFixed(0)}% · {m.sampleYears}년</Text>
+    </Pressable>
+  )
+}
+
+/** 히트맵 셀 상세 — 풀 통계 + 규칙 저장 (STRONG 이 아닌 달도 추적 가능). */
+function MonthDetailPanel({ stat, palette, savedMap, savingKey, onToggleSave }: {
+  stat: MonthStat
+  palette: Palette
+  savedMap: Record<string, string>
+  savingKey: string | null
+  onToggleSave: (kind: 'BUY_MONTH' | 'AVOID_MONTH', month: number) => void
+}) {
+  const kind: 'BUY_MONTH' | 'AVOID_MONTH' = stat.meanPct >= 0 ? 'BUY_MONTH' : 'AVOID_MONTH'
+  const key = `${kind}:${stat.month}`
+  const saved = !!savedMap[key]
+  const c = kind === 'BUY_MONTH' ? palette.up : palette.down
+  return (
+    <View style={{ backgroundColor: palette.surfaceAlt ?? palette.surface, borderRadius: 10, padding: 12, gap: 5, borderLeftWidth: 3, borderLeftColor: c }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <Text style={{ flex: 1, color: palette.ink, fontSize: 13, fontWeight: '900' }}>
+          {TIER_DOT[stat.tier]} {stat.month}월 {kind === 'BUY_MONTH' ? '강세' : '약세'} 상세
+        </Text>
+        <Pressable
+          onPress={() => onToggleSave(kind, stat.month)}
+          disabled={savingKey === key}
+          hitSlop={6}
+          style={{
+            flexDirection: 'row', alignItems: 'center', gap: 3,
+            paddingHorizontal: 9, paddingVertical: 5, borderRadius: 7,
+            backgroundColor: saved ? c + '22' : palette.bg,
+            borderWidth: 1, borderColor: saved ? c : palette.border,
+            opacity: savingKey === key ? 0.5 : 1,
+          }}
+        >
+          {saved ? <BookmarkCheck size={12} color={c} strokeWidth={2.5} /> : <Bookmark size={12} color={palette.inkMuted} strokeWidth={2.5} />}
+          <Text style={{ color: saved ? c : palette.inkMuted, fontSize: 10.5, fontWeight: '800' }}>{saved ? '저장됨' : '규칙 저장'}</Text>
+        </Pressable>
+      </View>
+      <Text style={{ color: palette.inkSub, fontSize: 11.5, lineHeight: 16 }}>
+        평균 {signed(stat.meanPct)}% · 중앙값 {signed(stat.medianPct)}% · 승률 {stat.winRatePct.toFixed(0)}% ({stat.sampleYears}년)
+      </Text>
+      <Text style={{ color: palette.inkFaint, fontSize: 10.5 }}>
+        최악해 {signed(stat.worstYearPct, 1)}% · 최고해 {signed(stat.bestYearPct, 1)}% · 비용후 {signed(stat.netAfterCostPct)}%
+      </Text>
+      {stat.tier === 'NOISE' ? (
+        <Text style={{ color: palette.orange ?? '#d97706', fontSize: 10.5, fontWeight: '700' }}>
+          ⚪ 노이즈 등급 — 통계적 근거가 약한 패턴이에요. 저장은 되지만 참고만 하세요.
+        </Text>
+      ) : null}
     </View>
   )
 }

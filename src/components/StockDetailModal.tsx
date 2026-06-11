@@ -26,6 +26,7 @@ import { WatchToggle } from './stock_detail/WatchToggle'
 import { WatchAlertForm } from './stock_detail/WatchAlertForm'
 import { PortfolioForm } from './stock_detail/PortfolioForm'
 import { QuickStats } from './stock_detail/QuickStats'
+import { SeasonalityTeaser } from './stock_detail/SeasonalityTeaser'
 import { SeasonalityModal } from './SeasonalityModal'
 
 export type StockDetailContext = {
@@ -219,7 +220,7 @@ export function StockDetailModal({
                 <CalendarRange size={17} color={palette.purple ?? '#7c3aed'} strokeWidth={2.4} />
                 <View style={{ flex: 1 }}>
                   <Text style={{ color: palette.ink, fontSize: 13.5, fontWeight: '800' }}>시즈널리티 — 월별 패턴</Text>
-                  <Text style={{ color: palette.inkMuted, fontSize: 11 }}>역사적으로 어느 달에 강하고 약했는지</Text>
+                  <SeasonalityTeaser market={context.base.market} ticker={context.base.ticker} />
                 </View>
                 <ChevronRight size={17} color={palette.inkFaint} strokeWidth={2.4} />
               </Pressable>
