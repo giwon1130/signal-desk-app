@@ -25,7 +25,8 @@
  */
 import React, { useState } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
-import { BookOpen, Trophy } from 'lucide-react-native'
+import { BookOpen, Sparkles, Trophy } from 'lucide-react-native'
+import { AssistantModal } from '../components/AssistantModal'
 import type {
   AiRecommendationData,
   MarketSummaryData,
@@ -51,9 +52,28 @@ type Props = {
 export const AIWorkspace = React.memo(function AIWorkspace({ aiRecommendation, summary, watchlist, onOpenDetail, onQuickAddWatch }: Props) {
   const { palette } = useTheme()
   const [mode, setMode] = useState<Mode>('playbook')
+  const [assistantOpen, setAssistantOpen] = useState(false)
 
   return (
     <ScrollView style={{ flex: 1 }} contentContainerStyle={{ gap: 14, paddingBottom: 20 }}>
+      {/* ── 시데 AI 비서 — 내 데이터를 아는 질문/답변 (네이티브 AITab 과 동일 진입) ── */}
+      <Pressable
+        onPress={() => setAssistantOpen(true)}
+        style={({ pressed }) => ({
+          flexDirection: 'row', alignItems: 'center', gap: 10,
+          backgroundColor: palette.blueSoft ?? palette.surfaceAlt,
+          borderRadius: 12, paddingHorizontal: 14, paddingVertical: 13,
+          borderWidth: 1, borderColor: palette.border,
+          opacity: pressed ? 0.8 : 1,
+        })}
+      >
+        <Sparkles size={18} color={palette.blue} strokeWidth={2.4} />
+        <View style={{ flex: 1 }}>
+          <Text style={{ color: palette.ink, fontSize: 14, fontWeight: '800' }}>시데 AI에게 물어보기</Text>
+          <Text style={{ color: palette.inkMuted, fontSize: 11 }}>내 보유·관심 종목과 오늘 시장을 알고 답하는 비서</Text>
+        </View>
+      </Pressable>
+
       <Header mode={mode} onChange={setMode} palette={palette} />
       <Entrance key={mode} delay={20}>
         {mode === 'playbook' ? (
@@ -69,6 +89,7 @@ export const AIWorkspace = React.memo(function AIWorkspace({ aiRecommendation, s
           <Scorecard aiRecommendation={aiRecommendation} palette={palette} onOpenDetail={onOpenDetail} />
         )}
       </Entrance>
+      <AssistantModal visible={assistantOpen} onClose={() => setAssistantOpen(false)} />
     </ScrollView>
   )
 })
