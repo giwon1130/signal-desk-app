@@ -49,7 +49,7 @@ import { CommandPalette } from './src/web/CommandPalette'
 import { AIWorkspace } from './src/web/AIWorkspace'
 import { StockDetailModal, type StockDetailContext } from './src/components/StockDetailModal'
 import { ReminderSettingsModal } from './src/components/ReminderSettingsModal'
-import { getAlertPreferences, updateAlertPreferences, type MarketPreference } from './src/api/alertPreferences'
+import { getAlertPreferences, syncMarketPreference, type MarketPreference } from './src/api/alertPreferences'
 import { markAlertsRead, deleteAlert as deleteAlertApi, clearAllAlerts } from './src/api/pushDevice'
 import { DailyGreetingModal } from './src/components/DailyGreetingModal'
 import { LoadingScreen } from './src/components/LoadingScreen'
@@ -212,10 +212,7 @@ function AppShell() {
     setV2MigrationOpen(false)
     await markV2MigrationShown()
     if (user?.token) {
-      try {
-        const current = await getAlertPreferences(user.token)
-        await updateAlertPreferences(user.token, { ...current, marketPreference: pref })
-      } catch { /* 실패해도 로컬 상태는 변경됨 */ }
+      await syncMarketPreference(user.token, pref) // 실패해도 로컬 상태는 변경됨
     }
   }, [user?.token])
 
@@ -225,12 +222,7 @@ function AppShell() {
     const label = pref === 'KR' ? '🇰🇷 한국 시장' : pref === 'US' ? '🇺🇸 미국 시장' : '🌍 양쪽 시장'
     toast.show(`${label} 으로 전환`)
     if (user?.token) {
-      void (async () => {
-        try {
-          const current = await getAlertPreferences(user.token)
-          await updateAlertPreferences(user.token, { ...current, marketPreference: pref })
-        } catch { /* 실패해도 UI 는 즉시 반영 */ }
-      })()
+      void syncMarketPreference(user.token, pref) // 실패해도 UI 는 즉시 반영
     }
   }, [user?.token, toast])
 
@@ -406,7 +398,8 @@ function AppShell() {
     const base: StockSearchResult = fromSearch ?? {
       market,
       ticker,
-      name:       watchItem?.name ?? portfolioPos?.name ?? detailFallbackName ?? ticker,
+      // detailFallbackName 은 '' 기본값이라 ?? 로는 ticker 분기에 닿지 않는다 — || 로 빈 문자열도 걸러 빈 타이틀 방지.
+      name:       watchItem?.name ?? portfolioPos?.name ?? (detailFallbackName || ticker),
       sector:     watchItem?.sector ?? '—',
       price:      watchItem?.price ?? portfolioPos?.currentPrice ?? 0,
       changeRate: watchItem?.changeRate ?? 0,

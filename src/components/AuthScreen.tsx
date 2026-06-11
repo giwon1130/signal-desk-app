@@ -17,7 +17,7 @@ import { hapticError, hapticSuccess } from '../utils/haptics'
 import { GoogleSignInButton } from './GoogleSignInButton'
 import { WebFooter } from './WebFooter'
 import type { MarketPreference } from '../api/alertPreferences'
-import { getAlertPreferences, updateAlertPreferences } from '../api/alertPreferences'
+import { syncMarketPreference } from '../api/alertPreferences'
 import { markOnboardingCompleted } from '../utils/onboarding'
 
 type Mode = 'login' | 'signup'
@@ -137,8 +137,7 @@ export function AuthScreen({ onDone }: Props) {
       // 가입 시 선택한 시장 선호 저장 + 온보딩 스킵 처리 (이미 물어봤으므로 중복 제거)
       if (mode === 'signup' && marketPref) {
         try {
-          const current = await getAlertPreferences(res.token)
-          await updateAlertPreferences(res.token, { ...current, marketPreference: marketPref })
+          await syncMarketPreference(res.token, marketPref)
           await markOnboardingCompleted()
         } catch { /* 저장 실패해도 가입은 진행 — 온보딩이 fallback 으로 다시 물어봄 */ }
       }

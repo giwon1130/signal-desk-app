@@ -49,6 +49,41 @@ export async function getAlertPreferences(authToken: string): Promise<AlertPrefe
   }
 }
 
+/** GET — 실패를 null 로 구분 (getAlertPreferences 는 실패 시 기본값이라 구분 불가). */
+async function fetchAlertPreferencesOrNull(authToken: string): Promise<AlertPreferences | null> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/me/alert-preferences`, {
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${authToken}`,
+      },
+    })
+    if (!res.ok) return null
+    return (await res.json()) as AlertPreferences
+  } catch {
+    return null
+  }
+}
+
+let pendingPreferenceSync: Promise<void> = Promise.resolve()
+
+/**
+ * marketPreference 만 안전하게 서버 동기화.
+ * - GET 실패 시 중단 — 기본값({...DEFAULT, pref})으로 사용자의 다른 설정(방해금지 등)을
+ *   덮어쓰는 사고 방지.
+ * - 모듈 레벨 직렬화 — 빠른 연속 토글에서 이전 GET 의 stale 값이 나중에 PUT 되는 레이스 방지.
+ */
+export function syncMarketPreference(authToken: string, pref: MarketPreference): Promise<void> {
+  pendingPreferenceSync = pendingPreferenceSync
+    .then(async () => {
+      const current = await fetchAlertPreferencesOrNull(authToken)
+      if (!current) return
+      await updateAlertPreferences(authToken, { ...current, marketPreference: pref })
+    })
+    .catch(() => {})
+  return pendingPreferenceSync
+}
+
 export async function updateAlertPreferences(
   authToken: string,
   prefs: AlertPreferences,

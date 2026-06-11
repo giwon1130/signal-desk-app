@@ -124,8 +124,35 @@ function clampMinute(value: number): number {
   return value
 }
 
+/**
+ * KST 기준 (요일, 시, 분)을 디바이스 로컬 타임존의 (요일, 시, 분)으로 변환.
+ * expo-notifications WEEKLY 트리거는 디바이스 로컬 시간으로 해석되므로,
+ * KST 시각을 그대로 넣으면 해외 타임존 기기에서 엉뚱한 시간에 울린다
+ * (예: ET 기기에서 "한국장 09:00" 알림이 ET 오전 9시에 발송).
+ * 자정을 넘는 변환이면 요일도 함께 시프트된다 (KST 월 09:00 = ET 일 19/20:00).
+ * 디바이스 타임존의 DST 전환은 다음 앱 실행(rescheduleAll)에서 보정.
+ */
+function kstWeeklyToLocal(kstWeekday: number, kstHour: number, kstMinute: number): {
+  weekday: number; hour: number; minute: number
+} {
+  const now = Date.now()
+  const KST_OFFSET_MS = 9 * 3600_000 // KST = UTC+9 고정 (서머타임 없음)
+  for (let i = 0; i < 7; i++) {
+    const kst = new Date(now + i * 86400_000 + KST_OFFSET_MS)
+    if (kst.getUTCDay() + 1 !== kstWeekday) continue // 1=일 .. 7=토
+    const utcMs = Date.UTC(
+      kst.getUTCFullYear(), kst.getUTCMonth(), kst.getUTCDate(),
+      kstHour, kstMinute,
+    ) - KST_OFFSET_MS
+    const local = new Date(utcMs)
+    return { weekday: local.getDay() + 1, hour: local.getHours(), minute: local.getMinutes() }
+  }
+  return { weekday: kstWeekday, hour: kstHour, minute: kstMinute } // 도달 불가 fallback
+}
+
 async function scheduleWeekdays(opts: {
   baseIdentifier: string
+  /** KST 기준 시/분 — 내부에서 디바이스 로컬로 변환해 등록한다. */
   hour: number
   minute: number
   title: string
@@ -137,6 +164,7 @@ async function scheduleWeekdays(opts: {
   await Notifications.cancelScheduledNotificationAsync(opts.baseIdentifier).catch(() => {})
   // 2) 평일 5개 각각 weekday suffix 로 새로 등록 — 동일 ID 면 덮어쓰기
   for (const weekday of WEEKDAYS_MON_TO_FRI) {
+    const local = kstWeeklyToLocal(weekday, opts.hour, opts.minute)
     const id = `${opts.baseIdentifier}.${weekday}`
     await Notifications.cancelScheduledNotificationAsync(id).catch(() => {})
     await Notifications.scheduleNotificationAsync({
@@ -148,9 +176,9 @@ async function scheduleWeekdays(opts: {
       },
       trigger: {
         type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
-        weekday,           // 2=월, 3=화, ..., 6=금
-        hour:   opts.hour,
-        minute: opts.minute,
+        weekday: local.weekday,
+        hour:    local.hour,
+        minute:  local.minute,
         ...(Platform.OS === 'android' && opts.channelId ? { channelId: opts.channelId } : {}),
       },
     })
@@ -171,7 +199,7 @@ export async function scheduleKrOpenReminder() {
   const ok = await ensurePermission()
   if (!ok) return
   const minutesBefore = await getMinutesBefore()
-  // 시간/분 보정 (KST 기준; DAILY trigger는 디바이스 로컬 시간 사용)
+  // 시간/분 보정 (KST 기준 — scheduleWeekdays 가 디바이스 로컬로 변환)
   let hour   = KR_OPEN_HOUR_KST
   let minute = KR_OPEN_MINUTE - minutesBefore
   if (minute < 0) { hour -= 1; minute = clampMinute(minute) }

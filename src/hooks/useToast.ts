@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import type { ToastType } from '../components/Toast'
 
 export function useToast(duration = 2200) {
@@ -15,5 +15,6 @@ export function useToast(duration = 2200) {
     timerRef.current = setTimeout(() => setVisible(false), duration)
   }, [duration])
 
-  return { visible, message, type, show }
+  // 객체 identity 유지 — 매 렌더 새 리터럴이면 toast 를 deps 로 갖는 useCallback/memo 가 전부 무효화된다.
+  return useMemo(() => ({ visible, message, type, show }), [visible, message, type, show])
 }

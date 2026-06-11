@@ -16,7 +16,7 @@ import * as Notifications from 'expo-notifications'
 import { ArrowRight, Bell, Check, Sparkles } from 'lucide-react-native'
 import { useTheme } from '../theme'
 import type { MarketPreference } from '../api/alertPreferences'
-import { updateAlertPreferences, getAlertPreferences } from '../api/alertPreferences'
+import { syncMarketPreference } from '../api/alertPreferences'
 import { quickAddWatchItem } from '../api'
 import { seedFor } from '../data/seedStocks'
 import { markOnboardingCompleted } from '../utils/onboarding'
@@ -59,8 +59,7 @@ export function OnboardingScreen({ authToken, onComplete }: Props) {
     setBusy(true)
     try {
       // marketPreference 저장 — 알림 토글은 디폴트값(이미 백엔드 DEFAULT 적용) 그대로.
-      const current = await getAlertPreferences(authToken)
-      await updateAlertPreferences(authToken, { ...current, marketPreference: pref })
+      await syncMarketPreference(authToken, pref)
 
       // 선택된 시드 종목 일괄 등록
       const seeds = seedFor(pref).filter((s) => pickedSeeds.has(`${s.market}:${s.ticker}`))
@@ -80,8 +79,7 @@ export function OnboardingScreen({ authToken, onComplete }: Props) {
     if (!pref) return
     setBusy(true)
     try {
-      const current = await getAlertPreferences(authToken)
-      await updateAlertPreferences(authToken, { ...current, marketPreference: pref })
+      await syncMarketPreference(authToken, pref)
       await markOnboardingCompleted()
       setStep(5)
       setTimeout(() => onComplete(pref), 700)

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { GestureResponderEvent, Pressable, ScrollView, Text, View } from 'react-native'
 import Svg, { G, Line, Path, Rect, Text as SvgText } from 'react-native-svg'
 import type { ChartPoint } from '../types'
@@ -26,6 +26,13 @@ export function CandleVolumeChart({ points, width }: { points: ChartPoint[]; wid
   const { palette } = useTheme()
   const [selected, setSelected] = useState<number | null>(null)
   const scrollRef = useRef<ScrollView>(null)
+
+  // 이동평균은 points 에만 의존 — 캔들 탭(selected 변경) 렌더마다 O(n×period)×3 재계산 방지.
+  const movingAverages = useMemo(() => ({
+    ma5: buildMovingAverage(points, 5),
+    ma20: buildMovingAverage(points, 20),
+    ma60: buildMovingAverage(points, 60),
+  }), [points])
 
   if (!points.length) {
     return (
@@ -62,9 +69,7 @@ export function CandleVolumeChart({ points, width }: { points: ChartPoint[]; wid
   const xAt = (index: number) => outerPadding + perCandle * index + perCandle * 0.5
   const yAt = (value: number) => topPadding + ((paddedHigh - value) / (paddedHigh - paddedLow)) * priceHeight
 
-  const ma5 = buildMovingAverage(points, 5)
-  const ma20 = buildMovingAverage(points, 20)
-  const ma60 = buildMovingAverage(points, 60)
+  const { ma5, ma20, ma60 } = movingAverages
   const ma5Path = buildLinePath(ma5, xAt, yAt)
   const ma20Path = buildLinePath(ma20, xAt, yAt)
   const ma60Path = buildLinePath(ma60, xAt, yAt)

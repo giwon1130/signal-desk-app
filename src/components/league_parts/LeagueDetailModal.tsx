@@ -61,10 +61,21 @@ export function LeagueDetailModal({ visible, leagueId, myUserId, marketSessions,
     }
   }, [leagueId])
 
-  const status = detail?.league.status
+  // 다른 리그를 열면 직전 리그의 리더보드/피드가 새 데이터 도착 전까지 비치던 잔상 제거.
+  useEffect(() => {
+    setDetail(null); setLeaderboard([]); setFeed([]); setPositions([]); setLoadError(false)
+  }, [leagueId])
+
+  // 초기 로드 — status 와 분리. (같이 묶으면 첫 로드로 status 가 undefined→'RUNNING' 으로
+  // 바뀌며 effect 가 재실행돼 즉시 두 번째 load 가 나가는 중복 호출이 있었다.)
   useEffect(() => {
     if (!visible || !leagueId) return
     void load()
+  }, [visible, leagueId, load])
+
+  const status = detail?.league.status
+  useEffect(() => {
+    if (!visible || !leagueId) return
     if (status === 'FINISHED') return // 종료된 리그는 변동 없음 — 폴링 안 함.
     const interval = setInterval(() => { void load() }, 10000)
     return () => clearInterval(interval)

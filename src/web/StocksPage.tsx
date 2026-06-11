@@ -165,6 +165,8 @@ export function StocksPage(props: Props) {
           changeRate: row.changeRate,
         } as StockSearchResult)
       }
+    } catch {
+      // 실패 토스트는 mutation 쪽에서 이미 노출 — 여기서 안 잡으면 unhandled rejection
     } finally {
       setTogglingKey('')
     }
