@@ -27,6 +27,8 @@ export function AssistantModal({ visible, onClose }: Props) {
   const [messages, setMessages] = useState<Msg[]>([])
   const [input, setInput] = useState('')
   const [asking, setAsking] = useState(false)
+  // 오늘 남은 질문 수 — 서버 응답에 실려 옴 (무제한이면 null 유지)
+  const [quota, setQuota] = useState<{ remaining: number; limit: number } | null>(null)
 
   const send = async (raw?: string) => {
     const q = (raw ?? input).trim()
@@ -35,7 +37,8 @@ export function AssistantModal({ visible, onClose }: Props) {
     setMessages((m) => [...m, { role: 'user', text: q }])
     setAsking(true)
     try {
-      const { answer, error } = await askAssistant(q)
+      const { answer, error, remaining, dailyLimit } = await askAssistant(q)
+      if (remaining != null && dailyLimit != null) setQuota({ remaining, limit: dailyLimit })
       setMessages((m) => [...m, answer
         ? { role: 'assistant', text: answer }
         : { role: 'assistant', text: error ?? '답변을 만들지 못했어요.', isError: true }])
@@ -156,6 +159,7 @@ export function AssistantModal({ visible, onClose }: Props) {
               </View>
               <Text style={{ color: palette.inkFaint, fontSize: 9.5, textAlign: 'center' }}>
                 AI 답변은 참고용이며 투자 판단의 책임은 본인에게 있어요
+                {quota ? ` · 오늘 ${quota.remaining}/${quota.limit}회 남음` : ''}
               </Text>
             </View>
           </KeyboardAvoidingView>
