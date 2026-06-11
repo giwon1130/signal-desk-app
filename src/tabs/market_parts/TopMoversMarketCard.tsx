@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from 'react'
 import { Animated, Pressable, Text, View } from 'react-native'
 import { Flame, Snowflake } from 'lucide-react-native'
 import { CollapsibleCard } from '../../components/CollapsibleCard'
+import { useRotatingIndex } from '../../hooks/useRotatingIndex'
 import { useStyles } from '../../styles'
 import { useTheme } from '../../theme'
 import type { MoverReason, TopMover, TopMoversResponse } from '../../types'
@@ -68,19 +68,7 @@ type RotItem = { name: string; rate: number; up: boolean }
 
 /** 급등/급락을 ~2.8초마다 페이드로 번갈아 보여주는 미리보기. */
 function RotatingPreview({ items, palette }: { items: RotItem[]; palette: any }) {
-  const [i, setI] = useState(0)
-  const opacity = useRef(new Animated.Value(1)).current
-
-  useEffect(() => {
-    if (items.length <= 1) return
-    const id = setInterval(() => {
-      Animated.timing(opacity, { toValue: 0, duration: 280, useNativeDriver: true }).start(() => {
-        setI((p) => (p + 1) % items.length)
-        Animated.timing(opacity, { toValue: 1, duration: 280, useNativeDriver: true }).start()
-      })
-    }, 2800)
-    return () => clearInterval(id)
-  }, [items.length, opacity])
+  const { index: i, opacity } = useRotatingIndex(items.length, 2800)
 
   if (items.length === 0) return <Text style={{ color: palette.inkFaint, fontSize: 12 }}>-</Text>
   const cur = items[i] ?? items[0]

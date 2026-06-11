@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
 import { Animated, Pressable, Text, View } from 'react-native'
 import { Activity } from 'lucide-react-native'
+import { useRotatingIndex } from '../hooks/useRotatingIndex'
 import { useTheme } from '../theme'
 import type { MarketKey, MarketSectionsData } from '../types'
 import { formatNumber, formatSignedRate } from '../utils'
@@ -20,8 +20,6 @@ type Idx = { market: MarketKey; label: string; value: number; changeRate: number
  */
 export function IndexPulse({ sections, marketPreference, onPress }: Props) {
   const { palette } = useTheme()
-  const [i, setI] = useState(0)
-  const opacity = useRef(new Animated.Value(1)).current
 
   const showKr = marketPreference !== 'US'
   const showUs = marketPreference !== 'KR'
@@ -29,16 +27,7 @@ export function IndexPulse({ sections, marketPreference, onPress }: Props) {
   if (showKr) for (const it of sections?.koreaMarket?.indices ?? []) items.push({ market: 'KR', label: it.label, value: it.value, changeRate: it.changeRate })
   if (showUs) for (const it of sections?.usMarket?.indices ?? []) items.push({ market: 'US', label: it.label, value: it.value, changeRate: it.changeRate })
 
-  useEffect(() => {
-    if (items.length <= 1) return
-    const id = setInterval(() => {
-      Animated.timing(opacity, { toValue: 0, duration: 280, useNativeDriver: true }).start(() => {
-        setI((p) => (p + 1) % items.length)
-        Animated.timing(opacity, { toValue: 1, duration: 280, useNativeDriver: true }).start()
-      })
-    }, 2800)
-    return () => clearInterval(id)
-  }, [items.length, opacity])
+  const { index: i, opacity } = useRotatingIndex(items.length, 2800)
 
   if (items.length === 0) return null
   const cur = items[i] ?? items[0]

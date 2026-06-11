@@ -3,9 +3,10 @@
  * 시장별 뉴스 심리(점수)를 칩으로, 실제 헤드라인을 ~3.5초마다 페이드로 회전 노출.
  * KR/US 헤드라인을 번갈아 보여줘 "내용이 굴러가며" 한 화면에 들어온다.
  */
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo } from 'react'
 import { Animated, Linking, Pressable, Text, View } from 'react-native'
 import { ChevronLeft, ChevronRight, Newspaper } from 'lucide-react-native'
+import { useRotatingIndex } from '../../hooks/useRotatingIndex'
 import { useTheme } from '../../theme'
 import type { NewsSentiment } from '../../types'
 import { formatRelativeOrShortTime } from '../../utils'
@@ -19,8 +20,6 @@ type Item = { market: string; title: string; source: string; tone: string; url: 
 
 export function NewsHero({ sentiments }: Props) {
   const { palette } = useTheme()
-  const opacity = useRef(new Animated.Value(1)).current
-  const [i, setI] = useState(0)
 
   // KR/US 헤드라인을 라운드로빈으로 섞어 골고루 회전.
   const items = useMemo<Item[]>(() => {
@@ -40,20 +39,7 @@ export function NewsHero({ sentiments }: Props) {
     return out.slice(0, 20)
   }, [sentiments])
 
-  const fadeTo = (next: number) => {
-    Animated.timing(opacity, { toValue: 0, duration: 220, useNativeDriver: true }).start(() => {
-      setI(next)
-      Animated.timing(opacity, { toValue: 1, duration: 220, useNativeDriver: true }).start()
-    })
-  }
-
-  useEffect(() => {
-    if (items.length <= 1) return
-    const id = setInterval(() => fadeTo((i + 1) % items.length), 3500)
-    return () => clearInterval(id)
-  }, [items.length, i])
-
-  useEffect(() => { if (i >= items.length) setI(0) }, [items.length, i])
+  const { index: i, opacity, goTo: fadeTo } = useRotatingIndex(items.length, 3500, 220)
 
   if (sentiments.length === 0) return null
   const cur = items.length > 0 ? items[Math.min(i, items.length - 1)] : null
