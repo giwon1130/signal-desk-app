@@ -39,6 +39,7 @@ import { HomeDashboard } from './src/web/HomeDashboard'
 import { StocksPage } from './src/web/StocksPage'
 import { AIWorkspace } from './src/web/AIWorkspace'
 import type { StockDetailContext } from './src/components/StockDetailModal'
+import { AssistantFab } from './src/components/AssistantFab'
 import { getAlertPreferences, syncMarketPreference, type MarketPreference } from './src/api/alertPreferences'
 import { getFortuneGreetingShownDate, markFortuneGreetingShown } from './src/utils/fortuneGreeting'
 import { useAlertsInbox } from './src/hooks/useAlertsInbox'
@@ -101,6 +102,10 @@ function AppShell() {
 
   // ── 알림 설정 모달 ──────
   const [reminderOpen, setReminderOpen] = useState(false)
+
+  // ── 시데 AI 비서 — 글로벌 플로팅 버튼으로 어느 탭에서든 (모달은 GlobalOverlays 에 1개) ──
+  const [assistantOpen, setAssistantOpen] = useState(false)
+  const handleOpenAssistant = useCallback(() => setAssistantOpen(true), [])
 
   // ── 투자 시장 선호 (UI 필터링 — MarketTab/StocksTab 등) ──
   const [marketPreference, setMarketPreference] = useState<MarketPreference>('BOTH')
@@ -507,6 +512,7 @@ function AppShell() {
             marketPreference={marketPreference}
             onOpenDetail={handleOpenDetail}
             onQuickAddWatch={handleQuickAddWatch}
+            onOpenAssistant={handleOpenAssistant}
           />
         ) : (
           <AITab
@@ -520,6 +526,7 @@ function AppShell() {
             onRefresh={refresh}
             onOpenDetail={handleOpenDetail}
             onQuickAddWatch={handleQuickAddWatch}
+            onOpenAssistant={handleOpenAssistant}
           />
         )
       ) : null}
@@ -586,6 +593,8 @@ function AppShell() {
       onDeleteAccount={confirmDeleteAccount}
       greetingOpen={greetingOpen}
       setGreetingOpen={setGreetingOpen}
+      assistantOpen={assistantOpen}
+      setAssistantOpen={setAssistantOpen}
     />
   )
 
@@ -615,6 +624,7 @@ function AppShell() {
         >
           {tabContent}
         </WebLayout>
+        {user ? <AssistantFab onPress={handleOpenAssistant} /> : null}
         {overlays}
       </SafeAreaView>
     )
@@ -654,6 +664,7 @@ function AppShell() {
         onClose={() => setIndexDetail(null)}
       />
 
+      {user ? <AssistantFab onPress={handleOpenAssistant} /> : null}
       {overlays}
     </SafeAreaView>
   )

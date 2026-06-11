@@ -18,7 +18,6 @@ import type {
 } from '../types'
 import { HiddenSignals } from './aitab_widgets/HiddenSignals'
 import { Playbook } from './aitab_widgets/Playbook'
-import { AssistantModal } from '../components/AssistantModal'
 import { SeasonalityRulesModal } from '../components/SeasonalityRulesModal'
 import { SectorRotationModal } from '../components/SectorRotationModal'
 import { listSeasonalityRules } from '../api/backtest'
@@ -35,16 +34,17 @@ type Props = {
   onRefresh: () => Promise<void>
   onOpenDetail: (market: string, ticker: string, name?: string) => void
   onQuickAddWatch: (stock: StockSearchResult) => Promise<void>
+  /** 글로벌 시데 AI 모달 열기 (FAB 와 동일 인스턴스 — 대화 세션 공유) */
+  onOpenAssistant: () => void
 }
 
 // memo: AppShell 재렌더(다른 탭 상태 변화 등)에 끌려 다시 그리지 않도록.
 export const AITab = memo(function AITab({
-  aiPicks, hiddenSignals, summary, watchlist, marketInsight, marketPreference = 'BOTH', refreshing, onRefresh, onOpenDetail, onQuickAddWatch,
+  aiPicks, hiddenSignals, summary, watchlist, marketInsight, marketPreference = 'BOTH', refreshing, onRefresh, onOpenDetail, onQuickAddWatch, onOpenAssistant,
 }: Props) {
   const { palette } = useTheme()
   const [rulesOpen, setRulesOpen] = useState(false)
   const [sectorOpen, setSectorOpen] = useState(false)
-  const [assistantOpen, setAssistantOpen] = useState(false)
   const [rulesCount, setRulesCount] = useState<number | null>(null)
   useEffect(() => { void listSeasonalityRules().then((r) => setRulesCount(r.length)) }, [rulesOpen])
 
@@ -57,7 +57,7 @@ export const AITab = memo(function AITab({
     >
       {/* ── 시데 AI 비서 — 내 데이터를 아는 질문/답변 ── */}
       <Pressable
-        onPress={() => setAssistantOpen(true)}
+        onPress={onOpenAssistant}
         style={({ pressed }) => ({
           flexDirection: 'row', alignItems: 'center', gap: 10,
           backgroundColor: palette.blueSoft ?? palette.surfaceAlt,
@@ -138,7 +138,6 @@ export const AITab = memo(function AITab({
       onClose={() => setSectorOpen(false)}
       initialMarket={marketPreference === 'KR' ? 'KR' : 'US'}
     />
-    <AssistantModal visible={assistantOpen} onClose={() => setAssistantOpen(false)} />
     </>
   )
 })

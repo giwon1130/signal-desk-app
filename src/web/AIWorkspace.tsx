@@ -26,7 +26,6 @@
 import React, { useState } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import { BookOpen, CalendarRange, Layers, Sparkles, Trophy } from 'lucide-react-native'
-import { AssistantModal } from '../components/AssistantModal'
 import { SeasonalityRulesModal } from '../components/SeasonalityRulesModal'
 import { SectorRotationModal } from '../components/SectorRotationModal'
 import { webGrid } from './shared'
@@ -50,13 +49,14 @@ type Props = {
   marketPreference?: 'KR' | 'US' | 'BOTH'
   onOpenDetail: (market: string, ticker: string, name?: string) => void
   onQuickAddWatch: (stock: StockSearchResult) => Promise<void>
+  /** 글로벌 시데 AI 모달 열기 (FAB 와 동일 인스턴스 — 대화 세션 공유) */
+  onOpenAssistant: () => void
 }
 
 // memo: AppShell 재렌더(다른 탭 상태 변화 등)에 끌려 다시 그리지 않도록.
-export const AIWorkspace = React.memo(function AIWorkspace({ aiRecommendation, summary, watchlist, marketPreference = 'BOTH', onOpenDetail, onQuickAddWatch }: Props) {
+export const AIWorkspace = React.memo(function AIWorkspace({ aiRecommendation, summary, watchlist, marketPreference = 'BOTH', onOpenDetail, onQuickAddWatch, onOpenAssistant }: Props) {
   const { palette } = useTheme()
   const [mode, setMode] = useState<Mode>('playbook')
-  const [assistantOpen, setAssistantOpen] = useState(false)
   const [rulesOpen, setRulesOpen] = useState(false)
   const [sectorOpen, setSectorOpen] = useState(false)
 
@@ -66,7 +66,7 @@ export const AIWorkspace = React.memo(function AIWorkspace({ aiRecommendation, s
       key: 'assistant', icon: <Sparkles size={18} color={palette.blue} strokeWidth={2.4} />,
       bg: palette.blueSoft ?? palette.surfaceAlt,
       title: '시데 AI에게 물어보기', desc: '내 보유·관심 종목과 오늘 시장을 알고 답하는 비서',
-      onPress: () => setAssistantOpen(true),
+      onPress: onOpenAssistant,
     },
     {
       key: 'rules', icon: <CalendarRange size={18} color={palette.purple ?? '#7c3aed'} strokeWidth={2.4} />,
@@ -121,7 +121,6 @@ export const AIWorkspace = React.memo(function AIWorkspace({ aiRecommendation, s
           <Scorecard aiRecommendation={aiRecommendation} palette={palette} onOpenDetail={onOpenDetail} />
         )}
       </Entrance>
-      <AssistantModal visible={assistantOpen} onClose={() => setAssistantOpen(false)} />
       <SeasonalityRulesModal visible={rulesOpen} onClose={() => setRulesOpen(false)} onOpenDetail={onOpenDetail} />
       <SectorRotationModal
         visible={sectorOpen}

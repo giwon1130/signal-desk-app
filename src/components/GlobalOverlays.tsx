@@ -12,6 +12,7 @@ import { ComposePostModal } from './reading_parts/ComposePostModal'
 import { LeaderProfileModal } from './reading_parts/LeaderProfileModal'
 import { SettingsModal } from './SettingsModal'
 import { DailyGreetingModal } from './DailyGreetingModal'
+import { AssistantModal } from './AssistantModal'
 import { LoadingScreen } from './LoadingScreen'
 import { CommandPalette } from '../web/CommandPalette'
 import { useTheme } from '../theme'
@@ -66,6 +67,8 @@ type Props = {
   // 오늘의 운세 팝업
   greetingOpen: boolean
   setGreetingOpen: (v: boolean) => void
+  assistantOpen: boolean
+  setAssistantOpen: (v: boolean) => void
 }
 
 /**
@@ -81,6 +84,7 @@ export function GlobalOverlays({
   league, reading,
   settingsOpen, setSettingsOpen, onMarketPreferenceChange, onLogout, onDeleteAccount,
   greetingOpen, setGreetingOpen,
+  assistantOpen, setAssistantOpen,
 }: Props) {
   const { mode, setMode } = useTheme()
 
@@ -172,6 +176,8 @@ export function GlobalOverlays({
         fortune={fortune ?? null}
         onClose={() => setGreetingOpen(false)}
       />
+      {/* 시데 AI — 글로벌 1개 인스턴스 (mounted 유지로 세션 동안 대화 보존) */}
+      <AssistantModal visible={assistantOpen} onClose={() => setAssistantOpen(false)} />
       {Platform.OS === 'web' ? (
         <CommandPalette
           watchlist={watchlist}
