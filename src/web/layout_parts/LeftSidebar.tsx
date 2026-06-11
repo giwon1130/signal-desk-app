@@ -7,11 +7,11 @@ import { useTheme } from '../../theme'
 import { hapticLight } from '../../utils/haptics'
 import type { TabKey } from '../../types'
 import { SidebarAction } from './SidebarAction'
-import { TABS } from './tabs-config'
+import { ADMIN_TAB, TABS } from './tabs-config'
 
 type Props = {
   width: number
-  user: { nickname?: string | null; email?: string | null } | null
+  user: { nickname?: string | null; email?: string | null; admin?: boolean } | null
   activeTab: TabKey
   isUp: boolean
   lastSyncedAt: string
@@ -81,7 +81,7 @@ export function LeftSidebar({
 
       {/* 네비 */}
       <View style={{ gap: 2 }}>
-        {TABS.map(({ key, label, Icon }) => {
+        {(user?.admin ? [...TABS, ADMIN_TAB] : TABS).map(({ key, label, Icon }) => {
           const active = activeTab === key
           return (
             <Pressable

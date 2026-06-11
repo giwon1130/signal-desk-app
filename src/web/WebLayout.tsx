@@ -42,7 +42,7 @@ const CONTEXT_BREAKPOINT = 1280
 const NARROW_BREAKPOINT  = 960
 
 type Props = {
-  user: { nickname?: string | null; email?: string | null } | null
+  user: { nickname?: string | null; email?: string | null; admin?: boolean } | null
   activeTab: TabKey
   isUp: boolean
   lastSyncedAt: string
@@ -98,7 +98,7 @@ export function WebLayout(props: Props) {
           marketPreference={marketPreference}
           onMarketPreferenceChange={onMarketPreferenceChange}
         />
-        <NarrowTabBar activeTab={activeTab} onTabChange={onTabChange} />
+        <NarrowTabBar activeTab={activeTab} onTabChange={onTabChange} showAdmin={!!user?.admin} />
         <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 20 }}>
           <View style={{ paddingHorizontal: 14, paddingTop: 10, gap: 12 }}>
             {summary?.tradingDayStatus ? <TradingDayBanner status={summary.tradingDayStatus} /> : null}

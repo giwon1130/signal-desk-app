@@ -3,7 +3,7 @@
  * v2.1: 5탭 (today/stocks/ai/league/reading). league 는 친구 모의투자,
  * reading 은 PC 작성용 리딩(종목 콜 공유) — 웹 앱의 핵심 용도.
  */
-import { BarChart3, Bot, Megaphone, Sunrise, Trophy } from 'lucide-react-native'
+import { BarChart3, Bot, Megaphone, ShieldCheck, Sunrise, Trophy } from 'lucide-react-native'
 import type { TabKey } from '../../types'
 
 export const TABS: Array<{ key: TabKey; label: string; Icon: typeof Sunrise }> = [
@@ -13,3 +13,7 @@ export const TABS: Array<{ key: TabKey; label: string; Icon: typeof Sunrise }> =
   { key: 'league',  label: '리그',   Icon: Trophy },
   { key: 'reading', label: '리딩',   Icon: Megaphone },
 ]
+
+/** 운영자 전용 탭 — admin 계정에만 노출 (LeftSidebar/NarrowTabBar 에서 조건부 결합). */
+export const ADMIN_TAB: { key: TabKey; label: string; Icon: typeof Sunrise } =
+  { key: 'admin', label: '운영', Icon: ShieldCheck }

@@ -40,6 +40,7 @@ import { StocksPage } from './src/web/StocksPage'
 import { AIWorkspace } from './src/web/AIWorkspace'
 import type { StockDetailContext } from './src/components/StockDetailModal'
 import { AssistantFab } from './src/components/AssistantFab'
+import { AdminPage } from './src/web/AdminPage'
 import { getAlertPreferences, syncMarketPreference, type MarketPreference } from './src/api/alertPreferences'
 import { getFortuneGreetingShownDate, markFortuneGreetingShown } from './src/utils/fortuneGreeting'
 import { useAlertsInbox } from './src/hooks/useAlertsInbox'
@@ -529,6 +530,11 @@ function AppShell() {
             onOpenAssistant={handleOpenAssistant}
           />
         )
+      ) : null}
+
+      {/* 운영자 콘솔 — 웹 + admin 계정만 (사이드바 탭도 admin 에게만 노출) */}
+      {!loading && !error && activeTab === 'admin' && Platform.OS === 'web' && user?.admin ? (
+        <AdminPage />
       ) : null}
 
       {/* v2.1: 친구 모의투자 (Trading League). 상세/거래 모달은 Phase G+ */}

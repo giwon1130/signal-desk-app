@@ -5,9 +5,9 @@ import { Pressable, Text, View } from 'react-native'
 import { useTheme } from '../../theme'
 import { hapticLight } from '../../utils/haptics'
 import type { TabKey } from '../../types'
-import { TABS } from './tabs-config'
+import { ADMIN_TAB, TABS } from './tabs-config'
 
-export function NarrowTabBar({ activeTab, onTabChange }: { activeTab: TabKey; onTabChange: (k: TabKey) => void }) {
+export function NarrowTabBar({ activeTab, onTabChange, showAdmin = false }: { activeTab: TabKey; onTabChange: (k: TabKey) => void; showAdmin?: boolean }) {
   const { palette } = useTheme()
   return (
     <View style={{
@@ -17,7 +17,7 @@ export function NarrowTabBar({ activeTab, onTabChange }: { activeTab: TabKey; on
       backgroundColor: palette.surface,
       paddingHorizontal: 4,
     }}>
-      {TABS.map(({ key, label, Icon }) => {
+      {(showAdmin ? [...TABS, ADMIN_TAB] : TABS).map(({ key, label, Icon }) => {
         const active = activeTab === key
         return (
           <Pressable

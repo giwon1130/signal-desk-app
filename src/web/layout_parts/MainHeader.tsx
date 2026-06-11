@@ -6,7 +6,7 @@ import { useTheme } from '../../theme'
 import type { TabKey } from '../../types'
 import type { MarketPreference } from '../../api/alertPreferences'
 import { MarketProfileChip } from '../../components/MarketProfileChip'
-import { TABS } from './tabs-config'
+import { ADMIN_TAB, TABS } from './tabs-config'
 
 type Props = {
   activeTab: TabKey
@@ -17,7 +17,7 @@ type Props = {
 
 export function MainHeader({ activeTab, lastSyncedAt, marketPreference, onMarketPreferenceChange }: Props) {
   const { palette } = useTheme()
-  const tabMeta = TABS.find((t) => t.key === activeTab)
+  const tabMeta = TABS.find((t) => t.key === activeTab) ?? (activeTab === 'admin' ? ADMIN_TAB : undefined)
   const tabLabel = tabMeta?.label ?? ''
   const descriptionMap: Record<TabKey, string> = {
     today:  '시장 무드 · 모닝/이브닝 브리프 · 보유 모니터',
@@ -25,6 +25,7 @@ export function MainHeader({ activeTab, lastSyncedAt, marketPreference, onMarket
     ai:     '오늘의 플레이북 + 누적 성적표',
     league: '친구 모의투자 — 시즌별 트로피 경쟁',
     reading: '종목·시황 콜 공유 — "거봐 내가 말했지?"',
+    admin:  '사용자 · 플랜 · 사용량 운영',
   }
   return (
     <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12 }}>

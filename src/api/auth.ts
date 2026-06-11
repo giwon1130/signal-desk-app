@@ -9,6 +9,10 @@ export type AuthUser = {
   userId:   string
   email:    string
   nickname: string
+  /** 요금제 — FREE / PRO (서버 결정) */
+  plan?:    string
+  /** 운영자 여부 — 웹 운영자 콘솔 노출 */
+  admin?:   boolean
 }
 
 // ─── Storage ─────────────────────────────────────────────────────────────────
