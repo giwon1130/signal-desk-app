@@ -510,6 +510,7 @@ function AppShell() {
             summary={summary}
             watchlist={watchlist}
             marketInsight={marketInsight}
+            marketPreference={marketPreference}
             refreshing={refreshing}
             onRefresh={refresh}
             onOpenDetail={handleOpenDetail}

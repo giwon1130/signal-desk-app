@@ -88,6 +88,7 @@ export function WebLayout(props: Props) {
         <TickerRibbon
           sections={sections}
           sessions={sessions}
+          marketPreference={marketPreference}
           onClickIndex={() => onTabChange('today')}
         />
         <NarrowHeader
@@ -112,10 +113,11 @@ export function WebLayout(props: Props) {
   /* ───── 넓은 뷰포트 (풀 데스크톱) ───── */
   return (
     <View style={{ flex: 1, backgroundColor: palette.bg }}>
-      {/* 상단 티커 리본 — 어느 탭에 있든 고정 */}
+      {/* 상단 티커 리본 — 어느 탭에 있든 고정 (선호 시장만) */}
       <TickerRibbon
         sections={sections}
         sessions={sessions}
+        marketPreference={marketPreference}
         onClickIndex={() => onTabChange('today')}
       />
 

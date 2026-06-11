@@ -28,6 +28,8 @@ type Props = {
   summary: MarketSummaryData | null
   watchlist: WatchItem[]
   marketInsight: MarketInsightData | null
+  /** 시장 선호 — 섹터 로테이션 기본 시장 등에 반영. */
+  marketPreference?: 'KR' | 'US' | 'BOTH'
   refreshing: boolean
   onRefresh: () => Promise<void>
   onOpenDetail: (market: string, ticker: string, name?: string) => void
@@ -36,7 +38,7 @@ type Props = {
 
 // memo: AppShell 재렌더(다른 탭 상태 변화 등)에 끌려 다시 그리지 않도록.
 export const AITab = memo(function AITab({
-  aiPicks, hiddenSignals, summary, watchlist, marketInsight, refreshing, onRefresh, onOpenDetail, onQuickAddWatch,
+  aiPicks, hiddenSignals, summary, watchlist, marketInsight, marketPreference = 'BOTH', refreshing, onRefresh, onOpenDetail, onQuickAddWatch,
 }: Props) {
   const { palette } = useTheme()
   const [rulesOpen, setRulesOpen] = useState(false)
@@ -111,7 +113,11 @@ export const AITab = memo(function AITab({
       />
     </ScrollView>
     <SeasonalityRulesModal visible={rulesOpen} onClose={() => setRulesOpen(false)} onOpenDetail={onOpenDetail} />
-    <SectorRotationModal visible={sectorOpen} onClose={() => setSectorOpen(false)} />
+    <SectorRotationModal
+      visible={sectorOpen}
+      onClose={() => setSectorOpen(false)}
+      initialMarket={marketPreference === 'KR' ? 'KR' : 'US'}
+    />
     </>
   )
 })

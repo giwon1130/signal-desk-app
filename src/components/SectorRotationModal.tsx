@@ -13,7 +13,12 @@ import { fetchSectorRotation } from '../api/backtest'
 import { Skeleton } from './effects'
 import { SeasonalityModal } from './SeasonalityModal'
 
-type Props = { visible: boolean; onClose: () => void }
+type Props = {
+  visible: boolean
+  onClose: () => void
+  /** 처음 보여줄 시장 — 시장 선호 설정을 따라간다 (모달 안에서 토글은 자유). */
+  initialMarket?: 'US' | 'KR'
+}
 type Mkt = 'US' | 'KR'
 
 const signed = (v: number, d = 1) => (v >= 0 ? `+${v.toFixed(d)}` : v.toFixed(d))
@@ -27,10 +32,15 @@ function cellColor(mean: number, p: Palette): string {
   return base + a
 }
 
-export function SectorRotationModal({ visible, onClose }: Props) {
+export function SectorRotationModal({ visible, onClose, initialMarket = 'US' }: Props) {
   const { palette } = useTheme()
   const insets = useSafeAreaInsets()
-  const [market, setMarket] = useState<Mkt>('US')
+  const [market, setMarket] = useState<Mkt>(initialMarket)
+
+  // 열 때마다 선호 시장으로 시작 (직전 세션의 토글 잔상 제거)
+  useEffect(() => {
+    if (visible) setMarket(initialMarket)
+  }, [visible, initialMarket])
   const [report, setReport] = useState<SectorRotationReport | null>(null)
   const [loading, setLoading] = useState(false)
   const [drill, setDrill] = useState<{ etf: string; name: string } | null>(null)

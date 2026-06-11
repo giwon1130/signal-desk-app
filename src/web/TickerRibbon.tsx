@@ -19,17 +19,21 @@ import { Sparkline } from './shared'
 type Props = {
   sections: MarketSectionsData | null
   sessions?: MarketSessionStatus[] | null
+  /** 시장 선호 — KR/US 선택 시 해당 시장 지수만 노출 (IndexPulse 와 동일 규칙). */
+  marketPreference?: 'KR' | 'US' | 'BOTH'
   onClickIndex?: (market: 'KR' | 'US') => void
 }
 
-export function TickerRibbon({ sections, sessions, onClickIndex }: Props) {
+export function TickerRibbon({ sections, sessions, marketPreference = 'BOTH', onClickIndex }: Props) {
   const { palette } = useTheme()
 
+  const showKr = marketPreference !== 'US'
+  const showUs = marketPreference !== 'KR'
   const indices: Array<{ market: 'KR' | 'US'; item: IndexMetric }> = []
-  if (sections?.koreaMarket?.indices) {
+  if (showKr && sections?.koreaMarket?.indices) {
     for (const it of sections.koreaMarket.indices) indices.push({ market: 'KR', item: it })
   }
-  if (sections?.usMarket?.indices) {
+  if (showUs && sections?.usMarket?.indices) {
     for (const it of sections.usMarket.indices) indices.push({ market: 'US', item: it })
   }
 

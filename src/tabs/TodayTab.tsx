@@ -202,8 +202,10 @@ export const TodayTab = memo(function TodayTab({
       {/* ── 관심종목 알림 (Market 탭에서 흡수) ── */}
       <WatchAlertList alerts={summary?.watchAlerts ?? []} />
 
-      {/* ── 다가오는 이벤트 (FOMC/실적/휴장) ── */}
-      <EventsCard events={upcomingEvents} />
+      {/* ── 다가오는 이벤트 (FOMC/실적/휴장) — 선호 시장만, GLOBAL 은 항상 ── */}
+      <EventsCard events={upcomingEvents.filter((e) =>
+        e.market === 'GLOBAL' || (e.market === 'KR' ? showKr : showUs),
+      )} />
 
       {/* 개인화 브리핑(보유/액션)은 브리프 카드에 통합 — 별도 카드 제거 */}
       {/* 뉴스 sentiment 는 상단 NewsHero(회전 헤드라인)로 이동 — 하단 카드 제거 */}
