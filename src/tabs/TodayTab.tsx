@@ -30,6 +30,7 @@ import { DisclosureCard } from './today_parts/DisclosureCard'
 import { EventsCard } from './today_parts/EventsCard'
 import { HoldingMonitor } from './today_parts/HoldingMonitor'
 import { SeasonRulesCard } from './today_parts/SeasonRulesCard'
+import { Entrance, Skeleton } from '../components/effects'
 import { MarketMoodCard } from './market_parts/MarketMoodCard'
 import { TopMoversMarketCard } from './market_parts/TopMoversMarketCard'
 import { WatchAlertList } from './market_parts/WatchAlertList'
@@ -140,43 +141,57 @@ export const TodayTab = memo(function TodayTab({
 
       {/* ── 브리프 Hero — 세션/거래일 상태 아래. 최신 브리프 1건 + 개인화(브리핑) 통합 ── */}
       {(mediaSummaries.length > 0 || summary?.briefing) ? (
-        <BriefHero
-          items={mediaSummaries}
-          briefing={summary?.briefing ?? null}
-          onTickerPress={(t) => {
-            const isKr = /^\d{6}$/.test(t)
-            onOpenDetail(isKr ? 'KR' : 'US', t)
-          }}
-        />
+        <Entrance index={0}>
+          <BriefHero
+            items={mediaSummaries}
+            briefing={summary?.briefing ?? null}
+            onTickerPress={(t) => {
+              const isKr = /^\d{6}$/.test(t)
+              onOpenDetail(isKr ? 'KR' : 'US', t)
+            }}
+          />
+        </Entrance>
       ) : null}
 
       {/* ── 오늘의 뉴스 — 헤드라인 회전(KR/US 번갈아). 브리프 바로 아래로 상단 배치 ── */}
       {(krSentiment || usSentiment) ? (
-        <NewsHero sentiments={[krSentiment, usSentiment].filter((s): s is NewsSentiment => !!s)} />
+        <Entrance index={1}>
+          <NewsHero sentiments={[krSentiment, usSentiment].filter((s): s is NewsSentiment => !!s)} />
+        </Entrance>
       ) : null}
 
       {/* ── 오늘 시장 분위기 — 위험도 + 요약 지표 통합, 쉬운 용어 ── */}
-      <MarketMoodCard
-        krRisk={summary?.compositeRiskKr ?? summary?.compositeRisk ?? null}
-        usRisk={summary?.compositeRiskUs ?? summary?.compositeRisk ?? null}
-        metrics={filteredMetrics}
-        marketPreference={marketPreference}
-      />
+      <Entrance index={2}>
+        <MarketMoodCard
+          krRisk={summary?.compositeRiskKr ?? summary?.compositeRisk ?? null}
+          usRisk={summary?.compositeRiskUs ?? summary?.compositeRisk ?? null}
+          metrics={filteredMetrics}
+          marketPreference={marketPreference}
+        />
+      </Entrance>
 
       {/* ── 보유 종목 모니터 (보유 있는 사용자 최우선) ── */}
       {positions.length > 0 ? (
-        <HoldingMonitor monitorTargets={monitorTargets} marketClosedToday={marketClosedToday} />
+        <Entrance index={3}>
+          <HoldingMonitor monitorTargets={monitorTargets} marketClosedToday={marketClosedToday} />
+        </Entrance>
       ) : null}
 
       {/* ── 이번 달 시즌 (저장한 시즌 규칙 중 진행 중인 것 — 없으면 미렌더) ── */}
       <SeasonRulesCard onOpenDetail={onOpenDetail} />
 
       {/* ── 보유 종목 공시 (DART) ── */}
-      <DisclosureCard disclosures={disclosures} onOpenDetail={onOpenDetail} />
+      <Entrance index={4}>
+        <DisclosureCard disclosures={disclosures} onOpenDetail={onOpenDetail} />
+      </Entrance>
 
       {/* AI 추천(단타 픽)은 AI 탭으로 분리 (#6) — 오늘 탭은 오늘 시장/보유 상태만 */}
 
       {/* ── 시장 발견 (v2): 급등락 — 시장별 1카드(급등|급락 좌우), 프로필별 필터 ── */}
+      {!topMovers ? (
+        // 도착 전 자리 잡기 — 뒤늦게 카드가 '뚝' 생기며 레이아웃이 밀리는 것 완화
+        <Skeleton width="100%" height={150} radius={14} color={palette.border} />
+      ) : null}
       {showKr && topMovers ? (
         <TopMoversMarketCard topMovers={topMovers} moverReasons={moverReasons} market="KR" onOpenDetail={onOpenDetail} />
       ) : null}

@@ -5,6 +5,7 @@ import { useStyles } from '../../styles'
 import { marketColor, useTheme } from '../../theme'
 import type { StockMarketFilter, StockSearchResult, WatchItem } from '../../types'
 import { formatPrice, formatSignedRate } from '../../utils'
+import { PriceFlash } from '../../components/effects'
 
 type LiveOf = (market: string, ticker: string, fallbackPrice: number, fallbackRate: number) =>
   { price: number; changeRate: number; live: boolean }
@@ -123,7 +124,9 @@ export function StockSearchSection({
               <Text style={styles.stockResultMeta}>{item.ticker} · {item.sector}</Text>
               <View style={styles.stockResultBottom}>
                 <View style={styles.cardTitleRow}>
-                  <Text style={styles.stockResultPrice}>{formatPrice(live.price, item.market)}</Text>
+                  <PriceFlash value={live.live ? live.price : null} upColor={palette.up} downColor={palette.down}>
+                    <Text style={styles.stockResultPrice}>{formatPrice(live.price, item.market)}</Text>
+                  </PriceFlash>
                   {live.live ? <Radio size={10} color="#10b981" strokeWidth={2.5} /> : null}
                 </View>
                 <Text style={[styles.stockResultDelta, { color: marketColor(palette, item.market, live.changeRate) }]}>

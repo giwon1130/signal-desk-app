@@ -2,7 +2,7 @@
  * 공용 비주얼 이펙트 — 새 의존성 없이 (RN Animated + react-native-svg + expo-haptics).
  * 리그·리딩 화려 개선에 사용.
  */
-import { useEffect, useId, useRef, type ReactNode } from 'react'
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { Animated, Easing, Pressable, StyleSheet, View } from 'react-native'
 import type { StyleProp, ViewStyle } from 'react-native'
 import Svg, { Defs, LinearGradient as SvgLinearGradient, Stop, Rect } from 'react-native-svg'
@@ -85,6 +85,92 @@ export function PressableScale({
     >
       <Animated.View style={[style, { transform: [{ scale: s }] }]}>{children}</Animated.View>
     </Pressable>
+  )
+}
+
+/**
+ * 가격 틱 플래시 — value 가 바뀌면 방향색(상승/하락) 배경이 번쩍였다 사라진다.
+ * backgroundColor 는 native driver 로 못 움직이므로, 깔린 색 레이어의 opacity 만 애니메이션.
+ * value 가 undefined→숫자(최초 수신)일 땐 플래시하지 않는다.
+ */
+export function PriceFlash({
+  value,
+  upColor,
+  downColor,
+  style,
+  children,
+}: {
+  value: number | null | undefined
+  upColor: string
+  downColor: string
+  style?: StyleProp<ViewStyle>
+  children: ReactNode
+}) {
+  const prev = useRef<number | null | undefined>(value)
+  const flash = useRef(new Animated.Value(0)).current
+  const [color, setColor] = useState<string>(upColor)
+  useEffect(() => {
+    const before = prev.current
+    prev.current = value
+    if (value == null || before == null || value === before) return
+    setColor(value > before ? upColor : downColor)
+    flash.setValue(0)
+    Animated.sequence([
+      Animated.timing(flash, { toValue: 1, duration: 90, useNativeDriver: true }),
+      Animated.timing(flash, { toValue: 0, duration: 650, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+    ]).start()
+  }, [value, upColor, downColor, flash])
+  return (
+    <View style={[style, { position: 'relative' }]}>
+      <Animated.View
+        pointerEvents="none"
+        style={{
+          position: 'absolute', top: -2, bottom: -2, left: -5, right: -5, borderRadius: 6,
+          backgroundColor: color,
+          opacity: flash.interpolate({ inputRange: [0, 1], outputRange: [0, 0.2] }),
+        }}
+      />
+      {children}
+    </View>
+  )
+}
+
+/**
+ * 스켈레톤 — 데이터 자리를 잡아두는 쉬머 블록. 스피너보다 "무엇이 올지" 보여줘 체감 대기가 짧다.
+ * width/height 는 숫자 또는 '60%' 같은 문자열.
+ */
+export function Skeleton({
+  width,
+  height,
+  radius = 8,
+  color,
+  style,
+}: {
+  width: number | `${number}%`
+  height: number
+  radius?: number
+  color: string
+  style?: StyleProp<ViewStyle>
+}) {
+  const v = useRef(new Animated.Value(0)).current
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(v, { toValue: 1, duration: 760, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+        Animated.timing(v, { toValue: 0, duration: 760, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+      ]),
+    )
+    loop.start()
+    return () => loop.stop()
+  }, [v])
+  return (
+    <Animated.View
+      style={[
+        { width, height, borderRadius: radius, backgroundColor: color },
+        { opacity: v.interpolate({ inputRange: [0, 1], outputRange: [0.45, 0.95] }) },
+        style,
+      ]}
+    />
   )
 }
 

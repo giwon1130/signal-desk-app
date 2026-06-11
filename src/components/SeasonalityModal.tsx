@@ -4,12 +4,14 @@
  * 색: 한국 관례(상승=빨강 palette.up / 하락=파랑 palette.down). 등급은 🟢🟡⚪.
  */
 import { useEffect, useState } from 'react'
-import { ActivityIndicator, Modal, Pressable, ScrollView, Text, View } from 'react-native'
+import { Modal, Pressable, ScrollView, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Bookmark, BookmarkCheck, CalendarRange, FlaskConical, Minus, Plus, X } from 'lucide-react-native'
 import { useTheme, type Palette } from '../theme'
 import type { CustomBacktestResult, MonthStat, SeasonalityReport, SeasonalityRuleCard, SeasonalityTier } from '../types/backtest'
 import { deleteSeasonalityRule, fetchCustomBacktest, fetchSeasonality, listSeasonalityRules, saveSeasonalityRule } from '../api/backtest'
+import { PressableScale, Skeleton } from './effects'
+import { hapticSuccess } from '../utils/haptics'
 
 type Props = { visible: boolean; market: string; ticker: string; name?: string; onClose: () => void }
 
@@ -67,8 +69,10 @@ export function SeasonalityModal({ visible, market, ticker, name, onClose }: Pro
           market, ticker, name: report.name, kind, month,
           meanPct: stat?.meanPct ?? null, winRatePct: stat?.winRatePct ?? null, sampleYears: stat?.sampleYears ?? null,
         })
-        if (saved) setSavedMap((m) => ({ ...m, [key]: saved.id }))
-        else setSaveError('저장하지 못했어요 — 로그인 상태와 네트워크를 확인해 주세요')
+        if (saved) {
+          setSavedMap((m) => ({ ...m, [key]: saved.id }))
+          void hapticSuccess()
+        } else setSaveError('저장하지 못했어요 — 로그인 상태와 네트워크를 확인해 주세요')
       }
     } finally {
       setSavingKey(null)
@@ -98,9 +102,15 @@ export function SeasonalityModal({ visible, market, ticker, name, onClose }: Pro
           </View>
 
           {loading ? (
-            <View style={{ paddingVertical: 60, alignItems: 'center', gap: 10 }}>
-              <ActivityIndicator color={palette.purple ?? '#7c3aed'} />
-              <Text style={{ color: palette.inkMuted, fontSize: 12 }}>역사적 패턴 분석 중…</Text>
+            <View style={{ paddingHorizontal: 16, paddingTop: 14, paddingBottom: 24, gap: 10 }}>
+              <Skeleton width={140} height={12} color={palette.border} />
+              <Skeleton width="100%" height={58} radius={10} color={palette.border} />
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginTop: 4 }}>
+                {Array.from({ length: 12 }, (_, i) => (
+                  <Skeleton key={i} width="31.5%" height={62} radius={9} color={palette.border} />
+                ))}
+              </View>
+              <Text style={{ color: palette.inkMuted, fontSize: 11, textAlign: 'center', marginTop: 6 }}>역사적 패턴 분석 중…</Text>
             </View>
           ) : err || !report ? (
             <View style={{ paddingVertical: 56, alignItems: 'center', gap: 6 }}>
@@ -336,9 +346,9 @@ function CustomBuilder({ market, ticker, name, palette }: { market: string; tick
         <Stepper value={cw.xm} min={1} max={12} suffix="월" onChange={(v) => setCw((s) => ({ ...s, xm: v }))} palette={palette} />
         <Stepper value={cw.xd} min={1} max={31} suffix="일" onChange={(v) => setCw((s) => ({ ...s, xd: v }))} palette={palette} />
       </View>
-      <Pressable onPress={() => void run()} disabled={loading} style={{ backgroundColor: palette.purple ?? '#7c3aed', borderRadius: 9, paddingVertical: 10, alignItems: 'center', opacity: loading ? 0.6 : 1 }}>
+      <PressableScale onPress={() => void run()} disabled={loading} style={{ backgroundColor: palette.purple ?? '#7c3aed', borderRadius: 9, paddingVertical: 10, alignItems: 'center', opacity: loading ? 0.6 : 1 }}>
         <Text style={{ color: '#fff', fontSize: 13, fontWeight: '800' }}>{loading ? '검증 중…' : '검증'}</Text>
-      </Pressable>
+      </PressableScale>
       {result === undefined ? null : result === null ? (
         <Text style={{ color: palette.inkMuted, fontSize: 11, marginTop: 10, textAlign: 'center' }}>표본이 부족하거나 데이터가 없어요 (최소 3년)</Text>
       ) : (

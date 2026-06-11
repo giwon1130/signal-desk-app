@@ -4,6 +4,7 @@ import { useStyles } from '../../styles'
 import { marketColor, useTheme } from '../../theme'
 import type { PortfolioSummary } from '../../types'
 import { formatPrice, formatSignedPrice, formatSignedRate } from '../../utils'
+import { PriceFlash } from '../../components/effects'
 
 type LiveOf = (market: string, ticker: string, fallbackPrice: number, fallbackRate: number) =>
   { price: number; changeRate: number; live: boolean }
@@ -64,7 +65,9 @@ export function PortfolioSection({ portfolio, liveOf, onOpenDetail }: Props) {
                 </Text>
               </View>
               <View style={styles.summaryValueBox}>
-                <Text style={styles.metricScore}>{formatPrice(evaluationAmount, p.market)}</Text>
+                <PriceFlash value={live.live ? livePrice : null} upColor={palette.up} downColor={palette.down}>
+                  <Text style={styles.metricScore}>{formatPrice(evaluationAmount, p.market)}</Text>
+                </PriceFlash>
                 <Text style={[styles.summaryDelta, { color: profitColor }]}>
                   {formatSignedRate(profitRate)}
                 </Text>

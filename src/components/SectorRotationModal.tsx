@@ -4,12 +4,13 @@
  * 색: 상승=빨강(palette.up) / 하락=파랑(palette.down), 한국 관례.
  */
 import { useEffect, useMemo, useState } from 'react'
-import { ActivityIndicator, Modal, Pressable, ScrollView, Text, View } from 'react-native'
+import { Modal, Pressable, ScrollView, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Layers, X } from 'lucide-react-native'
 import { useTheme, type Palette } from '../theme'
 import type { SectorRotationReport, SectorSeasonality } from '../types/backtest'
 import { fetchSectorRotation } from '../api/backtest'
+import { Skeleton } from './effects'
 import { SeasonalityModal } from './SeasonalityModal'
 
 type Props = { visible: boolean; onClose: () => void }
@@ -72,9 +73,14 @@ export function SectorRotationModal({ visible, onClose }: Props) {
           </View>
 
           {loading ? (
-            <View style={{ paddingVertical: 56, alignItems: 'center', gap: 10 }}>
-              <ActivityIndicator color={palette.teal ?? '#0d9488'} />
-              <Text style={{ color: palette.inkMuted, fontSize: 11 }}>섹터별 15년 패턴을 모으는 중 — 처음엔 시간이 좀 걸려요</Text>
+            <View style={{ paddingHorizontal: 14, paddingVertical: 14, gap: 7 }}>
+              <Skeleton width={150} height={12} color={palette.border} />
+              {Array.from({ length: 8 }, (_, i) => (
+                <Skeleton key={i} width="100%" height={38} radius={9} color={palette.border} />
+              ))}
+              <Text style={{ color: palette.inkMuted, fontSize: 11, textAlign: 'center', marginTop: 8 }}>
+                섹터별 15년 패턴을 모으는 중 — 처음엔 시간이 좀 걸려요
+              </Text>
             </View>
           ) : !report ? (
             <View style={{ paddingVertical: 50, alignItems: 'center' }}><Text style={{ color: palette.inkMuted, fontSize: 13 }}>데이터를 불러오지 못했어요</Text></View>

@@ -4,6 +4,7 @@ import { useStyles } from '../../styles'
 import { marketColor, useTheme } from '../../theme'
 import type { StockSearchResult } from '../../types'
 import { formatPrice, formatSignedRate } from '../../utils'
+import { PriceFlash } from '../effects'
 
 type Props = {
   base: StockSearchResult
@@ -23,7 +24,9 @@ export function PriceHero({ base, livePrice, liveChange, isLive }: Props) {
       </View>
       <View style={styles.summaryValueBox}>
         <View style={styles.cardTitleRow}>
-          <Text style={styles.stockDetailPrice}>{formatPrice(livePrice, base.market)}</Text>
+          <PriceFlash value={isLive ? livePrice : null} upColor={palette.up} downColor={palette.down}>
+            <Text style={styles.stockDetailPrice}>{formatPrice(livePrice, base.market)}</Text>
+          </PriceFlash>
           {isLive ? <Radio size={12} color="#10b981" strokeWidth={2.5} /> : null}
         </View>
         <Text style={[styles.summaryDelta, { color: marketColor(palette, base.market, liveChange) }]}>

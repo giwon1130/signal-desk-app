@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react'
+import { LayoutAnimation, Platform, UIManager } from 'react-native'
 import { apiErrorMessage } from '../utils/apiError'
 import {
   deleteFavoriteItem,
@@ -11,6 +12,17 @@ import type { PortfolioSummary, StockSearchResult, WatchItem } from '../types'
 import { hapticError, hapticSuccess } from '../utils/haptics'
 
 type Toast = { show: (text: string, kind?: 'success' | 'error' | 'info') => void }
+
+// 구 아키텍처 Android 는 명시적 활성화 필요 (웹/new-arch 에선 no-op).
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true)
+}
+
+/** 리스트 행 삽입/제거가 '뚝' 바뀌지 않게 — 다음 레이아웃 변경을 부드럽게. */
+const animateListChange = () => {
+  if (Platform.OS === 'web') return
+  LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
+}
 
 type Args = {
   watchlist: WatchItem[]
@@ -89,6 +101,7 @@ export function useWorkspaceMutations(args: Args) {
       await deleteFavoriteItem(id)
       // 서버 DELETE 성공 즉시 로컬에서 제거 → 버튼 "..." 이 끝난 듯 바로 사라짐.
       // 전체 refetch 는 백그라운드로.
+      animateListChange()
       setWatchlist((prev) => prev.filter((w) => w.id !== id))
       void fetchData()
       void hapticSuccess()
@@ -110,6 +123,7 @@ export function useWorkspaceMutations(args: Args) {
         watchlist.filter((w) => !!w.id).map((w) => deleteFavoriteItem(w.id)),
       )
       // 전부 지워졌다고 가정하고 즉시 비움 → 남은 건 refetch 에서 보정.
+      animateListChange()
       setWatchlist([])
       void fetchData()
       void hapticSuccess()

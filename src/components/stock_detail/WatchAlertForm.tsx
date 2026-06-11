@@ -5,6 +5,7 @@ import { useStyles } from '../../styles'
 import { useTheme } from '../../theme'
 import type { WatchItem } from '../../types'
 import { formatPrice, parsePriceInput } from '../../utils'
+import { PressableScale } from '../effects'
 
 type Props = {
   watchItem: WatchItem
@@ -117,21 +118,21 @@ export function WatchAlertForm({ watchItem, onSave, saving, hasPortfolio = false
           </View>
         )}
 
-        <Pressable
+        <PressableScale
           onPress={handleSave}
           disabled={saving}
-          style={({ pressed }) => ({
+          style={{
             backgroundColor: palette.blue,
             borderRadius: 10,
             paddingVertical: 10,
             alignItems: 'center',
-            opacity: pressed || saving ? 0.7 : 1,
-          })}
+            opacity: saving ? 0.7 : 1,
+          }}
         >
           <Text style={{ color: '#fff', fontSize: 13, fontWeight: '800' }}>
             {saving ? '저장 중...' : '알림 설정 저장'}
           </Text>
-        </Pressable>
+        </PressableScale>
       </View>
     </View>
   )

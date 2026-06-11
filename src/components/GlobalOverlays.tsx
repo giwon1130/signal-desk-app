@@ -1,5 +1,5 @@
-import type { ComponentProps } from 'react'
-import { Platform, View } from 'react-native'
+import { useEffect, useRef, useState, type ComponentProps } from 'react'
+import { Animated, Platform } from 'react-native'
 import { Toast } from './Toast'
 import { StockDetailModal, type StockDetailContext } from './StockDetailModal'
 import { ReminderSettingsModal } from './ReminderSettingsModal'
@@ -182,11 +182,31 @@ export function GlobalOverlays({
       ) : null}
 
       {/* 로딩 오버레이 — 헤더·탭바 포함 전체를 덮어 로딩 중 탭 전환 차단 (#1) */}
-      {loading ? (
-        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 100 }}>
-          <LoadingScreen />
-        </View>
-      ) : null}
+      <LoadingOverlay loading={loading} />
     </>
+  )
+}
+
+/** 로딩 → 메인 진입을 페이드로 — 뚝 바뀌지 않게 오버레이가 서서히 걷힌다. */
+function LoadingOverlay({ loading }: { loading: boolean }) {
+  const [mounted, setMounted] = useState(loading)
+  const opacity = useRef(new Animated.Value(loading ? 1 : 0)).current
+  useEffect(() => {
+    if (loading) {
+      setMounted(true)
+      opacity.setValue(1)
+      return
+    }
+    Animated.timing(opacity, { toValue: 0, duration: 420, useNativeDriver: true })
+      .start(({ finished }) => { if (finished) setMounted(false) })
+  }, [loading, opacity])
+  if (!mounted) return null
+  return (
+    <Animated.View
+      pointerEvents={loading ? 'auto' : 'none'}
+      style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 100, opacity }}
+    >
+      <LoadingScreen />
+    </Animated.View>
   )
 }
