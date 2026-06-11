@@ -228,6 +228,7 @@ function CustomBuilder({ market, ticker, name, palette }: { market: string; tick
   const [cw, setCw] = useState({ em: 6, ed: 25, xm: 7, xd: 25 })
   const [result, setResult] = useState<CustomBacktestResult | null | undefined>(undefined)
   const [loading, setLoading] = useState(false)
+  const [showYears, setShowYears] = useState(false)
   const run = async () => {
     setLoading(true); setResult(undefined)
     const r = await fetchCustomBacktest(market, ticker, name, cw.em, cw.ed, cw.xm, cw.xd)
@@ -267,6 +268,25 @@ function CustomBuilder({ market, ticker, name, palette }: { market: string; tick
           <Text style={{ color: palette.ink, fontSize: 12, fontWeight: '800' }}>{result.window} · {TIER_LABEL[result.tier] ?? result.tier}</Text>
           <Text style={{ color: palette.inkSub, fontSize: 11.5, lineHeight: 16 }}>평균 {signed(result.meanPct, 2)}% · 승률 {result.winRatePct.toFixed(0)}% · {result.sampleYears}년 · 비용후 {signed(result.netAfterCostPct, 2)}%</Text>
           <Text style={{ color: palette.inkFaint, fontSize: 10.5 }}>최악 {signed(result.worstYearPct, 1)}% · 최고 {signed(result.bestYearPct, 1)}%</Text>
+          {/* 연도별 — 평균이 한두 해에 끌려간 패턴인지 직접 확인 (정직한 통계 원칙) */}
+          {result.perYear.length > 0 ? (
+            <Pressable onPress={() => setShowYears((v) => !v)} hitSlop={4}>
+              <Text style={{ color: palette.purple ?? '#7c3aed', fontSize: 10.5, fontWeight: '800' }}>
+                {showYears ? '▾ 연도별 결과 접기' : '▸ 연도별 결과 보기'}
+              </Text>
+            </Pressable>
+          ) : null}
+          {showYears ? (
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 2 }}>
+              {result.perYear.map((y) => (
+                <View key={y.year} style={{ backgroundColor: palette.bg, borderRadius: 6, paddingHorizontal: 7, paddingVertical: 3, borderWidth: 1, borderColor: palette.border }}>
+                  <Text style={{ fontSize: 10, fontWeight: '700', color: palette.inkFaint }}>
+                    {y.year} <Text style={{ color: retColor(y.returnPct, palette), fontWeight: '800' }}>{signed(y.returnPct, 1)}%</Text>
+                  </Text>
+                </View>
+              ))}
+            </View>
+          ) : null}
         </View>
       )}
     </View>

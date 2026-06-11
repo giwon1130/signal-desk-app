@@ -29,6 +29,7 @@ import { NewsHero } from './today_parts/NewsHero'
 import { DisclosureCard } from './today_parts/DisclosureCard'
 import { EventsCard } from './today_parts/EventsCard'
 import { HoldingMonitor } from './today_parts/HoldingMonitor'
+import { SeasonRulesCard } from './today_parts/SeasonRulesCard'
 import { MarketMoodCard } from './market_parts/MarketMoodCard'
 import { TopMoversMarketCard } from './market_parts/TopMoversMarketCard'
 import { WatchAlertList } from './market_parts/WatchAlertList'
@@ -166,6 +167,9 @@ export const TodayTab = memo(function TodayTab({
       {positions.length > 0 ? (
         <HoldingMonitor monitorTargets={monitorTargets} marketClosedToday={marketClosedToday} />
       ) : null}
+
+      {/* ── 이번 달 시즌 (저장한 시즌 규칙 중 진행 중인 것 — 없으면 미렌더) ── */}
+      <SeasonRulesCard onOpenDetail={onOpenDetail} />
 
       {/* ── 보유 종목 공시 (DART) ── */}
       <DisclosureCard disclosures={disclosures} onOpenDetail={onOpenDetail} />

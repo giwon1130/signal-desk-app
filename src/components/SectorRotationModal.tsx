@@ -33,21 +33,26 @@ export function SectorRotationModal({ visible, onClose }: Props) {
   const [report, setReport] = useState<SectorRotationReport | null>(null)
   const [loading, setLoading] = useState(false)
   const [drill, setDrill] = useState<{ etf: string; name: string } | null>(null)
+  // 로테이션의 본질은 "다음 달 강해질 섹터로 미리 이동" — 이번 달/다음 달 토글.
+  const [monthView, setMonthView] = useState<'current' | 'next'>('current')
+  // 히트맵 셀 탭 → 수치 표시 (색만으론 +2%와 +6% 구분 불가)
+  const [cellInfo, setCellInfo] = useState<{ name: string; month: number; meanPct: number; winRatePct: number; tier: string } | null>(null)
 
   useEffect(() => {
     if (!visible) return
     let alive = true
-    setLoading(true); setReport(null)
+    setLoading(true); setReport(null); setCellInfo(null)
     fetchSectorRotation(market).then((r) => { if (alive) { setReport(r); setLoading(false) } })
     return () => { alive = false }
   }, [visible, market])
 
   const cm = report?.currentMonth ?? new Date().getMonth() + 1
+  const viewMonth = monthView === 'current' ? cm : (cm % 12) + 1
   const ranked = useMemo(() => {
     if (!report) return []
-    const meanOf = (s: SectorSeasonality) => s.monthly.find((m) => m.month === cm)?.meanPct ?? 0
+    const meanOf = (s: SectorSeasonality) => s.monthly.find((m) => m.month === viewMonth)?.meanPct ?? 0
     return [...report.sectors].sort((a, b) => meanOf(b) - meanOf(a))
-  }, [report, cm])
+  }, [report, viewMonth])
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
@@ -67,17 +72,32 @@ export function SectorRotationModal({ visible, onClose }: Props) {
           </View>
 
           {loading ? (
-            <View style={{ paddingVertical: 56, alignItems: 'center' }}><ActivityIndicator color={palette.teal ?? '#0d9488'} /></View>
+            <View style={{ paddingVertical: 56, alignItems: 'center', gap: 10 }}>
+              <ActivityIndicator color={palette.teal ?? '#0d9488'} />
+              <Text style={{ color: palette.inkMuted, fontSize: 11 }}>섹터별 15년 패턴을 모으는 중 — 처음엔 시간이 좀 걸려요</Text>
+            </View>
           ) : !report ? (
             <View style={{ paddingVertical: 50, alignItems: 'center' }}><Text style={{ color: palette.inkMuted, fontSize: 13 }}>데이터를 불러오지 못했어요</Text></View>
           ) : (
             <ScrollView contentContainerStyle={{ paddingHorizontal: 14, paddingVertical: 10 }}>
-              {/* 이번 달 랭킹 */}
-              <Text style={{ color: palette.inkMuted, fontSize: 11, fontWeight: '800', letterSpacing: 0.4 }}>이번 달({cm}월) 섹터 — 강한 순</Text>
-              <Text style={{ color: palette.inkFaint, fontSize: 10.5, marginBottom: 8 }}>위가 역사적으로 강했던(로테이션 후보) 섹터 · 섹터를 누르면 상세</Text>
+              {/* 이번 달 / 다음 달 랭킹 */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                <Text style={{ flex: 1, color: palette.inkMuted, fontSize: 11, fontWeight: '800', letterSpacing: 0.4 }}>
+                  {viewMonth}월 섹터 — 강한 순
+                </Text>
+                {([['current', `${cm}월`], ['next', `${(cm % 12) + 1}월 미리`]] as const).map(([k, label]) => (
+                  <Pressable key={k} onPress={() => setMonthView(k)}
+                    style={{ paddingHorizontal: 9, paddingVertical: 3, borderRadius: 999, backgroundColor: monthView === k ? (palette.teal ?? '#0d9488') + '22' : 'transparent', borderWidth: 1, borderColor: monthView === k ? palette.teal ?? '#0d9488' : palette.border }}>
+                    <Text style={{ fontSize: 10, fontWeight: '800', color: monthView === k ? palette.teal ?? '#0d9488' : palette.inkMuted }}>{label}</Text>
+                  </Pressable>
+                ))}
+              </View>
+              <Text style={{ color: palette.inkFaint, fontSize: 10.5, marginBottom: 8 }}>
+                {monthView === 'next' ? '다음 달 강해질 섹터로 미리 움직이는 게 로테이션의 핵심' : '위가 역사적으로 강했던(로테이션 후보) 섹터'} · 섹터를 누르면 상세
+              </Text>
               <View style={{ gap: 5, marginBottom: 18 }}>
                 {ranked.map((s) => {
-                  const mm = s.monthly.find((m) => m.month === cm)
+                  const mm = s.monthly.find((m) => m.month === viewMonth)
                   const mean = mm?.meanPct ?? 0
                   return (
                     <Pressable key={s.key} onPress={() => setDrill({ etf: s.etf, name: s.name })}
@@ -98,17 +118,30 @@ export function SectorRotationModal({ visible, onClose }: Props) {
                 <View style={{ flexDirection: 'row', marginBottom: 3 }}>
                   <View style={{ width: 62 }} />
                   {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
-                    <Text key={m} style={{ flex: 1, textAlign: 'center', fontSize: 8, fontWeight: m === cm ? '900' : '700', color: m === cm ? palette.teal : palette.inkFaint }}>{m}</Text>
+                    <Text key={m} style={{ flex: 1, textAlign: 'center', fontSize: 8, fontWeight: m === viewMonth ? '900' : '700', color: m === viewMonth ? palette.teal : palette.inkFaint }}>{m}</Text>
                   ))}
                 </View>
                 {report.sectors.map((s) => (
                   <View key={s.key} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
                     <Text style={{ width: 62, fontSize: 9.5, fontWeight: '700', color: palette.inkSub }} numberOfLines={1}>{s.name}</Text>
-                    {s.monthly.map((mm) => (
-                      <View key={mm.month} style={{ flex: 1, height: 17, marginHorizontal: 0.5, borderRadius: 2, backgroundColor: cellColor(mm.meanPct, palette), borderWidth: mm.month === cm ? 1 : 0, borderColor: palette.teal }} />
-                    ))}
+                    {s.monthly.map((mm) => {
+                      const selected = cellInfo?.name === s.name && cellInfo?.month === mm.month
+                      return (
+                        <Pressable
+                          key={mm.month}
+                          onPress={() => setCellInfo({ name: s.name, month: mm.month, meanPct: mm.meanPct, winRatePct: mm.winRatePct, tier: mm.tier })}
+                          style={{ flex: 1, height: 17, marginHorizontal: 0.5, borderRadius: 2, backgroundColor: cellColor(mm.meanPct, palette), borderWidth: selected ? 1.5 : mm.month === viewMonth ? 1 : 0, borderColor: selected ? palette.ink : palette.teal }}
+                        />
+                      )
+                    })}
                   </View>
                 ))}
+                {/* 셀 탭 → 수치 (색만으론 정보 부족) */}
+                <Text style={{ marginTop: 6, fontSize: 11, fontWeight: '700', color: cellInfo ? palette.inkSub : palette.inkFaint }}>
+                  {cellInfo
+                    ? `${TIER_DOT[cellInfo.tier] ?? '⚪'} ${cellInfo.name} ${cellInfo.month}월 — 평균 ${signed(cellInfo.meanPct)}% · 승률 ${cellInfo.winRatePct.toFixed(0)}%`
+                    : '칸을 누르면 평균·승률이 표시됩니다'}
+                </Text>
               </View>
 
               <Text style={{ color: palette.inkFaint, fontSize: 10.5, lineHeight: 15 }}>⚠️ 섹터 ETF의 과거 월별 평균입니다(US=SPDR, KR=KODEX/TIGER). 미래 보장이 아니며 비용은 미반영.</Text>
