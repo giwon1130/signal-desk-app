@@ -6,7 +6,7 @@
  */
 import { memo, useEffect, useState } from 'react'
 import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native'
-import { CalendarRange, ChevronRight, Layers } from 'lucide-react-native'
+import { CalendarRange, ChevronRight, Layers, Sparkles } from 'lucide-react-native'
 import { useTheme } from '../theme'
 import type {
   AiPicksData,
@@ -18,6 +18,7 @@ import type {
 } from '../types'
 import { HiddenSignals } from './aitab_widgets/HiddenSignals'
 import { Playbook } from './aitab_widgets/Playbook'
+import { AssistantModal } from '../components/AssistantModal'
 import { SeasonalityRulesModal } from '../components/SeasonalityRulesModal'
 import { SectorRotationModal } from '../components/SectorRotationModal'
 import { listSeasonalityRules } from '../api/backtest'
@@ -43,6 +44,7 @@ export const AITab = memo(function AITab({
   const { palette } = useTheme()
   const [rulesOpen, setRulesOpen] = useState(false)
   const [sectorOpen, setSectorOpen] = useState(false)
+  const [assistantOpen, setAssistantOpen] = useState(false)
   const [rulesCount, setRulesCount] = useState<number | null>(null)
   useEffect(() => { void listSeasonalityRules().then((r) => setRulesCount(r.length)) }, [rulesOpen])
 
@@ -53,6 +55,24 @@ export const AITab = memo(function AITab({
       contentContainerStyle={{ padding: 14, gap: 14, paddingBottom: 32 }}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.inkMuted} />}
     >
+      {/* ── 시데 AI 비서 — 내 데이터를 아는 질문/답변 ── */}
+      <Pressable
+        onPress={() => setAssistantOpen(true)}
+        style={({ pressed }) => ({
+          flexDirection: 'row', alignItems: 'center', gap: 10,
+          backgroundColor: palette.blueSoft ?? palette.surfaceAlt,
+          borderRadius: 12, paddingHorizontal: 14, paddingVertical: 13,
+          opacity: pressed ? 0.8 : 1,
+        })}
+      >
+        <Sparkles size={18} color={palette.blue} strokeWidth={2.4} />
+        <View style={{ flex: 1 }}>
+          <Text style={{ color: palette.ink, fontSize: 14, fontWeight: '800' }}>시데 AI에게 물어보기</Text>
+          <Text style={{ color: palette.inkMuted, fontSize: 11 }}>내 보유·관심 종목과 오늘 시장을 알고 답하는 비서</Text>
+        </View>
+        <ChevronRight size={18} color={palette.inkFaint} strokeWidth={2.4} />
+      </Pressable>
+
       {/* ── 내 시즌 규칙 (알고리즘 포트폴리오) ── */}
       <Pressable
         onPress={() => setRulesOpen(true)}
@@ -118,6 +138,7 @@ export const AITab = memo(function AITab({
       onClose={() => setSectorOpen(false)}
       initialMarket={marketPreference === 'KR' ? 'KR' : 'US'}
     />
+    <AssistantModal visible={assistantOpen} onClose={() => setAssistantOpen(false)} />
     </>
   )
 })
