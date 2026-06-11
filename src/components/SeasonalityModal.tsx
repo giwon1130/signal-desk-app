@@ -26,6 +26,7 @@ export function SeasonalityModal({ visible, market, ticker, name, onClose }: Pro
   // 저장된 규칙: key=`${kind}:${month}` → ruleId
   const [savedMap, setSavedMap] = useState<Record<string, string>>({})
   const [savingKey, setSavingKey] = useState<string | null>(null)
+  const [saveError, setSaveError] = useState('')
 
   useEffect(() => {
     if (!visible) return
@@ -51,10 +52,12 @@ export function SeasonalityModal({ visible, market, ticker, name, onClose }: Pro
     if (!report || h.month == null || savingKey) return
     const key = `${h.kind}:${h.month}`
     setSavingKey(key)
+    setSaveError('')
     try {
       if (savedMap[key]) {
         const ok = await deleteSeasonalityRule(savedMap[key])
         if (ok) setSavedMap((m) => { const n = { ...m }; delete n[key]; return n })
+        else setSaveError('삭제하지 못했어요 — 잠시 후 다시 시도해 주세요')
       } else {
         const stat = report.monthly.find((m) => m.month === h.month)
         const saved = await saveSeasonalityRule({
@@ -62,6 +65,7 @@ export function SeasonalityModal({ visible, market, ticker, name, onClose }: Pro
           meanPct: stat?.meanPct ?? null, winRatePct: stat?.winRatePct ?? null, sampleYears: stat?.sampleYears ?? null,
         })
         if (saved) setSavedMap((m) => ({ ...m, [key]: saved.id }))
+        else setSaveError('저장하지 못했어요 — 로그인 상태와 네트워크를 확인해 주세요')
       }
     } finally {
       setSavingKey(null)
@@ -108,6 +112,9 @@ export function SeasonalityModal({ visible, market, ticker, name, onClose }: Pro
                 <View style={{ gap: 8, marginBottom: 16 }}>
                   <Text style={{ color: palette.inkMuted, fontSize: 11, fontWeight: '800', letterSpacing: 0.4 }}>핵심 패턴 (🟢 뚜렷한 것만)</Text>
                   <Text style={{ color: palette.inkFaint, fontSize: 10.5, marginTop: -3 }}>저장하면 그 달이 다가올 때 푸시로 알려드려요</Text>
+                  {saveError ? (
+                    <Text style={{ color: palette.down, fontSize: 10.5, fontWeight: '700' }}>⚠️ {saveError}</Text>
+                  ) : null}
                   {report.highlights.map((h, i) => {
                     const buy = h.kind === 'BUY_MONTH'
                     const c = buy ? palette.up : palette.down
