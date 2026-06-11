@@ -16,16 +16,18 @@ export type AskResult = {
   dailyLimit: number | null
 }
 
+export type HistoryTurn = { role: 'user' | 'assistant'; text: string }
+
 /**
- * 시데 AI 비서 — 단발 질문/답변 (인증 필요).
+ * 시데 AI 비서 — 질문/답변 (인증 필요). history 로 직전 대화를 보내면 후속 질문 맥락이 이어진다.
  * 실패 시 사용자에게 보여줄 에러 메시지를 담아 반환한다 (throw 하지 않음).
  */
-export async function askAssistant(question: string): Promise<AskResult> {
+export async function askAssistant(question: string, history: HistoryTurn[] = []): Promise<AskResult> {
   try {
     const res = await authedFetch(`${API_BASE_URL}/api/v1/assistant/ask`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-      body: JSON.stringify({ question }),
+      body: JSON.stringify({ question, history: history.slice(-6) }),
     })
     if (res.status === 429) return { answer: null, error: '질문이 너무 잦아요 — 잠시 후 다시 시도해 주세요.', remaining: null, dailyLimit: null }
     const json = (await res.json()) as AskResponse

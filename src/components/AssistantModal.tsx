@@ -7,7 +7,7 @@ import {
   ActivityIndicator, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, TextInput, View,
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { Send, Sparkles, X } from 'lucide-react-native'
+import { RotateCcw, Send, Sparkles, X } from 'lucide-react-native'
 import { useTheme } from '../theme'
 import { askAssistant } from '../api/assistant'
 
@@ -37,7 +37,11 @@ export function AssistantModal({ visible, onClose }: Props) {
     setMessages((m) => [...m, { role: 'user', text: q }])
     setAsking(true)
     try {
-      const { answer, error, remaining, dailyLimit } = await askAssistant(q)
+      // 직전 대화(에러 버블 제외)를 함께 보내 후속 질문 맥락 유지
+      const history = messages
+        .filter((m) => !m.isError)
+        .map((m) => ({ role: m.role, text: m.text }))
+      const { answer, error, remaining, dailyLimit } = await askAssistant(q, history)
       if (remaining != null && dailyLimit != null) setQuota({ remaining, limit: dailyLimit })
       setMessages((m) => [...m, answer
         ? { role: 'assistant', text: answer }
@@ -64,6 +68,11 @@ export function AssistantModal({ visible, onClose }: Props) {
                 <Text style={{ color: palette.ink, fontSize: 16, fontWeight: '900' }}>시데 AI에게 물어보기</Text>
                 <Text style={{ color: palette.inkFaint, fontSize: 10.5, marginTop: 1 }}>내 보유·관심 종목과 오늘 시장을 알고 답해요</Text>
               </View>
+              {messages.length > 0 ? (
+                <Pressable onPress={() => setMessages([])} hitSlop={10} accessibilityLabel="대화 초기화">
+                  <RotateCcw size={17} color={palette.inkMuted} strokeWidth={2.4} />
+                </Pressable>
+              ) : null}
               <Pressable onPress={onClose} hitSlop={10}><X size={20} color={palette.inkMuted} strokeWidth={2.5} /></Pressable>
             </View>
 
