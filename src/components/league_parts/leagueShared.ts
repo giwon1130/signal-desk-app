@@ -8,8 +8,6 @@ import { apiErrorMessage } from '../../utils/apiError'
 export const LEAGUE_FEE = 0.003
 /** 한 종목 권장 최대 비중 30% (백엔드 미강제 — FE 경고용). */
 export const MAX_POSITION_PCT = 0.3
-/** 최대 참가 인원 (백엔드 MAX_PARTICIPANTS 와 동일). */
-export const MAX_PARTICIPANTS = 10
 /** 호스트/참가자 아바타 선택지. */
 export const LEAGUE_AVATARS = ['🐱', '🦊', '🐶', '🐼', '🦁', '🐯', '🐵', '🐰', '🐸', '🐨', '🦄', '🐲']
 

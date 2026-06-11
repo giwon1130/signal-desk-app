@@ -306,7 +306,7 @@ function AppShell() {
     if (!hiddenSignals || marketPreference === 'BOTH') return hiddenSignals
     return { ...hiddenSignals, signals: hiddenSignals.signals.filter((s) => s.market === marketPreference) }
   }, [hiddenSignals, marketPreference])
-  // aiRecommendation 안의 picks/executionLogs 도 동일 필터 (TodayTab의 단타 픽 PicksCard 대응).
+  // aiRecommendation 안의 executionLogs 도 동일 필터.
   const filteredAiRecommendation = useMemo(() => {
     if (!aiRecommendation || marketPreference === 'BOTH') return aiRecommendation
     const m = marketPreference

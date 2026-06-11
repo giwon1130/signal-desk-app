@@ -73,26 +73,6 @@ export function getMetricAccent(score: number) {
   return '#b91c1c'
 }
 
-/** 합성 위험도(1~10) 카드 팔레트. 점수가 높을수록 경계색. */
-export function getCompositeRiskPalette(score: number) {
-  if (score >= 8) {
-    return {
-      accent: '#be123c', backgroundColor: '#fff1f2', borderColor: '#fecdd3',
-      badgeBackgroundColor: '#ffe4e6', badgeTextColor: '#be123c', track: '#fecdd3',
-    }
-  }
-  if (score >= 5) {
-    return {
-      accent: '#c2410c', backgroundColor: '#fff7ed', borderColor: '#fed7aa',
-      badgeBackgroundColor: '#ffedd5', badgeTextColor: '#c2410c', track: '#fed7aa',
-    }
-  }
-  return {
-    accent: '#0f766e', backgroundColor: '#ecfeff', borderColor: '#bae6fd',
-    badgeBackgroundColor: '#cffafe', badgeTextColor: '#0f766e', track: '#bae6fd',
-  }
-}
-
 /** 위험 sub-score(0~100) 막대 색 — 점수가 높을수록 위험색. */
 export function getRiskScoreColor(score: number) {
   if (score >= 67) return '#dc2626'

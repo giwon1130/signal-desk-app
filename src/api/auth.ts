@@ -66,9 +66,6 @@ export const apiLogin = (email: string, password: string) =>
 export const apiGoogleOAuth = (idToken: string) =>
   postJson<AuthUser>('/auth/oauth/google', { idToken })
 
-export const apiKakaoOAuth = (accessToken: string) =>
-  postJson<AuthUser>('/auth/oauth/kakao', { accessToken })
-
 export async function apiMe(token: string): Promise<AuthUser> {
   const res = await fetch(`${API_BASE_URL}/auth/me`, {
     headers: { Authorization: `Bearer ${token}` },

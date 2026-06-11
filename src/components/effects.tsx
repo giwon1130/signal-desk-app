@@ -136,7 +136,3 @@ export function glow(color: string, radius = 12, opacity = 0.55): ViewStyle {
     elevation: radius,
   }
 }
-
-/** 가벼운 햅틱 (탭 전환 등 즉시 피드백). */
-export const tapHaptic = () =>
-  void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {})

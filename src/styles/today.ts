@@ -69,57 +69,6 @@ export function todayStyles(C: Palette): StyleObj {
     todaySessionLabel:  { fontSize: 11, fontWeight: '800' },
     todaySessionStatus: { fontSize: 10, fontWeight: '700', opacity: 0.85 },
 
-    // sentiment 카드
-    todaySentimentCard: {
-      borderRadius: 12, padding: 12, gap: 6, marginTop: 4,
-      borderWidth: 1, borderColor: C.border, backgroundColor: C.surfaceAlt,
-    },
-    todaySentimentHead:  { flexDirection: 'row', alignItems: 'center', gap: 8 },
-    todaySentimentMarket:{ flex: 1, color: C.ink, fontSize: 13, fontWeight: '800' },
-    todaySentimentLabel: { fontSize: 12, fontWeight: '800' },
-    todaySentimentScore: { fontSize: 22, fontWeight: '900', ...num, marginLeft: 4 },
-    todaySentimentBarTrack: {
-      height: 6, borderRadius: 999, backgroundColor: C.border, overflow: 'hidden', marginTop: 2,
-    },
-    todaySentimentBarFill: { height: 6, borderRadius: 999 },
-    todaySentimentMetaRow: { flexDirection: 'row', gap: 12, marginTop: 4 },
-    todaySentimentMeta:    { color: C.inkMuted, fontSize: 11, fontWeight: '700', ...num },
-    todaySentimentRationale: { color: C.inkSub, fontSize: 12, fontWeight: '600', lineHeight: 18 },
-
-    todayHeadlineRow: {
-      flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 6,
-      borderTopWidth: 1, borderTopColor: C.border,
-    },
-    todayHeadlineDot:    { width: 6, height: 6, borderRadius: 999 },
-    todayHeadlineText:   { flex: 1, color: C.ink, fontSize: 12, fontWeight: '600', lineHeight: 17 },
-    todayHeadlineSource: { color: C.inkFaint, fontSize: 10, fontWeight: '700' },
-
-    // 단타 픽
-    todayPickRow: {
-      borderRadius: 12, padding: 12, gap: 4, marginTop: 6,
-      borderWidth: 1, borderColor: C.border, backgroundColor: C.surfaceAlt,
-    },
-    todayPickTopLine:  { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-    todayPickName:     { color: C.ink, fontSize: 14, fontWeight: '800', flex: 1 },
-    todayPickStanceBadge: {
-      backgroundColor: C.brand, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 2,
-    },
-    todayPickStanceBadgeText: { color: C.brandAccent, fontSize: 10, fontWeight: '900', letterSpacing: 0.5 },
-    pickUserStatusBadge: {
-      borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2,
-      borderWidth: 1, borderColor: C.border, backgroundColor: C.surface,
-    },
-    pickUserStatusBadgeHeld:    { borderColor: C.red,  backgroundColor: C.redSoft },
-    pickUserStatusBadgeWatched: { borderColor: C.blue, backgroundColor: C.blueSoft },
-    pickUserStatusBadgeNew:     { borderColor: C.border, backgroundColor: C.surfaceAlt },
-    pickUserStatusBadgeText:         { fontSize: 9, fontWeight: '900', letterSpacing: 0.5, color: C.inkMuted },
-    pickUserStatusBadgeTextHeld:     { color: C.red },
-    pickUserStatusBadgeTextWatched:  { color: C.blue },
-    todayPickHeaderBadges: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-    todayPickMeta:      { color: C.inkMuted, fontSize: 11, fontWeight: '600', ...num },
-    todayPickRationale: { color: C.inkSub, fontSize: 12, fontWeight: '500', lineHeight: 17 },
-    todayPickReturn:    { fontSize: 12, fontWeight: '800', ...num, marginTop: 2 },
-
     // 모니터
     todayMonitorRow: {
       flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10,

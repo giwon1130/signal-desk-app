@@ -121,20 +121,3 @@ export function Entrance({
     </Animated.View>
   )
 }
-
-/** 상단 그라데이션 액센트 바(얇은 선) — 위젯 카드 헤더 강조용. */
-export function AccentBar({ from, to, height = 3 }: { from: string; to: string; height?: number }) {
-  if (Platform.OS !== 'web') return null
-  return React.createElement('div', {
-    style: {
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      right: 0,
-      height,
-      backgroundImage: `linear-gradient(90deg, ${from}, ${to})`,
-      pointerEvents: 'none',
-      zIndex: 2,
-    },
-  })
-}
