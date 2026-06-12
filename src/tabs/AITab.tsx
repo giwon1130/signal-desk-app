@@ -55,7 +55,7 @@ export const AITab = memo(function AITab({
       contentContainerStyle={{ padding: 14, gap: 14, paddingBottom: 32 }}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.inkMuted} />}
     >
-      {/* ── 시데 AI 비서 — 내 데이터를 아는 질문/답변 ── */}
+      {/* ── 시데 AI 비서 — 주력 진입(풀 너비) ── */}
       <Pressable
         onPress={onOpenAssistant}
         style={({ pressed }) => ({
@@ -73,46 +73,38 @@ export const AITab = memo(function AITab({
         <ChevronRight size={18} color={palette.inkFaint} strokeWidth={2.4} />
       </Pressable>
 
-      {/* ── 내 시즌 규칙 (알고리즘 포트폴리오) ── */}
-      <Pressable
-        onPress={() => setRulesOpen(true)}
-        style={({ pressed }) => ({
-          flexDirection: 'row', alignItems: 'center', gap: 10,
-          backgroundColor: palette.purpleSoft ?? palette.surfaceAlt,
-          borderRadius: 12, paddingHorizontal: 14, paddingVertical: 13,
-          opacity: pressed ? 0.8 : 1,
-        })}
-      >
-        <CalendarRange size={18} color={palette.purple ?? '#7c3aed'} strokeWidth={2.4} />
-        <View style={{ flex: 1 }}>
-          <Text style={{ color: palette.ink, fontSize: 14, fontWeight: '800' }}>내 시즌 규칙</Text>
-          <Text style={{ color: palette.inkMuted, fontSize: 11 }}>저장한 시즈널 패턴 + 트리거 알림 관리</Text>
-        </View>
-        {rulesCount ? (
-          <View style={{ backgroundColor: palette.purple ?? '#7c3aed', borderRadius: 10, minWidth: 20, paddingHorizontal: 6, paddingVertical: 2, alignItems: 'center' }}>
-            <Text style={{ color: '#fff', fontSize: 11, fontWeight: '900' }}>{rulesCount}</Text>
-          </View>
-        ) : null}
-        <ChevronRight size={18} color={palette.inkFaint} strokeWidth={2.4} />
-      </Pressable>
-
-      {/* ── 섹터 로테이션 ── */}
-      <Pressable
-        onPress={() => setSectorOpen(true)}
-        style={({ pressed }) => ({
-          flexDirection: 'row', alignItems: 'center', gap: 10,
-          backgroundColor: palette.tealSoft ?? palette.surfaceAlt,
-          borderRadius: 12, paddingHorizontal: 14, paddingVertical: 13,
-          opacity: pressed ? 0.8 : 1,
-        })}
-      >
-        <Layers size={18} color={palette.teal ?? '#0d9488'} strokeWidth={2.4} />
-        <View style={{ flex: 1 }}>
-          <Text style={{ color: palette.ink, fontSize: 14, fontWeight: '800' }}>섹터 로테이션</Text>
-          <Text style={{ color: palette.inkMuted, fontSize: 11 }}>이번 달 강한 섹터 + 연간 히트맵</Text>
-        </View>
-        <ChevronRight size={18} color={palette.inkFaint} strokeWidth={2.4} />
-      </Pressable>
+      {/* ── 시즌 규칙 · 섹터 로테이션 — 보조 도구는 칩 2개로 압축(본문이 폴드 아래로 안 밀리게) ── */}
+      <View style={{ flexDirection: 'row', gap: 10 }}>
+        <Pressable
+          onPress={() => setRulesOpen(true)}
+          style={({ pressed }) => ({
+            flex: 1, flexDirection: 'row', alignItems: 'center', gap: 7,
+            backgroundColor: palette.purpleSoft ?? palette.surfaceAlt,
+            borderRadius: 12, paddingHorizontal: 12, paddingVertical: 11,
+            opacity: pressed ? 0.8 : 1,
+          })}
+        >
+          <CalendarRange size={16} color={palette.purple ?? '#7c3aed'} strokeWidth={2.4} />
+          <Text style={{ color: palette.ink, fontSize: 12.5, fontWeight: '800', flex: 1 }} numberOfLines={1}>내 시즌 규칙</Text>
+          {rulesCount ? (
+            <View style={{ backgroundColor: palette.purple ?? '#7c3aed', borderRadius: 9, minWidth: 18, paddingHorizontal: 5, paddingVertical: 1, alignItems: 'center' }}>
+              <Text style={{ color: '#fff', fontSize: 10.5, fontWeight: '900' }}>{rulesCount}</Text>
+            </View>
+          ) : null}
+        </Pressable>
+        <Pressable
+          onPress={() => setSectorOpen(true)}
+          style={({ pressed }) => ({
+            flex: 1, flexDirection: 'row', alignItems: 'center', gap: 7,
+            backgroundColor: palette.tealSoft ?? palette.surfaceAlt,
+            borderRadius: 12, paddingHorizontal: 12, paddingVertical: 11,
+            opacity: pressed ? 0.8 : 1,
+          })}
+        >
+          <Layers size={16} color={palette.teal ?? '#0d9488'} strokeWidth={2.4} />
+          <Text style={{ color: palette.ink, fontSize: 12.5, fontWeight: '800', flex: 1 }} numberOfLines={1}>섹터 로테이션</Text>
+        </Pressable>
+      </View>
 
       {/* ── 마켓 브리핑 + 액션 + AI 픽 ── */}
       <Playbook

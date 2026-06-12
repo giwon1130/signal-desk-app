@@ -42,9 +42,10 @@ export function LeagueDetailModal({ visible, leagueId, myUserId, marketSessions,
   const [leaving, setLeaving] = useState(false)
   const [selectedMember, setSelectedMember] = useState<LeaderboardEntry | null>(null)
 
-  const load = useCallback(async () => {
+  // silent: 10초 폴링 갱신은 스피너 없이 — 안 그러면 pull-to-refresh 스피너가 매 폴링마다 깜빡인다.
+  const load = useCallback(async (opts?: { silent?: boolean }) => {
     if (!leagueId) return
-    setLoading(true)
+    if (!opts?.silent) setLoading(true)
     try {
       const [d, lb, fd, pos] = await Promise.all([
         fetchLeagueDetail(leagueId),
@@ -57,7 +58,7 @@ export function LeagueDetailModal({ visible, leagueId, myUserId, marketSessions,
     } catch {
       setLoadError(true)
     } finally {
-      setLoading(false)
+      if (!opts?.silent) setLoading(false)
     }
   }, [leagueId])
 
@@ -77,7 +78,7 @@ export function LeagueDetailModal({ visible, leagueId, myUserId, marketSessions,
   useEffect(() => {
     if (!visible || !leagueId) return
     if (status === 'FINISHED') return // 종료된 리그는 변동 없음 — 폴링 안 함.
-    const interval = setInterval(() => { void load() }, 10000)
+    const interval = setInterval(() => { void load({ silent: true }) }, 10000)
     return () => clearInterval(interval)
   }, [visible, leagueId, load, status])
 

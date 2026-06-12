@@ -208,9 +208,9 @@ function LeagueRow({ league, onPress }: { league: League; onPress: () => void })
       </View>
       <View style={{ flex: 1, gap: 3 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          <Text style={{ color: palette.ink, fontSize: 14, fontWeight: '800' }} numberOfLines={1}>{league.name}</Text>
+          <Text style={{ color: palette.ink, fontSize: 14, fontWeight: '800', flexShrink: 1, minWidth: 0 }} numberOfLines={1}>{league.name}</Text>
           <View style={[
-            { backgroundColor: statusColor + '22', borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2 },
+            { backgroundColor: statusColor + '22', borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2, flexShrink: 0 },
             running ? glow(statusColor, 6, 0.5) : null,
           ]}>
             <Text style={{ color: statusColor, fontSize: 9, fontWeight: '900' }}>{leagueStatusLabel(league.status)}</Text>

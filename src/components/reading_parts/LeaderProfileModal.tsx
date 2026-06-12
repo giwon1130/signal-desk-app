@@ -29,6 +29,9 @@ export function LeaderProfileModal({ visible, leaderUserId, myUserId, onClose, o
   const [loading, setLoading] = useState(false)
   const [loadError, setLoadError] = useState(false)
   const [subscribing, setSubscribing] = useState(false)
+  // 백엔드 프로필에 '내 구독 여부'가 없어 로컬로 추적 — 구독 성공 후 버튼을 '구독 중'으로 잠가
+  // 중복 구독/더블탭을 차단. 모달을 새 리더로 다시 열면 리셋.
+  const [subscribed, setSubscribed] = useState(false)
 
   const load = useCallback(async () => {
     if (!leaderUserId) return
@@ -44,21 +47,33 @@ export function LeaderProfileModal({ visible, leaderUserId, myUserId, onClose, o
     }
   }, [leaderUserId])
 
-  useEffect(() => { if (visible && leaderUserId) void load() }, [visible, leaderUserId, load])
+  useEffect(() => {
+    if (visible && leaderUserId) { setSubscribed(false); void load() }
+  }, [visible, leaderUserId, load])
 
   const leader = profile?.leader
   const stats = profile?.stats
   const isSelf = !!leader && leader.userId === myUserId
 
   const handleSubscribe = async () => {
-    if (!leader?.inviteCode || subscribing) return
+    if (!leader?.inviteCode || subscribing || subscribed) return
     setSubscribing(true)
     try {
       await subscribe(leader.inviteCode)
+      setSubscribed(true)
+      // 구독자 수도 즉시 +1 반영 (재조회 없이 화면 일관성)
+      setProfile((prev) => prev ? { ...prev, leader: { ...prev.leader, followerCount: prev.leader.followerCount + 1 } } : prev)
       toast?.show(`${leader.displayName}님 구독 완료`, 'success')
       onSubscribed?.()
     } catch (e: any) {
-      toast?.show(subscribeErrorMessage(e?.message || ''), 'error')
+      const msg = e?.message || ''
+      // 이미 구독한 경우도 성공처럼 처리(중복은 에러가 아님)
+      if (/already|conflict|exists|중복/i.test(msg)) {
+        setSubscribed(true)
+        toast?.show('이미 구독 중이에요', 'info')
+      } else {
+        toast?.show(subscribeErrorMessage(msg), 'error')
+      }
     } finally {
       setSubscribing(false)
     }
@@ -131,19 +146,21 @@ export function LeaderProfileModal({ visible, leaderUserId, myUserId, onClose, o
                 </View>
               ) : null}
 
-              {/* 구독 버튼 (본인 아니고 코드 있을 때) */}
+              {/* 구독 버튼 (본인 아니고 코드 있을 때). 구독 완료면 비활성 '구독 중 ✓' */}
               {!isSelf && leader?.inviteCode ? (
                 <Pressable
                   onPress={() => void handleSubscribe()}
-                  disabled={subscribing}
+                  disabled={subscribing || subscribed}
                   accessibilityRole="button"
                   style={({ pressed }) => ({
-                    backgroundColor: pressed ? palette.brandAccent + 'cc' : palette.brandAccent,
-                    borderRadius: 12, paddingVertical: 13, alignItems: 'center', opacity: subscribing ? 0.6 : 1,
+                    backgroundColor: subscribed ? palette.surfaceAlt : (pressed ? palette.brandAccent + 'cc' : palette.brandAccent),
+                    borderRadius: 12, paddingVertical: 13, alignItems: 'center',
+                    borderWidth: subscribed ? 1 : 0, borderColor: palette.border,
+                    opacity: subscribing ? 0.6 : 1,
                   })}
                 >
-                  <Text style={{ color: palette.bg, fontSize: 14, fontWeight: '800' }}>
-                    {subscribing ? '구독 중…' : '구독하기'}
+                  <Text style={{ color: subscribed ? palette.inkSub : palette.bg, fontSize: 14, fontWeight: '800' }}>
+                    {subscribing ? '구독 중…' : subscribed ? '구독 중 ✓' : '구독하기'}
                   </Text>
                 </Pressable>
               ) : null}
