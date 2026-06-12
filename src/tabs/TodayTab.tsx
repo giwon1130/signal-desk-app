@@ -10,7 +10,6 @@ import { useTheme } from '../theme'
 import type {
   AlertHistoryItem,
   DailyFortune,
-  DisclosureItem,
   HoldingPosition,
   MarketEvent,
   MarketSummaryData,
@@ -24,7 +23,6 @@ import {
 } from '../utils'
 import { BriefHero } from './today_parts/BriefHero'
 import { NewsHero } from './today_parts/NewsHero'
-import { DisclosureCard } from './today_parts/DisclosureCard'
 import { EventsCard } from './today_parts/EventsCard'
 import { HoldingMonitor } from './today_parts/HoldingMonitor'
 import { SeasonRulesCard } from './today_parts/SeasonRulesCard'
@@ -39,7 +37,6 @@ type Props = {
   fortune: DailyFortune | null
   mediaSummaries: MediaSummaryItem[]
   upcomingEvents: MarketEvent[]
-  disclosures: DisclosureItem[]
   // v2: Market 탭 흡수 — 합성위험도/시장 무드 지표/watch alerts. (급등락은 지수 상세 모달로 이동)
   marketPreference: MarketPreference
   onOpenDetail: (market: string, ticker: string, name?: string) => void
@@ -55,7 +52,6 @@ export const TodayTab = memo(function TodayTab({
   fortune,
   mediaSummaries,
   upcomingEvents,
-  disclosures,
   marketPreference,
   onOpenDetail,
   refreshing,
@@ -173,14 +169,8 @@ export const TodayTab = memo(function TodayTab({
       {/* ── 이번 달 시즌 (저장한 시즌 규칙 중 진행 중인 것 — 없으면 미렌더) ── */}
       <SeasonRulesCard onOpenDetail={onOpenDetail} />
 
-      {/* ── 보유 종목 공시 (DART) ── */}
-      <Entrance index={4}>
-        <DisclosureCard disclosures={disclosures} onOpenDetail={onOpenDetail} />
-      </Entrance>
-
-      {/* AI 추천(단타 픽)은 AI 탭으로 분리 (#6) — 오늘 탭은 오늘 시장/보유 상태만 */}
-
-      {/* 급등락은 하단 지수 펄스 탭 → 지수 상세 모달로 이동 (오늘 탭 정리 + 종목명 겹침 해소) */}
+      {/* 보유 종목 공시(DART)는 '내 종목 소식'이라 종목 탭으로 이동.
+          급등락은 하단 지수 펄스 → 지수 상세 모달로 이동. (오늘 탭은 시장 현황 중심) */}
 
       {/* ── 관심종목 알림 (Market 탭에서 흡수) ── */}
       <WatchAlertList alerts={summary?.watchAlerts ?? []} />

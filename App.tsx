@@ -450,7 +450,6 @@ function AppShell() {
             fortune={fortune}
             mediaSummaries={mediaSummaries}
             upcomingEvents={filteredUpcomingEvents}
-            disclosures={disclosures}
             marketPreference={marketPreference}
             onOpenDetail={handleOpenDetail}
             refreshing={refreshing}
@@ -490,6 +489,7 @@ function AppShell() {
             stockSearchLoading={stockSearchLoading}
             favoriteDeletingId={favoriteDeletingId}
             bulkDeleting={bulkDeletingWatch}
+            disclosures={disclosures}
             refreshing={refreshing}
             onRefresh={refresh}
             onStockSearchChange={setStockSearch}

@@ -2,6 +2,7 @@ import { memo, useMemo, useState } from 'react'
 import { Platform, RefreshControl, ScrollView } from 'react-native'
 import { useStyles } from '../styles'
 import type {
+  DisclosureItem,
   HoldingPosition,
   PortfolioSummary,
   StockMarketFilter,
@@ -12,6 +13,7 @@ import { useLivePrices } from '../hooks/useLivePrices'
 import { PortfolioSection } from './stocks_parts/PortfolioSection'
 import { StockSearchSection } from './stocks_parts/StockSearchSection'
 import { WatchlistSection } from './stocks_parts/WatchlistSection'
+import { DisclosureCard } from './today_parts/DisclosureCard'
 import {
   WorkspaceFilterBar,
   type WorkspaceMarketFilter,
@@ -27,6 +29,8 @@ type Props = {
   stockSearchLoading: boolean
   favoriteDeletingId: string
   bulkDeleting: boolean
+  /** 보유/관심 KR 종목 공시 — '내 종목 소식'이라 종목 탭에 위치 (오늘 탭에서 이동). */
+  disclosures: DisclosureItem[]
   refreshing: boolean
   onRefresh: () => Promise<void>
   onStockSearchChange: (value: string) => void
@@ -47,6 +51,7 @@ export const StocksTab = memo(function StocksTab({
   stockSearchLoading,
   favoriteDeletingId,
   bulkDeleting,
+  disclosures,
   refreshing,
   onRefresh,
   onStockSearchChange,
@@ -161,6 +166,8 @@ export const StocksTab = memo(function StocksTab({
         onDeleteAllFavorites={onDeleteAllFavorites}
         onStockSearchChange={onStockSearchChange}
       />
+      {/* ── 보유/관심 종목 공시 (DART) — 오늘 탭에서 이동 ── */}
+      <DisclosureCard disclosures={disclosures} onOpenDetail={onOpenDetail} />
     </ScrollView>
   )
 })
