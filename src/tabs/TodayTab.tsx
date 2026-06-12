@@ -71,9 +71,10 @@ export const TodayTab = memo(function TodayTab({
   const krSentiment = showKr ? summary?.newsSentiments?.find((s) => s.market === 'KR') : undefined
   const usSentiment = showUs ? summary?.newsSentiments?.find((s) => s.market === 'US') : undefined
 
-  // 단타 후보: 보유 종목 중 손익 ±3% 이내 (액션 가능 구간)
-  const monitorTargets = positions
-    .filter((p) => Math.abs(p.profitRate) <= 8)
+  // 보유 종목 전체를 손익 절대값 큰 순으로 — 익절/손절이 급한(극단) 종목이 맨 위로.
+  // (기존 ±8% 필터는 오히려 가장 액션이 필요한 큰 수익/손실 종목을 숨겼음)
+  const monitorTargets = [...positions]
+    .sort((a, b) => Math.abs(b.profitRate) - Math.abs(a.profitRate))
     .slice(0, listLimit)
 
   const tradingDay = summary?.tradingDayStatus

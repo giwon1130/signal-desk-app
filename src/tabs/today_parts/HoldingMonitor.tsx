@@ -28,10 +28,10 @@ export function HoldingMonitor({ monitorTargets, marketClosedToday }: Props) {
           <Brain size={14} color="#7c3aed" strokeWidth={2.5} />
           <Text style={styles.cardTitle}>보유 종목 모니터</Text>
         </View>
-        <Text style={styles.metaText}>액션 가능한 {monitorTargets.length}건</Text>
+        <Text style={styles.metaText}>손익 큰 순 {monitorTargets.length}건</Text>
       </View>
       {monitorTargets.length === 0 ? (
-        <Text style={styles.metaText}>지금 액션이 필요한 종목은 없습니다.</Text>
+        <Text style={styles.metaText}>보유 중인 종목이 없습니다.</Text>
       ) : monitorTargets.map((p) => {
         const isProfit = p.profitRate >= 0
         const Icon = isProfit ? TrendingUp : TrendingDown
