@@ -42,18 +42,21 @@ export function LeagueDetailModal({ visible, leagueId, myUserId, marketSessions,
   const [leaving, setLeaving] = useState(false)
   const [selectedMember, setSelectedMember] = useState<LeaderboardEntry | null>(null)
 
-  // silent: 10초 폴링 갱신은 스피너 없이 — 안 그러면 pull-to-refresh 스피너가 매 폴링마다 깜빡인다.
+  // 점진 렌더: 상세(빠름)가 도착하면 헤더·정보를 즉시 띄우고, 리더보드/피드/포지션
+  // (참가자 시세 라이브 조회라 느림)은 각자 도착하는 대로 채운다. 4개를 Promise.all 로
+  // 다 기다리면 가장 느린 한 건에 전체가 묶여 "리그 클릭 → 한참 빈 화면"이 됐다.
+  // silent: 10초 폴링은 스피너 없이.
   const load = useCallback(async (opts?: { silent?: boolean }) => {
     if (!leagueId) return
     if (!opts?.silent) setLoading(true)
+    // 느린 섹션은 독립 발사 — 도착 즉시 개별 반영 (실패해도 다른 섹션 진행)
+    void fetchLeaderboard(leagueId).then(setLeaderboard).catch(() => {})
+    void fetchTradeFeed(leagueId, 50).then(setFeed).catch(() => {})
+    void fetchMyPositions(leagueId).then(setPositions).catch(() => {})
     try {
-      const [d, lb, fd, pos] = await Promise.all([
-        fetchLeagueDetail(leagueId),
-        fetchLeaderboard(leagueId),
-        fetchTradeFeed(leagueId, 50),
-        fetchMyPositions(leagueId),
-      ])
-      setDetail(d); setLeaderboard(lb); setFeed(fd); setPositions(pos)
+      // 상세만 await — 도착하면 곧바로 로딩 해제 → 헤더/상태/거래 버튼 즉시 사용 가능
+      const d = await fetchLeagueDetail(leagueId)
+      setDetail(d)
       setLoadError(false)
     } catch {
       setLoadError(true)
