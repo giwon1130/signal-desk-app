@@ -129,26 +129,21 @@ export const TodayTab = memo(function TodayTab({
         </View>
       ) : null}
 
-      {/* ── 브리프 Hero — 세션/거래일 상태 아래. 최신 브리프 1건 + 개인화(브리핑) 통합 ── */}
-      {(mediaSummaries.length > 0 || summary?.briefing) ? (
+      {/* 정보 우선순위: 내 종목(보유·관심) → 시장 맥락(무드) → 읽을거리(브리프·뉴스) → 시즌·이벤트.
+          아침에 "내 종목 어떻게 됐지"가 1순위라 개인·액션 카드를 맨 위로. 무보유/무신호 카드는
+          자동으로 미렌더되어 신규 사용자에겐 자연히 브리프가 상단에 온다. */}
+
+      {/* ── 보유 종목 모니터 (내 종목 최우선) ── */}
+      {positions.length > 0 ? (
         <Entrance index={0}>
-          <BriefHero
-            items={mediaSummaries}
-            briefing={summary?.briefing ?? null}
-            onTickerPress={(t) => {
-              const isKr = /^\d{6}$/.test(t)
-              onOpenDetail(isKr ? 'KR' : 'US', t)
-            }}
-          />
+          <HoldingMonitor monitorTargets={monitorTargets} marketClosedToday={marketClosedToday} />
         </Entrance>
       ) : null}
 
-      {/* ── 오늘의 뉴스 — 헤드라인 회전(KR/US 번갈아). 브리프 바로 아래로 상단 배치 ── */}
-      {(krSentiment || usSentiment) ? (
-        <Entrance index={1}>
-          <NewsHero sentiments={[krSentiment, usSentiment].filter((s): s is NewsSentiment => !!s)} />
-        </Entrance>
-      ) : null}
+      {/* ── 관심종목 시그널 — 보유 모니터와 묶어 '내 종목' 블록으로 ── */}
+      <Entrance index={1}>
+        <WatchAlertList alerts={summary?.watchAlerts ?? []} />
+      </Entrance>
 
       {/* ── 오늘 시장 분위기 — 위험도 + 요약 지표 통합, 쉬운 용어 ── */}
       <Entrance index={2}>
@@ -160,10 +155,24 @@ export const TodayTab = memo(function TodayTab({
         />
       </Entrance>
 
-      {/* ── 보유 종목 모니터 (보유 있는 사용자 최우선) ── */}
-      {positions.length > 0 ? (
+      {/* ── 브리프 Hero — 최신 브리프 1건 + 개인화(브리핑) 통합 ── */}
+      {(mediaSummaries.length > 0 || summary?.briefing) ? (
         <Entrance index={3}>
-          <HoldingMonitor monitorTargets={monitorTargets} marketClosedToday={marketClosedToday} />
+          <BriefHero
+            items={mediaSummaries}
+            briefing={summary?.briefing ?? null}
+            onTickerPress={(t) => {
+              const isKr = /^\d{6}$/.test(t)
+              onOpenDetail(isKr ? 'KR' : 'US', t)
+            }}
+          />
+        </Entrance>
+      ) : null}
+
+      {/* ── 오늘의 뉴스 — 헤드라인 회전(KR/US 번갈아) ── */}
+      {(krSentiment || usSentiment) ? (
+        <Entrance index={4}>
+          <NewsHero sentiments={[krSentiment, usSentiment].filter((s): s is NewsSentiment => !!s)} />
         </Entrance>
       ) : null}
 
@@ -172,9 +181,6 @@ export const TodayTab = memo(function TodayTab({
 
       {/* 보유 종목 공시(DART)는 '내 종목 소식'이라 종목 탭으로 이동.
           급등락은 하단 지수 펄스 → 지수 상세 모달로 이동. (오늘 탭은 시장 현황 중심) */}
-
-      {/* ── 관심종목 알림 (Market 탭에서 흡수) ── */}
-      <WatchAlertList alerts={summary?.watchAlerts ?? []} />
 
       {/* ── 다가오는 이벤트 (FOMC/실적/휴장) — 선호 시장만, GLOBAL 은 항상 ── */}
       <EventsCard events={upcomingEvents.filter((e) =>
