@@ -16,6 +16,7 @@ import type {
   StockSearchResult,
   WatchItem,
 } from '../types'
+import { TabIntro } from '../components/guide/TabIntro'
 import { HiddenSignals } from './aitab_widgets/HiddenSignals'
 import { Playbook } from './aitab_widgets/Playbook'
 import { SeasonalityRulesModal } from '../components/SeasonalityRulesModal'
@@ -55,6 +56,16 @@ export const AITab = memo(function AITab({
       contentContainerStyle={{ padding: 14, gap: 14, paddingBottom: 32 }}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.inkMuted} />}
     >
+      {/* 탭 인트로 — 컴팩트 타이틀, 처음 몇 번만 펼친 설명 */}
+      <TabIntro
+        tabKey="ai"
+        icon={Sparkles}
+        title="AI"
+        tagline="물어보고 · 추천받고 · 시그널 확인"
+        description="시데 AI에게 종목·시장을 직접 물어보거나, 마켓 브리핑·오늘의 AI 픽·내 종목의 숨은 시그널을 받아보세요. 시즌 규칙과 섹터 로테이션도 여기서 확인할 수 있어요."
+        accent={palette.blue ?? palette.brandAccent}
+      />
+
       {/* ── 시데 AI 비서 — 주력 진입(풀 너비) ── */}
       <Pressable
         onPress={onOpenAssistant}

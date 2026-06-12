@@ -3,8 +3,10 @@ import { Platform, Pressable, RefreshControl, ScrollView, Text, View } from 'rea
 import {
   Bell,
   Clock,
+  Sparkles,
 } from 'lucide-react-native'
 import { CollapsibleCard } from '../components/CollapsibleCard'
+import { TabIntro } from '../components/guide/TabIntro'
 import { useStyles } from '../styles'
 import { useTheme } from '../theme'
 import type {
@@ -95,6 +97,16 @@ export const TodayTab = memo(function TodayTab({
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       contentContainerStyle={[styles.content, isWeb && styles.contentWeb]}
     >
+      {/* 탭 인트로 — 컴팩트 타이틀, 처음 몇 번만 펼친 설명 */}
+      <TabIntro
+        tabKey="today"
+        icon={Sparkles}
+        title="오늘"
+        tagline="내 종목·시장을 하루 한눈에"
+        description="장 세션 상태, 보유·관심 종목 모니터, 시장 지수와 핵심 시그널을 모아 보여줘요. 위에서부터 내 종목 → 시장 순으로 중요한 것부터 정렬돼 있습니다."
+        accent={palette.brandAccent}
+      />
+
       {/* ── 장 세션 상태 — 선택 시장만 (#5) ── */}
       {summary?.marketSessions?.length ? (
         <View style={[styles.todaySessionRow, isWeb && styles.cardFull]}>

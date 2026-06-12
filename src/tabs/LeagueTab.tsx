@@ -10,6 +10,7 @@ import { useTheme } from '../theme'
 import type { League } from '../types'
 import { fetchMyLeagues } from '../api/league'
 import { Entrance, GradientBackground, PressableScale, glow } from '../components/effects'
+import { TabIntro } from '../components/guide/TabIntro'
 import {
   fmtMoney, leagueShareMessage, leagueStatusColor, leagueStatusLabel,
 } from '../components/league_parts/leagueShared'
@@ -61,23 +62,15 @@ export const LeagueTab = memo(function LeagueTab({ authToken, refreshing, onOpen
       refreshControl={<RefreshControl refreshing={!!refreshing || loading} onRefresh={load} />}
       contentContainerStyle={styles.content}
     >
-      {/* 헤더 — 그라데이션 히어로 (트로피 골드) */}
-      <View style={[{ borderRadius: 18, overflow: 'hidden', padding: 16, gap: 7 }, glow('#f59e0b', 16, 0.4)]}>
-        <GradientBackground
-          colors={[{ offset: '0', color: '#f59e0b' }, { offset: '0.55', color: '#ea580c' }, { offset: '1', color: '#9a3412' }]}
-          radius={18} x1="0" y1="0" x2="1" y2="1"
-        />
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <Trophy size={20} color="#ffffff" strokeWidth={2.5} />
-          <Text style={{ color: '#ffffff', fontSize: 20, fontWeight: '900', letterSpacing: 0.5 }}>친구 모의투자</Text>
-        </View>
-        <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: '900', lineHeight: 22 }}>
-          친구들과 수익률 1등을 가려보세요.
-        </Text>
-        <Text style={{ color: '#ffffffd0', fontSize: 12.5, lineHeight: 18, fontWeight: '600' }}>
-          자본금·기간을 정해놓고 모의로 경쟁합니다. 매수가는 실시간 시세로 잠기고, 마감엔 시상대에서 순위가 갈립니다.
-        </Text>
-      </View>
+      {/* 탭 인트로 — 컴팩트 타이틀, 처음 몇 번만 펼친 설명 */}
+      <TabIntro
+        tabKey="league"
+        icon={Trophy}
+        title="리그"
+        tagline="친구와 모의투자 수익률 경쟁"
+        description="자본금·기간을 정해 친구들과 가상으로 경쟁해요. 매수가는 실시간 시세로 잠기고, 마감 때 시상대에서 순위가 갈립니다. 리그를 만들거나 친구 코드로 참가하세요."
+        accent="#f59e0b"
+      />
 
       {/* 액션 */}
       <View style={[styles.card, { gap: 12 }]}>

@@ -1,6 +1,9 @@
 import { memo, useMemo, useRef, useState } from 'react'
 import { Platform, RefreshControl, ScrollView, TextInput } from 'react-native'
+import { Briefcase } from 'lucide-react-native'
 import { useStyles } from '../styles'
+import { useTheme } from '../theme'
+import { TabIntro } from '../components/guide/TabIntro'
 import type {
   DisclosureItem,
   HoldingPosition,
@@ -62,6 +65,7 @@ export const StocksTab = memo(function StocksTab({
   onDeleteAllFavorites,
 }: Props) {
   const styles = useStyles()
+  const { palette } = useTheme()
   const positions = portfolio?.positions ?? []
   const isWeb = Platform.OS === 'web'
 
@@ -152,6 +156,16 @@ export const StocksTab = memo(function StocksTab({
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       contentContainerStyle={[styles.content, isWeb && styles.contentWeb]}
     >
+      {/* 탭 인트로 — 컴팩트 타이틀, 처음 몇 번만 펼친 설명 */}
+      <TabIntro
+        tabKey="stocks"
+        icon={Briefcase}
+        title="종목"
+        tagline="보유·관심 종목을 한 곳에서 관리"
+        description="종목을 검색해 관심목록에 담거나 보유 내역을 기록하면, 실시간 손익과 보유 종목 관련 공시까지 함께 추적돼요. 정렬·필터로 원하는 순서대로 볼 수 있습니다."
+        accent={palette.brandAccent}
+      />
+
       <StockSearchSection
         stockSearch={stockSearch}
         stockMarketFilter={stockMarketFilter}

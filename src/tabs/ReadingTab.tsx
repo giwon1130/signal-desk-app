@@ -17,7 +17,9 @@ import { useTheme } from '../theme'
 import type { Leader, ReadingPost } from '../types'
 import { applyForLeader, fetchFeed, fetchFollowing, fetchLeaderEligibility, fetchMyLeader, subscribe, unsubscribe } from '../api/reading'
 import { PostCard } from '../components/reading_parts/PostCard'
-import { Entrance, GradientBackground, glow } from '../components/effects'
+import { Entrance } from '../components/effects'
+import { TabIntro } from '../components/guide/TabIntro'
+import { EmptyGuide } from '../components/guide/EmptyGuide'
 import { ReadingEventModal } from '../components/reading_parts/ReadingEventModal'
 import { DiscoverLeadersModal } from '../components/reading_parts/DiscoverLeadersModal'
 import { readingShareMessage, subscribeErrorMessage } from '../components/reading_parts/readingShared'
@@ -137,31 +139,15 @@ export const ReadingTab = memo(function ReadingTab({ authToken, refreshing, refr
       refreshControl={<RefreshControl refreshing={!!refreshing || loading} onRefresh={load} />}
       contentContainerStyle={styles.content}
     >
-      {/* 헤더 — 그라데이션 히어로 */}
-      <View style={[{ borderRadius: 18, overflow: 'hidden', padding: 16, gap: 7 }, glow(palette.brandAccent, 16, 0.45)]}>
-        <GradientBackground
-          colors={[{ offset: '0', color: palette.brandAccent }, { offset: '0.55', color: palette.blue }, { offset: '1', color: '#4f46e5' }]}
-          radius={18} x1="0" y1="0" x2="1" y2="1"
-        />
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <Megaphone size={20} color="#ffffff" strokeWidth={2.6} />
-          <Text style={{ color: '#ffffff', fontSize: 20, fontWeight: '900', letterSpacing: 0.5 }}>리딩</Text>
-          <View style={{ flex: 1 }} />
-          <View style={[
-            { flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: '#ffffff', borderRadius: 999, paddingHorizontal: 9, paddingVertical: 4 },
-            glow('#fbbf24', 9, 0.8),
-          ]}>
-            <Text style={{ fontSize: 11 }}>🎉</Text>
-            <Text style={{ color: '#b45309', fontSize: 11, fontWeight: '900' }}>오픈 이벤트 · 무료</Text>
-          </View>
-        </View>
-        <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: '900', lineHeight: 22 }}>
-          콜을 기록으로 남기세요.
-        </Text>
-        <Text style={{ color: '#ffffffd0', fontSize: 12.5, lineHeight: 18, fontWeight: '600' }}>
-          종목을 공유하면 진입가가 자동 박제되고, 이후 수익률이 그대로 추적됩니다. 구독자는 검증된 콜만 받아봅니다.
-        </Text>
-      </View>
+      {/* 탭 인트로 — 컴팩트 타이틀, 처음 몇 번만 펼친 설명 (큰 히어로 대신) */}
+      <TabIntro
+        tabKey="reading"
+        icon={Megaphone}
+        title="리딩"
+        tagline="🎉 지금 무료 · 검증된 콜 구독"
+        description="리더가 종목을 콜하면 진입가가 자동 박제되고 이후 수익률이 그대로 추적돼요. 적중률로 검증된 리더를 구독하면 그분의 콜이 내 피드에 올라옵니다."
+        accent={palette.brandAccent}
+      />
 
       {/* 리더 섹션 — 이미 리더이거나 권한 있는 계정에만 */}
       {leader ? (
@@ -361,25 +347,21 @@ export const ReadingTab = memo(function ReadingTab({ authToken, refreshing, refr
             </Pressable>
           </View>
         ) : feed.length === 0 ? (
-          <View style={{ paddingVertical: 26, alignItems: 'center', gap: 8 }}>
-            <Megaphone size={28} color={palette.inkFaint} strokeWidth={1.8} />
-            <Text style={{ color: palette.inkMuted, fontSize: 12, fontWeight: '700' }}>아직 리딩이 없습니다</Text>
-            <Text style={{ color: palette.inkFaint, fontSize: 11, textAlign: 'center', lineHeight: 16 }}>
-              {isApproved ? '첫 리딩을 써보거나, ' : ''}리더를 구독하면 그분의 콜이 여기 올라와요.
-            </Text>
-            <Pressable
-              onPress={() => setShowDiscover(true)}
-              accessibilityRole="button"
-              style={({ pressed }) => ({
-                marginTop: 4, flexDirection: 'row', alignItems: 'center', gap: 6,
-                backgroundColor: pressed ? palette.brandAccent + 'cc' : palette.brandAccent,
-                borderRadius: 999, paddingHorizontal: 16, paddingVertical: 9,
-              })}
-            >
-              <Compass size={14} color={palette.bg} strokeWidth={2.5} />
-              <Text style={{ color: palette.bg, fontSize: 12, fontWeight: '800' }}>리더 둘러보기</Text>
-            </Pressable>
-          </View>
+          <EmptyGuide
+            icon={Megaphone}
+            accent={palette.brandAccent}
+            title="아직 리딩이 없어요"
+            description="검증된 리더가 종목을 콜하면 그 분의 매매 아이디어가 여기 실시간으로 올라옵니다."
+            steps={[
+              { n: 1, text: '리더 둘러보기에서 적중률·구독자 수를 비교해 마음에 드는 리더를 찾으세요.' },
+              { n: 2, text: '구독하면 그 리더의 콜이 이 피드에 쌓입니다.' },
+              ...(isApproved ? [{ n: 3, text: '리더로 승인되셨네요 — 직접 첫 리딩을 써보세요.' }] : []),
+            ]}
+            actions={[
+              { label: '리더 둘러보기', onPress: () => setShowDiscover(true), primary: true },
+              ...(isApproved ? [{ label: '리딩 쓰기', onPress: onCompose }] : []),
+            ]}
+          />
         ) : (
           feed.map((p, i) => (
             <Entrance key={p.id} index={i}>
