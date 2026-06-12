@@ -11,7 +11,7 @@
 import { memo, useCallback, useEffect, useState } from 'react'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { Pressable, RefreshControl, ScrollView, Share, Text, TextInput, View } from 'react-native'
-import { Megaphone, PenLine, Plus, Share2, X } from 'lucide-react-native'
+import { Compass, Megaphone, PenLine, Plus, Share2, X } from 'lucide-react-native'
 import { useStyles } from '../styles'
 import { useTheme } from '../theme'
 import type { Leader, ReadingPost } from '../types'
@@ -19,6 +19,7 @@ import { applyForLeader, fetchFeed, fetchFollowing, fetchLeaderEligibility, fetc
 import { PostCard } from '../components/reading_parts/PostCard'
 import { Entrance, GradientBackground, glow } from '../components/effects'
 import { ReadingEventModal } from '../components/reading_parts/ReadingEventModal'
+import { DiscoverLeadersModal } from '../components/reading_parts/DiscoverLeadersModal'
 import { readingShareMessage, subscribeErrorMessage } from '../components/reading_parts/readingShared'
 import { apiErrorMessage } from '../utils/apiError'
 
@@ -46,6 +47,7 @@ export const ReadingTab = memo(function ReadingTab({ authToken, refreshing, refr
   const [displayName, setDisplayName] = useState('')
   const [busy, setBusy] = useState(false)
   const [showEvent, setShowEvent] = useState(false)
+  const [showDiscover, setShowDiscover] = useState(false)
 
   // 리딩 첫 진입 시 오픈 이벤트(무료) 안내 모달 — 1회만 (AsyncStorage 플래그).
   useEffect(() => {
@@ -257,6 +259,27 @@ export const ReadingTab = memo(function ReadingTab({ authToken, refreshing, refr
             <Text style={{ color: palette.brandAccent, fontSize: 9, fontWeight: '900' }}>지금 무료</Text>
           </View>
         </View>
+
+        {/* 둘러보기 — 코드 없는 신규 사용자가 리더를 발견하는 주 진입점 */}
+        <Pressable
+          onPress={() => setShowDiscover(true)}
+          accessibilityRole="button"
+          style={({ pressed }) => ({
+            flexDirection: 'row', alignItems: 'center', gap: 8,
+            backgroundColor: pressed ? palette.surfaceAlt : palette.brandAccent + '14',
+            borderWidth: 1, borderColor: palette.brandAccent + '55',
+            borderRadius: 10, paddingHorizontal: 12, paddingVertical: 11,
+          })}
+        >
+          <Compass size={16} color={palette.brandAccent} strokeWidth={2.4} />
+          <View style={{ flex: 1 }}>
+            <Text style={{ color: palette.ink, fontSize: 13, fontWeight: '800' }}>리더 둘러보기</Text>
+            <Text style={{ color: palette.inkMuted, fontSize: 11 }}>적중률 검증된 리더를 코드 없이 바로 구독</Text>
+          </View>
+          <Text style={{ color: palette.inkFaint, fontSize: 14 }}>›</Text>
+        </Pressable>
+
+        <Text style={{ color: palette.inkFaint, fontSize: 11, textAlign: 'center' }}>또는 친구의 코드로 직접 구독</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <View style={{ flex: 1 }}>
             <TextInput
@@ -338,12 +361,24 @@ export const ReadingTab = memo(function ReadingTab({ authToken, refreshing, refr
             </Pressable>
           </View>
         ) : feed.length === 0 ? (
-          <View style={{ paddingVertical: 26, alignItems: 'center', gap: 6 }}>
+          <View style={{ paddingVertical: 26, alignItems: 'center', gap: 8 }}>
             <Megaphone size={28} color={palette.inkFaint} strokeWidth={1.8} />
             <Text style={{ color: palette.inkMuted, fontSize: 12, fontWeight: '700' }}>아직 리딩이 없습니다</Text>
             <Text style={{ color: palette.inkFaint, fontSize: 11, textAlign: 'center', lineHeight: 16 }}>
-              {isApproved ? '첫 리딩을 써보거나, ' : ''}친구 리더의 코드로 구독해보세요.
+              {isApproved ? '첫 리딩을 써보거나, ' : ''}리더를 구독하면 그분의 콜이 여기 올라와요.
             </Text>
+            <Pressable
+              onPress={() => setShowDiscover(true)}
+              accessibilityRole="button"
+              style={({ pressed }) => ({
+                marginTop: 4, flexDirection: 'row', alignItems: 'center', gap: 6,
+                backgroundColor: pressed ? palette.brandAccent + 'cc' : palette.brandAccent,
+                borderRadius: 999, paddingHorizontal: 16, paddingVertical: 9,
+              })}
+            >
+              <Compass size={14} color={palette.bg} strokeWidth={2.5} />
+              <Text style={{ color: palette.bg, fontSize: 12, fontWeight: '800' }}>리더 둘러보기</Text>
+            </Pressable>
           </View>
         ) : (
           feed.map((p, i) => (
@@ -355,6 +390,13 @@ export const ReadingTab = memo(function ReadingTab({ authToken, refreshing, refr
       </View>
     </ScrollView>
     <ReadingEventModal visible={showEvent} monthlyPriceWon={9900} onClose={closeEvent} />
+    <DiscoverLeadersModal
+      visible={showDiscover}
+      onClose={() => setShowDiscover(false)}
+      onOpenLeader={onOpenLeader}
+      onSubscribed={() => void load()}
+      toast={toast}
+    />
     </>
   )
 })

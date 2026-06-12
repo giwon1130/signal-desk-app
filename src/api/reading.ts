@@ -71,6 +71,32 @@ export async function unsubscribe(leaderUserId: string): Promise<void> {
   if (!r.ok) throw new Error((await r.text()) || 'unsubscribe-failed')
 }
 
+/** 둘러보기에서 코드 없이 userId 로 구독. */
+export async function subscribeByLeaderId(leaderUserId: string): Promise<void> {
+  const r = await authedFetch(`${base}/subscribe/${leaderUserId}`, { method: 'POST' })
+  if (!r.ok) throw new Error((await r.text()) || 'subscribe-failed')
+}
+
+export type LeaderCard = {
+  userId: string
+  displayName: string
+  bio: string
+  followerCount: number
+  totalCalls: number
+  hitRate: number
+  avgReturnPct: number | null
+  following: boolean
+}
+
+/** 리딩 둘러보기 — 승인된 리더 목록(적중률·구독자 순). */
+export async function fetchDiscoverLeaders(): Promise<LeaderCard[]> {
+  try {
+    const r = await authedFetch(`${base}/leaders`)
+    const j = (await r.json()) as ApiResponse<LeaderCard[]>
+    return j.success ? j.data ?? [] : []
+  } catch { return [] }
+}
+
 export async function fetchFollowing(): Promise<Leader[]> {
   const r = await authedFetch(`${base}/following`)
   const j = (await r.json()) as ApiResponse<Leader[]>
