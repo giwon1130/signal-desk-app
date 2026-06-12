@@ -11,6 +11,8 @@ import { useTheme, type Palette } from '../../theme'
 import { fetchDiscoverLeaders, subscribeByLeaderId, type LeaderCard } from '../../api/reading'
 import { fmtPct } from './readingShared'
 
+type SortKey = 'hit' | 'followers' | 'calls'
+
 type Props = {
   visible: boolean
   onClose: () => void
@@ -25,6 +27,7 @@ export function DiscoverLeadersModal({ visible, onClose, onOpenLeader, onSubscri
   const [leaders, setLeaders] = useState<LeaderCard[]>([])
   const [loading, setLoading] = useState(false)
   const [busyId, setBusyId] = useState('')
+  const [sort, setSort] = useState<SortKey>('hit')
 
   const load = async () => {
     setLoading(true)
@@ -32,6 +35,16 @@ export function DiscoverLeadersModal({ visible, onClose, onOpenLeader, onSubscri
     setLoading(false)
   }
   useEffect(() => { if (visible) void load() }, [visible])
+
+  // 정렬 — 적중률(검증)/구독자(인기)/콜 많은 순. 콜 0건은 항상 뒤로(통계 의미 없음).
+  const sortedLeaders = [...leaders].sort((a, b) => {
+    if (sort === 'hit') {
+      if ((a.totalCalls === 0) !== (b.totalCalls === 0)) return a.totalCalls === 0 ? 1 : -1
+      return b.hitRate - a.hitRate || b.followerCount - a.followerCount
+    }
+    if (sort === 'followers') return b.followerCount - a.followerCount
+    return b.totalCalls - a.totalCalls // 'calls'
+  })
 
   const handleSubscribe = async (l: LeaderCard) => {
     if (busyId) return
@@ -56,6 +69,27 @@ export function DiscoverLeadersModal({ visible, onClose, onOpenLeader, onSubscri
           <Text style={{ color: palette.inkMuted, fontSize: 12, lineHeight: 18 }}>
             적중률이 검증된 리더를 구독하면 그분의 종목 콜이 내 피드에 올라와요.
           </Text>
+          {/* 정렬 탭 — 적중률(검증)/구독자(인기)/콜 많은 순 */}
+          {leaders.length > 1 ? (
+            <View style={{ flexDirection: 'row', gap: 6 }}>
+              {([['hit', '적중률순'], ['followers', '인기순'], ['calls', '콜 많은 순']] as const).map(([k, label]) => {
+                const active = sort === k
+                return (
+                  <Pressable
+                    key={k}
+                    onPress={() => setSort(k)}
+                    style={{
+                      paddingHorizontal: 11, paddingVertical: 6, borderRadius: 999,
+                      backgroundColor: active ? palette.brandAccent + '22' : 'transparent',
+                      borderWidth: 1, borderColor: active ? palette.brandAccent : palette.border,
+                    }}
+                  >
+                    <Text style={{ fontSize: 11, fontWeight: '800', color: active ? palette.brandAccent : palette.inkMuted }}>{label}</Text>
+                  </Pressable>
+                )
+              })}
+            </View>
+          ) : null}
           {loading ? (
             <View style={{ paddingVertical: 40, alignItems: 'center' }}><ActivityIndicator color={palette.brandAccent} /></View>
           ) : leaders.length === 0 ? (
@@ -65,7 +99,7 @@ export function DiscoverLeadersModal({ visible, onClose, onOpenLeader, onSubscri
               <Text style={{ color: palette.inkFaint, fontSize: 11, textAlign: 'center' }}>친구의 구독 코드가 있으면 코드로 구독할 수 있어요</Text>
             </View>
           ) : (
-            leaders.map((l) => (
+            sortedLeaders.map((l) => (
               <View key={l.userId} style={{ backgroundColor: palette.surface, borderRadius: 12, borderWidth: 1, borderColor: palette.border, padding: 14, gap: 8 }}>
                 <Pressable onPress={() => onOpenLeader?.(l.userId)} style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1, gap: 3 })}>
                   <Text style={{ color: palette.ink, fontSize: 15, fontWeight: '800' }} numberOfLines={1}>{l.displayName}</Text>

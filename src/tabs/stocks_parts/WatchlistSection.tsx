@@ -17,6 +17,8 @@ type Props = {
   onDeleteFavorite: (id: string) => void
   onDeleteAllFavorites: () => void
   onStockSearchChange: (value: string) => void
+  /** 빈 상태 '종목 탐색하기' — 상단 검색창으로 스크롤+포커스. */
+  onFocusSearch?: () => void
 }
 
 export function WatchlistSection({
@@ -28,6 +30,7 @@ export function WatchlistSection({
   onDeleteFavorite,
   onDeleteAllFavorites,
   onStockSearchChange,
+  onFocusSearch,
 }: Props) {
   const styles = useStyles()
   const { palette } = useTheme()
@@ -146,7 +149,7 @@ export function WatchlistSection({
             위에서 종목 검색 후 + 버튼을 한 번 누르면{'\n'}바로 관심종목으로 담겨.
           </Text>
           <Pressable
-            onPress={() => onStockSearchChange('')}
+            onPress={() => (onFocusSearch ? onFocusSearch() : onStockSearchChange(''))}
             style={({ pressed }) => [
               {
                 marginTop: 6, borderRadius: 999,

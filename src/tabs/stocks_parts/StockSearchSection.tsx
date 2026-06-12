@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type RefObject } from 'react'
 import { Pressable, Text, TextInput, View } from 'react-native'
 import { Plus, Radio, Search, X } from 'lucide-react-native'
 import { useStyles } from '../../styles'
@@ -23,6 +23,7 @@ type Props = {
   onDeleteFavorite: (id: string) => Promise<void> | void
   liveOf: LiveOf
   cardFull?: boolean
+  inputRef?: RefObject<TextInput | null>
 }
 
 export function StockSearchSection({
@@ -38,6 +39,7 @@ export function StockSearchSection({
   onDeleteFavorite,
   liveOf,
   cardFull,
+  inputRef,
 }: Props) {
   const styles = useStyles()
   const { palette } = useTheme()
@@ -76,6 +78,7 @@ export function StockSearchSection({
         </Text>
       </View>
       <TextInput
+        ref={inputRef}
         value={stockSearch}
         onChangeText={onStockSearchChange}
         placeholder="종목명, 티커, 섹터 검색 (예: 삼성, AAPL)"

@@ -1,5 +1,5 @@
-import { memo, useMemo, useState } from 'react'
-import { Platform, RefreshControl, ScrollView } from 'react-native'
+import { memo, useMemo, useRef, useState } from 'react'
+import { Platform, RefreshControl, ScrollView, TextInput } from 'react-native'
 import { useStyles } from '../styles'
 import type {
   DisclosureItem,
@@ -137,8 +137,17 @@ export const StocksTab = memo(function StocksTab({
     return { ...portfolio, positions: sortedPositions }
   }, [portfolio, sortedPositions])
 
+  // 관심종목 빈 상태 "종목 탐색하기" → 상단으로 스크롤 + 검색창 포커스 (기존엔 no-op 이었음).
+  const scrollRef = useRef<ScrollView>(null)
+  const searchRef = useRef<TextInput>(null)
+  const focusSearch = () => {
+    scrollRef.current?.scrollTo({ y: 0, animated: true })
+    setTimeout(() => searchRef.current?.focus(), 250)
+  }
+
   return (
     <ScrollView
+      ref={scrollRef}
       style={styles.scroll}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       contentContainerStyle={[styles.content, isWeb && styles.contentWeb]}
@@ -156,6 +165,7 @@ export const StocksTab = memo(function StocksTab({
         onDeleteFavorite={onDeleteFavorite}
         liveOf={liveOf}
         cardFull={isWeb}
+        inputRef={searchRef}
       />
       {/* 보유/관심 공통 정렬·필터 (Spec 결정 6) */}
       <WorkspaceFilterBar
@@ -178,6 +188,7 @@ export const StocksTab = memo(function StocksTab({
         onDeleteFavorite={onDeleteFavorite}
         onDeleteAllFavorites={onDeleteAllFavorites}
         onStockSearchChange={onStockSearchChange}
+        onFocusSearch={focusSearch}
       />
       {/* ── 보유/관심 종목 공시 (DART) — 오늘 탭에서 이동 ── */}
       <DisclosureCard disclosures={disclosures} onOpenDetail={onOpenDetail} />
