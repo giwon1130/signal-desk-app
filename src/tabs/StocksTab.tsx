@@ -93,31 +93,43 @@ export const StocksTab = memo(function StocksTab({
   const applyFilter = <T extends { market: string }>(items: T[]) =>
     marketFilter === 'ALL' ? items : items.filter((it) => it.market === marketFilter)
 
+  // 정렬·합계는 PortfolioSection 행과 같은 라이브 값으로 계산해야 화면과 일치한다.
+  // (기존엔 저장된 profitAmount/profitRate 로 정렬 → 라이브 시세와 어긋났음)
+  const liveProfitOf = (p: HoldingPosition) => {
+    const live = liveOf(p.market, p.ticker, p.currentPrice, 0).price
+    const profitAmount = (live - p.buyPrice) * p.quantity
+    const profitRate = p.buyPrice > 0 ? ((live - p.buyPrice) / p.buyPrice) * 100 : p.profitRate
+    return { profitAmount, profitRate }
+  }
+
   const sortedPositions = useMemo<HoldingPosition[]>(() => {
     const filtered = applyFilter(positions)
     if (sortKey === 'added') return filtered
     const arr = [...filtered]
     if (sortKey === 'profit') {
-      arr.sort((a, b) => b.profitAmount - a.profitAmount)
+      arr.sort((a, b) => liveProfitOf(b).profitAmount - liveProfitOf(a).profitAmount)
     } else if (sortKey === 'change') {
-      arr.sort((a, b) => b.profitRate - a.profitRate)
+      arr.sort((a, b) => liveProfitOf(b).profitRate - liveProfitOf(a).profitRate)
     } else if (sortKey === 'name') {
       arr.sort((a, b) => a.name.localeCompare(b.name))
     }
     return arr
-  }, [positions, marketFilter, sortKey])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [positions, marketFilter, sortKey, livePrices])
 
   const sortedWatchlist = useMemo<WatchItem[]>(() => {
     const filtered = applyFilter(watchlist)
     if (sortKey === 'added' || sortKey === 'profit') return filtered  // 'profit' 은 관심에 의미 없음 → added fallback
     const arr = [...filtered]
     if (sortKey === 'change') {
-      arr.sort((a, b) => b.changeRate - a.changeRate)
+      const rateOf = (w: WatchItem) => liveOf(w.market, w.ticker, w.price, w.changeRate).changeRate
+      arr.sort((a, b) => rateOf(b) - rateOf(a))
     } else if (sortKey === 'name') {
       arr.sort((a, b) => a.name.localeCompare(b.name))
     }
     return arr
-  }, [watchlist, marketFilter, sortKey])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [watchlist, marketFilter, sortKey, livePrices])
 
   // sortedPositions 를 다시 PortfolioSummary 형태로 감싸기 — PortfolioSection 는 portfolio prop 받음.
   const sortedPortfolio = useMemo<PortfolioSummary | null>(() => {
@@ -161,6 +173,7 @@ export const StocksTab = memo(function StocksTab({
         watchlist={sortedWatchlist}
         favoriteDeletingId={favoriteDeletingId}
         bulkDeleting={bulkDeleting}
+        liveOf={liveOf}
         onOpenDetail={onOpenDetail}
         onDeleteFavorite={onDeleteFavorite}
         onDeleteAllFavorites={onDeleteAllFavorites}

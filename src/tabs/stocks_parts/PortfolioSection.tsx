@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { Briefcase, Radio } from 'lucide-react-native'
 import { useStyles } from '../../styles'
@@ -20,6 +21,18 @@ export function PortfolioSection({ portfolio, liveOf, onOpenDetail }: Props) {
   const { palette } = useTheme()
   const positions = portfolio?.positions ?? []
 
+  // 헤더 합계도 각 행과 같은 라이브 시세로 계산 → 헤더 총손익 = 보이는 행들의 합 (불일치 제거).
+  const totals = useMemo(() => {
+    let profit = 0
+    let cost = 0
+    for (const p of positions) {
+      const live = liveOf(p.market, p.ticker, p.currentPrice, 0).price
+      profit += (live - p.buyPrice) * p.quantity
+      cost += p.buyPrice * p.quantity
+    }
+    return { profit, rate: cost > 0 ? (profit / cost) * 100 : 0 }
+  }, [positions, liveOf])
+
   return (
     <View style={styles.card}>
       <View style={styles.sectionHeaderRow}>
@@ -29,12 +42,12 @@ export function PortfolioSection({ portfolio, liveOf, onOpenDetail }: Props) {
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <Text style={styles.metaText}>{positions.length}개</Text>
-          {portfolio && positions.length > 0 ? (
+          {positions.length > 0 ? (
             <Text style={[styles.metaText, {
-              color: portfolio.totalProfit >= 0 ? palette.up : palette.down,
+              color: totals.profit >= 0 ? palette.up : palette.down,
               fontWeight: '800',
             }]}>
-              {formatSignedPrice(portfolio.totalProfit, 'KR')} ({formatSignedRate(portfolio.totalProfitRate)})
+              {formatSignedPrice(totals.profit, 'KR')} ({formatSignedRate(totals.rate)})
             </Text>
           ) : null}
         </View>

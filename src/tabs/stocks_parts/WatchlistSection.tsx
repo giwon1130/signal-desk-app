@@ -1,13 +1,18 @@
 import { Alert, Pressable, Text, View } from 'react-native'
 import { Search, Sparkles, Star, Trash2 } from 'lucide-react-native'
 import { useStyles } from '../../styles'
-import { useTheme } from '../../theme'
+import { marketColor, useTheme } from '../../theme'
+import { formatPrice, formatSignedRate } from '../../utils'
 import type { WatchItem } from '../../types'
+
+type LiveOf = (market: string, ticker: string, fallbackPrice: number, fallbackRate: number) =>
+  { price: number; changeRate: number; live: boolean }
 
 type Props = {
   watchlist: WatchItem[]
   favoriteDeletingId: string
   bulkDeleting: boolean
+  liveOf: LiveOf
   onOpenDetail: (market: string, ticker: string, name?: string) => void
   onDeleteFavorite: (id: string) => void
   onDeleteAllFavorites: () => void
@@ -18,6 +23,7 @@ export function WatchlistSection({
   watchlist,
   favoriteDeletingId,
   bulkDeleting,
+  liveOf,
   onOpenDetail,
   onDeleteFavorite,
   onDeleteAllFavorites,
@@ -73,13 +79,15 @@ export function WatchlistSection({
         </View>
       </View>
       {watchlist.length ? (
-        watchlist.map((item) => (
+        watchlist.map((item) => {
+          const live = liveOf(item.market, item.ticker, item.price, item.changeRate)
+          return (
           <View key={`${item.market}-${item.ticker}-${item.id}`} style={styles.favoriteRow}>
             <Pressable
               onPress={() => onOpenDetail(item.market, item.ticker, item.name)}
               style={styles.metricLeft}
             >
-              <Text style={styles.metricName}>{item.name}</Text>
+              <Text style={styles.metricName} numberOfLines={1} ellipsizeMode="tail">{item.name}</Text>
               <Text style={styles.metricState}>{item.market} · {item.ticker} · {item.sector}</Text>
               <Text style={styles.cardNote}>{item.stance}</Text>
               {(item.technical || (item.volumeRatio != null && item.volumeRatio >= 2)) ? (
@@ -101,16 +109,27 @@ export function WatchlistSection({
                 </View>
               ) : null}
             </Pressable>
-            <Pressable
-              onPress={() => item.id && onDeleteFavorite(item.id)}
-              style={styles.favoriteDeleteButton}
-            >
-              <Text style={styles.favoriteDeleteText}>
-                {favoriteDeletingId === item.id ? '...' : '해제'}
-              </Text>
-            </Pressable>
+            <View style={{ alignItems: 'flex-end', gap: 4 }}>
+              <View style={{ alignItems: 'flex-end' }}>
+                <Text style={{ color: palette.ink, fontSize: 13, fontWeight: '800', fontVariant: ['tabular-nums'] }}>
+                  {formatPrice(live.price, item.market)}
+                </Text>
+                <Text style={{ color: marketColor(palette, item.market, live.changeRate), fontSize: 12, fontWeight: '800', fontVariant: ['tabular-nums'] }}>
+                  {formatSignedRate(live.changeRate)}
+                </Text>
+              </View>
+              <Pressable
+                onPress={() => item.id && onDeleteFavorite(item.id)}
+                style={styles.favoriteDeleteButton}
+              >
+                <Text style={styles.favoriteDeleteText}>
+                  {favoriteDeletingId === item.id ? '...' : '해제'}
+                </Text>
+              </Pressable>
+            </View>
           </View>
-        ))
+          )
+        })
       ) : (
         <View style={{ alignItems: 'center', gap: 10, paddingVertical: 24 }}>
           <View style={{
