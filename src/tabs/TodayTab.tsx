@@ -15,9 +15,7 @@ import type {
   MarketEvent,
   MarketSummaryData,
   MediaSummaryItem,
-  MoverReason,
   NewsSentiment,
-  TopMoversResponse,
 } from '../types'
 import type { MarketPreference } from '../api/alertPreferences'
 import {
@@ -30,9 +28,8 @@ import { DisclosureCard } from './today_parts/DisclosureCard'
 import { EventsCard } from './today_parts/EventsCard'
 import { HoldingMonitor } from './today_parts/HoldingMonitor'
 import { SeasonRulesCard } from './today_parts/SeasonRulesCard'
-import { Entrance, Skeleton } from '../components/effects'
+import { Entrance } from '../components/effects'
 import { MarketMoodCard } from './market_parts/MarketMoodCard'
-import { TopMoversMarketCard } from './market_parts/TopMoversMarketCard'
 import { WatchAlertList } from './market_parts/WatchAlertList'
 
 type Props = {
@@ -43,9 +40,7 @@ type Props = {
   mediaSummaries: MediaSummaryItem[]
   upcomingEvents: MarketEvent[]
   disclosures: DisclosureItem[]
-  // v2: Market 탭 흡수 — 합성위험도/시장 무드 지표/top movers/watch alerts.
-  topMovers: TopMoversResponse | null
-  moverReasons: MoverReason[]
+  // v2: Market 탭 흡수 — 합성위험도/시장 무드 지표/watch alerts. (급등락은 지수 상세 모달로 이동)
   marketPreference: MarketPreference
   onOpenDetail: (market: string, ticker: string, name?: string) => void
   refreshing: boolean
@@ -61,8 +56,6 @@ export const TodayTab = memo(function TodayTab({
   mediaSummaries,
   upcomingEvents,
   disclosures,
-  topMovers,
-  moverReasons,
   marketPreference,
   onOpenDetail,
   refreshing,
@@ -187,17 +180,7 @@ export const TodayTab = memo(function TodayTab({
 
       {/* AI 추천(단타 픽)은 AI 탭으로 분리 (#6) — 오늘 탭은 오늘 시장/보유 상태만 */}
 
-      {/* ── 시장 발견 (v2): 급등락 — 시장별 1카드(급등|급락 좌우), 프로필별 필터 ── */}
-      {!topMovers ? (
-        // 도착 전 자리 잡기 — 뒤늦게 카드가 '뚝' 생기며 레이아웃이 밀리는 것 완화
-        <Skeleton width="100%" height={150} radius={14} color={palette.border} />
-      ) : null}
-      {showKr && topMovers ? (
-        <TopMoversMarketCard topMovers={topMovers} moverReasons={moverReasons} market="KR" onOpenDetail={onOpenDetail} />
-      ) : null}
-      {showUs && topMovers?.us ? (
-        <TopMoversMarketCard topMovers={topMovers} moverReasons={moverReasons} market="US" onOpenDetail={onOpenDetail} />
-      ) : null}
+      {/* 급등락은 하단 지수 펄스 탭 → 지수 상세 모달로 이동 (오늘 탭 정리 + 종목명 겹침 해소) */}
 
       {/* ── 관심종목 알림 (Market 탭에서 흡수) ── */}
       <WatchAlertList alerts={summary?.watchAlerts ?? []} />

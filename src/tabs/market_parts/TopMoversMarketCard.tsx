@@ -12,12 +12,14 @@ type Props = {
   moverReasons?: MoverReason[]
   market: 'KR' | 'US'
   onOpenDetail: (market: string, ticker: string, name?: string) => void
+  /** 지수 상세 모달처럼 이미 그 화면이 주목적인 곳에선 펼친 채로. */
+  defaultCollapsed?: boolean
 }
 
 const TOP_N = 5
 
 /** 시장별 급등락 카드 — 급등(좌)·급락(우) 한 카드에. */
-export function TopMoversMarketCard({ topMovers, moverReasons, market, onOpenDetail }: Props) {
+export function TopMoversMarketCard({ topMovers, moverReasons, market, onOpenDetail, defaultCollapsed }: Props) {
   const styles = useStyles()
   const { palette } = useTheme()
   const isKr = market === 'KR'
@@ -47,6 +49,7 @@ export function TopMoversMarketCard({ topMovers, moverReasons, market, onOpenDet
 
   return (
     <CollapsibleCard
+      defaultCollapsed={defaultCollapsed}
       title={
         <View style={styles.cardTitleRow}>
           <Text style={styles.cardTitle}>{flag} 급등락</Text>
@@ -112,9 +115,10 @@ function Column({
                 paddingVertical: 6, gap: 2, opacity: pressed ? 0.6 : 1,
               })}
             >
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
-                <Text style={{ color: palette.ink, fontSize: 12, fontWeight: '700', flex: 1 }} numberOfLines={1}>{m.name}</Text>
-                <Text style={{ color, fontSize: 12, fontWeight: '800', fontVariant: ['tabular-nums'] }}>{formatSignedRate(m.changeRate)}</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                {/* flex:1 + minWidth:0 로 긴 종목명이 말줄임되게(겹침 방지), 등락률은 flexShrink:0 으로 고정폭 보장 */}
+                <Text style={{ color: palette.ink, fontSize: 12, fontWeight: '700', flex: 1, minWidth: 0 }} numberOfLines={1} ellipsizeMode="tail">{m.name}</Text>
+                <Text style={{ color, fontSize: 12, fontWeight: '800', fontVariant: ['tabular-nums'], flexShrink: 0 }}>{formatSignedRate(m.changeRate)}</Text>
               </View>
               {reason ? (
                 <Text style={{ color: palette.inkMuted, fontSize: 10, lineHeight: 14 }} numberOfLines={2}>{reason}</Text>

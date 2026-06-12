@@ -451,8 +451,6 @@ function AppShell() {
             mediaSummaries={mediaSummaries}
             upcomingEvents={filteredUpcomingEvents}
             disclosures={disclosures}
-            topMovers={topMovers}
-            moverReasons={moverReasons}
             marketPreference={marketPreference}
             onOpenDetail={handleOpenDetail}
             refreshing={refreshing}
@@ -667,6 +665,9 @@ function AppShell() {
         sections={sections}
         initialMarket={indexDetail?.market ?? 'KR'}
         initialLabel={indexDetail?.label ?? ''}
+        topMovers={topMovers}
+        moverReasons={moverReasons}
+        onOpenDetail={handleOpenDetail}
         onClose={() => setIndexDetail(null)}
       />
 
