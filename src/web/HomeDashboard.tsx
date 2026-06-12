@@ -16,6 +16,7 @@ import type {
 import type { MarketPreference } from '../api/alertPreferences'
 import { Sparkles } from 'lucide-react-native'
 import { useTheme, type Palette } from '../theme'
+import { TabIntro } from '../components/guide/TabIntro'
 import { webGrid } from './shared'
 import { GradientCard, Entrance, withAlpha } from './web_effects'
 import { SectorPerformanceWidget } from './widgets/SectorPerformanceWidget'
@@ -65,6 +66,15 @@ export const HomeDashboard = memo(function HomeDashboard(props: Props) {
   const showBrief = props.mediaSummaries.length > 0 || !!props.summary?.briefing
   return (
     <ScrollView style={{ flex: 1 }} contentContainerStyle={{ gap: 14, paddingBottom: 20 }}>
+      {/* 탭 인트로 — 컴팩트 타이틀, 처음 몇 번만 펼친 설명 (네이티브 탭과 동일) */}
+      <TabIntro
+        tabKey="web-today"
+        icon={Sparkles}
+        title="오늘"
+        tagline="내 종목·시장을 하루 한눈에"
+        description="장 상태, 모닝/장중/마감 브리프, 보유·관심 종목, 시장 지수와 핵심 시그널을 데스크톱 밀도로 모아 보여줘요."
+        accent={palette.brandAccent}
+      />
       <Entrance delay={0}>
         <MoodHero summary={props.summary} marketPreference={props.marketPreference} palette={palette} />
       </Entrance>

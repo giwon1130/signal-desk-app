@@ -206,12 +206,31 @@ function PlanSection({ plan, palette }: { plan: string; palette: any }) {
       ) : (
         <>
           <Text style={{ color: palette.inkSub, fontSize: 12, lineHeight: 17 }}>
-            PRO 가 되면 시데 AI에게 하루 100회까지 물어볼 수 있어요. (FREE 10회)
+            시데 AI에게 <Text style={{ fontWeight: '900', color: palette.ink }}>하루 100회</Text>까지 물어볼 수 있어요. (FREE 10회)
+          </Text>
+          <Text style={{ color: palette.inkMuted, fontSize: 11, lineHeight: 16 }}>
+            🎉 베타 기간엔 결제 없이 무료로 승인해 드려요. 신청하면 검토 후 알림으로 알려드립니다.
           </Text>
           {status === 'PENDING' ? (
             <Text style={{ color: palette.purple ?? '#7c3aed', fontSize: 12, fontWeight: '800' }}>
               ⏳ 신청 검토 중 — 승인되면 알림으로 알려드려요
             </Text>
+          ) : status === 'DISMISSED' ? (
+            <>
+              <Text style={{ color: palette.inkMuted, fontSize: 11.5 }}>
+                이전 신청이 보류됐어요. 다시 신청할 수 있어요.
+              </Text>
+              <Pressable
+                onPress={() => void handleRequest()}
+                disabled={busy}
+                style={{
+                  backgroundColor: palette.purple ?? '#7c3aed', borderRadius: 9,
+                  paddingVertical: 9, alignItems: 'center', opacity: busy ? 0.6 : 1, marginTop: 2,
+                }}
+              >
+                <Text style={{ color: '#fff', fontSize: 13, fontWeight: '800' }}>{busy ? '신청 중...' : '다시 신청하기'}</Text>
+              </Pressable>
+            </>
           ) : (
             <Pressable
               onPress={() => void handleRequest()}

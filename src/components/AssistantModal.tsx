@@ -157,20 +157,24 @@ export function AssistantModal({ visible, onClose }: Props) {
 
               {/* 한도 도달 → PRO 신청 CTA */}
               {showProCta ? (
-                <Pressable
-                  onPress={() => void handleProRequest()}
-                  disabled={proRequesting}
-                  style={({ pressed }) => ({
-                    alignSelf: 'flex-start',
-                    backgroundColor: palette.purple ?? '#7c3aed',
-                    borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10,
-                    opacity: pressed || proRequesting ? 0.6 : 1,
-                  })}
-                >
-                  <Text style={{ color: '#fff', fontSize: 12.5, fontWeight: '800' }}>
-                    {proRequesting ? '신청 중...' : '💎 PRO 신청하기 — 하루 100회로 늘리기'}
+                <View style={{ alignSelf: 'flex-start', gap: 4 }}>
+                  <Pressable
+                    onPress={() => void handleProRequest()}
+                    disabled={proRequesting}
+                    style={({ pressed }) => ({
+                      backgroundColor: palette.purple ?? '#7c3aed',
+                      borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10,
+                      opacity: pressed || proRequesting ? 0.6 : 1,
+                    })}
+                  >
+                    <Text style={{ color: '#fff', fontSize: 12.5, fontWeight: '800' }}>
+                      {proRequesting ? '신청 중...' : '💎 PRO 신청하기 — 하루 100회로 늘리기'}
+                    </Text>
+                  </Pressable>
+                  <Text style={{ color: palette.inkMuted, fontSize: 10.5 }}>
+                    🎉 베타 기간엔 결제 없이 무료로 승인해 드려요
                   </Text>
-                </Pressable>
+                </View>
               ) : null}
             </ScrollView>
 

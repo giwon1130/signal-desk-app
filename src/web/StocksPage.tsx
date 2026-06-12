@@ -3,6 +3,8 @@ import { Alert, View } from 'react-native'
 import type { HoldingPosition, PortfolioSummary, StockMarketFilter, StockSearchResult, WatchItem } from '../types'
 import { useTheme } from '../theme'
 import { useLivePrices } from '../hooks/useLivePrices'
+import { Briefcase } from 'lucide-react-native'
+import { TabIntro } from '../components/guide/TabIntro'
 import { Toolbar, type Mode } from './stockspage_parts/Toolbar'
 import { DataTable, type Row } from './stockspage_parts/DataTable'
 import type { SortKey, SortDir } from './stockspage_parts/HeaderCell'
@@ -187,6 +189,15 @@ export const StocksPage = memo(function StocksPage(props: Props) {
 
   return (
     <View style={{ gap: 14 }}>
+      {/* 탭 인트로 — 컴팩트 타이틀, 처음 몇 번만 펼친 설명 (네이티브 탭과 동일) */}
+      <TabIntro
+        tabKey="web-stocks"
+        icon={Briefcase}
+        title="종목"
+        tagline="보유·관심 종목을 한 곳에서 관리"
+        description="검색해서 관심목록에 담거나 보유 내역을 기록하면, 실시간 손익과 정렬 가능한 테이블로 한눈에 추적돼요."
+        accent={palette.brandAccent}
+      />
       <Toolbar
         mode={mode}
         onModeChange={setMode}
