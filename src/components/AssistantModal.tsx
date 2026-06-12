@@ -70,14 +70,19 @@ export function AssistantModal({ visible, onClose }: Props) {
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+      {/* 키보드 회피는 최외곽에서 — 시트 안쪽에만 두면 바텀시트가 하단 고정이라 키보드가
+          입력창을 덮는다. 전체를 padding 으로 밀어 시트가 키보드 위로 올라오게. */}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={{ flex: 1 }}
+      >
       <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)' }} onPress={onClose}>
         <View style={{ flex: 1 }} />
         <Pressable
           onPress={(e) => e.stopPropagation()}
           style={{ backgroundColor: palette.bg, borderTopLeftRadius: 20, borderTopRightRadius: 20, height: '82%' }}
         >
-          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
-            {/* 헤더 */}
+          {/* 헤더 */}
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 18, paddingTop: 16, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: palette.border }}>
               <Sparkles size={17} color={palette.purple ?? '#7c3aed'} strokeWidth={2.5} />
               <View style={{ flex: 1 }}>
@@ -205,9 +210,9 @@ export function AssistantModal({ visible, onClose }: Props) {
                 {quota ? ` · 오늘 ${quota.remaining}/${quota.limit}회 남음` : ''}
               </Text>
             </View>
-          </KeyboardAvoidingView>
         </Pressable>
       </Pressable>
+      </KeyboardAvoidingView>
     </Modal>
   )
 }
