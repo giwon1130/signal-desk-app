@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Dimensions, Modal, Pressable, ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Bell, X } from 'lucide-react-native'
+import { Bell, Lock, X } from 'lucide-react-native'
 import { useStyles } from '../styles'
 import { useTheme } from '../theme'
 import {
@@ -22,11 +22,14 @@ type Props = {
   visible: boolean
   authToken: string | null
   onClose: () => void
+  /** PRO 여부 — 미국장 마감 브리프 등 PRO 전용 알림 게이팅 */
+  isPro?: boolean
+  onUpgrade?: () => void
 }
 
 const MINUTES_OPTIONS = [5, 10, 15, 30, 60]
 
-export function ReminderSettingsModal({ visible, authToken, onClose }: Props) {
+export function ReminderSettingsModal({ visible, authToken, onClose, isPro = false, onUpgrade }: Props) {
   const styles = useStyles()
   const { palette } = useTheme()
 
@@ -132,7 +135,23 @@ export function ReminderSettingsModal({ visible, authToken, onClose }: Props) {
             >
               <AlertToggleRow compact title="🌅 모닝 브리프" hint="08:30 KST · 야간 미국장 + 보유 공시" value={prefs.premarketEnabled} disabled={togglesDisabled} onValueChange={(v) => void updatePref({ premarketEnabled: v })} />
               <AlertToggleRow compact title="🔔 마감 브리프" hint="15:40 KST · 마감 정리 + 내일 관전" value={prefs.closeBriefEnabled} disabled={togglesDisabled} onValueChange={(v) => void updatePref({ closeBriefEnabled: v })} />
-              <AlertToggleRow compact title="🌆 미국장 마감 브리프 (새벽)" hint="06:30 KST · NY 마감 직후 주도주·실적" value={prefs.eveningBriefEnabled} disabled={togglesDisabled} onValueChange={(v) => void updatePref({ eveningBriefEnabled: v })} />
+              {!isPro && !prefs.eveningBriefEnabled ? (
+                <Pressable
+                  onPress={() => onUpgrade?.()}
+                  style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 8, opacity: pressed ? 0.8 : 1 })}
+                >
+                  <Lock size={13} color={palette.inkMuted} strokeWidth={2.2} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ color: palette.inkSub, fontSize: 12.5, fontWeight: '700' }}>🌆 미국장 마감 브리프 (새벽)</Text>
+                    <Text style={{ color: palette.inkMuted, fontSize: 10 }}>💎 PRO 전용 — 탭하면 안내</Text>
+                  </View>
+                  <View style={{ backgroundColor: palette.purple ?? '#7c3aed', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 1 }}>
+                    <Text style={{ color: '#fff', fontSize: 9.5, fontWeight: '900' }}>💎 PRO</Text>
+                  </View>
+                </Pressable>
+              ) : (
+                <AlertToggleRow compact title="🌆 미국장 마감 브리프 (새벽)" hint="06:30 KST · NY 마감 직후 주도주·실적" value={prefs.eveningBriefEnabled} disabled={togglesDisabled} onValueChange={(v) => void updatePref({ eveningBriefEnabled: v })} />
+              )}
             </AlertGroup>
 
             {/* 관심종목 watch 그룹 */}

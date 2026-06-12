@@ -14,7 +14,9 @@ import { SettingsModal } from './SettingsModal'
 import { DailyGreetingModal } from './DailyGreetingModal'
 import { AssistantModal } from './AssistantModal'
 import { LoadingScreen } from './LoadingScreen'
+import { ProUpgradeSheet } from './pro/ProUpgrade'
 import { CommandPalette } from '../web/CommandPalette'
+import { isPro as computeIsPro } from '../lib/entitlements'
 import { useTheme } from '../theme'
 import { markV2MigrationShown } from '../utils/onboarding'
 import type { MarketPreference } from '../api/alertPreferences'
@@ -87,6 +89,9 @@ export function GlobalOverlays({
   assistantOpen, setAssistantOpen,
 }: Props) {
   const { mode, setMode } = useTheme()
+  const [proUpgradeOpen, setProUpgradeOpen] = useState(false)
+  const pro = computeIsPro(user?.plan)
+  const openUpgrade = () => setProUpgradeOpen(true)
 
   return (
     <>
@@ -99,11 +104,15 @@ export function GlobalOverlays({
         onSaveWatchAlerts={onSaveWatchAlerts}
         onSavePortfolio={onSavePortfolio}
         onDeletePortfolio={(id) => void onDeletePortfolio(id)}
+        isPro={pro}
+        onUpgrade={openUpgrade}
       />
       <ReminderSettingsModal
         visible={reminderOpen}
         authToken={user?.token ?? null}
         onClose={() => setReminderOpen(false)}
+        isPro={pro}
+        onUpgrade={openUpgrade}
       />
       <RecentAlertsModal
         visible={alerts.alertsOpen}
@@ -178,6 +187,8 @@ export function GlobalOverlays({
       />
       {/* 시데 AI — 글로벌 1개 인스턴스 (mounted 유지로 세션 동안 대화 보존) */}
       <AssistantModal visible={assistantOpen} onClose={() => setAssistantOpen(false)} />
+      {/* PRO 업그레이드 시트 — 잠긴 기능 탭 시 전역 1개 인스턴스 */}
+      <ProUpgradeSheet visible={proUpgradeOpen} plan={user?.plan} onClose={() => setProUpgradeOpen(false)} />
       {Platform.OS === 'web' ? (
         <CommandPalette
           watchlist={watchlist}

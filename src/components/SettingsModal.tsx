@@ -17,6 +17,7 @@ import type { MarketPreference } from '../api/alertPreferences'
 import { ModalHeader } from './ModalHeader'
 import { MarketPreferencePicker } from './reminder_parts/MarketPreferencePicker'
 import { fetchMyPlanRequest, requestPro, type PlanRequestStatus } from '../api/plan'
+import { PRO_BENEFITS } from '../lib/entitlements'
 
 type ThemeMode = 'system' | 'light' | 'dark'
 
@@ -206,9 +207,23 @@ function PlanSection({ plan, palette }: { plan: string; palette: any }) {
       ) : (
         <>
           <Text style={{ color: palette.inkSub, fontSize: 12, lineHeight: 17 }}>
-            시데 AI에게 <Text style={{ fontWeight: '900', color: palette.ink }}>하루 100회</Text>까지 물어볼 수 있어요. (FREE 10회)
+            PRO 가 되면 아래가 한 번에 열려요.
           </Text>
-          <Text style={{ color: palette.inkMuted, fontSize: 11, lineHeight: 16 }}>
+          <View style={{ gap: 4, marginTop: 2 }}>
+            <View style={{ flexDirection: 'row' }}>
+              <Text style={{ flex: 1 }} />
+              <Text style={{ width: 64, textAlign: 'center', color: palette.inkFaint, fontSize: 9.5, fontWeight: '800' }}>FREE</Text>
+              <Text style={{ width: 84, textAlign: 'center', color: palette.purple ?? '#7c3aed', fontSize: 9.5, fontWeight: '900' }}>PRO</Text>
+            </View>
+            {PRO_BENEFITS.map((b) => (
+              <View key={b.title} style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={{ flex: 1, color: palette.inkSub, fontSize: 11 }} numberOfLines={1}>{b.icon} {b.title}</Text>
+                <Text style={{ width: 64, textAlign: 'center', color: palette.inkFaint, fontSize: 10 }}>{b.free}</Text>
+                <Text style={{ width: 84, textAlign: 'center', color: palette.ink, fontSize: 10, fontWeight: '800' }}>{b.pro}</Text>
+              </View>
+            ))}
+          </View>
+          <Text style={{ color: palette.inkMuted, fontSize: 11, lineHeight: 16, marginTop: 4 }}>
             🎉 베타 기간엔 결제 없이 무료로 승인해 드려요. 신청하면 검토 후 알림으로 알려드립니다.
           </Text>
           {status === 'PENDING' ? (

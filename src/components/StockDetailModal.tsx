@@ -28,6 +28,8 @@ import { PortfolioForm } from './stock_detail/PortfolioForm'
 import { QuickStats } from './stock_detail/QuickStats'
 import { SeasonalityTeaser } from './stock_detail/SeasonalityTeaser'
 import { SeasonalityModal } from './SeasonalityModal'
+import { DeepReportModal } from './DeepReportModal'
+import { Sparkles } from 'lucide-react-native'
 
 export type StockDetailContext = {
   /** 표준 스냅샷 — 검색 결과/관심종목/보유 어디서든 만들어 넘길 수 있음 */
@@ -55,6 +57,10 @@ type Props = {
     stopLossPrice?: number | null
   }) => Promise<void>
   onDeletePortfolio: (id: string) => void
+  /** PRO 여부 — AI 심층 리포트·목표가 알림 게이팅 */
+  isPro?: boolean
+  /** PRO 잠금 기능 탭 시 업그레이드 시트 열기 */
+  onUpgrade?: () => void
 }
 
 export function StockDetailModal({
@@ -65,9 +71,12 @@ export function StockDetailModal({
   onSaveWatchAlerts,
   onSavePortfolio,
   onDeletePortfolio,
+  isPro = false,
+  onUpgrade,
 }: Props) {
   const styles = useStyles()
   const { palette } = useTheme()
+  const [deepReportOpen, setDeepReportOpen] = useState(false)
 
   const [buyPriceInput, setBuyPriceInput]         = useState('')
   const [quantityInput, setQuantityInput]         = useState('')
@@ -225,6 +234,27 @@ export function StockDetailModal({
                 <ChevronRight size={17} color={palette.inkFaint} strokeWidth={2.4} />
               </Pressable>
 
+              {/* AI 심층 리포트 — PRO 전용. FREE 는 잠금 표시 후 업그레이드 유도. */}
+              <Pressable
+                onPress={() => { if (isPro) setDeepReportOpen(true); else onUpgrade?.() }}
+                style={({ pressed }) => ({
+                  flexDirection: 'row', alignItems: 'center', gap: 9,
+                  backgroundColor: palette.surfaceAlt,
+                  borderRadius: 11, paddingHorizontal: 13, paddingVertical: 12, marginTop: 10,
+                  borderWidth: 1, borderColor: (palette.purple ?? '#7c3aed') + '44',
+                  opacity: pressed ? 0.7 : 1,
+                })}
+              >
+                <Sparkles size={17} color={palette.purple ?? '#7c3aed'} strokeWidth={2.4} />
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: palette.ink, fontSize: 13.5, fontWeight: '800' }}>AI 심층 리포트</Text>
+                  <Text style={{ color: palette.inkMuted, fontSize: 11 }}>
+                    {isPro ? '실적·수급·계절성·리스크를 AI가 한 장으로 정리' : '💎 PRO 전용 — 탭하면 안내'}
+                  </Text>
+                </View>
+                <ChevronRight size={17} color={palette.inkFaint} strokeWidth={2.4} />
+              </Pressable>
+
               {hasWatch && context.watchItem ? (
                 // 보유 + US는 알림 트리거가 PortfolioForm 목표/손절가뿐 (거래량 알림이 KR 전용)
                 !context.portfolioPosition || context.base.market === 'KR' ? (
@@ -233,6 +263,8 @@ export function StockDetailModal({
                     onSave={(below, above, vol) => void handleSaveAlerts(below, above, vol)}
                     saving={alertSaving}
                     hasPortfolio={!!context.portfolioPosition}
+                    isPro={isPro}
+                    onUpgrade={onUpgrade}
                   />
                 ) : null
               ) : null}
@@ -269,6 +301,14 @@ export function StockDetailModal({
         ticker={context.base.ticker}
         name={context.base.name}
         onClose={() => setSeasonalityOpen(false)}
+      />
+      <DeepReportModal
+        visible={deepReportOpen}
+        market={context.base.market}
+        ticker={context.base.ticker}
+        name={context.base.name}
+        onClose={() => setDeepReportOpen(false)}
+        onUpgrade={onUpgrade}
       />
     </Modal>
   )

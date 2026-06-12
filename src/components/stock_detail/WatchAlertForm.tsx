@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Pressable, Switch, Text, TextInput, View } from 'react-native'
-import { Bell } from 'lucide-react-native'
+import { Bell, Lock } from 'lucide-react-native'
 import { useStyles } from '../../styles'
 import { useTheme } from '../../theme'
 import type { WatchItem } from '../../types'
@@ -13,11 +13,16 @@ type Props = {
   saving: boolean
   /** 보유 종목이면 가격 알림은 PortfolioForm의 목표가/손절가에서 자동 트리거되므로 숨긴다 */
   hasPortfolio?: boolean
+  /** PRO 여부 — 목표가 알림(상한/하한)은 PRO 전용 */
+  isPro?: boolean
+  onUpgrade?: () => void
 }
 
-export function WatchAlertForm({ watchItem, onSave, saving, hasPortfolio = false }: Props) {
+export function WatchAlertForm({ watchItem, onSave, saving, hasPortfolio = false, isPro = false, onUpgrade }: Props) {
   const styles = useStyles()
   const { palette } = useTheme()
+  // 목표가 알림은 PRO 전용. 단 이미 설정해 둔 FREE 사용자는 그대로 편집 가능(grandfather).
+  const lockPriceAlerts = !isPro && !watchItem.alertBelow && !watchItem.alertAbove
 
   const [alertBelowInput, setAlertBelowInput] = useState(
     watchItem.alertBelow ? String(watchItem.alertBelow) : '',
@@ -54,6 +59,22 @@ export function WatchAlertForm({ watchItem, onSave, saving, hasPortfolio = false
           <Text style={{ color: palette.inkMuted, fontSize: 11, fontWeight: '600', lineHeight: 16 }}>
             🔔 보유 중이라 아래 <Text style={{ fontWeight: '800', color: palette.ink }}>실제 보유 종목 수정</Text>의 <Text style={{ fontWeight: '800', color: palette.ink }}>목표가/손절가</Text>가 자동으로 알림 트리거가 됩니다.
           </Text>
+        ) : lockPriceAlerts ? (
+          <Pressable
+            onPress={() => onUpgrade?.()}
+            style={({ pressed }) => ({
+              flexDirection: 'row', alignItems: 'center', gap: 8, opacity: pressed ? 0.8 : 1,
+            })}
+          >
+            <Lock size={14} color={palette.inkMuted} strokeWidth={2.2} />
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: palette.inkSub, fontSize: 11.5, fontWeight: '700' }}>목표가 알림 (상한·하한)</Text>
+              <Text style={{ color: palette.inkMuted, fontSize: 10 }}>💎 PRO 전용 — 탭하면 안내</Text>
+            </View>
+            <View style={{ backgroundColor: palette.purple ?? '#7c3aed', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 1 }}>
+              <Text style={{ color: '#fff', fontSize: 9.5, fontWeight: '900' }}>💎 PRO</Text>
+            </View>
+          </Pressable>
         ) : (
           <>
             {/* 하한 알림 */}

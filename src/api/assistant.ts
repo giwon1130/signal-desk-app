@@ -39,3 +39,42 @@ export async function askAssistant(question: string, history: HistoryTurn[] = []
     return { answer: null, error: '서버에 연결할 수 없어요.', remaining: null, dailyLimit: null }
   }
 }
+
+type DeepReportResponse = {
+  success: boolean
+  report?: string | null
+  error?: string | null
+  /** PRO 가 아니라 잠김 — 앱에서 업그레이드 CTA 노출 */
+  locked?: boolean
+  remaining?: number | null
+  dailyLimit?: number | null
+}
+
+export type DeepReportResult = {
+  report: string | null
+  error: string | null
+  locked: boolean
+  remaining: number | null
+  dailyLimit: number | null
+}
+
+/** PRO 전용 — 한 종목 AI 심층 리포트. 실패/잠김 모두 메시지로 반환 (throw 안 함). */
+export async function fetchDeepReport(market: string, ticker: string): Promise<DeepReportResult> {
+  try {
+    const res = await authedFetch(`${API_BASE_URL}/api/v1/assistant/deep-report`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ market, ticker }),
+    })
+    const json = (await res.json()) as DeepReportResponse
+    return {
+      report: json.report ?? null,
+      error: json.success ? null : (json.error ?? '리포트를 만들지 못했어요.'),
+      locked: json.locked ?? false,
+      remaining: json.remaining ?? null,
+      dailyLimit: json.dailyLimit ?? null,
+    }
+  } catch {
+    return { report: null, error: '서버에 연결할 수 없어요.', locked: false, remaining: null, dailyLimit: null }
+  }
+}
