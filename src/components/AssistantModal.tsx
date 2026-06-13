@@ -68,25 +68,21 @@ export function AssistantModal({ visible, onClose }: Props) {
     setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 80)
   }
 
-  return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      {/* 키보드 회피는 최외곽에서 — 시트 안쪽에만 두면 바텀시트가 하단 고정이라 키보드가
-          입력창을 덮는다. 전체를 padding 으로 밀어 시트가 키보드 위로 올라오게. */}
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={{ flex: 1 }}
-      >
-      <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)' }} onPress={onClose}>
-        <View style={{ flex: 1 }} />
-        <Pressable
-          onPress={(e) => e.stopPropagation()}
-          style={{ backgroundColor: palette.bg, borderTopLeftRadius: 20, borderTopRightRadius: 20, height: '82%' }}
-        >
+  const isWeb = Platform.OS === 'web'
+
+  // 채팅 본문(헤더+대화+입력) — 웹/네이티브 래퍼가 공유.
+  const body = (
+    <>
           {/* 헤더 */}
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 18, paddingTop: 16, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: palette.border }}>
-              <Sparkles size={17} color={palette.purple ?? '#7c3aed'} strokeWidth={2.5} />
+              <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: (palette.purple ?? '#7c3aed') + '1f', alignItems: 'center', justifyContent: 'center' }}>
+                <Sparkles size={16} color={palette.purple ?? '#7c3aed'} strokeWidth={2.5} />
+              </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ color: palette.ink, fontSize: 16, fontWeight: '900' }}>시데 AI에게 물어보기</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Text style={{ color: palette.ink, fontSize: 15, fontWeight: '900' }}>시데 AI</Text>
+                  <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#22c55e' }} />
+                </View>
                 <Text style={{ color: palette.inkFaint, fontSize: 10.5, marginTop: 1 }}>내 보유·관심 종목과 오늘 시장을 알고 답해요</Text>
               </View>
               {messages.length > 0 ? (
@@ -214,6 +210,48 @@ export function AssistantModal({ visible, onClose }: Props) {
                 {quota ? ` · 오늘 ${quota.remaining}/${quota.limit}회 남음` : ''}
               </Text>
             </View>
+    </>
+  )
+
+  // 웹 — 우하단 도킹 챗봇 패널(전체화면 X). 페이지 위에 떠 있고 바깥 클릭 시 닫힘.
+  if (isWeb) {
+    return (
+      <Modal visible={visible} animationType="fade" transparent onRequestClose={onClose}>
+        <Pressable
+          style={{ flex: 1, backgroundColor: 'transparent', justifyContent: 'flex-end', alignItems: 'flex-end' }}
+          onPress={onClose}
+        >
+          <Pressable
+            onPress={(e) => e.stopPropagation()}
+            style={{
+              width: 392, maxWidth: '92%', height: 620, maxHeight: '82%',
+              marginRight: 16, marginBottom: 88,
+              backgroundColor: palette.bg, borderRadius: 18,
+              borderWidth: 1, borderColor: palette.border, overflow: 'hidden',
+              shadowColor: '#000', shadowOpacity: 0.18, shadowRadius: 28, shadowOffset: { width: 0, height: 10 },
+            }}
+          >
+            {body}
+          </Pressable>
+        </Pressable>
+      </Modal>
+    )
+  }
+
+  // 네이티브 — 하단 바텀시트. 키보드 회피는 최외곽에서(시트가 키보드 위로 올라오게).
+  return (
+    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={{ flex: 1 }}
+      >
+      <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)' }} onPress={onClose}>
+        <View style={{ flex: 1 }} />
+        <Pressable
+          onPress={(e) => e.stopPropagation()}
+          style={{ backgroundColor: palette.bg, borderTopLeftRadius: 20, borderTopRightRadius: 20, height: '82%' }}
+        >
+          {body}
         </Pressable>
       </Pressable>
       </KeyboardAvoidingView>
