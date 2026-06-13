@@ -4,13 +4,18 @@
  * 있던 걸 한 곳에 모아서 일관된 UX + 유지보수 쉽게.
  */
 import React, { useMemo } from 'react'
-import { Platform, Text, View, type StyleProp, type ViewStyle } from 'react-native'
+import { Animated, Easing, Platform, Text, View, type StyleProp, type ViewStyle } from 'react-native'
 import type { Palette } from '../theme'
 import type { ChartPoint } from '../types'
 import { formatNumber } from '../utils'
 
-export const CARD_RADIUS = 12
-export const CARD_PADDING = 14
+export const CARD_RADIUS = 14
+export const CARD_PADDING = 15
+
+/** 웹 카드 공통 소프트 섀도 — 평면적이던 카드에 은은한 깊이. 라이트/다크 공통(검정 알파). */
+export const softShadow: ViewStyle = Platform.OS === 'web'
+  ? { shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 14, shadowOffset: { width: 0, height: 4 } }
+  : {}
 
 /** CSS Grid passthrough (RN-Web). */
 export const webGrid = (columns: string, gap = 14): object =>
@@ -52,15 +57,16 @@ export function Widget({ title, meta, icon, action, palette, children, style, bo
           borderRadius: CARD_RADIUS,
           borderWidth: 1,
           borderColor: palette.border,
-          padding: dense ? 12 : CARD_PADDING,
+          padding: dense ? 13 : CARD_PADDING,
           overflow: 'hidden',
         },
+        softShadow,
         style,
       ]}
     >
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7, marginBottom: 12 }}>
         {icon}
-        <Text style={{ fontSize: 13, fontWeight: '700', color: palette.ink, flex: 1 }} numberOfLines={1}>
+        <Text style={{ fontSize: 12, fontWeight: '800', color: palette.ink, flex: 1, letterSpacing: 0.2, textTransform: 'uppercase' }} numberOfLines={1}>
           {title}
         </Text>
         {meta ? (
@@ -70,6 +76,24 @@ export function Widget({ title, meta, icon, action, palette, children, style, bo
       </View>
       <View style={bodyStyle}>{children}</View>
     </View>
+  )
+}
+
+// ─────────────────────────── Skeleton ───────────────────────────────
+
+/** 로딩 자리표시 — 은은한 펄스. 데이터 도착 전 레이아웃이 비지 않게. */
+export function Skeleton({ width = '100%', height = 14, radius = 6, style }: { width?: number | string; height?: number; radius?: number; style?: StyleProp<ViewStyle> }) {
+  const v = React.useRef(new Animated.Value(0.5)).current
+  React.useEffect(() => {
+    const loop = Animated.loop(Animated.sequence([
+      Animated.timing(v, { toValue: 1, duration: 720, easing: Easing.inOut(Easing.ease), useNativeDriver: Platform.OS !== 'web' }),
+      Animated.timing(v, { toValue: 0.5, duration: 720, easing: Easing.inOut(Easing.ease), useNativeDriver: Platform.OS !== 'web' }),
+    ]))
+    loop.start()
+    return () => loop.stop()
+  }, [v])
+  return (
+    <Animated.View style={[{ width: width as any, height, borderRadius: radius, backgroundColor: 'rgba(128,128,128,0.18)', opacity: v }, style]} />
   )
 }
 

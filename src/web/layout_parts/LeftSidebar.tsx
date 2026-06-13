@@ -94,9 +94,10 @@ export function LeftSidebar({
                   flexDirection: 'row',
                   alignItems: 'center',
                   gap: 10,
-                  paddingHorizontal: 10,
-                  paddingVertical: 9,
-                  borderRadius: 8,
+                  paddingLeft: 12,
+                  paddingRight: 10,
+                  paddingVertical: 9.5,
+                  borderRadius: 9,
                   backgroundColor: active
                     ? palette.blueSoft
                     : hovered ? palette.surfaceAlt : 'transparent',
@@ -104,6 +105,11 @@ export function LeftSidebar({
                 }]
               }}
             >
+              {/* 활성 좌측 액센트 바 */}
+              <View style={{
+                position: 'absolute', left: 0, top: 9, bottom: 9, width: 3, borderRadius: 2,
+                backgroundColor: active ? palette.blue : 'transparent',
+              }} />
               <Icon
                 size={16}
                 color={active ? palette.blue : palette.inkMuted}

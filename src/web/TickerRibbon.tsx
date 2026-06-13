@@ -51,20 +51,13 @@ export function TickerRibbon({ sections, sessions, marketPreference = 'BOTH', on
         ...(Platform.OS === 'web' ? ({ overflowX: 'auto', overflowY: 'hidden' } as object) : null),
       }}
     >
-      <Text
-        style={{
-          color: '#94a3b8',
-          fontSize: 10,
-          fontWeight: '800',
-          letterSpacing: 2,
-          paddingRight: 10,
-          borderRightWidth: 1,
-          borderRightColor: '#1e293b',
-          marginRight: 10,
-        }}
-      >
-        LIVE
-      </Text>
+      <View style={{
+        flexDirection: 'row', alignItems: 'center', gap: 5,
+        paddingRight: 10, borderRightWidth: 1, borderRightColor: '#1e293b', marginRight: 10,
+      }}>
+        <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#22c55e' }} />
+        <Text style={{ color: '#94a3b8', fontSize: 10, fontWeight: '800', letterSpacing: 2 }}>LIVE</Text>
+      </View>
 
       {/* 세션 배지 */}
       {sessions && sessions.length > 0 ? (

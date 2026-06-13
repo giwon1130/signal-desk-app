@@ -28,13 +28,13 @@ export function MainHeader({ activeTab, lastSyncedAt, marketPreference, onMarket
     admin:  '사용자 · 플랜 · 사용량 운영',
   }
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12 }}>
-      <View style={{ gap: 2 }}>
-        <Text style={{ color: palette.inkFaint, fontSize: 10, fontWeight: '800', letterSpacing: 2 }}>
+    <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12, paddingBottom: 14, borderBottomWidth: 1, borderBottomColor: palette.border }}>
+      <View style={{ gap: 3 }}>
+        <Text style={{ color: palette.brandAccent, fontSize: 10, fontWeight: '900', letterSpacing: 2 }}>
           SIGNAL DESK
         </Text>
-        <Text style={{ color: palette.ink, fontSize: 22, fontWeight: '800' }}>{tabLabel}</Text>
-        <Text style={{ color: palette.inkMuted, fontSize: 12 }}>{descriptionMap[activeTab]}</Text>
+        <Text style={{ color: palette.ink, fontSize: 23, fontWeight: '900', letterSpacing: -0.3 }}>{tabLabel}</Text>
+        <Text style={{ color: palette.inkMuted, fontSize: 12.5 }}>{descriptionMap[activeTab]}</Text>
       </View>
       <View style={{ alignItems: 'flex-end', gap: 6 }}>
         <MarketProfileChip value={marketPreference} onChange={onMarketPreferenceChange} />
