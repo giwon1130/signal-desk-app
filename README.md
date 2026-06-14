@@ -20,7 +20,7 @@ SignalDesk 클라이언트 — **Expo 하나로 iOS · Android · Web 을 모두
 |--------|------|--------|
 | iOS | **TestFlight 베타 운영 중** (Build #18, 2026-05-22) | Today 탭 중심의 빠른 확인용 컴패니언. 모닝 브리프 Hero, 합성 위험도 카드, 한/미 세션 칩, 보유 종목 공시, 알림 deep link. EAS 유료 플랜 |
 | Android | Expo dev build | 안드로이드 TestFlight 동등 채널은 미정 |
-| Web | **현재 라이브 미배포** (2026-05-26 Railway 정리). 빌드 소스는 `src/web/*` 보존 | 재오픈 시 Railway 재배포 또는 Vercel/CF Pages 무료 호스팅. 데스크톱 3열 셸(티커 리본 + 좌 네비 + 메인 + 우 컨텍스트), Cmd+K 팔레트, AI 플레이북/성적표 |
+| Web | **라이브 운영 중** — [giwon1130.github.io/signal-desk-app](https://giwon1130.github.io/signal-desk-app/) (GitHub Pages, Expo 웹 빌드). 빌드 소스 `src/web/*` | 데스크톱 3열 셸(티커 리본 + 좌 네비 + 메인 + 우 컨텍스트), Cmd+K 팔레트, AI 플레이북/성적표 |
 
 단일 코드베이스지만 `Platform.OS === 'web'` 분기로 웹 전용 화면(`src/web/*`)을 올려 정보 밀도와 상호작용을 데스크톱에 맞춘다.
 
@@ -122,21 +122,15 @@ EXPO_PUBLIC_API_BASE_URL=http://192.168.x.x:8091 npm start
 
 ## 배포
 
-### 웹 (현재 미배포)
+### 웹 (라이브 운영 중)
 
-2026-05-26 Railway 비용 정리로 `signal-desk-web` 서비스가 삭제됐다. 빌드 소스(`src/web/*`, `Dockerfile.web`)는 보존돼 있으므로 재오픈 시 한 번에 복구 가능.
+**라이브: https://giwon1130.github.io/signal-desk-app/** — `main` 브랜치 GitHub Actions 워크플로우로 `expo export -p web` 결과를 GitHub Pages에 배포한다.
 
-재오픈 옵션:
-```bash
-# A) Railway 재배포
-railway link
-railway up --service signal-desk-web --ci --detach
+> 이전에는 Railway(`signal-desk-web` 서비스)로 배포했으나 2026-05-26 비용 정리 후 GitHub Pages(무료)로 이전했다. 옛 Vite 레포 `signal-desk-web`은 더 이상 사용하지 않는다(deprecated).
 
-# B) Vercel / Cloudflare Pages (무료 호스팅)
-npx expo export -p web   # dist/ 빌드 → 정적 호스팅
-```
-
-`Dockerfile.web` 은 `expo export -p web` 결과를 nginx 에 얹는 멀티스테이지. Google OAuth 운영 URL을 재오픈 시 GCP OAuth Client의 **Authorized JavaScript origins** 에 다시 등록 (trailing slash 금지).
+참고:
+- 빌드 소스: `src/web/*` (+ `Dockerfile.web`은 nginx 정적 호스팅용으로 보존)
+- Google OAuth 운영 URL을 GCP OAuth Client의 **Authorized JavaScript origins**에 등록 (trailing slash 금지)
 
 ### 모바일 (TestFlight 베타 운영 중)
 
