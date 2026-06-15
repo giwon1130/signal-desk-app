@@ -2,7 +2,6 @@ import { memo } from 'react'
 import { ScrollView, Text, View } from 'react-native'
 import type {
   AlertHistoryItem,
-  DisclosureItem,
   HoldingPosition,
   MarketEvent,
   MarketSummaryData,
@@ -28,7 +27,6 @@ import { PortfolioWidget } from './widgets/PortfolioWidget'
 import { NewsWidget } from './widgets/NewsWidget'
 import { BriefHero } from '../tabs/today_parts/BriefHero'
 import { SeasonRulesCard } from '../tabs/today_parts/SeasonRulesCard'
-import { DisclosureCard } from '../tabs/today_parts/DisclosureCard'
 import { EventsCard } from '../tabs/today_parts/EventsCard'
 
 /**
@@ -55,7 +53,6 @@ type Props = {
   mediaSummaries: MediaSummaryItem[]
   moverReasons: MoverReason[]
   upcomingEvents: MarketEvent[]
-  disclosures: DisclosureItem[]
   marketPreference: MarketPreference
   onOpenDetail: (market: string, ticker: string, name?: string) => void
 }
@@ -149,7 +146,6 @@ export const HomeDashboard = memo(function HomeDashboard(props: Props) {
               palette={palette}
               onOpenDetail={props.onOpenDetail}
             />
-            <DisclosureCard disclosures={props.disclosures} onOpenDetail={props.onOpenDetail} />
           </View>
         </View>
       </Entrance>

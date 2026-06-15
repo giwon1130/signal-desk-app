@@ -11,7 +11,8 @@ import {
 import type { PortfolioSummary, StockSearchResult, WatchItem } from '../types'
 import { hapticError, hapticSuccess } from '../utils/haptics'
 
-type Toast = { show: (text: string, kind?: 'success' | 'error' | 'info') => void }
+type ToastAction = { label: string; onPress: () => void }
+type Toast = { show: (text: string, kind?: 'success' | 'error' | 'info', action?: ToastAction | null) => void }
 
 // 구 아키텍처 Android 는 명시적 활성화 필요 (웹/new-arch 에선 no-op).
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -30,6 +31,8 @@ type Args = {
   setPortfolio: React.Dispatch<React.SetStateAction<PortfolioSummary | null>>
   fetchData: () => Promise<void>
   toast: Toast
+  /** 상한/PRO 에러 토스트에 '업그레이드' 액션을 붙일 때 호출 (예: 설정 열기). */
+  onUpgrade?: () => void
 }
 
 /**
@@ -45,9 +48,16 @@ type Args = {
  * favoriteDeletingId / bulkDeletingWatch 는 상태 노출 — UI 의 disable/loading 표기용.
  */
 export function useWorkspaceMutations(args: Args) {
-  const { watchlist, setWatchlist, fetchData, toast } = args
+  const { watchlist, setWatchlist, fetchData, toast, onUpgrade } = args
   const [favoriteDeletingId, setFavoriteDeletingId] = useState('')
   const [bulkDeletingWatch, setBulkDeletingWatch] = useState(false)
+
+  // 상한/PRO 에러면 '업그레이드' 액션을 붙인다(서버 메시지에 'PRO' 포함).
+  const showMutationError = useCallback((e: unknown, fallback: string) => {
+    const msg = apiErrorMessage(e, fallback)
+    const isProLimit = /PRO/i.test(msg)
+    toast.show(msg, 'error', isProLimit && onUpgrade ? { label: '💎 업그레이드', onPress: onUpgrade } : null)
+  }, [toast, onUpgrade])
 
   const handleSavePortfolio = useCallback(async (payload: {
     id?: string
@@ -65,10 +75,10 @@ export function useWorkspaceMutations(args: Args) {
       toast.show(payload.id ? '보유 종목을 수정했습니다' : '보유 종목으로 등록했습니다', 'success')
     } catch (e) {
       void hapticError()
-      toast.show(apiErrorMessage(e, '저장에 실패했습니다. 입력값을 확인해 주세요'), 'error')
+      showMutationError(e, '저장에 실패했습니다. 입력값을 확인해 주세요')
       throw new Error('save-portfolio-failed')
     }
-  }, [fetchData, toast])
+  }, [fetchData, toast, showMutationError])
 
   const handleDeletePortfolio = useCallback(async (id: string) => {
     try {
@@ -90,10 +100,10 @@ export function useWorkspaceMutations(args: Args) {
       toast.show('관심종목에 담았습니다', 'success')
     } catch (e) {
       void hapticError()
-      toast.show(apiErrorMessage(e, '관심종목 추가에 실패했습니다'), 'error')
+      showMutationError(e, '관심종목 추가에 실패했습니다')
       throw new Error('quick-add-failed')
     }
-  }, [fetchData, toast])
+  }, [fetchData, toast, showMutationError])
 
   const handleDeleteFavorite = useCallback(async (id: string) => {
     setFavoriteDeletingId(id)
@@ -174,9 +184,9 @@ export function useWorkspaceMutations(args: Args) {
       toast.show('알림 설정을 저장했습니다.', 'success')
     } catch (e) {
       void hapticError()
-      toast.show(apiErrorMessage(e, '저장에 실패했습니다. 다시 시도해 주세요.'), 'error')
+      showMutationError(e, '저장에 실패했습니다. 다시 시도해 주세요.')
     }
-  }, [setWatchlist, toast])
+  }, [setWatchlist, toast, showMutationError])
 
   return {
     favoriteDeletingId,

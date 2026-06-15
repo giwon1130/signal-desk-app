@@ -1,10 +1,11 @@
 import { memo, useMemo, useState } from 'react'
 import { Alert, View } from 'react-native'
-import type { HoldingPosition, PortfolioSummary, StockMarketFilter, StockSearchResult, WatchItem } from '../types'
+import type { DisclosureItem, HoldingPosition, PortfolioSummary, StockMarketFilter, StockSearchResult, WatchItem } from '../types'
 import { useTheme } from '../theme'
 import { useLivePrices } from '../hooks/useLivePrices'
 import { Briefcase } from 'lucide-react-native'
 import { TabIntro } from '../components/guide/TabIntro'
+import { DisclosureCard } from '../tabs/today_parts/DisclosureCard'
 import { Toolbar, type Mode } from './stockspage_parts/Toolbar'
 import { DataTable, type Row } from './stockspage_parts/DataTable'
 import type { SortKey, SortDir } from './stockspage_parts/HeaderCell'
@@ -25,6 +26,7 @@ type Props = {
   stockSearchLoading: boolean
   favoriteDeletingId: string
   bulkDeleting: boolean
+  disclosures: DisclosureItem[]
   onStockSearchChange: (value: string) => void
   onStockMarketFilterChange: (filter: StockMarketFilter) => void
   onOpenDetail: (market: string, ticker: string, name?: string) => void
@@ -38,7 +40,7 @@ export const StocksPage = memo(function StocksPage(props: Props) {
   const { palette } = useTheme()
   const {
     watchlist, portfolio, stockSearch, stockMarketFilter, stockResults, stockSearchLoading,
-    favoriteDeletingId, bulkDeleting,
+    favoriteDeletingId, bulkDeleting, disclosures,
     onStockSearchChange, onStockMarketFilterChange,
     onOpenDetail, onQuickAddWatch, onDeleteFavorite, onDeleteAllFavorites,
   } = props
@@ -228,6 +230,7 @@ export const StocksPage = memo(function StocksPage(props: Props) {
         stockSearchLoading={stockSearchLoading}
         palette={palette}
       />
+      {disclosures.length > 0 ? <DisclosureCard disclosures={disclosures} onOpenDetail={onOpenDetail} /> : null}
     </View>
   )
 })

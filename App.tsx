@@ -89,6 +89,7 @@ function AppShell() {
   // 차트는 Phase 4+ Beta 후 'today' 의 ChartSection 으로 다시 들어올 수 있음 — 그 때 useChartSelection 복구.
   const mutations = useWorkspaceMutations({
     watchlist, setWatchlist, setPortfolio, fetchData, toast,
+    onUpgrade: () => setSettingsOpen(true),  // 상한/PRO 토스트의 '업그레이드' → 설정(PRO 신청)
   })
   const {
     favoriteDeletingId, bulkDeletingWatch,
@@ -439,7 +440,6 @@ function AppShell() {
             mediaSummaries={mediaSummaries}
             moverReasons={moverReasons}
             upcomingEvents={filteredUpcomingEvents}
-            disclosures={disclosures}
             marketPreference={marketPreference}
             onOpenDetail={handleOpenDetail}
           />
@@ -472,6 +472,7 @@ function AppShell() {
             stockSearchLoading={stockSearchLoading}
             favoriteDeletingId={favoriteDeletingId}
             bulkDeleting={bulkDeletingWatch}
+            disclosures={disclosures}
             onStockSearchChange={setStockSearch}
             onStockMarketFilterChange={setStockMarketFilter}
             onOpenDetail={handleOpenDetail}
@@ -508,6 +509,9 @@ function AppShell() {
             aiRecommendation={filteredAiRecommendation}
             summary={summary}
             watchlist={watchlist}
+            aiPicks={filteredAiPicks}
+            hiddenSignals={filteredHiddenSignals}
+            marketInsight={marketInsight}
             marketPreference={marketPreference}
             onOpenDetail={handleOpenDetail}
             onQuickAddWatch={handleQuickAddWatch}

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { Animated, Text } from 'react-native'
+import { Animated, Pressable, Text, View } from 'react-native'
 import { useTheme } from '../theme'
 
 export type ToastType = 'success' | 'error' | 'info'
@@ -8,9 +8,10 @@ type Props = {
   message: string
   type?: ToastType
   visible: boolean
+  action?: { label: string; onPress: () => void } | null
 }
 
-export function Toast({ message, type = 'success', visible }: Props) {
+export function Toast({ message, type = 'success', visible, action }: Props) {
   const { palette } = useTheme()
   const opacity    = useRef(new Animated.Value(0)).current
   const translateY = useRef(new Animated.Value(16)).current
@@ -43,6 +44,16 @@ export function Toast({ message, type = 'success', visible }: Props) {
       <Text style={{ color: COLOR, fontSize: 14, fontWeight: '700', textAlign: 'center' }}>
         {message}
       </Text>
+      {action ? (
+        <View style={{ alignItems: 'center', marginTop: 8 }}>
+          <Pressable
+            onPress={action.onPress}
+            style={({ pressed }) => ({ backgroundColor: COLOR, borderRadius: 8, paddingHorizontal: 14, paddingVertical: 7, opacity: pressed ? 0.7 : 1 })}
+          >
+            <Text style={{ color: palette.bg, fontSize: 12.5, fontWeight: '800' }}>{action.label}</Text>
+          </Pressable>
+        </View>
+      ) : null}
     </Animated.View>
   )
 }

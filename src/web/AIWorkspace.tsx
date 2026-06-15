@@ -31,14 +31,19 @@ import { SectorRotationModal } from '../components/SectorRotationModal'
 import { TabIntro } from '../components/guide/TabIntro'
 import { webGrid } from './shared'
 import type {
+  AiPicksData,
   AiRecommendationData,
+  HiddenSignalsData,
+  MarketInsightData,
   MarketSummaryData,
   StockSearchResult,
   WatchItem,
 } from '../types'
 import { useTheme, type Palette } from '../theme'
-import { Playbook } from './widgets/AIPlaybook'
 import { Scorecard } from './widgets/AIScorecard'
+// 네이티브 AI탭과 동일 구성 — RN 위젯을 웹에서도 그대로 재사용.
+import { Playbook as NativePlaybook } from '../tabs/aitab_widgets/Playbook'
+import { HiddenSignals as NativeHiddenSignals } from '../tabs/aitab_widgets/HiddenSignals'
 import { Entrance, glow } from './web_effects'
 
 type Mode = 'playbook' | 'scorecard'
@@ -47,6 +52,9 @@ type Props = {
   aiRecommendation: AiRecommendationData | null
   summary: MarketSummaryData | null
   watchlist: WatchItem[]
+  aiPicks: AiPicksData | null
+  hiddenSignals: HiddenSignalsData | null
+  marketInsight: MarketInsightData | null
   marketPreference?: 'KR' | 'US' | 'BOTH'
   onOpenDetail: (market: string, ticker: string, name?: string) => void
   onQuickAddWatch: (stock: StockSearchResult) => Promise<void>
@@ -55,7 +63,7 @@ type Props = {
 }
 
 // memo: AppShell 재렌더(다른 탭 상태 변화 등)에 끌려 다시 그리지 않도록.
-export const AIWorkspace = React.memo(function AIWorkspace({ aiRecommendation, summary, watchlist, marketPreference = 'BOTH', onOpenDetail, onQuickAddWatch, onOpenAssistant }: Props) {
+export const AIWorkspace = React.memo(function AIWorkspace({ aiRecommendation, summary, watchlist, aiPicks, hiddenSignals, marketInsight, marketPreference = 'BOTH', onOpenDetail, onQuickAddWatch, onOpenAssistant }: Props) {
   const { palette } = useTheme()
   const [mode, setMode] = useState<Mode>('playbook')
   const [rulesOpen, setRulesOpen] = useState(false)
@@ -119,14 +127,24 @@ export const AIWorkspace = React.memo(function AIWorkspace({ aiRecommendation, s
       <Header mode={mode} onChange={setMode} palette={palette} />
       <Entrance key={mode} delay={20}>
         {mode === 'playbook' ? (
-          <Playbook
-            aiRecommendation={aiRecommendation}
-            summary={summary}
-            watchlist={watchlist}
-            palette={palette}
-            onOpenDetail={onOpenDetail}
-            onQuickAddWatch={onQuickAddWatch}
-          />
+          <View style={{ gap: 14 }}>
+            {/* 네이티브 AI탭과 동일: 마켓 인사이트 + 액션 + AI 픽 */}
+            <NativePlaybook
+              aiPicks={aiPicks}
+              summary={summary}
+              watchlist={watchlist}
+              marketInsight={marketInsight}
+              palette={palette}
+              onOpenDetail={onOpenDetail}
+              onQuickAddWatch={onQuickAddWatch}
+            />
+            {/* 숨은 시그널 — 보유·관심 종목 공시/수급/급등락 */}
+            <NativeHiddenSignals
+              signals={hiddenSignals?.signals ?? []}
+              palette={palette}
+              onOpenDetail={onOpenDetail}
+            />
+          </View>
         ) : (
           <Scorecard aiRecommendation={aiRecommendation} palette={palette} onOpenDetail={onOpenDetail} />
         )}

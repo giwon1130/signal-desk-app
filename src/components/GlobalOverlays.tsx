@@ -95,7 +95,7 @@ export function GlobalOverlays({
 
   return (
     <>
-      <Toast visible={toast.visible} message={toast.message} type={toast.type} />
+      <Toast visible={toast.visible} message={toast.message} type={toast.type} action={toast.action} />
       <StockDetailModal
         visible={!!detailKey}
         onClose={onCloseDetail}
