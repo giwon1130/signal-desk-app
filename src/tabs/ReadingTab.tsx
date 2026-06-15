@@ -33,10 +33,12 @@ type Props = {
   onCompose: () => void
   onOpenLeader?: (leaderUserId: string) => void
   toast?: { show: (msg: string, type?: 'success' | 'error' | 'info') => void }
+  /** PRO 여부 — AI 리더 구독 게이트(둘러보기) */
+  isPro?: boolean
 }
 
 // memo: AppShell 재렌더(다른 탭 상태 변화 등)에 끌려 다시 그리지 않도록.
-export const ReadingTab = memo(function ReadingTab({ authToken, refreshing, refreshTick, subscribeCode, onCompose, onOpenLeader, toast }: Props) {
+export const ReadingTab = memo(function ReadingTab({ authToken, refreshing, refreshTick, subscribeCode, onCompose, onOpenLeader, toast, isPro = false }: Props) {
   const styles = useStyles()
   const { palette } = useTheme()
   const [feed, setFeed] = useState<ReadingPost[]>([])
@@ -144,8 +146,8 @@ export const ReadingTab = memo(function ReadingTab({ authToken, refreshing, refr
         tabKey="reading"
         icon={Megaphone}
         title="리딩"
-        tagline="🎉 지금 무료 · 검증된 콜 구독"
-        description="리더가 종목을 콜하면 진입가가 자동 박제되고 이후 수익률이 그대로 추적돼요. 적중률로 검증된 리더를 구독하면 그분의 콜이 내 피드에 올라옵니다."
+        tagline="검증된 콜 구독 · 사람 무료, AI는 PRO"
+        description="리더가 종목을 콜하면 진입가가 자동 박제되고 이후 수익률이 그대로 추적돼요. 적중률로 검증된 리더를 구독하면 그분의 콜이 내 피드에 올라옵니다. 🤖 AI 리더는 PRO 전용이에요."
         accent={palette.brandAccent}
       />
 
@@ -242,7 +244,7 @@ export const ReadingTab = memo(function ReadingTab({ authToken, refreshing, refr
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           <Text style={{ color: palette.inkMuted, fontSize: 11, fontWeight: '800', letterSpacing: 1 }}>리더 구독</Text>
           <View style={{ backgroundColor: palette.brandAccent + '22', borderRadius: 4, paddingHorizontal: 6, paddingVertical: 1 }}>
-            <Text style={{ color: palette.brandAccent, fontSize: 9, fontWeight: '900' }}>지금 무료</Text>
+            <Text style={{ color: palette.brandAccent, fontSize: 9, fontWeight: '900' }}>사람 무료</Text>
           </View>
         </View>
 
@@ -378,6 +380,7 @@ export const ReadingTab = memo(function ReadingTab({ authToken, refreshing, refr
       onOpenLeader={onOpenLeader}
       onSubscribed={() => void load()}
       toast={toast}
+      isPro={isPro}
     />
     </>
   )

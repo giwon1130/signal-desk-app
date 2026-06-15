@@ -11,6 +11,7 @@ import { useTheme, type Palette } from '../../theme'
 import { fetchDiscoverLeaders, subscribeByLeaderId, type LeaderCard } from '../../api/reading'
 import { fmtPct } from './readingShared'
 import { apiErrorMessage } from '../../utils/apiError'
+import { ProUpgradeSheet } from '../pro/ProUpgrade'
 
 type SortKey = 'hit' | 'followers' | 'calls'
 
@@ -20,14 +21,17 @@ type Props = {
   onOpenLeader?: (leaderUserId: string) => void
   onSubscribed?: () => void
   toast?: { show: (msg: string, type?: 'success' | 'error' | 'info') => void }
+  /** PRO 여부 — AI 리더 구독은 PRO 전용 */
+  isPro?: boolean
 }
 
-export function DiscoverLeadersModal({ visible, onClose, onOpenLeader, onSubscribed, toast }: Props) {
+export function DiscoverLeadersModal({ visible, onClose, onOpenLeader, onSubscribed, toast, isPro = false }: Props) {
   const { palette } = useTheme()
   const insets = useSafeAreaInsets()
   const [leaders, setLeaders] = useState<LeaderCard[]>([])
   const [loading, setLoading] = useState(false)
   const [busyId, setBusyId] = useState('')
+  const [upgradeOpen, setUpgradeOpen] = useState(false)
   const [sort, setSort] = useState<SortKey>('hit')
 
   const load = async () => {
@@ -49,6 +53,8 @@ export function DiscoverLeadersModal({ visible, onClose, onOpenLeader, onSubscri
 
   const handleSubscribe = async (l: LeaderCard) => {
     if (busyId) return
+    // AI 리더는 PRO 전용 — FREE면 구독 대신 업그레이드 시트로.
+    if (l.isAi && !isPro) { setUpgradeOpen(true); return }
     setBusyId(l.userId)
     try {
       await subscribeByLeaderId(l.userId)
@@ -113,12 +119,21 @@ export function DiscoverLeadersModal({ visible, onClose, onOpenLeader, onSubscri
                     ) : null}
                   </View>
                   {l.bio ? <Text style={{ color: palette.inkMuted, fontSize: 12, lineHeight: 17 }} numberOfLines={2}>{l.bio}</Text> : null}
-                  <View style={{ flexDirection: 'row', gap: 10, marginTop: 2 }}>
-                    <Stat label="적중률" value={l.totalCalls > 0 ? `${Math.round(l.hitRate * 100)}%` : '—'} accent={palette.up} palette={palette} />
-                    <Stat label="평균" value={l.avgReturnPct == null ? '—' : fmtPct(l.avgReturnPct)} accent={l.avgReturnPct != null && l.avgReturnPct < 0 ? palette.down : palette.up} palette={palette} />
-                    <Stat label="콜" value={`${l.totalCalls}`} palette={palette} />
-                    <Stat label="구독자" value={`${l.followerCount}`} palette={palette} />
-                  </View>
+                  {l.isAi && l.totalCalls === 0 ? (
+                    // 시황 위주 AI 리더는 종목 콜이 없어 적중률/콜 통계가 무의미 — 안내 라인으로 대체.
+                    <View style={{ flexDirection: 'row', gap: 10, marginTop: 2 }}>
+                      <Stat label="유형" value="AI 시황" accent={palette.purple ?? '#7c3aed'} palette={palette} />
+                      <Stat label="업데이트" value="매일" palette={palette} />
+                      <Stat label="구독자" value={`${l.followerCount}`} palette={palette} />
+                    </View>
+                  ) : (
+                    <View style={{ flexDirection: 'row', gap: 10, marginTop: 2 }}>
+                      <Stat label="적중률" value={l.totalCalls > 0 ? `${Math.round(l.hitRate * 100)}%` : '—'} accent={palette.up} palette={palette} />
+                      <Stat label="평균" value={l.avgReturnPct == null ? '—' : fmtPct(l.avgReturnPct)} accent={l.avgReturnPct != null && l.avgReturnPct < 0 ? palette.down : palette.up} palette={palette} />
+                      <Stat label="콜" value={`${l.totalCalls}`} palette={palette} />
+                      <Stat label="구독자" value={`${l.followerCount}`} palette={palette} />
+                    </View>
+                  )}
                 </Pressable>
                 <Pressable
                   onPress={() => void handleSubscribe(l)}
@@ -131,7 +146,10 @@ export function DiscoverLeadersModal({ visible, onClose, onOpenLeader, onSubscri
                   })}
                 >
                   <Text style={{ color: l.following ? palette.inkSub : palette.bg, fontSize: 13, fontWeight: '800' }}>
-                    {busyId === l.userId ? '구독 중…' : l.following ? '구독 중 ✓' : '구독하기'}
+                    {busyId === l.userId ? '구독 중…'
+                      : l.following ? '구독 중 ✓'
+                      : (l.isAi && !isPro) ? '💎 PRO로 구독'
+                      : '구독하기'}
                   </Text>
                 </Pressable>
               </View>
@@ -139,6 +157,7 @@ export function DiscoverLeadersModal({ visible, onClose, onOpenLeader, onSubscri
           )}
         </ScrollView>
       </View>
+      <ProUpgradeSheet visible={upgradeOpen} onClose={() => setUpgradeOpen(false)} />
     </Modal>
   )
 }

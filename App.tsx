@@ -557,6 +557,7 @@ function AppShell() {
           onCompose={handleCompose}
           onOpenLeader={handleOpenLeader}
           toast={toast}
+          isPro={(user?.plan ?? '').toUpperCase() === 'PRO'}
         />
       ) : null}
     </>
