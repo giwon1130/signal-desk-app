@@ -40,6 +40,7 @@ import { StocksPage } from './src/web/StocksPage'
 import { AIWorkspace } from './src/web/AIWorkspace'
 import type { StockDetailContext } from './src/components/StockDetailModal'
 import { AssistantFab } from './src/components/AssistantFab'
+import { isPro } from './src/lib/entitlements'
 import { AdminPage } from './src/web/AdminPage'
 import { getAlertPreferences, syncMarketPreference, type MarketPreference } from './src/api/alertPreferences'
 import { getFortuneGreetingShownDate, markFortuneGreetingShown } from './src/utils/fortuneGreeting'
@@ -447,7 +448,6 @@ function AppShell() {
             summary={summary}
             positions={portfolioPositions}
             alertHistory={alertHistory}
-            fortune={fortune}
             mediaSummaries={mediaSummaries}
             upcomingEvents={filteredUpcomingEvents}
             marketPreference={marketPreference}
@@ -544,6 +544,7 @@ function AppShell() {
           onOpenLeague={handleOpenLeague}
           onCreateLeague={handleCreateLeague}
           onRequestJoin={league.handleRequestJoin}
+          isPro={isPro(user?.plan)}
         />
       ) : null}
 
@@ -557,7 +558,7 @@ function AppShell() {
           onCompose={handleCompose}
           onOpenLeader={handleOpenLeader}
           toast={toast}
-          isPro={(user?.plan ?? '').toUpperCase() === 'PRO'}
+          isPro={isPro(user?.plan)}
         />
       ) : null}
     </>

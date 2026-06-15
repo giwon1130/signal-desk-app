@@ -11,7 +11,6 @@ import { useStyles } from '../styles'
 import { useTheme } from '../theme'
 import type {
   AlertHistoryItem,
-  DailyFortune,
   HoldingPosition,
   MarketEvent,
   MarketSummaryData,
@@ -36,7 +35,6 @@ type Props = {
   summary: MarketSummaryData | null
   positions: HoldingPosition[]
   alertHistory: AlertHistoryItem[]
-  fortune: DailyFortune | null
   mediaSummaries: MediaSummaryItem[]
   upcomingEvents: MarketEvent[]
   // v2: Market 탭 흡수 — 합성위험도/시장 무드 지표/watch alerts. (급등락은 지수 상세 모달로 이동)
@@ -51,7 +49,6 @@ export const TodayTab = memo(function TodayTab({
   summary,
   positions,
   alertHistory,
-  fortune,
   mediaSummaries,
   upcomingEvents,
   marketPreference,

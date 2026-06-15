@@ -135,7 +135,7 @@ export const AIWorkspace = React.memo(function AIWorkspace({ aiRecommendation, s
       <SectorRotationModal
         visible={sectorOpen}
         onClose={() => setSectorOpen(false)}
-        initialMarket={marketPreference === 'KR' ? 'KR' : 'US'}
+        initialMarket={marketPreference === 'US' ? 'US' : 'KR'}
       />
     </ScrollView>
   )

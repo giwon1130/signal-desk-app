@@ -139,7 +139,7 @@ export const AITab = memo(function AITab({
     <SectorRotationModal
       visible={sectorOpen}
       onClose={() => setSectorOpen(false)}
-      initialMarket={marketPreference === 'KR' ? 'KR' : 'US'}
+      initialMarket={marketPreference === 'US' ? 'US' : 'KR'}
     />
     </>
   )

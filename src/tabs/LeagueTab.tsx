@@ -11,6 +11,8 @@ import type { League } from '../types'
 import { fetchMyLeagues } from '../api/league'
 import { Entrance, GradientBackground, PressableScale, glow } from '../components/effects'
 import { TabIntro } from '../components/guide/TabIntro'
+import { ProUpgradeSheet } from '../components/pro/ProUpgrade'
+import { FREE_LIMITS } from '../lib/entitlements'
 import {
   fmtMoney, leagueShareMessage, leagueStatusColor, leagueStatusLabel,
 } from '../components/league_parts/leagueShared'
@@ -21,16 +23,24 @@ type Props = {
   onOpenLeague: (leagueId: string) => void
   onCreateLeague: () => void
   onRequestJoin: (code: string) => void
+  /** PRO 여부 — FREE 는 진행 중 리그 1개 제한 */
+  isPro?: boolean
 }
 
 // memo: AppShell 재렌더(다른 탭 상태 변화 등)에 끌려 다시 그리지 않도록.
-export const LeagueTab = memo(function LeagueTab({ authToken, refreshing, onOpenLeague, onCreateLeague, onRequestJoin }: Props) {
+export const LeagueTab = memo(function LeagueTab({ authToken, refreshing, onOpenLeague, onCreateLeague, onRequestJoin, isPro = false }: Props) {
   const styles = useStyles()
   const { palette } = useTheme()
   const [leagues, setLeagues] = useState<League[]>([])
   const [loading, setLoading] = useState(false)
   const [loadError, setLoadError] = useState(false)
   const [joinCode, setJoinCode] = useState('')
+  const [upgradeOpen, setUpgradeOpen] = useState(false)
+
+  // FREE 는 진행 중(미종료) 리그 1개까지. 초과 시 만들기 대신 업그레이드 안내.
+  const ongoingCount = leagues.filter((l) => l.status !== 'FINISHED').length
+  const atLeagueLimit = !isPro && ongoingCount >= FREE_LIMITS.leagues
+  const handleCreate = () => { if (atLeagueLimit) setUpgradeOpen(true); else onCreateLeague() }
 
   const load = useCallback(async () => {
     if (!authToken) return
@@ -48,7 +58,7 @@ export const LeagueTab = memo(function LeagueTab({ authToken, refreshing, onOpen
 
   useEffect(() => { void load() }, [load])
 
-  const codeValid = joinCode.trim().length >= 4
+  const codeValid = joinCode.trim().length >= 5
 
   const handleJoin = () => {
     if (!codeValid) return
@@ -57,6 +67,7 @@ export const LeagueTab = memo(function LeagueTab({ authToken, refreshing, onOpen
   }
 
   return (
+    <>
     <ScrollView
       style={styles.scroll}
       refreshControl={<RefreshControl refreshing={!!refreshing || loading} onRefresh={load} />}
@@ -74,7 +85,12 @@ export const LeagueTab = memo(function LeagueTab({ authToken, refreshing, onOpen
 
       {/* 액션 */}
       <View style={[styles.card, { gap: 12 }]}>
-        <PressableScale onPress={onCreateLeague} accessibilityLabel="새 리그 만들기" style={{ borderRadius: 12, overflow: 'hidden' }}>
+        {atLeagueLimit ? (
+          <Text style={{ color: palette.inkMuted, fontSize: 11, fontWeight: '600' }}>
+            무료는 진행 중 리그 1개까지예요 · PRO는 무제한 💎
+          </Text>
+        ) : null}
+        <PressableScale onPress={handleCreate} accessibilityLabel="새 리그 만들기" style={{ borderRadius: 12, overflow: 'hidden' }}>
           <View style={[
             { paddingVertical: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 12, overflow: 'hidden' },
             glow(palette.brandAccent, 12, 0.5),
@@ -163,6 +179,8 @@ export const LeagueTab = memo(function LeagueTab({ authToken, refreshing, onOpen
         )}
       </View>
     </ScrollView>
+    <ProUpgradeSheet visible={upgradeOpen} onClose={() => setUpgradeOpen(false)} />
+    </>
   )
 })
 
