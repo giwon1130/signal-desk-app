@@ -190,6 +190,17 @@ export function ReminderSettingsModal({ visible, authToken, onClose, isPro = fal
               />
             </View>
 
+            {/* 리딩 새 글 알림 — 단독 */}
+            <View style={{ borderTopWidth: 1, borderTopColor: palette.border }}>
+              <AlertToggleRow
+                title="📣 리딩 새 글 알림"
+                hint="구독한 리더(사람·AI)가 새 글을 올리면 알림"
+                value={prefs.readingPostEnabled}
+                disabled={togglesDisabled}
+                onValueChange={(v) => void updatePref({ readingPostEnabled: v })}
+              />
+            </View>
+
             {/* 방해금지 — 야간 푸시 보류 */}
             <View style={{ borderTopWidth: 1, borderTopColor: palette.border }}>
               <AlertToggleRow

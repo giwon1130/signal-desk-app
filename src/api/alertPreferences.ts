@@ -17,6 +17,8 @@ export type AlertPreferences = {
   quietHoursEnabled: boolean
   quietStartHour: number   // 0~23 (KST)
   quietEndHour: number     // 0~23 (KST)
+  /** 리딩 새 글 알림 — 구독 리더(사람·AI)의 새 글 푸시 */
+  readingPostEnabled: boolean
 }
 
 export const DEFAULT_ALERT_PREFERENCES: AlertPreferences = {
@@ -32,6 +34,7 @@ export const DEFAULT_ALERT_PREFERENCES: AlertPreferences = {
   quietHoursEnabled: false,
   quietStartHour: 22,
   quietEndHour: 7,
+  readingPostEnabled: true,
 }
 
 export async function getAlertPreferences(authToken: string): Promise<AlertPreferences> {
