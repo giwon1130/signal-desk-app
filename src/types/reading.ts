@@ -54,12 +54,14 @@ export type ReadingPost = {
 /** AI 시황 흐름 리딩 — "🤖 AI 시황" 룸 카드 (서버 /reading/ai-flow). */
 export type AiFlowReading = {
   id: string
-  title: string            // "6월 15일 마감 시황 흐름"
+  title: string            // "6월 15일 마감 시황 흐름" 또는 영상 제목
   headline: string         // AI 한 줄
   narrative: string        // 본문
   flowPoints: string[]     // 주도/순환매/전망/체크포인트 불릿
   sentiment: 'BULLISH' | 'BEARISH' | 'NEUTRAL'
   keyTickers: string[]
+  sourceLabel: string      // "시데 AI 시황" 또는 "삼프로TV"
+  sourceUrl: string        // 유튜브 원문 링크(데이터 기반은 빈 문자열)
   generatedAt: string
 }
 
