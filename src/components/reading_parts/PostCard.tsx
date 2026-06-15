@@ -88,10 +88,15 @@ function CallRow({ call, palette }: { call: ReadingCall; palette: any }) {
           {call.targetReturnPct != null ? ` · 목표 ${fmtPct(call.targetReturnPct, 0)}` : ''}
         </Text>
       </View>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
-        {ret != null ? <TrendingUp size={12} color={retColor} strokeWidth={2.5} /> : null}
-        <Text style={{ color: retColor, fontSize: 13, fontWeight: '900', fontVariant: ['tabular-nums'] }}>
-          {ret == null ? '—' : fmtPct(ret)}
+      <View style={{ alignItems: 'flex-end', minWidth: 56 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+          {ret != null ? <TrendingUp size={12} color={retColor} strokeWidth={2.5} /> : null}
+          <Text style={{ color: retColor, fontSize: 13, fontWeight: '900', fontVariant: ['tabular-nums'] }}>
+            {ret == null ? '—' : fmtPct(ret)}
+          </Text>
+        </View>
+        <Text style={{ color: palette.inkFaint, fontSize: 8.5, fontWeight: '700', marginTop: 1 }}>
+          {ret == null ? '시세대기' : closed ? '최종 수익' : '콜 이후'}
         </Text>
       </View>
     </View>
