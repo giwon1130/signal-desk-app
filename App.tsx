@@ -313,7 +313,13 @@ function AppShell() {
     setActiveTab('today')
   }, [])
 
-  usePushDeepLink(handleOpenDetail, handleNavigateToday, handleNavigateMarket, league.handleOpenLeagueFromPush)
+  // 리딩 새 글 알림 탭 — 리딩 탭으로 이동 + 해당 리더 프로필(글 목록) 열기.
+  const handleOpenReadingPost = useCallback((leaderUserId?: string) => {
+    setActiveTab('reading')
+    if (leaderUserId) reading.setActiveLeaderId(leaderUserId)
+  }, [reading.setActiveLeaderId])
+
+  usePushDeepLink(handleOpenDetail, handleNavigateToday, handleNavigateMarket, league.handleOpenLeagueFromPush, handleOpenReadingPost)
 
   // v2.1: URL 딥링크(?join=CODE / signaldesk://join?code=CODE)로 들어오면 참가 모달 자동 오픈.
   useEffect(() => {

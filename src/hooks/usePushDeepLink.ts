@@ -12,6 +12,8 @@ type NotificationData = {
   score?: number
   level?: string
   leagueId?: string
+  leaderUserId?: string
+  postId?: string
 }
 
 /**
@@ -30,6 +32,8 @@ export function usePushDeepLink(
   onNavigateToday: () => void,
   onNavigateMarket: () => void,
   onOpenLeague?: (leagueId: string) => void,
+  /** 리딩 새 글 — 리딩 탭으로 이동 + (있으면)해당 리더 프로필 열기. */
+  onOpenReadingPost?: (leaderUserId?: string) => void,
 ) {
   useEffect(() => {
     // 웹 빌드에서는 getLastNotificationResponse 가 호출 즉시 예외를 던져서
@@ -44,13 +48,14 @@ export function usePushDeepLink(
         onOpenDetail('KR', data.stockCode)
         return
       }
-      // 모닝 브리프 — Today 탭 (Hero 카드)
-      if (data.type === 'MORNING_BRIEF') {
-        onNavigateToday()
+      // 리딩 새 글(AI 리더 포함) — 리딩 탭 + 해당 리더 프로필(글 목록)로
+      if (data.type === 'READING_POST_NEW') {
+        onOpenReadingPost?.(data.leaderUserId)
         return
       }
-      // 미장 이브닝 브리프 — Today 탭 (모닝과 동일하게 브리프는 Today 허브)
-      if (data.type === 'EVENING_BRIEF') {
+      // 브리프(모닝/장중/마감/미장 이브닝) — 전부 Today 탭 (Hero 카드)
+      if (data.type === 'MORNING_BRIEF' || data.type === 'MIDDAY_BRIEF' ||
+          data.type === 'CLOSE_BRIEF' || data.type === 'EVENING_BRIEF') {
         onNavigateToday()
         return
       }
@@ -79,5 +84,5 @@ export function usePushDeepLink(
       handle(response.notification.request.content.data as NotificationData)
     })
     return () => sub.remove()
-  }, [onOpenDetail, onNavigateToday, onNavigateMarket, onOpenLeague])
+  }, [onOpenDetail, onNavigateToday, onNavigateMarket, onOpenLeague, onOpenReadingPost])
 }
