@@ -11,13 +11,12 @@
 import { memo, useCallback, useEffect, useState } from 'react'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { Pressable, RefreshControl, ScrollView, Share, Text, TextInput, View } from 'react-native'
-import { Compass, Megaphone, PenLine, Plus, Share2, Sparkles, X } from 'lucide-react-native'
+import { Compass, Megaphone, PenLine, Plus, Share2, X } from 'lucide-react-native'
 import { useStyles } from '../styles'
 import { useTheme } from '../theme'
-import type { AiFlowReading, Leader, ReadingPost } from '../types'
-import { applyForLeader, fetchAiFlowReadings, fetchFeed, fetchFollowing, fetchLeaderEligibility, fetchMyLeader, subscribe, unsubscribe } from '../api/reading'
+import type { Leader, ReadingPost } from '../types'
+import { applyForLeader, fetchFeed, fetchFollowing, fetchLeaderEligibility, fetchMyLeader, subscribe, unsubscribe } from '../api/reading'
 import { PostCard } from '../components/reading_parts/PostCard'
-import { AiFlowCard } from '../components/reading_parts/AiFlowCard'
 import { Entrance } from '../components/effects'
 import { TabIntro } from '../components/guide/TabIntro'
 import { EmptyGuide } from '../components/guide/EmptyGuide'
@@ -51,11 +50,6 @@ export const ReadingTab = memo(function ReadingTab({ authToken, refreshing, refr
   const [busy, setBusy] = useState(false)
   const [showEvent, setShowEvent] = useState(false)
   const [showDiscover, setShowDiscover] = useState(false)
-  // 리딩방 룸: 구독 리딩(사람) / 🤖 AI 시황 흐름
-  const [roomTab, setRoomTab] = useState<'subscribe' | 'ai'>('subscribe')
-  const [aiFlows, setAiFlows] = useState<AiFlowReading[]>([])
-  // AI 시황 출처 필터: 전체 / 시데 AI(데이터 기반) / 방송 요약(유튜브)
-  const [flowFilter, setFlowFilter] = useState<'all' | 'ai' | 'yt'>('all')
 
   // 리딩 첫 진입 시 오픈 이벤트(무료) 안내 모달 — 1회만 (AsyncStorage 플래그).
   useEffect(() => {
@@ -75,8 +69,8 @@ export const ReadingTab = memo(function ReadingTab({ authToken, refreshing, refr
     setLoading(true)
     setLoadError(false)
     try {
-      const [f, me, fol, elig, flows] = await Promise.all([fetchFeed(), fetchMyLeader(), fetchFollowing(), fetchLeaderEligibility(), fetchAiFlowReadings(40)])
-      setFeed(f); setLeader(me); setFollowing(fol); setCanLead(elig); setAiFlows(flows)
+      const [f, me, fol, elig] = await Promise.all([fetchFeed(), fetchMyLeader(), fetchFollowing(), fetchLeaderEligibility()])
+      setFeed(f); setLeader(me); setFollowing(fol); setCanLead(elig)
     } catch {
       setLoadError(true)
     } finally {
@@ -154,81 +148,6 @@ export const ReadingTab = memo(function ReadingTab({ authToken, refreshing, refr
         description="리더가 종목을 콜하면 진입가가 자동 박제되고 이후 수익률이 그대로 추적돼요. 적중률로 검증된 리더를 구독하면 그분의 콜이 내 피드에 올라옵니다."
         accent={palette.brandAccent}
       />
-
-      {/* 룸 세그먼트 — 구독 리딩(사람) / 🤖 AI 시황 */}
-      <View style={{ flexDirection: 'row', backgroundColor: palette.surfaceAlt, borderRadius: 10, padding: 3, gap: 3 }}>
-        {([['subscribe', '구독 리딩'], ['ai', '🤖 AI 시황']] as const).map(([key, label]) => {
-          const active = roomTab === key
-          return (
-            <Pressable
-              key={key}
-              onPress={() => setRoomTab(key)}
-              style={{
-                flex: 1, paddingVertical: 8, borderRadius: 8, alignItems: 'center',
-                backgroundColor: active ? palette.surface : 'transparent',
-              }}
-            >
-              <Text style={{ color: active ? palette.ink : palette.inkMuted, fontSize: 12.5, fontWeight: active ? '800' : '600' }}>{label}</Text>
-            </Pressable>
-          )
-        })}
-      </View>
-
-      {roomTab === 'ai' ? (
-        <View style={{ gap: 12 }}>
-          {/* 출처 필터 — 전체 / ✨시데 AI(데이터) / 📺방송 요약(유튜브) */}
-          {aiFlows.length > 0 ? (
-            <View style={{ flexDirection: 'row', gap: 6 }}>
-              {([['all', '전체'], ['ai', '✨ 시데 AI'], ['yt', '📺 방송 요약']] as const).map(([key, label]) => {
-                const active = flowFilter === key
-                return (
-                  <Pressable
-                    key={key}
-                    onPress={() => setFlowFilter(key)}
-                    style={{
-                      paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999,
-                      backgroundColor: active ? palette.brandAccent : palette.surfaceAlt,
-                      borderWidth: 1, borderColor: active ? palette.brandAccent : palette.border,
-                    }}
-                  >
-                    <Text style={{ color: active ? palette.bg : palette.inkSub, fontSize: 11.5, fontWeight: active ? '800' : '600' }}>{label}</Text>
-                  </Pressable>
-                )
-              })}
-            </View>
-          ) : null}
-
-          {(() => {
-            const shown = aiFlows.filter((c) =>
-              flowFilter === 'all' ? true : flowFilter === 'yt' ? !!c.sourceUrl : !c.sourceUrl,
-            )
-            if (aiFlows.length === 0) {
-              return (
-                <View style={{ paddingVertical: 28, alignItems: 'center', gap: 8 }}>
-                  <Sparkles size={26} color={palette.inkFaint} strokeWidth={1.8} />
-                  <Text style={{ color: palette.inkMuted, fontSize: 12.5, fontWeight: '700' }}>아직 AI 시황이 없어요</Text>
-                  <Text style={{ color: palette.inkFaint, fontSize: 11, textAlign: 'center', lineHeight: 16 }}>
-                    매 거래일 장전·마감에 AI가 섹터·수급·순환매 흐름을 읽어 올려드려요.
-                  </Text>
-                </View>
-              )
-            }
-            if (shown.length === 0) {
-              return (
-                <Text style={{ color: palette.inkFaint, fontSize: 12, textAlign: 'center', paddingVertical: 20 }}>
-                  이 출처의 시황이 아직 없어요.
-                </Text>
-              )
-            }
-            return shown.map((c, i) => (
-              <Entrance key={c.id} index={i}>
-                <AiFlowCard card={c} />
-              </Entrance>
-            ))
-          })()}
-        </View>
-      ) : (
-      <>
 
       {/* 리더 섹션 — 이미 리더이거나 권한 있는 계정에만 */}
       {leader ? (
@@ -451,8 +370,6 @@ export const ReadingTab = memo(function ReadingTab({ authToken, refreshing, refr
           ))
         )}
       </View>
-      </>
-      )}
     </ScrollView>
     <ReadingEventModal visible={showEvent} monthlyPriceWon={9900} onClose={closeEvent} />
     <DiscoverLeadersModal

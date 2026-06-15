@@ -10,6 +10,7 @@ import { ModalHeader } from '../ModalHeader'
 import { useTheme, type Palette } from '../../theme'
 import { fetchDiscoverLeaders, subscribeByLeaderId, type LeaderCard } from '../../api/reading'
 import { fmtPct } from './readingShared'
+import { apiErrorMessage } from '../../utils/apiError'
 
 type SortKey = 'hit' | 'followers' | 'calls'
 
@@ -54,8 +55,9 @@ export function DiscoverLeadersModal({ visible, onClose, onOpenLeader, onSubscri
       setLeaders((list) => list.map((x) => (x.userId === l.userId ? { ...x, following: true, followerCount: x.followerCount + 1 } : x)))
       toast?.show(`${l.displayName}님 구독 완료`, 'success')
       onSubscribed?.()
-    } catch {
-      toast?.show('구독에 실패했어요. 잠시 후 다시 시도해 주세요', 'error')
+    } catch (e) {
+      // 서버 메시지(예: "AI 리더 구독은 PRO 전용...") 그대로 노출.
+      toast?.show(apiErrorMessage(e, '구독에 실패했어요. 잠시 후 다시 시도해 주세요'), 'error')
     } finally {
       setBusyId('')
     }
@@ -102,7 +104,14 @@ export function DiscoverLeadersModal({ visible, onClose, onOpenLeader, onSubscri
             sortedLeaders.map((l) => (
               <View key={l.userId} style={{ backgroundColor: palette.surface, borderRadius: 12, borderWidth: 1, borderColor: palette.border, padding: 14, gap: 8 }}>
                 <Pressable onPress={() => onOpenLeader?.(l.userId)} style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1, gap: 3 })}>
-                  <Text style={{ color: palette.ink, fontSize: 15, fontWeight: '800' }} numberOfLines={1}>{l.displayName}</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <Text style={{ color: palette.ink, fontSize: 15, fontWeight: '800', flexShrink: 1 }} numberOfLines={1}>{l.displayName}</Text>
+                    {l.isAi ? (
+                      <View style={{ backgroundColor: (palette.purple ?? '#7c3aed') + '22', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 1, flexShrink: 0 }}>
+                        <Text style={{ color: palette.purple ?? '#7c3aed', fontSize: 9.5, fontWeight: '900' }}>AI · 💎 PRO</Text>
+                      </View>
+                    ) : null}
+                  </View>
                   {l.bio ? <Text style={{ color: palette.inkMuted, fontSize: 12, lineHeight: 17 }} numberOfLines={2}>{l.bio}</Text> : null}
                   <View style={{ flexDirection: 'row', gap: 10, marginTop: 2 }}>
                     <Stat label="적중률" value={l.totalCalls > 0 ? `${Math.round(l.hitRate * 100)}%` : '—'} accent={palette.up} palette={palette} />

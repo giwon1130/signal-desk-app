@@ -98,6 +98,7 @@ export type LeaderCard = {
   hitRate: number
   avgReturnPct: number | null
   following: boolean
+  isAi: boolean
 }
 
 /** 리딩 둘러보기 — 승인된 리더 목록(적중률·구독자 순). */
