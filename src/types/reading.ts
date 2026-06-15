@@ -51,6 +51,18 @@ export type ReadingPost = {
   calls: ReadingCall[]
 }
 
+/** AI 시황 흐름 리딩 — "🤖 AI 시황" 룸 카드 (서버 /reading/ai-flow). */
+export type AiFlowReading = {
+  id: string
+  title: string            // "6월 15일 마감 시황 흐름"
+  headline: string         // AI 한 줄
+  narrative: string        // 본문
+  flowPoints: string[]     // 주도/순환매/전망/체크포인트 불릿
+  sentiment: 'BULLISH' | 'BEARISH' | 'NEUTRAL'
+  keyTickers: string[]
+  generatedAt: string
+}
+
 export type LeaderStats = {
   totalCalls: number
   hitCount: number

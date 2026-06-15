@@ -4,6 +4,7 @@
  */
 import { API_BASE_URL, authedFetch } from '../api'
 import type {
+  AiFlowReading,
   ApiResponse,
   CallInput,
   DetectedMention,
@@ -14,6 +15,17 @@ import type {
 } from '../types'
 
 const base = `${API_BASE_URL}/api/v1/reading`
+
+/** 🤖 AI 시황 흐름 리딩 — 최신순. 실패 시 빈 배열(throw 안 함). */
+export async function fetchAiFlowReadings(limit = 20): Promise<AiFlowReading[]> {
+  try {
+    const r = await authedFetch(`${base}/ai-flow?limit=${limit}`, { headers: { Accept: 'application/json' } })
+    const j = (await r.json()) as ApiResponse<AiFlowReading[]>
+    return j.success ? (j.data ?? []) : []
+  } catch {
+    return []
+  }
+}
 
 // ─── 리더 ──────────────────────────────────────────────────────────────────
 export async function applyForLeader(displayName: string, bio = ''): Promise<Leader> {
