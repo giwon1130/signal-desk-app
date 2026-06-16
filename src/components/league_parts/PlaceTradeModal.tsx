@@ -19,7 +19,8 @@ type Props = {
   cashBalance: number                    // league 통화
   currency: 'KRW' | 'USD'
   marketScope: MarketScope
-  totalAssets: number                    // league 통화 — 30% 비중 기준
+  totalAssets: number                    // league 통화 — 표시용
+  startingCapital: number                // league 통화 — 30% 비중 기준(백엔드와 동일: 시드 기준)
   tradingHours: TradingHours             // 장중에만 / 24시간
   marketSessions: MarketSessionStatus[]  // KR/US 개장 여부 (장 마감 안내용)
   onClose: () => void
@@ -38,7 +39,7 @@ type Selected = {
 }
 
 export function PlaceTradeModal({
-  visible, leagueId, positions, cashBalance, currency, marketScope, totalAssets, tradingHours, marketSessions, onClose, onTraded, toast,
+  visible, leagueId, positions, cashBalance, currency, marketScope, totalAssets, startingCapital, tradingHours, marketSessions, onClose, onTraded, toast,
 }: Props) {
   const { palette } = useTheme()
   const insets = useSafeAreaInsets()
@@ -102,13 +103,14 @@ export function PlaceTradeModal({
   // 검증
   const overQty = side === 'SELL' && selected?.heldQty != null && qty > selected.heldQty
   const insufficientCash = side === 'BUY' && sameCcy && qty > 0 && buyCost > cashBalance
-  // 30% 비중 경고 (BUY · 동일통화 · totalAssets 유효) — 매수 후 해당 종목 평가비중.
+  // 30% 비중 경고 — 백엔드 규칙과 동일: '누적 매수원가 + 이번 주문액 ≤ 시드 × 30%'.
+  // (이전엔 시총/현재총자산 기준이라 수익 후 BE 는 거부하는데 FE 는 경고 안 뜨는 불일치가 있었음.)
   const over30 = useMemo(() => {
-    if (side !== 'BUY' || !sameCcy || !selected || qty <= 0 || totalAssets <= 0) return false
+    if (side !== 'BUY' || !sameCcy || !selected || qty <= 0 || startingCapital <= 0) return false
     const held = positions.find((p) => p.market === selected.market && p.ticker === selected.ticker)
-    const heldValue = held && held.currentPrice != null ? held.currentPrice * held.quantity : 0
-    return (heldValue + notional) / totalAssets > MAX_POSITION_PCT
-  }, [side, sameCcy, selected, qty, totalAssets, positions, notional])
+    const existingCost = held ? held.averageCost * held.quantity : 0
+    return (existingCost + notional) > startingCapital * MAX_POSITION_PCT
+  }, [side, sameCcy, selected, qty, startingCapital, positions, notional])
 
   // 선택 종목 시장의 개장 여부 (백엔드 marketSessions 권위값). 없으면 열린 것으로 간주.
   const marketClosed = !!selected && marketSessions.find((s) => s.market === selected.market)?.isOpen === false

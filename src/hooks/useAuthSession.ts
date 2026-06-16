@@ -61,20 +61,23 @@ export function useAuthSession() {
     setUser(null)
   }, [])
 
+  // 현재 사용자/토큰의 최신값 — refreshUser 가 setUser 업데이터 안에서 부수효과를 내지 않게 ref 로 참조.
+  const userRef = useRef<AuthUser | null>(null)
+  useEffect(() => { userRef.current = user }, [user])
+
   /** 서버에서 최신 사용자(plan 등) 재조회 — PRO 승인/포그라운드 복귀 시 즉시 반영. 실패는 조용히 무시. */
   const refreshUser = useCallback(async () => {
-    setUser((prev) => {
-      if (!prev?.token) return prev
-      void (async () => {
-        try {
-          const fresh = await apiMe(prev.token)
-          const merged = { ...fresh, token: prev.token }
-          setUser(merged)
-          await saveAuth(merged)
-        } catch { /* 만료면 authedFetch 의 401 핸들러가 로그아웃 처리 */ }
-      })()
-      return prev
-    })
+    const token = userRef.current?.token
+    if (!token) return
+    try {
+      const fresh = await apiMe(token)
+      const merged = { ...fresh, token }
+      setUser(merged)
+      await saveAuth(merged)
+    } catch {
+      // 갱신 실패는 조용히 무시(일시 네트워크 오류로 로그아웃시키지 않음).
+      // 토큰이 실제 만료라면 이후 authedFetch 호출의 401 핸들러가 로그아웃 처리.
+    }
   }, [])
 
   // 401(토큰 만료/무효) → 강제 로그아웃 핸들러 등록.
