@@ -327,12 +327,13 @@ export function DataTable({
           ) : null}
         </View>
       ) : (
-        rows.map((row, i) => {
+        rows.map((row) => {
           const isLive = row.market === 'KR' && !!livePrices[row.ticker]
           const toggling = togglingKey === `${row.market}:${row.ticker}` || favoriteDeletingId === row.watchId
           return (
+            // key 는 market+ticker(고유) — 인덱스 제외해야 정렬 변동 시 remount 없이 memo 재사용.
             <DataRow
-              key={`${row.market}-${row.ticker}-${i}`}
+              key={`${row.market}-${row.ticker}`}
               row={row}
               mode={mode}
               isLive={isLive}
