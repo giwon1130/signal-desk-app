@@ -14,6 +14,7 @@ import { WebLayout } from './src/web/WebLayout'
 import { useStyles } from './src/styles'
 import { ThemeProvider, useTheme } from './src/theme'
 import { AuthScreen } from './src/components/AuthScreen'
+import { ErrorBoundary } from './src/components/ErrorBoundary'
 import { OnboardingScreen } from './src/components/OnboardingScreen'
 import {
   getOnboardingCompleted, markOnboardingCompleted,
@@ -713,9 +714,11 @@ function AppShell() {
 export default function App() {
   return (
     <SafeAreaProvider>
-      <ThemeProvider>
-        <AppShell />
-      </ThemeProvider>
+      <ErrorBoundary>
+        <ThemeProvider>
+          <AppShell />
+        </ThemeProvider>
+      </ErrorBoundary>
     </SafeAreaProvider>
   )
 }
