@@ -2,7 +2,7 @@
  * 리그 상세 화면 — 리더보드 + 거래 피드 + 내 포지션 + 거래 진입.
  * 진행 중(RUNNING/OPEN)엔 10초 폴링, 종료(FINISHED)엔 폴링 안 함.
  */
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Modal, Pressable, RefreshControl, ScrollView, Share, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Crown, LogOut, Share2, Trophy, X } from 'lucide-react-native'
@@ -49,24 +49,30 @@ export function LeagueDetailModal({ visible, leagueId, myUserId, marketSessions,
   const load = useCallback(async (opts?: { silent?: boolean }) => {
     if (!leagueId) return
     if (!opts?.silent) setLoading(true)
-    // 느린 섹션은 독립 발사 — 도착 즉시 개별 반영 (실패해도 다른 섹션 진행)
-    void fetchLeaderboard(leagueId).then(setLeaderboard).catch(() => {})
-    void fetchTradeFeed(leagueId, 50).then(setFeed).catch(() => {})
-    void fetchMyPositions(leagueId).then(setPositions).catch(() => {})
+    // 느린 섹션은 독립 발사 — 도착 즉시 개별 반영 (실패해도 다른 섹션 진행).
+    // reqLeagueId 가드: 다른 리그를 빠르게 열면 직전 리그의 느린 응답이 새 리그 화면을 덮어쓰던 race 차단.
+    const reqLeagueId = leagueId
+    void fetchLeaderboard(leagueId).then((r) => { if (reqLeagueId === leagueIdRef.current) setLeaderboard(r) }).catch(() => {})
+    void fetchTradeFeed(leagueId, 50).then((r) => { if (reqLeagueId === leagueIdRef.current) setFeed(r) }).catch(() => {})
+    void fetchMyPositions(leagueId).then((r) => { if (reqLeagueId === leagueIdRef.current) setPositions(r) }).catch(() => {})
     try {
       // 상세만 await — 도착하면 곧바로 로딩 해제 → 헤더/상태/거래 버튼 즉시 사용 가능
       const d = await fetchLeagueDetail(leagueId)
+      if (reqLeagueId !== leagueIdRef.current) return
       setDetail(d)
       setLoadError(false)
     } catch {
-      setLoadError(true)
+      if (reqLeagueId === leagueIdRef.current) setLoadError(true)
     } finally {
-      if (!opts?.silent) setLoading(false)
+      if (!opts?.silent && reqLeagueId === leagueIdRef.current) setLoading(false)
     }
   }, [leagueId])
 
+  // 현재 열린 리그 id 의 최신값 — 비동기 응답이 늦게 도착했을 때 아직 같은 리그인지 검사용.
+  const leagueIdRef = useRef(leagueId)
   // 다른 리그를 열면 직전 리그의 리더보드/피드가 새 데이터 도착 전까지 비치던 잔상 제거.
   useEffect(() => {
+    leagueIdRef.current = leagueId
     setDetail(null); setLeaderboard([]); setFeed([]); setPositions([]); setLoadError(false)
   }, [leagueId])
 

@@ -34,6 +34,8 @@ export function usePushDeepLink(
   onOpenLeague?: (leagueId: string) => void,
   /** 리딩 새 글 — 리딩 탭으로 이동 + (있으면)해당 리더 프로필 열기. */
   onOpenReadingPost?: (leaderUserId?: string) => void,
+  /** PRO 승인 알림 — 설정/업그레이드 화면 + 세션 plan 갱신. */
+  onPlanApproved?: () => void,
 ) {
   useEffect(() => {
     // 웹 빌드에서는 getLastNotificationResponse 가 호출 즉시 예외를 던져서
@@ -51,6 +53,21 @@ export function usePushDeepLink(
       // 리딩 새 글(AI 리더 포함) — 리딩 탭 + 해당 리더 프로필(글 목록)로
       if (data.type === 'READING_POST_NEW') {
         onOpenReadingPost?.(data.leaderUserId)
+        return
+      }
+      // 콜 적중 — 해당 리더 프로필/글로(종목 상세 아님)
+      if (data.type === 'READING_CALL_HIT') {
+        onOpenReadingPost?.(data.leaderUserId)
+        return
+      }
+      // PRO 승인 — 설정/업그레이드 + 세션 plan 갱신(즉시 PRO 반영)
+      if (data.type === 'PLAN_APPROVED') {
+        onPlanApproved?.()
+        return
+      }
+      // 운영 장애/PRO 신청(관리자 대상) — 별도 화면 없어 Today 로
+      if (data.type === 'ADMIN_ALERT' || data.type === 'PLAN_REQUEST') {
+        onNavigateToday()
         return
       }
       // 브리프(모닝/장중/마감/미장 이브닝) — 전부 Today 탭 (Hero 카드)
@@ -84,5 +101,5 @@ export function usePushDeepLink(
       handle(response.notification.request.content.data as NotificationData)
     })
     return () => sub.remove()
-  }, [onOpenDetail, onNavigateToday, onNavigateMarket, onOpenLeague, onOpenReadingPost])
+  }, [onOpenDetail, onNavigateToday, onNavigateMarket, onOpenLeague, onOpenReadingPost, onPlanApproved])
 }

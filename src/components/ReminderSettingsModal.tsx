@@ -61,9 +61,10 @@ export function ReminderSettingsModal({ visible, authToken, onClose, isPro = fal
   }, [visible])
 
   const updatePref = async (patch: Partial<AlertPreferences>) => {
-    const next = { ...prefs, ...patch }
-    setPrefs(next)
-    if (authToken) await updateAlertPreferences(authToken, next)
+    // 함수형 업데이트로 최신 prefs 기준 병합 — 빠른 연속 토글 시 stale 클로저로 직전 변경이 덮이는 것 방지.
+    let next: AlertPreferences | null = null
+    setPrefs((prev) => { next = { ...prev, ...patch }; return next })
+    if (authToken && next) await updateAlertPreferences(authToken, next)
   }
 
   const handlePush = async (v: boolean) => {

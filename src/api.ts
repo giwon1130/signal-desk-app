@@ -18,14 +18,22 @@ import { API_BASE_URL } from './api/config'
 // 외부(다른 모듈)에서 `import { API_BASE_URL } from '../api'` 로 쓰던 것 호환 유지.
 export { API_BASE_URL }
 
-/** JWT 토큰이 있으면 Authorization 헤더를 자동 주입한 fetch */
+// 토큰 만료/무효(401)를 한 곳에서 처리하기 위한 핸들러 — useAuthSession 이 강제 로그아웃을 등록.
+let onUnauthorized: (() => void) | null = null
+export function setUnauthorizedHandler(fn: (() => void) | null) { onUnauthorized = fn }
+
+/** JWT 토큰이 있으면 Authorization 헤더를 자동 주입한 fetch. 토큰이 있는데 401 이면 세션 만료로 보고 핸들러 통지. */
 export function authedFetch(input: string, init: RequestInit = {}): Promise<Response> {
   const token = getMemoryToken()
   const headers: Record<string, string> = {
     ...(init.headers as Record<string, string> | undefined),
   }
   if (token) headers.Authorization = `Bearer ${token}`
-  return fetch(input, { ...init, headers })
+  return fetch(input, { ...init, headers }).then((res) => {
+    // 토큰을 실어 보냈는데 401 → 만료/무효. 전역 핸들러로 강제 로그아웃(앱이 빈 화면으로 멈추지 않게).
+    if (res.status === 401 && token) onUnauthorized?.()
+    return res
+  })
 }
 
 export type LoadAllDataResult = {

@@ -71,7 +71,7 @@ function AppShell() {
   useEffect(() => { webBootstrap(palette.bg) }, [palette.bg])
 
   // ── 인증 ─────────────────────────────────────
-  const { authChecked, user, handleAuthDone, handleLogout, handleDeleteAccount } = useAuthSession()
+  const { authChecked, user, handleAuthDone, handleLogout, handleDeleteAccount, refreshUser } = useAuthSession()
 
   const [activeTab, setActiveTab] = useState<TabKey>('today')
   const market = useMarketSnapshot(user?.token ?? null, !!user)
@@ -136,31 +136,36 @@ function AppShell() {
       setOnboardingState('loading')
       return
     }
+    let cancelled = false
+    let migTimer: ReturnType<typeof setTimeout> | null = null
+    // 진입 직후 갑작스러우면 어색 → 700ms 지연으로 메인 그려진 뒤 자연스럽게 노출. 로그아웃 시 타이머/상태 변경 취소.
+    const scheduleMigration = () => { migTimer = setTimeout(() => { if (!cancelled) setV2MigrationOpen(true) }, 700) }
     void (async () => {
       const [p, completed] = await Promise.all([
         getAlertPreferences(tok),
         getOnboardingCompleted(),
       ])
+      if (cancelled) return
       if (p.marketPreference) setMarketPreference(p.marketPreference)
       // 이미 완료했으면 그대로 진입. 미완료지만 marketPreference 가 있으면(v1 사용자) 자동 완료 처리.
       if (completed) {
         setOnboardingState('done')
-        // 완료된 사용자 중 v2 마이그레이션 모달 아직 안 본 경우 1회 노출.
-        // 진입 직후 갑작스러우면 어색 → 700ms 지연으로 메인 그려진 뒤 자연스럽게 노출.
         const migShown = await getV2MigrationShown()
-        if (!migShown) setTimeout(() => setV2MigrationOpen(true), 700)
+        if (!cancelled && !migShown) scheduleMigration()
       } else if (p.marketPreference) {
         // v1 사용자 — 온보딩 한 적 없지만 marketPreference 가 있으므로 신규 아님.
         await markOnboardingCompleted()
+        if (cancelled) return
         setOnboardingState('done')
         const migShown = await getV2MigrationShown()
-        if (!migShown) setTimeout(() => setV2MigrationOpen(true), 700)
+        if (!cancelled && !migShown) scheduleMigration()
       } else {
         setOnboardingState('show')
         // 신규 사용자는 온보딩 자체가 v2 안내라 별도 마이그레이션 모달 불필요.
         await markV2MigrationShown()
       }
     })()
+    return () => { cancelled = true; if (migTimer) clearTimeout(migTimer) }
   }, [user?.token])
 
   // v2 마이그레이션 모달 confirm — 시장 선호 즉시 반영 + 마크.
@@ -327,7 +332,13 @@ function AppShell() {
     if (leaderUserId) reading.setActiveLeaderId(leaderUserId)
   }, [reading.setActiveLeaderId])
 
-  usePushDeepLink(handleOpenDetail, handleNavigateToday, handleNavigateMarket, league.handleOpenLeagueFromPush, handleOpenReadingPost)
+  // PRO 승인 푸시 — 업그레이드 시트 열고 세션 plan 즉시 갱신(재시작 없이 PRO 반영).
+  const handlePlanApproved = useCallback(() => {
+    void refreshUser()
+    setProUpgradeOpen(true)
+  }, [refreshUser])
+
+  usePushDeepLink(handleOpenDetail, handleNavigateToday, handleNavigateMarket, league.handleOpenLeagueFromPush, handleOpenReadingPost, handlePlanApproved)
 
   // v2.1: URL 딥링크(?join=CODE / signaldesk://join?code=CODE)로 들어오면 참가 모달 자동 오픈.
   useEffect(() => {
