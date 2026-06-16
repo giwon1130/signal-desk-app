@@ -367,7 +367,7 @@ export const ReadingTab = memo(function ReadingTab({ authToken, refreshing, refr
         ) : (
           feed.map((p, i) => (
             <Entrance key={p.id} index={i}>
-              <PostCard post={p} onPressLeader={() => onOpenLeader?.(p.leaderUserId)} />
+              <PostCard post={p} onPressLeader={onOpenLeader} />
             </Entrance>
           ))
         )}

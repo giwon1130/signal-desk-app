@@ -1,4 +1,4 @@
-import { memo, useMemo, useState } from 'react'
+import { memo, useCallback, useMemo, useState } from 'react'
 import { View } from 'react-native'
 import type { DisclosureItem, HoldingPosition, PortfolioSummary, StockMarketFilter, StockSearchResult, WatchItem } from '../types'
 import { useTheme } from '../theme'
@@ -153,7 +153,9 @@ export const StocksPage = memo(function StocksPage(props: Props) {
     else { setSortKey(key); setSortDir(key === 'name' || key === 'market' || key === 'sector' ? 'asc' : 'desc') }
   }
 
-  const handleToggle = async (row: Row) => {
+  // useCallback — 라이브 가격 5초 틱에도 참조가 안정돼야 DataRow memo 가 변경 없는 행을 건너뜀.
+  // (togglingKey 는 사용자 토글 시에만 바뀌므로 틱 사이에는 안정.)
+  const handleToggle = useCallback(async (row: Row) => {
     const key = `${row.market}:${row.ticker}`
     if (togglingKey) return
     setTogglingKey(key)
@@ -175,7 +177,7 @@ export const StocksPage = memo(function StocksPage(props: Props) {
     } finally {
       setTogglingKey('')
     }
-  }
+  }, [togglingKey, onDeleteFavorite, onQuickAddWatch])
 
   const confirmBulkDelete = () => {
     if (bulkDeleting || watchlist.length < 2) return

@@ -1,6 +1,7 @@
 /**
  * 리딩 글 카드 — 피드(ReadingTab)와 리더 프로필(LeaderProfileModal) 공용.
  */
+import { memo } from 'react'
 import { Text, View } from 'react-native'
 import { TrendingUp } from 'lucide-react-native'
 import { useTheme } from '../../theme'
@@ -8,9 +9,11 @@ import type { ReadingCall, ReadingPost } from '../../types'
 import { callStatusBadge, fmtPct, fmtPrice, returnColor } from './readingShared'
 import { GradientBackground, PressableScale, glow } from '../effects'
 
-export function PostCard({ post, onPressLeader, showLeader = true }: {
+// memo — 피드/프로필 글 목록에서 부모 상태 변화 시 변경 없는 글이 재렌더되지 않게.
+// onPressLeader 는 (leaderUserId)=>void 안정 참조를 받아 인라인 클로저 없이 memo 가 동작하도록.
+export const PostCard = memo(function PostCard({ post, onPressLeader, showLeader = true }: {
   post: ReadingPost
-  onPressLeader?: () => void
+  onPressLeader?: (leaderUserId: string) => void
   showLeader?: boolean
 }) {
   const { palette } = useTheme()
@@ -19,7 +22,7 @@ export function PostCard({ post, onPressLeader, showLeader = true }: {
     <View style={{ paddingVertical: 12, borderTopWidth: 1, borderTopColor: palette.border, gap: 8 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
         {showLeader ? (
-          <PressableScale onPress={onPressLeader} accessibilityLabel={`${post.leaderName} 프로필`} scaleTo={0.93} style={{ borderRadius: 999 }}>
+          <PressableScale onPress={() => onPressLeader?.(post.leaderUserId)} accessibilityLabel={`${post.leaderName} 프로필`} scaleTo={0.93} style={{ borderRadius: 999 }}>
             <View style={[
               { flexDirection: 'row', alignItems: 'center', gap: 5, paddingLeft: 7, paddingRight: 10, paddingVertical: 4, borderRadius: 999, overflow: 'hidden' },
               glow(palette.brandAccent, 8, 0.55),
@@ -52,7 +55,7 @@ export function PostCard({ post, onPressLeader, showLeader = true }: {
       ) : null}
     </View>
   )
-}
+})
 
 function CallRow({ call, palette }: { call: ReadingCall; palette: any }) {
   const ret = call.returnPct

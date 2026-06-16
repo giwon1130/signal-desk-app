@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { ArrowDown, ArrowUp, Minus, Plus, Radio, Star, X } from 'lucide-react-native'
 import { marketColor, type Palette } from '../../theme'
@@ -41,6 +42,222 @@ type Props = {
   stockSearchLoading: boolean
   palette: Palette
 }
+
+type RowProps = {
+  row: Row
+  mode: Mode
+  isLive: boolean
+  toggling: boolean
+  onOpenDetail: (m: string, t: string, n?: string) => void
+  onToggleWatch: (row: Row) => Promise<void>
+  palette: Palette
+}
+
+/** 행 단위 메모 비교 — 값이 같으면 재렌더 스킵(라이브 가격 5초 틱마다 전체 행 재렌더 방지). */
+function rowPropsEqual(a: RowProps, b: RowProps): boolean {
+  if (a.mode !== b.mode || a.isLive !== b.isLive || a.toggling !== b.toggling) return false
+  if (a.onOpenDetail !== b.onOpenDetail || a.onToggleWatch !== b.onToggleWatch || a.palette !== b.palette) return false
+  const x = a.row
+  const y = b.row
+  if (
+    x.market !== y.market || x.ticker !== y.ticker || x.name !== y.name ||
+    x.sector !== y.sector || x.stance !== y.stance || x.price !== y.price ||
+    x.changeRate !== y.changeRate || x.isInWatch !== y.isInWatch || x.watchId !== y.watchId
+  ) return false
+  const xh = x.holding
+  const yh = y.holding
+  if (!xh && !yh) return true
+  if (!xh || !yh) return false
+  return xh.buyPrice === yh.buyPrice && xh.quantity === yh.quantity &&
+    xh.profitRate === yh.profitRate && xh.profitAmount === yh.profitAmount &&
+    xh.evaluationAmount === yh.evaluationAmount
+}
+
+const DataRow = memo(function DataRow({ row, mode, isLive, toggling, onOpenDetail, onToggleWatch, palette }: RowProps) {
+  const color = marketColor(palette, row.market, row.changeRate)
+  return (
+    <Pressable
+      onPress={() => onOpenDetail(row.market, row.ticker, row.name)}
+      style={(state) => {
+        const hovered = (state as { hovered?: boolean }).hovered
+        return [{
+          flexDirection: 'row', alignItems: 'center',
+          paddingVertical: 9, paddingHorizontal: 12, gap: 8,
+          borderBottomWidth: 1, borderBottomColor: palette.border,
+          backgroundColor: hovered ? palette.surfaceAlt : 'transparent',
+        }]
+      }}
+    >
+      {/* ☆ 토글 */}
+      <Pressable
+        onPress={(e) => { (e as unknown as { stopPropagation: () => void }).stopPropagation?.(); void onToggleWatch(row) }}
+        hitSlop={6}
+        style={{ width: 34, alignItems: 'center' }}
+        disabled={toggling}
+      >
+        <Star
+          size={14}
+          color={row.isInWatch ? '#f59e0b' : palette.inkFaint}
+          strokeWidth={2.5}
+          fill={row.isInWatch ? '#f59e0b' : 'none'}
+        />
+      </Pressable>
+
+      {/* 종목명 + stance */}
+      <View style={{ flex: 2.4, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+        <Text
+          numberOfLines={1}
+          style={{ color: palette.ink, fontSize: 13, fontWeight: '800', flexShrink: 1 }}
+        >
+          {row.name}
+        </Text>
+        {isLive ? (
+          <Radio size={9} color="#10b981" strokeWidth={3} />
+        ) : row.market === 'US' ? (
+          <Text style={{ color: palette.inkFaint, fontSize: 9, fontWeight: '700', letterSpacing: 0.3 }}>지연</Text>
+        ) : null}
+        {row.stance ? <StanceTag stance={row.stance} palette={palette} size="xs" /> : null}
+      </View>
+
+      {/* 티커 */}
+      <Text
+        style={{
+          width: 70,
+          color: palette.inkMuted,
+          fontSize: 12,
+          fontWeight: '600',
+          fontVariant: ['tabular-nums'],
+        }}
+      >
+        {row.ticker}
+      </Text>
+
+      {/* 시장 */}
+      <View style={{ width: 60 }}>
+        <View style={{
+          alignSelf: 'flex-start',
+          paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4,
+          backgroundColor: row.market === 'KR' ? palette.blueSoft : palette.greenSoft,
+        }}>
+          <Text style={{
+            color: row.market === 'KR' ? palette.blue : palette.green,
+            fontSize: 10, fontWeight: '800', letterSpacing: 0.5,
+          }}>
+            {row.market}
+          </Text>
+        </View>
+      </View>
+
+      {/* 섹터 OR 매수가×수량 */}
+      {mode === 'holdings' && row.holding ? (
+        <View style={{ flex: 1.4, minWidth: 0, alignItems: 'flex-end' }}>
+          <Text style={{ color: palette.ink, fontSize: 12, fontWeight: '700', fontVariant: ['tabular-nums'] }}>
+            {formatPrice(row.holding.buyPrice, row.market)}
+          </Text>
+          <Text style={{ color: palette.inkMuted, fontSize: 10, fontWeight: '600', fontVariant: ['tabular-nums'] }}>
+            × {row.holding.quantity}주
+          </Text>
+        </View>
+      ) : (
+        <Text
+          numberOfLines={1}
+          style={{
+            flex: 1.4, minWidth: 0,
+            color: palette.inkMuted, fontSize: 11, fontWeight: '600',
+          }}
+        >
+          {row.sector || '—'}
+        </Text>
+      )}
+
+      {/* 현재가 */}
+      <Text
+        style={{
+          width: 110,
+          textAlign: 'right',
+          color: palette.ink, fontSize: 13, fontWeight: '800',
+          fontVariant: ['tabular-nums'],
+        }}
+      >
+        {formatPrice(row.price, row.market)}
+      </Text>
+
+      {/* 등락률 OR 수익률 */}
+      {mode === 'holdings' && row.holding ? (
+        <View style={{ width: 90, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 3 }}>
+          {(() => {
+            const pColor = marketColor(palette, row.market, row.holding.profitRate)
+            return (
+              <>
+                {row.holding.profitRate > 0 ? <ArrowUp size={10} color={pColor} strokeWidth={3} />
+                  : row.holding.profitRate < 0 ? <ArrowDown size={10} color={pColor} strokeWidth={3} />
+                  : <Minus size={10} color={pColor} strokeWidth={3} />}
+                <Text style={{ color: pColor, fontSize: 12, fontWeight: '800', fontVariant: ['tabular-nums'] }}>
+                  {formatSignedRate(row.holding.profitRate)}
+                </Text>
+              </>
+            )
+          })()}
+        </View>
+      ) : (
+        <View style={{ width: 90, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 3 }}>
+          {row.changeRate > 0 ? <ArrowUp size={10} color={color} strokeWidth={3} />
+            : row.changeRate < 0 ? <ArrowDown size={10} color={color} strokeWidth={3} />
+            : <Minus size={10} color={color} strokeWidth={3} />}
+          <Text style={{ color, fontSize: 12, fontWeight: '800', fontVariant: ['tabular-nums'] }}>
+            {formatSignedRate(row.changeRate)}
+          </Text>
+        </View>
+      )}
+
+      {/* 평가금액 OR 관심 토글 액션 */}
+      {mode === 'holdings' && row.holding ? (
+        <View style={{ width: 120, alignItems: 'flex-end' }}>
+          <Text style={{ color: palette.ink, fontSize: 13, fontWeight: '800', fontVariant: ['tabular-nums'] }}>
+            {formatPrice(row.holding.evaluationAmount, row.market)}
+          </Text>
+          <Text style={{
+            color: marketColor(palette, row.market, row.holding.profitAmount),
+            fontSize: 11, fontWeight: '700', fontVariant: ['tabular-nums'],
+          }}>
+            {formatSignedPrice(row.holding.profitAmount, row.market)}
+          </Text>
+        </View>
+      ) : (
+        <View style={{ width: 48, alignItems: 'flex-end' }}>
+          <Pressable
+            onPress={(e) => { (e as unknown as { stopPropagation: () => void }).stopPropagation?.(); void onToggleWatch(row) }}
+            disabled={toggling}
+            style={(state) => {
+              const hovered = (state as { hovered?: boolean }).hovered
+              return [{
+                flexDirection: 'row', alignItems: 'center', gap: 3,
+                paddingHorizontal: 8, paddingVertical: 4,
+                borderRadius: 6,
+                backgroundColor: row.isInWatch
+                  ? (hovered ? palette.redSoft : palette.surfaceAlt)
+                  : (hovered ? palette.blueSoft : palette.blue),
+                opacity: toggling ? 0.5 : 1,
+              }]
+            }}
+          >
+            {row.isInWatch ? (
+              <>
+                <X size={9} color={palette.red} strokeWidth={3} />
+                <Text style={{ color: palette.red, fontSize: 10, fontWeight: '800' }}>해제</Text>
+              </>
+            ) : (
+              <>
+                <Plus size={9} color="#ffffff" strokeWidth={3} />
+                <Text style={{ color: '#ffffff', fontSize: 10, fontWeight: '800' }}>담기</Text>
+              </>
+            )}
+          </Pressable>
+        </View>
+      )}
+    </Pressable>
+  )
+}, rowPropsEqual)
 
 export function DataTable({
   mode, rows, sortKey, sortDir, onSort, onOpenDetail, onToggleWatch,
@@ -112,190 +329,18 @@ export function DataTable({
       ) : (
         rows.map((row, i) => {
           const isLive = row.market === 'KR' && !!livePrices[row.ticker]
-          const color = marketColor(palette, row.market, row.changeRate)
           const toggling = togglingKey === `${row.market}:${row.ticker}` || favoriteDeletingId === row.watchId
           return (
-            <Pressable
+            <DataRow
               key={`${row.market}-${row.ticker}-${i}`}
-              onPress={() => onOpenDetail(row.market, row.ticker, row.name)}
-              style={(state) => {
-                const hovered = (state as { hovered?: boolean }).hovered
-                return [{
-                  flexDirection: 'row', alignItems: 'center',
-                  paddingVertical: 9, paddingHorizontal: 12, gap: 8,
-                  borderBottomWidth: 1, borderBottomColor: palette.border,
-                  backgroundColor: hovered ? palette.surfaceAlt : 'transparent',
-                }]
-              }}
-            >
-              {/* ☆ 토글 */}
-              <Pressable
-                onPress={(e) => { (e as unknown as { stopPropagation: () => void }).stopPropagation?.(); void onToggleWatch(row) }}
-                hitSlop={6}
-                style={{ width: 34, alignItems: 'center' }}
-                disabled={toggling}
-              >
-                <Star
-                  size={14}
-                  color={row.isInWatch ? '#f59e0b' : palette.inkFaint}
-                  strokeWidth={2.5}
-                  fill={row.isInWatch ? '#f59e0b' : 'none'}
-                />
-              </Pressable>
-
-              {/* 종목명 + stance */}
-              <View style={{ flex: 2.4, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <Text
-                  numberOfLines={1}
-                  style={{ color: palette.ink, fontSize: 13, fontWeight: '800', flexShrink: 1 }}
-                >
-                  {row.name}
-                </Text>
-                {isLive ? (
-                  <Radio size={9} color="#10b981" strokeWidth={3} />
-                ) : row.market === 'US' ? (
-                  <Text style={{ color: palette.inkFaint, fontSize: 9, fontWeight: '700', letterSpacing: 0.3 }}>지연</Text>
-                ) : null}
-                {row.stance ? <StanceTag stance={row.stance} palette={palette} size="xs" /> : null}
-              </View>
-
-              {/* 티커 */}
-              <Text
-                style={{
-                  width: 70,
-                  color: palette.inkMuted,
-                  fontSize: 12,
-                  fontWeight: '600',
-                  fontVariant: ['tabular-nums'],
-                }}
-              >
-                {row.ticker}
-              </Text>
-
-              {/* 시장 */}
-              <View style={{ width: 60 }}>
-                <View style={{
-                  alignSelf: 'flex-start',
-                  paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4,
-                  backgroundColor: row.market === 'KR' ? palette.blueSoft : palette.greenSoft,
-                }}>
-                  <Text style={{
-                    color: row.market === 'KR' ? palette.blue : palette.green,
-                    fontSize: 10, fontWeight: '800', letterSpacing: 0.5,
-                  }}>
-                    {row.market}
-                  </Text>
-                </View>
-              </View>
-
-              {/* 섹터 OR 매수가×수량 */}
-              {mode === 'holdings' && row.holding ? (
-                <View style={{ flex: 1.4, minWidth: 0, alignItems: 'flex-end' }}>
-                  <Text style={{ color: palette.ink, fontSize: 12, fontWeight: '700', fontVariant: ['tabular-nums'] }}>
-                    {formatPrice(row.holding.buyPrice, row.market)}
-                  </Text>
-                  <Text style={{ color: palette.inkMuted, fontSize: 10, fontWeight: '600', fontVariant: ['tabular-nums'] }}>
-                    × {row.holding.quantity}주
-                  </Text>
-                </View>
-              ) : (
-                <Text
-                  numberOfLines={1}
-                  style={{
-                    flex: 1.4, minWidth: 0,
-                    color: palette.inkMuted, fontSize: 11, fontWeight: '600',
-                  }}
-                >
-                  {row.sector || '—'}
-                </Text>
-              )}
-
-              {/* 현재가 */}
-              <Text
-                style={{
-                  width: 110,
-                  textAlign: 'right',
-                  color: palette.ink, fontSize: 13, fontWeight: '800',
-                  fontVariant: ['tabular-nums'],
-                }}
-              >
-                {formatPrice(row.price, row.market)}
-              </Text>
-
-              {/* 등락률 OR 수익률 */}
-              {mode === 'holdings' && row.holding ? (
-                <View style={{ width: 90, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 3 }}>
-                  {(() => {
-                    const pColor = marketColor(palette, row.market, row.holding.profitRate)
-                    return (
-                      <>
-                        {row.holding.profitRate > 0 ? <ArrowUp size={10} color={pColor} strokeWidth={3} />
-                          : row.holding.profitRate < 0 ? <ArrowDown size={10} color={pColor} strokeWidth={3} />
-                          : <Minus size={10} color={pColor} strokeWidth={3} />}
-                        <Text style={{ color: pColor, fontSize: 12, fontWeight: '800', fontVariant: ['tabular-nums'] }}>
-                          {formatSignedRate(row.holding.profitRate)}
-                        </Text>
-                      </>
-                    )
-                  })()}
-                </View>
-              ) : (
-                <View style={{ width: 90, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 3 }}>
-                  {row.changeRate > 0 ? <ArrowUp size={10} color={color} strokeWidth={3} />
-                    : row.changeRate < 0 ? <ArrowDown size={10} color={color} strokeWidth={3} />
-                    : <Minus size={10} color={color} strokeWidth={3} />}
-                  <Text style={{ color, fontSize: 12, fontWeight: '800', fontVariant: ['tabular-nums'] }}>
-                    {formatSignedRate(row.changeRate)}
-                  </Text>
-                </View>
-              )}
-
-              {/* 평가금액 OR 관심 토글 액션 */}
-              {mode === 'holdings' && row.holding ? (
-                <View style={{ width: 120, alignItems: 'flex-end' }}>
-                  <Text style={{ color: palette.ink, fontSize: 13, fontWeight: '800', fontVariant: ['tabular-nums'] }}>
-                    {formatPrice(row.holding.evaluationAmount, row.market)}
-                  </Text>
-                  <Text style={{
-                    color: marketColor(palette, row.market, row.holding.profitAmount),
-                    fontSize: 11, fontWeight: '700', fontVariant: ['tabular-nums'],
-                  }}>
-                    {formatSignedPrice(row.holding.profitAmount, row.market)}
-                  </Text>
-                </View>
-              ) : (
-                <View style={{ width: 48, alignItems: 'flex-end' }}>
-                  <Pressable
-                    onPress={(e) => { (e as unknown as { stopPropagation: () => void }).stopPropagation?.(); void onToggleWatch(row) }}
-                    disabled={toggling}
-                    style={(state) => {
-                      const hovered = (state as { hovered?: boolean }).hovered
-                      return [{
-                        flexDirection: 'row', alignItems: 'center', gap: 3,
-                        paddingHorizontal: 8, paddingVertical: 4,
-                        borderRadius: 6,
-                        backgroundColor: row.isInWatch
-                          ? (hovered ? palette.redSoft : palette.surfaceAlt)
-                          : (hovered ? palette.blueSoft : palette.blue),
-                        opacity: toggling ? 0.5 : 1,
-                      }]
-                    }}
-                  >
-                    {row.isInWatch ? (
-                      <>
-                        <X size={9} color={palette.red} strokeWidth={3} />
-                        <Text style={{ color: palette.red, fontSize: 10, fontWeight: '800' }}>해제</Text>
-                      </>
-                    ) : (
-                      <>
-                        <Plus size={9} color="#ffffff" strokeWidth={3} />
-                        <Text style={{ color: '#ffffff', fontSize: 10, fontWeight: '800' }}>담기</Text>
-                      </>
-                    )}
-                  </Pressable>
-                </View>
-              )}
-            </Pressable>
+              row={row}
+              mode={mode}
+              isLive={isLive}
+              toggling={toggling}
+              onOpenDetail={onOpenDetail}
+              onToggleWatch={onToggleWatch}
+              palette={palette}
+            />
           )
         })
       )}
