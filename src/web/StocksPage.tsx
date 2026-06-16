@@ -1,5 +1,5 @@
 import { memo, useMemo, useState } from 'react'
-import { Alert, View } from 'react-native'
+import { View } from 'react-native'
 import type { DisclosureItem, HoldingPosition, PortfolioSummary, StockMarketFilter, StockSearchResult, WatchItem } from '../types'
 import { useTheme } from '../theme'
 import { useLivePrices } from '../hooks/useLivePrices'
@@ -179,14 +179,10 @@ export const StocksPage = memo(function StocksPage(props: Props) {
 
   const confirmBulkDelete = () => {
     if (bulkDeleting || watchlist.length < 2) return
-    Alert.alert(
-      '관심종목 전체 해제',
-      `${watchlist.length}개 종목을 전부 해제할까요? 되돌릴 수 없습니다.`,
-      [
-        { text: '취소', style: 'cancel' },
-        { text: '전체 해제', style: 'destructive', onPress: () => onDeleteAllFavorites() },
-      ],
-    )
+    // 웹 전용 페이지 — RN Alert 버튼 onPress 가 동작하지 않으므로 window.confirm 사용.
+    if (typeof window !== 'undefined' && window.confirm(`${watchlist.length}개 종목을 전부 해제할까요? 되돌릴 수 없습니다.`)) {
+      onDeleteAllFavorites()
+    }
   }
 
   return (

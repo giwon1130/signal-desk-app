@@ -61,6 +61,8 @@ export function StockSearchSection({
       } else {
         await onQuickAddWatch(stock)
       }
+    } catch {
+      // 에러 토스트는 mutation 훅에서 이미 표시 — 여기선 미처리 거부만 방지.
     } finally {
       setTogglingKey('')
     }

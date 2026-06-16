@@ -20,8 +20,8 @@
  * 데이터는 기존에 이미 로드 중이던 aiRecommendation.{executionLogs, metrics}
  * + summary.briefing.actionItems 만 사용. 백엔드 추가 0.
  *
- * 본 파일은 라우팅 + 서브탭 토글만 담당. 실제 콘텐츠는
- * widgets/AIPlaybook.tsx 와 widgets/AIScorecard.tsx 로 분리.
+ * 본 파일은 라우팅 + 서브탭 토글만 담당. 플레이북은 네이티브 Playbook 을 재사용,
+ * 스코어카드는 widgets/AIScorecard.tsx.
  */
 import React, { useState } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'

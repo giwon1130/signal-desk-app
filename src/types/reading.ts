@@ -16,6 +16,7 @@ export type Leader = {
   inviteCode: string | null   // 본인/구독 화면에서만
   status: LeaderStatus
   followerCount: number
+  isAi: boolean
 }
 
 export type DetectedMention = {

@@ -63,6 +63,9 @@ type Props = {
   // 통합 설정
   settingsOpen: boolean
   setSettingsOpen: (v: boolean) => void
+  // PRO 업그레이드 시트 (상한/PRO 토스트의 '업그레이드' 진입점 — App 에서 상태 관리)
+  proUpgradeOpen: boolean
+  setProUpgradeOpen: (v: boolean) => void
   onMarketPreferenceChange: (p: MarketPreference) => void
   onLogout: () => void
   onDeleteAccount: () => void
@@ -84,12 +87,11 @@ export function GlobalOverlays({
   reminderOpen, setReminderOpen, alerts,
   v2MigrationOpen, setV2MigrationOpen, onV2MigrationConfirm,
   league, reading,
-  settingsOpen, setSettingsOpen, onMarketPreferenceChange, onLogout, onDeleteAccount,
+  settingsOpen, setSettingsOpen, proUpgradeOpen, setProUpgradeOpen, onMarketPreferenceChange, onLogout, onDeleteAccount,
   greetingOpen, setGreetingOpen,
   assistantOpen, setAssistantOpen,
 }: Props) {
   const { mode, setMode } = useTheme()
-  const [proUpgradeOpen, setProUpgradeOpen] = useState(false)
   const pro = computeIsPro(user?.plan)
   const openUpgrade = () => setProUpgradeOpen(true)
 
@@ -163,6 +165,8 @@ export function GlobalOverlays({
         visible={!!reading.activeLeaderId}
         leaderUserId={reading.activeLeaderId}
         myUserId={user?.userId}
+        isPro={pro}
+        onUpgrade={openUpgrade}
         onClose={() => reading.setActiveLeaderId(null)}
         onSubscribed={reading.handleReadingRefresh}
         toast={toast}

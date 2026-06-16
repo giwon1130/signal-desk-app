@@ -17,12 +17,14 @@ type Props = {
   visible: boolean
   leaderUserId: string | null
   myUserId?: string
+  isPro?: boolean
+  onUpgrade?: () => void
   onClose: () => void
   onSubscribed?: () => void
   toast?: { show: (msg: string, type?: 'success' | 'error' | 'info') => void }
 }
 
-export function LeaderProfileModal({ visible, leaderUserId, myUserId, onClose, onSubscribed, toast }: Props) {
+export function LeaderProfileModal({ visible, leaderUserId, myUserId, isPro, onUpgrade, onClose, onSubscribed, toast }: Props) {
   const { palette } = useTheme()
   const insets = useSafeAreaInsets()
   const [profile, setProfile] = useState<LeaderProfile | null>(null)
@@ -57,6 +59,8 @@ export function LeaderProfileModal({ visible, leaderUserId, myUserId, onClose, o
 
   const handleSubscribe = async () => {
     if (!leader?.inviteCode || subscribing || subscribed) return
+    // AI 리더는 PRO 전용 — 서버도 막지만, 미PRO면 에러 대신 업그레이드로 안내.
+    if (leader.isAi && !isPro) { onClose(); onUpgrade?.(); return }
     setSubscribing(true)
     try {
       await subscribe(leader.inviteCode)
@@ -160,7 +164,7 @@ export function LeaderProfileModal({ visible, leaderUserId, myUserId, onClose, o
                   })}
                 >
                   <Text style={{ color: subscribed ? palette.inkSub : palette.bg, fontSize: 14, fontWeight: '800' }}>
-                    {subscribing ? '구독 중…' : subscribed ? '구독 중 ✓' : '구독하기'}
+                    {subscribing ? '구독 중…' : subscribed ? '구독 중 ✓' : (leader.isAi && !isPro) ? '💎 PRO로 구독' : '구독하기'}
                   </Text>
                 </Pressable>
               ) : null}

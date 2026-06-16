@@ -1,48 +1,15 @@
 /**
  * PRO 업그레이드 — 공용 컴포넌트.
- * - ProBadge: 작은 💎 PRO 배지
- * - ProLockRow: 잠긴 기능 줄(자물쇠 + 설명) — 탭하면 업그레이드 시트 열기
  * - ProUpgradeSheet: 혜택 비교 + 신청 버튼(기존 requestPro 재사용, 베타 무료 안내)
  */
 import { useEffect, useState } from 'react'
 import { Modal, Pressable, ScrollView, Text, View } from 'react-native'
-import { Lock, X } from 'lucide-react-native'
+import { X } from 'lucide-react-native'
 import { useTheme } from '../../theme'
 import { PRO_BENEFITS } from '../../lib/entitlements'
 import { fetchMyPlanRequest, requestPro, type PlanRequestStatus } from '../../api/plan'
 
 const PURPLE = '#7c3aed'
-
-export function ProBadge() {
-  const { palette } = useTheme()
-  return (
-    <View style={{ backgroundColor: (palette.purple ?? PURPLE), borderRadius: 6, paddingHorizontal: 6, paddingVertical: 1 }}>
-      <Text style={{ color: '#fff', fontSize: 9.5, fontWeight: '900' }}>💎 PRO</Text>
-    </View>
-  )
-}
-
-export function ProLockRow({ title, hint, onPress }: { title: string; hint?: string; onPress: () => void }) {
-  const { palette } = useTheme()
-  return (
-    <Pressable
-      onPress={onPress}
-      style={({ pressed }) => ({
-        flexDirection: 'row', alignItems: 'center', gap: 8,
-        paddingVertical: 9, paddingHorizontal: 10, borderRadius: 10,
-        backgroundColor: pressed ? palette.surfaceAlt : palette.surface,
-        borderWidth: 1, borderColor: palette.border, opacity: pressed ? 0.85 : 1,
-      })}
-    >
-      <Lock size={14} color={palette.inkMuted} strokeWidth={2.2} />
-      <View style={{ flex: 1, minWidth: 0 }}>
-        <Text style={{ color: palette.inkSub, fontSize: 12.5, fontWeight: '700' }} numberOfLines={1}>{title}</Text>
-        {hint ? <Text style={{ color: palette.inkFaint, fontSize: 10.5 }} numberOfLines={1}>{hint}</Text> : null}
-      </View>
-      <ProBadge />
-    </Pressable>
-  )
-}
 
 export function ProUpgradeSheet({
   visible,

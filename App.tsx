@@ -87,9 +87,11 @@ function AppShell() {
   } = search
   // v2 Phase 3 정리: HomeTab / MarketTab 삭제됨 → homeQuery + 차트 셀렉션 hook 제거.
   // 차트는 Phase 4+ Beta 후 'today' 의 ChartSection 으로 다시 들어올 수 있음 — 그 때 useChartSelection 복구.
+  // PRO 업그레이드 시트 — 상한/PRO 토스트의 '업그레이드'가 직접 여는 단일 진입점(설정 모달과 분리, 일관성).
+  const [proUpgradeOpen, setProUpgradeOpen] = useState(false)
   const mutations = useWorkspaceMutations({
     watchlist, setWatchlist, setPortfolio, fetchData, toast,
-    onUpgrade: () => setSettingsOpen(true),  // 상한/PRO 토스트의 '업그레이드' → 설정(PRO 신청)
+    onUpgrade: () => setProUpgradeOpen(true),  // 상한/PRO 토스트의 '업그레이드' → PRO 업그레이드 시트
   })
   const {
     favoriteDeletingId, bulkDeletingWatch,
@@ -216,6 +218,11 @@ function AppShell() {
   }, [fortune])
 
   const confirmLogout = useCallback(() => {
+    // 웹: RN Alert 의 버튼 onPress 가 동작하지 않아 window.confirm 으로 분기.
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined' && window.confirm('정말 로그아웃할까요?')) void handleLogout()
+      return
+    }
     Alert.alert('로그아웃', '정말 로그아웃할까요?', [
       { text: '취소', style: 'cancel' },
       { text: '로그아웃', style: 'destructive', onPress: () => void handleLogout() },
@@ -223,24 +230,25 @@ function AppShell() {
   }, [handleLogout])
 
   const confirmDeleteAccount = useCallback(() => {
-    Alert.alert(
-      '회원 탈퇴',
-      '계정과 모든 데이터(관심종목·보유·알림 설정·기록)가 영구 삭제됩니다. 되돌릴 수 없어요. 정말 탈퇴할까요?',
-      [
-        { text: '취소', style: 'cancel' },
-        {
-          text: '탈퇴',
-          style: 'destructive',
-          onPress: () => void (async () => {
-            try {
-              await handleDeleteAccount()
-            } catch (e) {
-              Alert.alert('오류', e instanceof Error ? e.message : '계정 삭제에 실패했습니다.')
-            }
-          })(),
-        },
-      ],
-    )
+    const runDelete = async () => {
+      try {
+        await handleDeleteAccount()
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : '계정 삭제에 실패했습니다.'
+        if (Platform.OS === 'web') { if (typeof window !== 'undefined') window.alert(msg) }
+        else Alert.alert('오류', msg)
+      }
+    }
+    const message = '계정과 모든 데이터(관심종목·보유·알림 설정·기록)가 영구 삭제됩니다. 되돌릴 수 없어요. 정말 탈퇴할까요?'
+    // 웹: RN Alert 의 버튼 onPress 가 동작하지 않아 window.confirm 으로 분기.
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined' && window.confirm(message)) void runDelete()
+      return
+    }
+    Alert.alert('회원 탈퇴', message, [
+      { text: '취소', style: 'cancel' },
+      { text: '탈퇴', style: 'destructive', onPress: () => void runDelete() },
+    ])
   }, [handleDeleteAccount])
 
   // 로그인 후 1회: 권한 요청 + 켜진 알림 다시 예약
@@ -604,6 +612,8 @@ function AppShell() {
       reading={reading}
       settingsOpen={settingsOpen}
       setSettingsOpen={setSettingsOpen}
+      proUpgradeOpen={proUpgradeOpen}
+      setProUpgradeOpen={setProUpgradeOpen}
       onMarketPreferenceChange={handleMarketPreferenceChange}
       onLogout={confirmLogout}
       onDeleteAccount={confirmDeleteAccount}

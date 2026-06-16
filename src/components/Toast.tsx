@@ -35,12 +35,15 @@ export function Toast({ message, type = 'success', visible, action }: Props) {
   }, [visible])
 
   return (
-    <Animated.View style={{
-      position: 'absolute', bottom: 24, left: 20, right: 20, zIndex: 999,
-      backgroundColor: BG, borderRadius: 14, padding: 14,
-      borderWidth: 1.5, borderColor: BORDER,
-      opacity, transform: [{ translateY }],
-    }}>
+    <Animated.View
+      // 숨김(opacity 0) 상태에서 하단 영역 터치를 가로채지 않도록 — 보일 때만 자식(액션 버튼) 터치 허용.
+      pointerEvents={visible ? 'box-none' : 'none'}
+      style={{
+        position: 'absolute', bottom: 24, left: 20, right: 20, zIndex: 999,
+        backgroundColor: BG, borderRadius: 14, padding: 14,
+        borderWidth: 1.5, borderColor: BORDER,
+        opacity, transform: [{ translateY }],
+      }}>
       <Text style={{ color: COLOR, fontSize: 14, fontWeight: '700', textAlign: 'center' }}>
         {message}
       </Text>
