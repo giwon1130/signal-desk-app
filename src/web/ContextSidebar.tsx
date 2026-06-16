@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { memo, useMemo } from 'react'
 import { ScrollView, View } from 'react-native'
 import type { AiRecommendationData, DailyFortune, PortfolioSummary, WatchItem } from '../types'
 import { useTheme } from '../theme'
@@ -7,6 +7,12 @@ import { WatchlistSection } from './sidebar_sections/WatchlistSection'
 import { PortfolioSection } from './sidebar_sections/PortfolioSection'
 import { RecentAiSection } from './sidebar_sections/RecentAiSection'
 import { FortuneMini } from './sidebar_sections/FortuneMini'
+
+// 사이드바는 관심종목 라이브 가격(5초 틱)으로 매번 리렌더되지만, 아래 세 섹션은 라이브 데이터를
+// 안 받는다 → memo 로 props 동일 시 틱마다 재렌더 스킵(상시 노출이라 누적 절약). memo 는 순수 최적화.
+const MemoPortfolioSection = memo(PortfolioSection)
+const MemoRecentAiSection = memo(RecentAiSection)
+const MemoFortuneMini = memo(FortuneMini)
 
 /**
  * 우측 고정 컨텍스트 사이드바.
@@ -58,19 +64,19 @@ export function ContextSidebar(props: Props) {
           onGotoStocks={onGotoStocks}
           palette={palette}
         />
-        <PortfolioSection
+        <MemoPortfolioSection
           portfolio={portfolio}
           onOpenDetail={onOpenDetail}
           onGotoStocks={onGotoStocks}
           palette={palette}
         />
-        <RecentAiSection
+        <MemoRecentAiSection
           aiRecommendation={aiRecommendation}
           onOpenDetail={onOpenDetail}
           onGotoAi={onGotoAi}
           palette={palette}
         />
-        {fortune ? <FortuneMini fortune={fortune} palette={palette} /> : null}
+        {fortune ? <MemoFortuneMini fortune={fortune} palette={palette} /> : null}
       </ScrollView>
     </View>
   )

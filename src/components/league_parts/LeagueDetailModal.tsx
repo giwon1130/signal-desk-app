@@ -2,7 +2,7 @@
  * 리그 상세 화면 — 리더보드 + 거래 피드 + 내 포지션 + 거래 진입.
  * 진행 중(RUNNING/OPEN)엔 10초 폴링, 종료(FINISHED)엔 폴링 안 함.
  */
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Modal, Pressable, RefreshControl, ScrollView, Share, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Crown, LogOut, Share2, Trophy, X } from 'lucide-react-native'
@@ -114,6 +114,11 @@ export function LeagueDetailModal({ visible, leagueId, myUserId, marketSessions,
   }
 
   const league = detail?.league
+  // 거래 피드 렌더에서 거래마다 participants 를 선형 검색하던 것 → userId→participant Map 1회 구성으로 대체.
+  const participantById = useMemo(
+    () => new Map((detail?.participants ?? []).map((p) => [p.userId, p])),
+    [detail?.participants],
+  )
   const me = leaderboard.find((e) => e.userId === myUserId)
   const isHost = !!league && !!myUserId && league.hostUserId === myUserId
   const canTrade = league?.status === 'RUNNING' && !!myUserId && !!me
@@ -268,7 +273,7 @@ export function LeagueDetailModal({ visible, leagueId, myUserId, marketSessions,
               </Text>
             ) : (
               feed.map((t) => {
-                const trader = detail?.participants.find((p) => p.userId === t.userId)
+                const trader = participantById.get(t.userId)
                 const color = t.side === 'BUY' ? palette.up : palette.down
                 return (
                   <View key={t.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 6 }}>
