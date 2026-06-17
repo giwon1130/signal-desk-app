@@ -1,93 +1,121 @@
-# signal-desk-app
+# 시데 (SignalDesk) — 개인 투자 대시보드
 
-SignalDesk 클라이언트 — **Expo 하나로 iOS · Android · Web 을 모두 빌드**. 백엔드는 `../signal-desk-api` (Spring Boot Kotlin).
+> 시장·종목·단타 시그널을 한 화면에서. AI 비서, 검증된 콜 구독(리딩), 친구와 모의투자 리그까지.
+> **단일 코드베이스(Expo)로 iOS · Android · Web 동시 운영**, 백엔드는 Kotlin + Spring Boot.
 
-## 📚 문서
+<p>
+  <a href="https://giwon1130.github.io/signal-desk-app/"><b>🌐 웹 데모 바로가기</b></a> ·
+  📱 iOS TestFlight 베타 운영 중 ·
+  🤖 AI 요약 = Google Gemini
+</p>
+
+---
+
+## 📸 스크린샷
+
+| 오늘 (브리프·위험도) | 종목 (관심·실시간 손익) | 시데 AI (마켓 인사이트) |
+|:---:|:---:|:---:|
+| ![오늘](docs/screenshots/today.png) | ![종목](docs/screenshots/stocks.png) | ![AI](docs/screenshots/ai.png) |
+| **리딩 (리더 마켓·AI 리더)** | **리그 (모의투자)** | |
+| ![리딩](docs/screenshots/reading.png) | ![리그](docs/screenshots/league.png) | |
+
+> 모바일(iOS 시뮬레이터) 캡쳐. 데스크톱 웹 화면은 [라이브 데모](https://giwon1130.github.io/signal-desk-app/)에서 바로 확인할 수 있어요.
+> 추가 캡쳐 방법은 [docs/screenshots/CAPTURE.md](docs/screenshots/CAPTURE.md) 참고.
+
+---
+
+## 한눈에
+
+**시데**는 흩어져 있는 투자 정보(시장 지표·내 종목·뉴스·공시·단타 시그널)와 AI 분석, 그리고 사람·AI의 매매 콜을 **하나의 대시보드**로 모은 개인 투자 도구입니다.
+
+- 아침에 **모닝 브리프 한 장**으로 간밤 미국장·수급·뉴스·오늘 셋업을 파악
+- 관심·보유 종목의 **실시간 손익**을 한눈에 (KR 실시간 WebSocket)
+- 모르는 건 **시데 AI**에게 바로 질문, 종목은 **심층 리포트**로 깊게
+- 검증된 리더의 **콜을 구독**하고(진입가 자동 박제 + 적중률 추적), **AI 리더**의 시황·리포트 콜도 받기
+- 친구들과 **모의투자 리그**로 같은 시드에서 수익률 경쟁
+
+---
+
+## 핵심 기능
+
+### 🌅 오늘 (Today)
+- **AI 브리프** — 장전·장중·마감 시점에 미국장 + 수급 + 섹터 + 뉴스를 Gemini가 종합한 시황 한 장
+- **합성 위험도** — VIX·뉴스·대안지표를 1~10으로 종합한 시장 리스크 게이지
+- 한국/미국 **세션 상태**(장중/장마감/조기폐장 반영), 휴장·주말 자동 전환
+- 보유/관심 종목 **공시(DART)** 실시간 알림
+
+### 📊 종목
+- 관심종목 / 실제 보유(매수가·수량 → 실시간 손익·평가금)
+- **실시간 시세** — 한국 종목 WebSocket 5초 틱, 정렬 가능한 테이블
+- 종목 검색(국내·미국), 종목 상세(차트·지표·알림 설정)
+
+### 🤖 시데 AI
+- Gemini 기반 **투자 비서** — 시장·종목·전략을 대화로 질문 (FREE 하루 10회 / PRO 100회)
+- **종목 심층 리포트** — 한 종목을 깊게 분석한 리포트 생성(PRO)
+- 답변은 보유·관심 종목 컨텍스트를 반영, 매수/매도 단정 없이 근거 중심
+
+### 📣 리딩 — 콜 구독
+- **사람 리더**: 종목을 콜하면 **진입가가 자동 박제**되고 이후 수익률·**적중률**이 정직하게 추적됨. 코드로 구독
+- **AI 리더 (PRO 전용)**: 🤖 시데 AI 시황(흐름) · 📺 방송 AI요약 · 📈 증권사 리포트 목표가 콜 — 스케줄러가 자동 발행
+- 콜 적중 시 "거봐 내가 말했지?" 푸시, 적중률·평균수익으로 리더 검증
+
+### 🏆 리그 — 모의투자
+- 친구와 같은 시드로 시즌 생성/참가(코드), **실시간 시세 평가 리더보드**
+- 거래 수수료·종목 집중도(최대 비중) 규칙, 장중 거래 시간 가드, 종료 시 자동 정산
+
+### 🔔 알림 & PRO
+- 급등락·목표가/손절·공시·콜 적중 **푸시 + 딥링크**(탭하면 해당 화면으로), 방해금지 시간대
+- **PRO**: AI 쿼터 확대 · 고급 알림 · AI 리더 구독 · 종목 심층 리포트 (현재 베타 무료/수동 승인)
+
+---
+
+## 🛠 기술 스택
+
+| 영역 | 스택 |
+|---|---|
+| 앱 | Expo · React Native (iOS · Android · Web 단일 코드, `Platform.OS` 분기로 웹 전용 데스크톱 레이아웃) · TypeScript |
+| 실시간 | WebSocket(시세 틱) · Expo Push(알림) · 딥링크 라우팅 |
+| 백엔드 | Kotlin · Spring Boot · PostgreSQL(Flyway 마이그레이션) · Caffeine 캐시 · JdbcTemplate |
+| AI | Google Gemini (키 로테이션 · 모델 폴백 · 일일 쿼터) |
+| 데이터 | 네이버/야후 시세 · FRED 매크로 · DART/SEC 공시 · Google News · 증권사 리포트 컨센서스 |
+| 인프라 | Railway(API) · GitHub Pages(웹, GitHub Actions 자동 배포) · EAS **로컬 빌드로 iOS 배포 비용 $0** |
+
+## 🧱 아키텍처 (요약)
+
+```
+[Expo 앱 (iOS/Android/Web)]
+   │  REST + WebSocket + Expo Push
+   ▼
+[Spring Boot API (Railway)]
+   ├─ 시장/종목/차트   ├─ AI 비서·리포트(Gemini)
+   ├─ 리딩(콜·적중률)  ├─ 리그(거래·정산)
+   ├─ 알림(푸시·딥링크) └─ 스케줄러(브리프·공시·AI 리더·정산)
+   ▼
+[PostgreSQL]  +  외부: 네이버·야후·FRED·DART·SEC·Gemini
+```
+
+## ✨ 개발 하이라이트
+
+- **단일 코드베이스 멀티플랫폼** — 모바일은 빠른 확인용 컴패니언, 웹은 정보 밀도 높은 데스크톱 3열 셸(티커 리본 + 좌 네비 + 메인 + 우 컨텍스트 + Cmd+K 팔레트)로 같은 백엔드 공유
+- **$0 iOS 배포** — EAS 로컬 빌드 + 자동 제출로 클라우드 빌드 비용 없이 TestFlight 운영
+- **정직한 성과 추적** — 콜 진입가/결착가를 박제(immutable)해 적중률·수익률을 사후 조작 불가능하게 기록
+- **무료 한도 내 AI 운영** — Gemini 키 로테이션·모델 폴백·일일 쿼터·캐시로 비용 최소화
+
+> ⚠️ 본 서비스의 모든 분석·시그널은 참고용이며 투자자문이 아닙니다. 투자 판단과 책임은 본인에게 있습니다.
+
+---
+
+# 개발 문서
 
 자세한 문서는 [`docs/`](docs/) 에 정리됨. 역할별 진입 경로는 [`docs/README.md`](docs/README.md) 참고.
 
-- [제품 비전 / 용어집 / 사용자 흐름](docs/제품/) — PM / 디자이너 / 모두
+- [제품 비전 / 용어집 / 사용자 흐름](docs/제품/) — PM / 디자이너
 - [디자인 시스템 / 컴포넌트 / 카피 가이드](docs/디자인/) — 디자이너
 - [아키텍처 / 데이터 모델 / API / 프론트엔드](docs/엔지니어링/) — FE / BE
 - [배포 / 환경변수 / 장애 대응 / 보안 / 비용](docs/운영/) — DevOps / 운영
 - [테스트 전략](docs/품질/) — QA
 
-자동화 에이전트(Claude 등) 용 노트는 [`AGENTS.md`](AGENTS.md).
-
-## 플랫폼 포지션
-
-| 플랫폼 | 배포 | 포지션 |
-|--------|------|--------|
-| iOS | **TestFlight 베타 운영 중** (Build #18, 2026-05-22) | Today 탭 중심의 빠른 확인용 컴패니언. 모닝 브리프 Hero, 합성 위험도 카드, 한/미 세션 칩, 보유 종목 공시, 알림 deep link. EAS 유료 플랜 |
-| Android | Expo dev build | 안드로이드 TestFlight 동등 채널은 미정 |
-| Web | **라이브 운영 중** — [giwon1130.github.io/signal-desk-app](https://giwon1130.github.io/signal-desk-app/) (GitHub Pages, Expo 웹 빌드). 빌드 소스 `src/web/*` | 데스크톱 3열 셸(티커 리본 + 좌 네비 + 메인 + 우 컨텍스트), Cmd+K 팔레트, AI 플레이북/성적표 |
-
-단일 코드베이스지만 `Platform.OS === 'web'` 분기로 웹 전용 화면(`src/web/*`)을 올려 정보 밀도와 상호작용을 데스크톱에 맞춘다.
-
-## 주요 기능
-
-### 공용 (모바일 + 웹)
-- 시장 요약: 헤더 대시보드, 한국/미국 세션 상태, KPI, 핵심 지표
-- 차트: KR/US 전환, D/W/M 캔들 + 거래량 + MA5/MA20/MA60, 지수(KOSPI/KOSDAQ/NASDAQ/S&P500)
-- 워크스페이스: 관심종목, 실제 보유(매수가·수량·손익), AI 추천 로그
-- 뉴스 sentiment
-- **합성 위험도(`compositeRisk`)** — PizzINT+VIX+뉴스 종합 1~10 (기존 Pentagon Pizza / Policy Buzz / Bar Counter-Signal 단독 카드 폐기, 합성으로 통합)
-- 휴장/주말 모드 자동 전환
-
-### 모바일 전용
-- **모닝 브리프 Hero 카드** (08:30 KST) — DART 공시 + FRED 매크로 + 수급 + 뉴스 Gemini 종합
-- 합성 위험도 알림 토글 (score≥8 시 08:32 KST 푸시)
-- 운세 팝업 하루 1회 제한, 시작 로딩 화면(투자 명언 로테이션)
-- 장 시작 로컬 알림 (KR 09:00 / US 23:30 KST, 분 전 옵션)
-- 종목 상세 슬라이드업 모달
-- 알림 탭 deep link (모닝 브리프/위험도/관심종목 공시)
-- Google 네이티브 SDK 로그인
-
-### 웹 전용
-- **TickerRibbon** — 상단 고정 지수/세션 배지/스파크라인
-- **HomeDashboard** — 섹터 히트맵, AltSignals 프로그레스 바, 단타 픽 그리드
-- **StocksPage** — 정렬 가능한 테이블 + StanceTag
-- **ContextSidebar** — 관심종목, 최근 AI 로그, 오늘의 운 미니 카드
-- **AIWorkspace** — 두 서브탭
-  - *오늘의 플레이북*: BriefingHero + ActionItem(우선도별) + Pick 카드 (관심 인라인 추가)
-  - *성적표*: 승률/평균수익률/참여율 메트릭 + 놓친 픽 / 따라간 픽 / 최근 결과 테이블
-- **Cmd+K CommandPalette** — 탭 이동 + 종목 점프
-- **Google Sign-In (GIS)** — `EXPO_PUBLIC_GOOGLE_CLIENT_ID_WEB` 설정 시 활성
-
-## API 의존
-
-```
-# 시장 (src/api.ts)
-GET  /health
-GET  /api/v1/market/summary            # newsSentiments·compositeRisk·watchAlerts·briefing 포함 (별도 news 엔드포인트 없음)
-GET  /api/v1/market/sections
-GET  /api/v1/market/ai-recommendations
-GET  /api/v1/market/top-movers?limit
-GET  /api/v1/market/stocks/search?q&market
-
-# AI / 인사이트 / 미디어 (src/api/*)
-GET  /api/v1/ai/picks                  # 오늘의 AI 픽 (공통)
-GET  /api/v1/ai/signals                # 숨은 시그널 (Bearer)
-GET  /api/v1/insights/today            # Gemini 시황 종합
-GET  /api/v1/media/summaries/latest    # 최신 모닝/이브닝 브리프
-GET  /api/v1/disclosures/recent?limit  # 보유/관심 KR 공시 (Bearer)
-GET  /api/v1/events/upcoming?days      # 주요 이벤트 캘린더
-
-# 워크스페이스 (Bearer)
-GET  /api/v1/workspace/watchlist       POST /api/v1/workspace/watchlist   DELETE .../{id}
-GET  /api/v1/workspace/portfolio       POST /api/v1/workspace/portfolio   DELETE .../{id}
-GET  /api/v1/workspace/fortune         # 오늘의 운세
-
-# 알림 / 디바이스 (Bearer)
-GET  /api/v1/me/alert-preferences      PUT  /api/v1/me/alert-preferences  # marketPreference·eveningBrief 등
-POST /api/v1/push/devices              DELETE /api/v1/push/devices/{token}
-GET  /api/v1/push/alerts?limit         # 알림 이력
-
-# 인증 (src/api/auth.ts)
-POST /auth/signup                      POST /auth/login
-POST /auth/oauth/google                POST /auth/oauth/kakao   # idToken/accessToken → 자체 JWT
-GET  /auth/me
-```
+백엔드는 `../signal-desk-api` (Kotlin + Spring Boot). 자동화 에이전트(Claude 등) 용 노트는 [`AGENTS.md`](AGENTS.md).
 
 ## 실행
 
@@ -123,36 +151,19 @@ EXPO_PUBLIC_API_BASE_URL=http://192.168.x.x:8091 npm start
 ## 배포
 
 ### 웹 (라이브 운영 중)
+**https://giwon1130.github.io/signal-desk-app/** — `main` 브랜치 GitHub Actions 워크플로우로 `expo export -p web` 결과를 GitHub Pages 에 배포. 빌드 소스 `src/web/*`.
 
-**라이브: https://giwon1130.github.io/signal-desk-app/** — `main` 브랜치 GitHub Actions 워크플로우로 `expo export -p web` 결과를 GitHub Pages에 배포한다.
-
-> 이전에는 Railway(`signal-desk-web` 서비스)로 배포했으나 2026-05-26 비용 정리 후 GitHub Pages(무료)로 이전했다. 옛 Vite 레포 `signal-desk-web`은 더 이상 사용하지 않는다(deprecated).
-
-참고:
-- 빌드 소스: `src/web/*` (+ `Dockerfile.web`은 nginx 정적 호스팅용으로 보존)
-- Google OAuth 운영 URL을 GCP OAuth Client의 **Authorized JavaScript origins**에 등록 (trailing slash 금지)
-
-### 모바일 (TestFlight 베타 운영 중)
-
+### 모바일 (TestFlight 베타)
+EAS **로컬 빌드**로 클라우드 비용 없이 빌드 후 자동 제출:
 ```bash
-# 빌드 + TestFlight 자동 제출 한 번에 (alias `sdbuild`)
-npx eas build --profile production --platform ios --auto-submit
+TMPDIR=$HOME/.eas-build-tmp npx eas build --local -p ios --profile production --output /tmp/sd.ipa
+npx eas submit -p ios --profile production --path /tmp/sd.ipa
 ```
-
-- 최근 빌드: Build #18 (2026-05-22, UX 피드백 반영 + 알림 모달 높이 수정)
-- EAS 유료 플랜 (계정 단위, `@giwon1130`)
 - ASC 앱: SignalDesk (App ID `6770443767`), Bundle ID `com.giwon.signaldesk`
-- 식별자/자격증명/Gotcha는 `.claude/context.md` 참조
-
-실기기 Debug Release(개발용):
-```bash
-./scripts/release.sh
-./scripts/release.sh feat/foo --device <UDID>
-./scripts/release.sh feat/foo --no-build
-```
+- 버전은 `app.json`, 빌드번호는 eas.json `appVersionSource: remote` 로 EAS 가 원격 관리
 
 ## 참고
 - iOS 시뮬레이터/실기기에서 `localhost` 는 기기 자신 — 같은 네트워크 PC IP 사용
-- 차트 렌더링은 모바일은 `react-native-svg`, 웹은 `src/web/shared.tsx` 의 인라인 SVG
-- 웹·모바일 기능 범위를 일부러 다르게 가져간다. 모바일은 이동 중 확인, 웹은 분석/편집.
-- 에이전트용 상세 규약은 `AGENTS.md` 참고.
+- 차트 렌더링은 모바일 `react-native-svg`, 웹 `src/web/shared.tsx` 의 인라인 SVG
+- 웹·모바일 기능 범위를 일부러 다르게 — 모바일은 이동 중 확인, 웹은 분석/편집
+- 에이전트용 상세 규약은 `AGENTS.md` 참고
