@@ -1,7 +1,7 @@
 import Constants from 'expo-constants'
 import { useEffect, useState } from 'react'
 import { Platform } from 'react-native'
-import { apiGoogleOAuth, type AuthUser } from './auth'
+import { apiAppleOAuth, apiGoogleOAuth, type AuthUser } from './auth'
 
 type Extra = {
   googleClientIdIos?:     string
@@ -83,4 +83,35 @@ export function useGoogleSignIn(onAuth: (u: AuthUser) => void) {
   }
 
   return [request, signIn] as const
+}
+
+// ─── Sign in with Apple (iOS 전용) ─────────────────────────────────────────────
+// expo-apple-authentication 은 네이티브 전용 — 웹/안드로이드 번들에서 top-level import 금지.
+type AppleAuthModule = typeof import('expo-apple-authentication')
+let appleModule: AppleAuthModule | null = null
+function loadAppleModule(): AppleAuthModule {
+  if (appleModule) return appleModule
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  appleModule = require('expo-apple-authentication') as AppleAuthModule
+  return appleModule
+}
+
+/** iOS 에서만 사용 가능. 사용 가능 여부는 컴포넌트에서 Platform.OS==='ios' 로 게이트. */
+export async function appleSignIn(): Promise<AuthUser> {
+  if (Platform.OS !== 'ios') throw new Error('Apple 로그인은 iOS 에서만 지원됩니다.')
+  const AppleAuthentication = loadAppleModule()
+  try {
+    const credential = await AppleAuthentication.signInAsync({
+      requestedScopes: [
+        AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+        AppleAuthentication.AppleAuthenticationScope.EMAIL,
+      ],
+    })
+    const identityToken = credential.identityToken
+    if (!identityToken) throw new Error('Apple identityToken 을 받지 못했습니다.')
+    return await apiAppleOAuth(identityToken)
+  } catch (e) {
+    if ((e as { code?: string }).code === 'ERR_REQUEST_CANCELED') throw new Error('로그인을 취소했습니다.')
+    throw e
+  }
 }

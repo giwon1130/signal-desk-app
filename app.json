@@ -15,6 +15,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.giwon.signaldesk",
+      "usesAppleSignIn": true,
       "buildNumber": "1",
       "infoPlist": {
         "NSUserNotificationsUsageDescription": "장 시작과 단타 픽 업데이트 시점을 알려드려요.",
@@ -56,6 +57,7 @@
     },
     "plugins": [
       "expo-web-browser",
+      "expo-apple-authentication",
       [
         "expo-notifications",
         {

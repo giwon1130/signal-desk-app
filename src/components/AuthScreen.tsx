@@ -15,6 +15,7 @@ import { useStyles } from '../styles'
 import { useTheme } from '../theme'
 import { hapticError, hapticSuccess } from '../utils/haptics'
 import { GoogleSignInButton } from './GoogleSignInButton'
+import { AppleSignInButton } from './AppleSignInButton'
 import { WebFooter } from './WebFooter'
 import type { MarketPreference } from '../api/alertPreferences'
 import { syncMarketPreference } from '../api/alertPreferences'
@@ -320,6 +321,13 @@ export function AuthScreen({ onDone }: Props) {
         </View>
 
         <GoogleSignInButton
+          loading={loading}
+          onAuth={handleGoogleSuccess}
+          onError={handleGoogleError}
+        />
+
+        {/* Sign in with Apple — iOS 전용(가이드라인 4.8). 컴포넌트 내부에서 플랫폼 게이트. */}
+        <AppleSignInButton
           loading={loading}
           onAuth={handleGoogleSuccess}
           onError={handleGoogleError}
