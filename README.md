@@ -19,8 +19,11 @@
 | **리딩 (리더 마켓·AI 리더)** | **리그 (모의투자)** | |
 | ![리딩](docs/screenshots/reading.png) | ![리그](docs/screenshots/league.png) | |
 
-> 모바일(iOS 시뮬레이터) 캡쳐. 데스크톱 웹 화면은 [라이브 데모](https://giwon1130.github.io/signal-desk-app/)에서 바로 확인할 수 있어요.
-> 추가 캡쳐 방법은 [docs/screenshots/CAPTURE.md](docs/screenshots/CAPTURE.md) 참고.
+**웹 — 데스크톱 3열 셸** (티커 리본 · 좌 네비 · 메인 대시보드 · 우 컨텍스트)
+
+![웹 데스크톱](docs/screenshots/web.png)
+
+> 모바일은 iOS 시뮬레이터, 웹은 [라이브 데모](https://giwon1130.github.io/signal-desk-app/) 캡쳐. 추가 캡쳐 방법은 [docs/screenshots/CAPTURE.md](docs/screenshots/CAPTURE.md) 참고.
 
 ---
 
