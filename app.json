@@ -71,6 +71,14 @@
         {
           "iosUrlScheme": "com.googleusercontent.apps.496073748220-n9end3a963hj96nh6ru6ai3d54u8g72v"
         }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "useFrameworks": "static"
+          }
+        }
       ]
     ],
     "owner": "giwon1130"
