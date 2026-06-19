@@ -292,10 +292,10 @@ export function AuthScreen({ onDone }: Props) {
           disabled={loading}
           style={({ pressed }) => [
             {
-              borderRadius: 11, backgroundColor: palette.ink,
+              height: 46, borderRadius: 10, backgroundColor: palette.ink,
               alignItems: 'center', justifyContent: 'center',
               flexDirection: 'row', gap: 7,
-              paddingVertical: 11, paddingHorizontal: 14,
+              paddingHorizontal: 14,
               marginTop: 4,
               opacity: loading || pressed ? 0.75 : 1,
             },
@@ -304,11 +304,11 @@ export function AuthScreen({ onDone }: Props) {
           {loading ? (
             <ActivityIndicator size="small" color={palette.surface} />
           ) : mode === 'login' ? (
-            <LogIn size={15} color={palette.surface} strokeWidth={2.5} />
+            <LogIn size={16} color={palette.surface} strokeWidth={2.5} />
           ) : (
-            <UserPlus size={15} color={palette.surface} strokeWidth={2.5} />
+            <UserPlus size={16} color={palette.surface} strokeWidth={2.5} />
           )}
-          <Text style={{ color: palette.surface, fontSize: 13, fontWeight: '800' }}>
+          <Text style={{ color: palette.surface, fontSize: 15, fontWeight: '800' }}>
             {mode === 'login' ? '로그인' : '가입하기'}
           </Text>
         </Pressable>

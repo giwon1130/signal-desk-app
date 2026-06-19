@@ -163,9 +163,9 @@ type ThemeCtx = {
 const Ctx = createContext<ThemeCtx | null>(null)
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  // v2: default 'dark' (대시보드 프로 톤). 사용자가 설정에서 'system'/'light'/'dark' 선택 가능.
-  // 기존 v1 사용자는 AsyncStorage 에 저장된 값이 있으면 그대로 적용 (마이그레이션 무중단).
-  const [mode,   setMode]   = useState<ThemeMode>('dark')
+  // default 'light'. 사용자가 설정에서 'system'/'light'/'dark' 선택 가능.
+  // 기존 사용자는 AsyncStorage 에 저장된 값이 있으면 그대로 적용 (마이그레이션 무중단).
+  const [mode,   setMode]   = useState<ThemeMode>('light')
   const [system, setSystem] = useState<'light' | 'dark'>(Appearance.getColorScheme() === 'dark' ? 'dark' : 'light')
 
   // 저장된 모드 로드
@@ -204,8 +204,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 export function useTheme(): ThemeCtx {
   const ctx = useContext(Ctx)
   if (!ctx) {
-    // 폴백: Provider 없이 호출되어도 안전하게 다크 반환 (v2 default)
-    return { palette: dark, mode: 'dark', setMode: () => {}, toggle: () => {} }
+    // 폴백: Provider 없이 호출되어도 안전하게 라이트 반환 (default)
+    return { palette: light, mode: 'light', setMode: () => {}, toggle: () => {} }
   }
   return ctx
 }

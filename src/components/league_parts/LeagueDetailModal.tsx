@@ -241,6 +241,7 @@ export function LeagueDetailModal({ visible, leagueId, myUserId, marketSessions,
               {positions.map((p) => {
                 const up = (p.returnPct ?? 0) >= 0
                 const retColor = p.returnPct == null ? palette.inkFaint : up ? palette.up : palette.down
+                const gain = p.currentPrice != null ? (p.currentPrice - p.averageCost) * p.quantity : null
                 return (
                   <View key={`${p.market}:${p.ticker}`} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 6, gap: 8 }}>
                     <View style={{ flex: 1 }}>
@@ -251,6 +252,11 @@ export function LeagueDetailModal({ visible, leagueId, myUserId, marketSessions,
                       <Text style={{ color: retColor, fontSize: 13, fontWeight: '900' }}>
                         {p.returnPct == null ? '—' : `${up ? '+' : ''}${p.returnPct.toFixed(2)}%`}
                       </Text>
+                      {gain != null ? (
+                        <Text style={{ color: retColor, fontSize: 11, fontWeight: '700' }}>
+                          {gain >= 0 ? '+' : '-'}{fmtMoney(Math.abs(gain), league.currency)}
+                        </Text>
+                      ) : null}
                       <Text style={{ color: palette.inkMuted, fontSize: 10 }}>
                         평단 {fmtNum(p.averageCost)}{p.currentPrice != null ? ` → ${fmtNum(p.currentPrice)}` : ''}
                       </Text>

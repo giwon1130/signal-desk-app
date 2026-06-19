@@ -92,6 +92,7 @@ export function MemberPortfolioModal({ visible, leagueId, member, currency, onCl
             ) : positions.map((p) => {
               const up = (p.returnPct ?? 0) >= 0
               const c = p.returnPct == null ? palette.inkFaint : up ? palette.up : palette.down
+              const gain = p.currentPrice != null ? (p.currentPrice - p.averageCost) * p.quantity : null
               return (
                 <View key={`${p.market}:${p.ticker}`} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 8, gap: 8, borderTopWidth: 1, borderTopColor: palette.border }}>
                   <View style={{ flex: 1 }}>
@@ -102,6 +103,11 @@ export function MemberPortfolioModal({ visible, leagueId, member, currency, onCl
                     <Text style={{ color: c, fontSize: 13, fontWeight: '900' }}>
                       {p.returnPct == null ? '—' : `${up ? '+' : ''}${p.returnPct.toFixed(2)}%`}
                     </Text>
+                    {gain != null ? (
+                      <Text style={{ color: c, fontSize: 11, fontWeight: '700' }}>
+                        {gain >= 0 ? '+' : '-'}{fmtMoney(Math.abs(gain), currency)}
+                      </Text>
+                    ) : null}
                     <Text style={{ color: palette.inkMuted, fontSize: 10 }}>
                       평단 {fmtNum(p.averageCost)}{p.currentPrice != null ? ` → ${fmtNum(p.currentPrice)}` : ''}
                     </Text>

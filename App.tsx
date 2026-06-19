@@ -18,7 +18,7 @@ import { ErrorBoundary } from './src/components/ErrorBoundary'
 import { OnboardingScreen } from './src/components/OnboardingScreen'
 import {
   getOnboardingCompleted, markOnboardingCompleted,
-  getV2MigrationShown, markV2MigrationShown,
+  getUsageGuideShown, markUsageGuideShown,
 } from './src/utils/onboarding'
 import { WebFrame } from './src/components/WebFrame'
 import { webBootstrap } from './src/utils/webBootstrap'
@@ -120,8 +120,9 @@ function AppShell() {
   // v2 온보딩 상태 — 미완료 신규 사용자만 OnboardingScreen 노출.
   // 기존 v1 사용자는 marketPreference 가 이미 있으므로 첫 진입에서 자동 markCompleted 후 스킵.
   const [onboardingState, setOnboardingState] = useState<'loading' | 'show' | 'done'>('loading')
-  // v1 → v2 마이그레이션 모달 — 1회 노출 후 마크.
-  const [v2MigrationOpen, setV2MigrationOpen] = useState(false)
+  // 앱 활용 가이드 — 1회 노출 후 마크. (pending: 노출 예정이나 다른 모달과 안 겹치게 대기 중)
+  const [guideOpen, setGuideOpen] = useState(false)
+  const [guidePending, setGuidePending] = useState(false)
   // v2.1: 리그 오케스트레이션 — 생성/상세/참가 모달 + 새로고침 트리거.
   const league = useLeagueOrchestration(setActiveTab)
   // v2.1: 통합 설정 모달
@@ -138,9 +139,7 @@ function AppShell() {
       return
     }
     let cancelled = false
-    let migTimer: ReturnType<typeof setTimeout> | null = null
-    // 진입 직후 갑작스러우면 어색 → 700ms 지연으로 메인 그려진 뒤 자연스럽게 노출. 로그아웃 시 타이머/상태 변경 취소.
-    const scheduleMigration = () => { migTimer = setTimeout(() => { if (!cancelled) setV2MigrationOpen(true) }, 700) }
+    // 가이드 노출 여부만 결정 → 실제 노출 타이밍은 아래 effect 가 운세 모달과 겹치지 않게 관리.
     void (async () => {
       const [p, completed] = await Promise.all([
         getAlertPreferences(tok),
@@ -151,32 +150,22 @@ function AppShell() {
       // 이미 완료했으면 그대로 진입. 미완료지만 marketPreference 가 있으면(v1 사용자) 자동 완료 처리.
       if (completed) {
         setOnboardingState('done')
-        const migShown = await getV2MigrationShown()
-        if (!cancelled && !migShown) scheduleMigration()
+        const guideShown = await getUsageGuideShown()
+        if (!cancelled && !guideShown) setGuidePending(true)
       } else if (p.marketPreference) {
         // v1 사용자 — 온보딩 한 적 없지만 marketPreference 가 있으므로 신규 아님.
         await markOnboardingCompleted()
         if (cancelled) return
         setOnboardingState('done')
-        const migShown = await getV2MigrationShown()
-        if (!cancelled && !migShown) scheduleMigration()
+        const guideShown = await getUsageGuideShown()
+        if (!cancelled && !guideShown) setGuidePending(true)
       } else {
         setOnboardingState('show')
-        // 신규 사용자는 온보딩 자체가 v2 안내라 별도 마이그레이션 모달 불필요.
-        await markV2MigrationShown()
+        // 신규 사용자는 온보딩 자체가 앱 안내라 별도 가이드 모달 불필요.
+        await markUsageGuideShown()
       }
     })()
-    return () => { cancelled = true; if (migTimer) clearTimeout(migTimer) }
-  }, [user?.token])
-
-  // v2 마이그레이션 모달 confirm — 시장 선호 즉시 반영 + 마크.
-  const handleV2MigrationConfirm = useCallback(async (pref: MarketPreference) => {
-    setMarketPreference(pref)
-    setV2MigrationOpen(false)
-    await markV2MigrationShown()
-    if (user?.token) {
-      await syncMarketPreference(user.token, pref) // 실패해도 로컬 상태는 변경됨
-    }
+    return () => { cancelled = true }
   }, [user?.token])
 
   // v2: 헤더 시장 칩 변경 공통 핸들러 — 모바일/웹 양쪽이 같은 동작 (즉시 반영 + 토스트 + 백엔드 동기).
@@ -212,6 +201,8 @@ function AppShell() {
   useEffect(() => {
     if (Platform.OS === 'web') return
     if (!fortune || greetingTriggered.current) return
+    // 가이드 모달과 동시에 뜨면 iOS 에서 화면 터치가 막힘 → 가이드가 떠 있으면 닫힐 때까지 대기(effect 재실행).
+    if (guideOpen) return
     greetingTriggered.current = true
     void (async () => {
       // 같은 날 이미 띄웠으면 skip — 날짜가 바뀌어야 다시 노출.
@@ -221,7 +212,16 @@ function AppShell() {
         await markFortuneGreetingShown(fortune.date)
       }
     })()
-  }, [fortune])
+  }, [fortune, guideOpen])
+
+  // 가이드 모달은 운세 모달과 절대 동시에 뜨지 않게 — 운세가 닫힌 뒤(또는 운세가 없으면 잠시 후) 단독 노출.
+  // 두 모달이 겹치면 iOS RN 에서 안 보이는 모달이 터치를 가로채 화면이 먹통이 된다.
+  useEffect(() => {
+    if (Platform.OS === 'web') return
+    if (!guidePending || greetingOpen || guideOpen) return
+    const t = setTimeout(() => { setGuidePending(false); setGuideOpen(true) }, 1200)
+    return () => clearTimeout(t)
+  }, [guidePending, greetingOpen, guideOpen])
 
   const confirmLogout = useCallback(() => {
     // 웹: RN Alert 의 버튼 onPress 가 동작하지 않아 window.confirm 으로 분기.
@@ -617,9 +617,8 @@ function AppShell() {
       reminderOpen={reminderOpen}
       setReminderOpen={setReminderOpen}
       alerts={alerts}
-      v2MigrationOpen={v2MigrationOpen}
-      setV2MigrationOpen={setV2MigrationOpen}
-      onV2MigrationConfirm={handleV2MigrationConfirm}
+      guideOpen={guideOpen}
+      setGuideOpen={setGuideOpen}
       league={league}
       reading={reading}
       settingsOpen={settingsOpen}

@@ -12,7 +12,7 @@ import { fetchMyLeagues } from '../api/league'
 import { Entrance, GradientBackground, PressableScale, glow } from '../components/effects'
 import { TabIntro } from '../components/guide/TabIntro'
 import { ProUpgradeSheet } from '../components/pro/ProUpgrade'
-import { FREE_LIMITS } from '../lib/entitlements'
+import { FREE_LIMITS, PRO_LIMITS } from '../lib/entitlements'
 import {
   fmtMoney, leagueShareMessage, leagueStatusColor, leagueStatusLabel,
 } from '../components/league_parts/leagueShared'
@@ -87,7 +87,7 @@ export const LeagueTab = memo(function LeagueTab({ authToken, refreshing, onOpen
       <View style={[styles.card, { gap: 12 }]}>
         {atLeagueLimit ? (
           <Text style={{ color: palette.inkMuted, fontSize: 11, fontWeight: '600' }}>
-            무료는 진행 중 리그 1개까지예요 · PRO는 무제한 💎
+            무료는 진행 중 리그 {FREE_LIMITS.leagues}개까지예요 · PRO는 {PRO_LIMITS.leagues}개 💎
           </Text>
         ) : null}
         <PressableScale onPress={handleCreate} accessibilityLabel="새 리그 만들기" style={{ borderRadius: 12, overflow: 'hidden' }}>

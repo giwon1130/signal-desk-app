@@ -4,7 +4,7 @@ import { Toast } from './Toast'
 import { StockDetailModal, type StockDetailContext } from './StockDetailModal'
 import { ReminderSettingsModal } from './ReminderSettingsModal'
 import { RecentAlertsModal } from './RecentAlertsModal'
-import { V2MigrationModal } from './V2MigrationModal'
+import { AppGuideModal } from './AppGuideModal'
 import { CreateLeagueModal } from './league_parts/CreateLeagueModal'
 import { LeagueDetailModal } from './league_parts/LeagueDetailModal'
 import { JoinLeagueModal } from './league_parts/JoinLeagueModal'
@@ -18,7 +18,7 @@ import { ProUpgradeSheet } from './pro/ProUpgrade'
 import { CommandPalette } from '../web/CommandPalette'
 import { isPro as computeIsPro } from '../lib/entitlements'
 import { useTheme } from '../theme'
-import { markV2MigrationShown } from '../utils/onboarding'
+import { markUsageGuideShown } from '../utils/onboarding'
 import type { MarketPreference } from '../api/alertPreferences'
 import type { AuthUser } from '../api/auth'
 import type { useToast } from '../hooks/useToast'
@@ -53,10 +53,9 @@ type Props = {
   reminderOpen: boolean
   setReminderOpen: (v: boolean) => void
   alerts: ReturnType<typeof useAlertsInbox>
-  // v1 → v2 마이그레이션
-  v2MigrationOpen: boolean
-  setV2MigrationOpen: (v: boolean) => void
-  onV2MigrationConfirm: (p: MarketPreference) => Promise<void>
+  // 앱 활용 가이드 (1회성)
+  guideOpen: boolean
+  setGuideOpen: (v: boolean) => void
   // 리그 / 리딩
   league: ReturnType<typeof useLeagueOrchestration>
   reading: ReturnType<typeof useReadingOrchestration>
@@ -85,7 +84,7 @@ export function GlobalOverlays({
   detailKey, detailContext, onCloseDetail, onToggleWatch, onSaveWatchAlerts, onSavePortfolio, onDeletePortfolio,
   onOpenDetail, onNavigateTab,
   reminderOpen, setReminderOpen, alerts,
-  v2MigrationOpen, setV2MigrationOpen, onV2MigrationConfirm,
+  guideOpen, setGuideOpen,
   league, reading,
   settingsOpen, setSettingsOpen, proUpgradeOpen, setProUpgradeOpen, onMarketPreferenceChange, onLogout, onDeleteAccount,
   greetingOpen, setGreetingOpen,
@@ -125,13 +124,11 @@ export function GlobalOverlays({
         onDelete={alerts.handleDeleteAlert}
         onClearAll={alerts.handleClearAlerts}
       />
-      <V2MigrationModal
-        visible={v2MigrationOpen}
-        currentPreference={marketPreference}
-        onConfirm={(p) => void onV2MigrationConfirm(p)}
+      <AppGuideModal
+        visible={guideOpen}
         onClose={() => {
-          setV2MigrationOpen(false)
-          void markV2MigrationShown()
+          setGuideOpen(false)
+          void markUsageGuideShown()
         }}
       />
       <CreateLeagueModal
