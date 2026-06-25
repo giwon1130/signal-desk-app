@@ -153,6 +153,25 @@ export type MarketSummaryData = {
   newsSentiments?: NewsSentiment[]
   tradingDayStatus?: TradingDayStatus
   briefing?: DailyBriefing
+  preMarketDirection?: PreMarketDirection
+}
+
+/** 한국장 시작 전 야간 방향성(PRO 전용). locked=true 면 값 없이 잠금만(블러+업그레이드 유도). */
+export type PreMarketDirection = {
+  locked: boolean
+  kospiFutures?: DirectionQuote | null
+  overseas?: DirectionQuote[]
+  bias?: 'RISING' | 'NEUTRAL' | 'FALLING' | null
+  biasLabel?: string | null
+  summary?: string | null
+  sessionActive?: boolean
+  asOf?: string | null
+}
+
+export type DirectionQuote = {
+  label: string
+  changeRate: number
+  value: number
 }
 
 export type TopMover = {

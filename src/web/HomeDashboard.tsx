@@ -26,6 +26,7 @@ import { WatchAlertsWidget } from './widgets/WatchAlertsWidget'
 import { PortfolioWidget } from './widgets/PortfolioWidget'
 import { NewsWidget } from './widgets/NewsWidget'
 import { BriefHero } from '../tabs/today_parts/BriefHero'
+import { PreMarketDirectionCard } from '../tabs/today_parts/PreMarketDirectionCard'
 import { SeasonRulesCard } from '../tabs/today_parts/SeasonRulesCard'
 import { EventsCard } from '../tabs/today_parts/EventsCard'
 
@@ -55,6 +56,7 @@ type Props = {
   upcomingEvents: MarketEvent[]
   marketPreference: MarketPreference
   onOpenDetail: (market: string, ticker: string, name?: string) => void
+  onUpgrade?: () => void   // 야간 방향성 PRO 잠금 카드 → PRO 업그레이드 시트
 }
 
 // memo: AppShell 재렌더(검색 키스트로크 등)에 끌려 다시 그리지 않도록.
@@ -80,6 +82,9 @@ export const HomeDashboard = memo(function HomeDashboard(props: Props) {
       <Entrance delay={60}>
         <View style={[{ gap: 14 }, webGrid('minmax(0, 2fr) minmax(0, 1fr)')]}>
           <View style={{ gap: 14 }}>
+            {props.summary?.preMarketDirection ? (
+              <PreMarketDirectionCard data={props.summary.preMarketDirection} onUpgrade={props.onUpgrade} />
+            ) : null}
             {showBrief ? (
               <BriefHero
                 items={props.mediaSummaries}

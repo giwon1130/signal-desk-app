@@ -28,6 +28,7 @@ export const PRO_BENEFITS: { icon: string; title: string; free: string; pro: str
   { icon: '🧠', title: 'AI 종목 심층 리포트', free: '—', pro: '하루 5회' },
   { icon: '🎯', title: '목표가 알림 (상한·하한)', free: '—', pro: '제공' },
   { icon: '📰', title: '장중·미국장 마감 브리프', free: '—', pro: '제공' },
+  { icon: '🌙', title: '장 시작 전 야간 방향성', free: '—', pro: '야간 선물·해외상장 삼성' },
   { icon: '⭐', title: '관심 종목', free: `${FREE_LIMITS.watchlist}개`, pro: `${PRO_LIMITS.watchlist}개` },
   { icon: '💼', title: '보유 종목', free: `${FREE_LIMITS.holdings}개`, pro: `${PRO_LIMITS.holdings}개` },
   { icon: '📣', title: '리더 구독', free: `${FREE_LIMITS.leaderSubscriptions}명`, pro: `${PRO_LIMITS.leaderSubscriptions}명` },

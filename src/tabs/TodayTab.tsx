@@ -24,6 +24,7 @@ import {
   getSessionPalette,
 } from '../utils'
 import { BriefHero } from './today_parts/BriefHero'
+import { PreMarketDirectionCard } from './today_parts/PreMarketDirectionCard'
 import { NewsHero } from './today_parts/NewsHero'
 import { EventsCard } from './today_parts/EventsCard'
 import { HoldingMonitor } from './today_parts/HoldingMonitor'
@@ -43,6 +44,7 @@ type Props = {
   onOpenDetail: (market: string, ticker: string, name?: string) => void
   refreshing: boolean
   onRefresh: () => Promise<void>
+  onUpgrade?: () => void   // 야간 방향성 PRO 잠금 카드 → PRO 업그레이드 시트
 }
 
 // memo: AppShell 재렌더(검색 키스트로크 등)에 끌려 다시 그리지 않도록.
@@ -56,6 +58,7 @@ export const TodayTab = memo(function TodayTab({
   onOpenDetail,
   refreshing,
   onRefresh,
+  onUpgrade,
 }: Props) {
   const styles = useStyles()
   const { palette } = useTheme()
@@ -168,6 +171,13 @@ export const TodayTab = memo(function TodayTab({
           marketPreference={marketPreference}
         />
       </Entrance>
+
+      {/* ── 🌙 야간 방향성 (PRO) — 장 시작 전 한국장 출발 방향 미리보기 ── */}
+      {summary?.preMarketDirection ? (
+        <Entrance index={2}>
+          <PreMarketDirectionCard data={summary.preMarketDirection} onUpgrade={onUpgrade} />
+        </Entrance>
+      ) : null}
 
       {/* ── 브리프 Hero — 최신 브리프 1건 + 개인화(브리핑) 통합 ── */}
       {(mediaSummaries.length > 0 || summary?.briefing) ? (

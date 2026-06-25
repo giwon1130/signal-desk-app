@@ -468,6 +468,7 @@ function AppShell() {
             upcomingEvents={filteredUpcomingEvents}
             marketPreference={marketPreference}
             onOpenDetail={handleOpenDetail}
+            onUpgrade={() => setProUpgradeOpen(true)}
           />
         ) : (
           <TodayTab
@@ -480,6 +481,7 @@ function AppShell() {
             onOpenDetail={handleOpenDetail}
             refreshing={refreshing}
             onRefresh={refresh}
+            onUpgrade={() => setProUpgradeOpen(true)}
           />
         )
       ) : null}
