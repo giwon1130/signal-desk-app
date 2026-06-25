@@ -2,11 +2,17 @@
   "expo": {
     "name": "signal-desk-app",
     "slug": "signal-desk-app",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "updates": {
+      "url": "https://u.expo.dev/891d142e-d493-43d3-a7b1-ac7bdcf23963"
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",

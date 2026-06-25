@@ -166,7 +166,7 @@ export function SettingsModal({
   )
 }
 
-/** 플랜 카드 — 현재 플랜 + PRO 혜택 + 신청 버튼(신청됨이면 검토 중 표시). */
+/** 플랜 카드 — 현재 플랜 + PRO 혜택 + 신청 버튼(신청됨이면 접수 상태 표시). */
 function PlanSection({ plan, palette }: { plan: string; palette: any }) {
   const [status, setStatus] = useState<PlanRequestStatus>(null)
   const [busy, setBusy] = useState(false)
@@ -224,11 +224,11 @@ function PlanSection({ plan, palette }: { plan: string; palette: any }) {
             ))}
           </View>
           <Text style={{ color: palette.inkMuted, fontSize: 11, lineHeight: 16, marginTop: 4 }}>
-            🎉 베타 기간엔 결제 없이 무료로 승인해 드려요. 신청하면 검토 후 알림으로 알려드립니다.
+            🚧 PRO는 아직 베타 준비 중이에요. 지금 신청해두면 정식 오픈 때 순차적으로 안내드릴게요. (현재는 바로 승인되지 않아요)
           </Text>
           {status === 'PENDING' ? (
             <Text style={{ color: palette.purple ?? '#7c3aed', fontSize: 12, fontWeight: '800' }}>
-              ⏳ 신청 검토 중 — 승인되면 알림으로 알려드려요
+              ⏳ 신청 접수됨 — 정식 오픈 때 순차적으로 안내드려요
             </Text>
           ) : status === 'DISMISSED' ? (
             <>

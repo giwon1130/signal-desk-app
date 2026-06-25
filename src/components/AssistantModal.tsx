@@ -168,7 +168,7 @@ export function AssistantModal({ visible, onClose }: Props) {
                     </Text>
                   </Pressable>
                   <Text style={{ color: palette.inkMuted, fontSize: 10.5 }}>
-                    🎉 베타 기간엔 결제 없이 무료로 승인해 드려요
+                    🚧 PRO는 베타 준비 중 — 신청해두면 정식 오픈 때 안내드려요 (지금은 바로 승인되지 않아요)
                   </Text>
                 </View>
               ) : null}
