@@ -26,11 +26,13 @@ type Props = {
   /** PRO 여부 — 미국장 마감 브리프 등 PRO 전용 알림 게이팅 */
   isPro?: boolean
   onUpgrade?: () => void
+  /** 가중 프리셋 변경 성공 시 — 시장 분위기(위험도) 즉시 새로고침 트리거 */
+  onRiskWeightChanged?: () => void
 }
 
 const MINUTES_OPTIONS = [5, 10, 15, 30, 60]
 
-export function ReminderSettingsModal({ visible, authToken, onClose, isPro = false, onUpgrade }: Props) {
+export function ReminderSettingsModal({ visible, authToken, onClose, isPro = false, onUpgrade, onRiskWeightChanged }: Props) {
   const styles = useStyles()
   const { palette } = useTheme()
 
@@ -70,7 +72,12 @@ export function ReminderSettingsModal({ visible, authToken, onClose, isPro = fal
     const prev = riskWeight
     setRiskWeight({ ...prev, preset: id })
     const res = await updateRiskWeight(authToken, id)
-    setRiskWeight(res ?? prev)
+    if (res) {
+      setRiskWeight(res)
+      onRiskWeightChanged?.()   // 위험도 즉시 새로고침 (서버에 새 프리셋 적용된 요약 재요청)
+    } else {
+      setRiskWeight(prev)       // 실패 → 롤백
+    }
   }
 
   const updatePref = async (patch: Partial<AlertPreferences>) => {

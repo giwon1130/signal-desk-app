@@ -618,6 +618,7 @@ function AppShell() {
       onNavigateTab={handleTabChange}
       reminderOpen={reminderOpen}
       setReminderOpen={setReminderOpen}
+      onRefreshSummary={() => void refresh()}
       alerts={alerts}
       guideOpen={guideOpen}
       setGuideOpen={setGuideOpen}

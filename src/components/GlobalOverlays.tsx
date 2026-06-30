@@ -52,6 +52,7 @@ type Props = {
   // 알림 설정 / 알림함
   reminderOpen: boolean
   setReminderOpen: (v: boolean) => void
+  onRefreshSummary?: () => void   // 가중 프리셋 변경 시 시장 분위기 즉시 갱신
   alerts: ReturnType<typeof useAlertsInbox>
   // 앱 활용 가이드 (1회성)
   guideOpen: boolean
@@ -83,7 +84,7 @@ export function GlobalOverlays({
   user, toast, loading, marketPreference, summary, fortune, watchlist, alertHistory,
   detailKey, detailContext, onCloseDetail, onToggleWatch, onSaveWatchAlerts, onSavePortfolio, onDeletePortfolio,
   onOpenDetail, onNavigateTab,
-  reminderOpen, setReminderOpen, alerts,
+  reminderOpen, setReminderOpen, onRefreshSummary, alerts,
   guideOpen, setGuideOpen,
   league, reading,
   settingsOpen, setSettingsOpen, proUpgradeOpen, setProUpgradeOpen, onMarketPreferenceChange, onLogout, onDeleteAccount,
@@ -114,6 +115,7 @@ export function GlobalOverlays({
         onClose={() => setReminderOpen(false)}
         isPro={pro}
         onUpgrade={openUpgrade}
+        onRiskWeightChanged={onRefreshSummary}
       />
       <RecentAlertsModal
         visible={alerts.alertsOpen}
