@@ -154,6 +154,14 @@ export type MarketSummaryData = {
   tradingDayStatus?: TradingDayStatus
   briefing?: DailyBriefing
   preMarketDirection?: PreMarketDirection
+  riskWeight?: RiskWeightInfo          // 시장 분위기 가중 프리셋(현재값+PRO여부+선택지)
+}
+
+/** 시장 분위기 가중 프리셋 — 서버 RiskWeightInfo 와 동일. 상세 타입은 api/riskWeight.ts. */
+export type RiskWeightInfo = {
+  preset: string
+  customizable: boolean
+  options: { id: string; label: string; description: string }[]
 }
 
 /** 한국장 시작 전 야간 방향성(PRO 전용). locked=true 면 값 없이 잠금만(블러+업그레이드 유도). */
