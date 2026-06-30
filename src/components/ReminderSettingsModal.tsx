@@ -14,8 +14,9 @@ import {
 } from '../hooks/useMarketReminder'
 import { getPushAlertsEnabled, setPushAlertsEnabled } from '../api/pushDevice'
 import { DEFAULT_ALERT_PREFERENCES, getAlertPreferences, updateAlertPreferences, type AlertPreferences } from '../api/alertPreferences'
-import { DEFAULT_RISK_WEIGHT, getRiskWeight, updateRiskWeight, type RiskWeightInfo, type RiskWeightPresetId } from '../api/riskWeight'
+import { DEFAULT_RISK_WEIGHT, getRiskWeight, updateRiskWeight, RISK_WEIGHT_DEFAULT, RISK_WEIGHT_MAX, type RiskWeightInfo, type RiskWeightPresetId } from '../api/riskWeight'
 import { AlertToggleRow } from './reminder_parts/AlertToggleRow'
+import { WeightSlider } from './reminder_parts/WeightSlider'
 import { AlertGroup } from './reminder_parts/AlertGroup'
 import { MinutesBeforePicker } from './reminder_parts/MinutesBeforePicker'
 
@@ -43,6 +44,8 @@ export function ReminderSettingsModal({ visible, authToken, onClose, isPro = fal
   const [hydrated, setHydrated] = useState(false)
   const [prefs, setPrefs] = useState<AlertPreferences>(DEFAULT_ALERT_PREFERENCES)
   const [riskWeight, setRiskWeight] = useState<RiskWeightInfo>(DEFAULT_RISK_WEIGHT)
+  // CUSTOM 슬라이더 로컬 드래프트(라벨→배수). 드래그는 로컬, 손 뗄 때만 저장.
+  const [customDraft, setCustomDraft] = useState<Record<string, number>>({})
 
   // 모달 열릴 때마다 현재 저장값 hydrate
   useEffect(() => {
@@ -62,21 +65,44 @@ export function ReminderSettingsModal({ visible, authToken, onClose, isPro = fal
       setMinutes(c)
       setPrefs(sp)
       setRiskWeight(rw)
+      setCustomDraft(draftFrom(rw))
       setHydrated(true)
     })()
   }, [visible])
 
-  // 프리셋 변경(PRO) — 낙관적 반영 후 실패 시 롤백. 위험도는 다음 요약 새로고침에 반영됨.
+  // 지표 카탈로그 기준 드래프트 — 저장된 customWeights 우선, 없으면 기본 1.0.
+  const draftFrom = (rw: RiskWeightInfo): Record<string, number> => {
+    const d: Record<string, number> = {}
+    rw.factors.forEach((f) => { d[f.id] = rw.customWeights[f.id] ?? RISK_WEIGHT_DEFAULT })
+    return d
+  }
+
+  // 프리셋 칩 변경(PRO) — 낙관적 반영 후 실패 시 롤백. 위험도는 onRiskWeightChanged 로 즉시 새로고침.
   const handlePreset = async (id: RiskWeightPresetId) => {
     if (!authToken || id === riskWeight.preset) return
     const prev = riskWeight
+    const weights = id === 'CUSTOM'
+      ? (Object.keys(customDraft).length ? customDraft : draftFrom(prev))
+      : undefined
+    if (id === 'CUSTOM' && weights) setCustomDraft(weights)
     setRiskWeight({ ...prev, preset: id })
-    const res = await updateRiskWeight(authToken, id)
+    const res = await updateRiskWeight(authToken, id, weights)
     if (res) {
       setRiskWeight(res)
-      onRiskWeightChanged?.()   // 위험도 즉시 새로고침 (서버에 새 프리셋 적용된 요약 재요청)
+      if (res.preset === 'CUSTOM') setCustomDraft(draftFrom(res))
+      onRiskWeightChanged?.()
     } else {
-      setRiskWeight(prev)       // 실패 → 롤백
+      setRiskWeight(prev)
+    }
+  }
+
+  // 슬라이더 손 뗄 때 — CUSTOM 배수 저장 + 위험도 새로고침.
+  const commitCustom = async (next: Record<string, number>) => {
+    if (!authToken) return
+    const res = await updateRiskWeight(authToken, 'CUSTOM', next)
+    if (res) {
+      setRiskWeight(res)
+      onRiskWeightChanged?.()
     }
   }
 
@@ -295,6 +321,30 @@ export function ReminderSettingsModal({ visible, authToken, onClose, isPro = fal
                   <Text style={{ color: palette.inkFaint, fontSize: 11, marginTop: 8 }}>
                     {riskWeight.options.find((o) => o.id === riskWeight.preset)?.description ?? ''}
                   </Text>
+
+                  {/* 직접 설정(CUSTOM) — 지표별 슬라이더 */}
+                  {riskWeight.preset === 'CUSTOM' && riskWeight.factors.length > 0 ? (
+                    <View style={{ marginTop: 14, padding: 12, borderRadius: 12, backgroundColor: palette.surfaceAlt }}>
+                      <Text style={{ color: palette.inkMuted, fontSize: 10.5, marginBottom: 12 }}>
+                        지표별 비중 배수예요. 1.0× = 기본, 0× = 무시, 2.0× = 두 배. (합은 자동 정규화)
+                      </Text>
+                      {riskWeight.factors.map((f) => (
+                        <WeightSlider
+                          key={f.id}
+                          label={f.label}
+                          value={customDraft[f.id] ?? RISK_WEIGHT_DEFAULT}
+                          max={RISK_WEIGHT_MAX}
+                          disabled={!hydrated}
+                          onChange={(v) => setCustomDraft((d) => ({ ...d, [f.id]: v }))}
+                          onCommit={(v) => {
+                            const next = { ...customDraft, [f.id]: v }
+                            setCustomDraft(next)
+                            void commitCustom(next)
+                          }}
+                        />
+                      ))}
+                    </View>
+                  ) : null}
                 </>
               ) : (
                 <Pressable
