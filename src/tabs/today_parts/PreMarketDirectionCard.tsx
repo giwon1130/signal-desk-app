@@ -1,5 +1,5 @@
 /**
- * 🌙 야간 방향성 — 한국장 시작 전, 야간 코스피200 선물 + 해외상장 삼성 등락으로 오늘 출발 방향 미리보기.
+ * 🌙 야간 방향성 — 한국장 시작 전, 간밤 MSCI 한국 + 해외상장 삼성 + S&P선물 등락으로 오늘 출발 방향 미리보기.
  * PRO 전용: 서버가 FREE 에겐 locked=true(값 비공개)로 내려줌 → 여기선 티저+잠금으로 업그레이드 유도.
  *
  * 웹·네이티브 공용 (RN 프리미티브만 사용, blur 의존성 없음).
@@ -52,10 +52,10 @@ export function PreMarketDirectionCard({ data, onUpgrade }: Props) {
       <View style={cardStyle}>
         {Header}
         <Text style={{ color: palette.inkSub, fontSize: 13, lineHeight: 19 }}>
-          장 시작 전, 야간 코스피선물·해외상장 삼성 등락으로 오늘 한국장 출발 방향을 미리 봐요.
+          장 시작 전, 간밤 미국장(MSCI 한국)·해외상장 삼성 등락으로 오늘 한국장 출발 방향을 미리 봐요.
         </Text>
         <View style={{ gap: 8 }}>
-          {['야간 코스피200 선물', '삼성전자(런던)'].map((label) => (
+          {['MSCI 한국(간밤)', '삼성전자(런던)'].map((label) => (
             <View key={label} style={{
               flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
               backgroundColor: palette.surfaceAlt, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10,
@@ -122,7 +122,7 @@ export function PreMarketDirectionCard({ data, onUpgrade }: Props) {
       </View>
 
       <Text style={{ color: palette.inkFaint, fontSize: 10.5, lineHeight: 15 }}>
-        야간 선물·해외상장 시세 기준 참고 지표예요. 실제 시초가와 다를 수 있어요.
+        간밤 미국장·해외상장 시세 기준 참고 지표예요. 실제 시초가와 다를 수 있어요.
       </Text>
     </View>
   )
