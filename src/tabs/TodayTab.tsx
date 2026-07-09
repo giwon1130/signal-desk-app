@@ -146,7 +146,7 @@ export const TodayTab = memo(function TodayTab({
         </View>
       ) : null}
 
-      {/* 정보 우선순위: 내 종목(보유·관심) → 시장 맥락(무드) → 읽을거리(브리프·뉴스) → 시즌·이벤트.
+      {/* 정보 우선순위: 내 종목(보유·관심) → 시장 맥락(무드·뉴스) → 읽을거리(브리프) → 시즌·이벤트.
           아침에 "내 종목 어떻게 됐지"가 1순위라 개인·액션 카드를 맨 위로. 무보유/무신호 카드는
           자동으로 미렌더되어 신규 사용자에겐 자연히 브리프가 상단에 온다. */}
 
@@ -172,16 +172,23 @@ export const TodayTab = memo(function TodayTab({
         />
       </Entrance>
 
+      {/* ── 오늘의 뉴스 — 헤드라인 회전(KR/US 번갈아), 시장 분위기 카드와 한 블록 ── */}
+      {(krSentiment || usSentiment) ? (
+        <Entrance index={3}>
+          <NewsHero sentiments={[krSentiment, usSentiment].filter((s): s is NewsSentiment => !!s)} />
+        </Entrance>
+      ) : null}
+
       {/* ── 🌙 야간 방향성 (PRO) — 장 시작 전 한국장 출발 방향 미리보기 ── */}
       {summary?.preMarketDirection ? (
-        <Entrance index={2}>
+        <Entrance index={3}>
           <PreMarketDirectionCard data={summary.preMarketDirection} onUpgrade={onUpgrade} />
         </Entrance>
       ) : null}
 
       {/* ── 브리프 Hero — 최신 브리프 1건 + 개인화(브리핑) 통합 ── */}
       {(mediaSummaries.length > 0 || summary?.briefing) ? (
-        <Entrance index={3}>
+        <Entrance index={4}>
           <BriefHero
             items={mediaSummaries}
             briefing={summary?.briefing ?? null}
@@ -190,13 +197,6 @@ export const TodayTab = memo(function TodayTab({
               onOpenDetail(isKr ? 'KR' : 'US', t)
             }}
           />
-        </Entrance>
-      ) : null}
-
-      {/* ── 오늘의 뉴스 — 헤드라인 회전(KR/US 번갈아) ── */}
-      {(krSentiment || usSentiment) ? (
-        <Entrance index={4}>
-          <NewsHero sentiments={[krSentiment, usSentiment].filter((s): s is NewsSentiment => !!s)} />
         </Entrance>
       ) : null}
 

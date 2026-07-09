@@ -38,9 +38,9 @@ import { EventsCard } from '../tabs/today_parts/EventsCard'
  *
  * 레이아웃 (CSS Grid):
  *   row1 full:        MoodHero (헤드라인 + 센티먼트 게이지 — 선호 시장만)
- *   row2 2fr/1fr:     BriefHero(모닝/장중/마감 브리프) / 시즌·이벤트 열
- *   row3 2fr/2fr/1.2fr: Portfolio / News / WatchAlerts
- *   row4 1.6fr/1fr:   SectorPerformance / CompositeRisk
+ *   row2 2fr/1fr:     News / CompositeRisk (오늘 점수·뉴스를 한 블록으로 — 상단 고정)
+ *   row3 2fr/1fr:     BriefHero(모닝/장중/마감 브리프) / 시즌·이벤트 열
+ *   row4 2fr/2fr/1.2fr: Portfolio / SectorPerformance / WatchAlerts
  *   row5 1.6fr/1fr:   TopMovers(사유·선호 반영) / AlertTimeline + 공시
  */
 
@@ -78,8 +78,16 @@ export const HomeDashboard = memo(function HomeDashboard(props: Props) {
         <MoodHero summary={props.summary} marketPreference={props.marketPreference} palette={palette} />
       </Entrance>
 
-      {/* 브리프 + 시즌/이벤트 열 */}
+      {/* 뉴스 + 종합 위험도 — 오늘 점수(MoodHero) 바로 아래 한 블록 */}
       <Entrance delay={60}>
+        <View style={[{ gap: 14 }, webGrid('minmax(0, 2fr) minmax(0, 1fr)')]}>
+          <NewsWidget summary={props.summary} palette={palette} />
+          <CompositeRiskWidget summary={props.summary} palette={palette} />
+        </View>
+      </Entrance>
+
+      {/* 브리프 + 시즌/이벤트 열 */}
+      <Entrance delay={120}>
         <View style={[{ gap: 14 }, webGrid('minmax(0, 2fr) minmax(0, 1fr)')]}>
           <View style={{ gap: 14 }}>
             {props.summary?.preMarketDirection ? (
@@ -104,7 +112,7 @@ export const HomeDashboard = memo(function HomeDashboard(props: Props) {
       </Entrance>
 
       {/* 3-열 위젯 스트립 */}
-      <Entrance delay={120}>
+      <Entrance delay={180}>
         <View
           style={[
             { gap: 14 },
@@ -116,21 +124,13 @@ export const HomeDashboard = memo(function HomeDashboard(props: Props) {
             onOpenDetail={props.onOpenDetail}
             palette={palette}
           />
-          <NewsWidget summary={props.summary} palette={palette} />
-          <WatchAlertsWidget summary={props.summary} palette={palette} onOpenDetail={props.onOpenDetail} />
-        </View>
-      </Entrance>
-
-      {/* Sector + 종합 위험도 행 */}
-      <Entrance delay={180}>
-        <View style={[{ gap: 14 }, webGrid('minmax(0, 1.6fr) minmax(0, 1fr)')]}>
           <SectorPerformanceWidget
             positions={props.positions}
             watchlist={props.watchlist}
             palette={palette}
             onOpenDetail={props.onOpenDetail}
           />
-          <CompositeRiskWidget summary={props.summary} palette={palette} />
+          <WatchAlertsWidget summary={props.summary} palette={palette} onOpenDetail={props.onOpenDetail} />
         </View>
       </Entrance>
 
