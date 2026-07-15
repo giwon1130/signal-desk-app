@@ -8,7 +8,7 @@
  *  - 리더 구독 섹션(누구나): 코드 입력 + 구독 중인 리더 목록(취소)
  *  - 피드: 구독 리더 + 본인 글 (PostCard 공용)
  */
-import { memo, useCallback, useEffect, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { Pressable, RefreshControl, ScrollView, Share, Text, TextInput, View } from 'react-native'
 import { Compass, Megaphone, PenLine, Plus, Share2, X } from 'lucide-react-native'
@@ -37,6 +37,15 @@ type Props = {
   isPro?: boolean
 }
 
+type FeedFilter = 'all' | 'human' | 'ai' | 'active'
+
+const feedFilters: { key: FeedFilter; label: string }[] = [
+  { key: 'all', label: '전체' },
+  { key: 'human', label: '사람 리더' },
+  { key: 'ai', label: 'AI 리딩' },
+  { key: 'active', label: '진행 중 콜' },
+]
+
 // memo: AppShell 재렌더(다른 탭 상태 변화 등)에 끌려 다시 그리지 않도록.
 export const ReadingTab = memo(function ReadingTab({ authToken, refreshing, refreshTick, subscribeCode, onCompose, onOpenLeader, toast, isPro = false }: Props) {
   const styles = useStyles()
@@ -52,6 +61,7 @@ export const ReadingTab = memo(function ReadingTab({ authToken, refreshing, refr
   const [busy, setBusy] = useState(false)
   const [showEvent, setShowEvent] = useState(false)
   const [showDiscover, setShowDiscover] = useState(false)
+  const [feedFilter, setFeedFilter] = useState<FeedFilter>('all')
 
   // 리딩 첫 진입 시 오픈 이벤트(무료) 안내 모달 — 1회만 (AsyncStorage 플래그).
   useEffect(() => {
@@ -133,6 +143,17 @@ export const ReadingTab = memo(function ReadingTab({ authToken, refreshing, refr
   }
 
   const isApproved = leader?.status === 'APPROVED'
+  // 피드는 구독 리더와 내 글로 구성된다. 구독 목록의 AI 여부로 AI 리딩을 구분한다.
+  const aiLeaderIds = useMemo(
+    () => new Set(following.filter((item) => item.isAi).map((item) => item.userId)),
+    [following],
+  )
+  const filteredFeed = useMemo(() => feed.filter((post) => {
+    if (feedFilter === 'human') return !aiLeaderIds.has(post.leaderUserId)
+    if (feedFilter === 'ai') return aiLeaderIds.has(post.leaderUserId)
+    if (feedFilter === 'active') return post.calls.some((call) => call.status === 'ACTIVE')
+    return true
+  }), [aiLeaderIds, feed, feedFilter])
 
   return (
     <>
@@ -338,8 +359,31 @@ export const ReadingTab = memo(function ReadingTab({ authToken, refreshing, refr
       <View style={styles.card}>
         <View style={styles.sectionHeaderRow}>
           <Text style={styles.cardTitle}>피드</Text>
-          <Text style={styles.metaText}>{feed.length}개</Text>
+          <Text style={styles.metaText}>{feedFilter === 'all' ? `${feed.length}개` : `${filteredFeed.length}/${feed.length}개`}</Text>
         </View>
+        {feed.length > 0 ? (
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 12, marginBottom: 4 }}>
+            {feedFilters.map((filter) => {
+              const selected = feedFilter === filter.key
+              return (
+                <Pressable
+                  key={filter.key}
+                  onPress={() => setFeedFilter(filter.key)}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected }}
+                  accessibilityLabel={`${filter.label} 피드 보기`}
+                  style={({ pressed }) => ({
+                    backgroundColor: selected ? palette.brandAccent + '20' : pressed ? palette.surface : palette.surfaceAlt,
+                    borderWidth: 1, borderColor: selected ? palette.brandAccent + '88' : palette.border,
+                    borderRadius: 999, paddingHorizontal: 10, paddingVertical: 7,
+                  })}
+                >
+                  <Text style={{ color: selected ? palette.brandAccent : palette.inkMuted, fontSize: 11, fontWeight: '800' }}>{filter.label}</Text>
+                </Pressable>
+              )
+            })}
+          </View>
+        ) : null}
         {loadError ? (
           <View style={{ paddingVertical: 24, alignItems: 'center', gap: 8 }}>
             <Text style={{ color: palette.inkMuted, fontSize: 12, fontWeight: '700' }}>불러오기 실패</Text>
@@ -364,8 +408,23 @@ export const ReadingTab = memo(function ReadingTab({ authToken, refreshing, refr
               ...(isApproved ? [{ label: '리딩 쓰기', onPress: onCompose }] : []),
             ]}
           />
+        ) : filteredFeed.length === 0 ? (
+          <View style={{ paddingVertical: 28, alignItems: 'center', gap: 10 }}>
+            <Text style={{ color: palette.inkMuted, fontSize: 13, fontWeight: '700' }}>선택한 조건의 리딩이 없어요</Text>
+            <Pressable
+              onPress={() => setFeedFilter('all')}
+              accessibilityRole="button"
+              style={({ pressed }) => ({
+                backgroundColor: pressed ? palette.surfaceAlt : palette.surface,
+                borderWidth: 1, borderColor: palette.border, borderRadius: 8,
+                paddingHorizontal: 14, paddingVertical: 8,
+              })}
+            >
+              <Text style={{ color: palette.ink, fontSize: 12, fontWeight: '800' }}>전체 보기</Text>
+            </Pressable>
+          </View>
         ) : (
-          feed.map((p, i) => (
+          filteredFeed.map((p, i) => (
             <Entrance key={p.id} index={i}>
               <PostCard post={p} onPressLeader={onOpenLeader} />
             </Entrance>
