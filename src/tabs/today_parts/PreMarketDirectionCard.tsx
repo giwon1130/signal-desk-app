@@ -15,6 +15,9 @@ type Props = {
 }
 
 const signed = (rate: number) => `${rate >= 0 ? '+' : '-'}${Math.abs(rate).toFixed(2)}%`
+const confidenceLabel: Record<string, string> = {
+  HIGH: '높음', MEDIUM: '보통', LOW: '낮음', INSUFFICIENT: '자료 부족',
+}
 
 export function PreMarketDirectionCard({ data, onUpgrade }: Props) {
   const { palette } = useTheme()
@@ -103,6 +106,15 @@ export function PreMarketDirectionCard({ data, onUpgrade }: Props) {
           <BiasIcon size={18} color={biasColor} strokeWidth={2.6} />
           <Text style={{ color: palette.ink, fontSize: 15, fontWeight: '900', flex: 1 }}>{data.biasLabel}</Text>
         </View>
+      ) : null}
+
+      {(data.confidence || data.asOf) ? (
+        <Text style={{ color: palette.inkFaint, fontSize: 11, lineHeight: 16 }}>
+          {data.score != null ? `가중 신호 ${signed(data.score)} · ` : ''}
+          {data.confidence ? `신뢰도 ${confidenceLabel[data.confidence] ?? data.confidence}` : ''}
+          {data.coverage != null ? ` · 핵심 지표 ${data.coverage}% 반영` : ''}
+          {data.asOf ? ` · ${new Date(data.asOf).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })} 기준` : ''}
+        </Text>
       ) : null}
 
       {/* 지표별 등락 */}

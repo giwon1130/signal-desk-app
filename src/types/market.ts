@@ -174,6 +174,10 @@ export type PreMarketDirection = {
   summary?: string | null
   sessionActive?: boolean
   asOf?: string | null
+  score?: number | null
+  confidence?: 'HIGH' | 'MEDIUM' | 'LOW' | 'INSUFFICIENT' | null
+  coverage?: number | null
+  inputCount?: number | null
 }
 
 export type DirectionQuote = {
