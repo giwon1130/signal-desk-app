@@ -15,6 +15,8 @@ import { ProUpgradeSheet } from '../pro/ProUpgrade'
 
 type SortKey = 'hit' | 'followers' | 'calls'
 
+const MIN_COMPARABLE_CALLS = 3
+
 type Props = {
   visible: boolean
   onClose: () => void
@@ -41,11 +43,14 @@ export function DiscoverLeadersModal({ visible, onClose, onOpenLeader, onSubscri
   }
   useEffect(() => { if (visible) void load() }, [visible])
 
-  // 정렬 — 목표 달성률/구독자/누적 콜 순. 콜 0건은 성과 비교에서 항상 뒤로 보낸다.
+  // 성과 비교는 확정 콜이 어느 정도 쌓인 리더를 먼저 보여준다.
+  // 표본이 1~2건인 높은 적중률이 상단을 독점하지 않게 한다.
   const sortedLeaders = [...leaders].sort((a, b) => {
     if (sort === 'hit') {
-      if ((a.totalCalls === 0) !== (b.totalCalls === 0)) return a.totalCalls === 0 ? 1 : -1
-      return b.hitRate - a.hitRate || b.followerCount - a.followerCount
+      const aComparable = a.resolvedCalls >= MIN_COMPARABLE_CALLS
+      const bComparable = b.resolvedCalls >= MIN_COMPARABLE_CALLS
+      if (aComparable !== bComparable) return aComparable ? -1 : 1
+      return b.hitRate - a.hitRate || b.resolvedCalls - a.resolvedCalls || b.followerCount - a.followerCount
     }
     if (sort === 'followers') return b.followerCount - a.followerCount
     return b.totalCalls - a.totalCalls // 'calls'
@@ -75,12 +80,12 @@ export function DiscoverLeadersModal({ visible, onClose, onOpenLeader, onSubscri
         <ModalHeader icon={Megaphone} title="리더 둘러보기" onClose={onClose} />
         <ScrollView contentContainerStyle={{ padding: 14, gap: 10 }}>
           <Text style={{ color: palette.inkMuted, fontSize: 12, lineHeight: 18 }}>
-            공개 리딩과 결과가 확정된 종목 콜 성과를 보고 구독해요.
+            확정된 종목 콜의 결과와 표본 수를 함께 보고 구독해요.
           </Text>
-          {/* 정렬 탭 — 목표 달성률/구독자/누적 콜 순 */}
+          {/* 정렬 탭 — 성과 검증/구독자/누적 콜 순 */}
           {leaders.length > 1 ? (
             <View style={{ flexDirection: 'row', gap: 6 }}>
-              {([['hit', '목표 달성순'], ['followers', '인기순'], ['calls', '콜 많은 순']] as const).map(([k, label]) => {
+              {([['hit', '성과 확인순'], ['followers', '인기순'], ['calls', '콜 많은 순']] as const).map(([k, label]) => {
                 const active = sort === k
                 return (
                   <Pressable
@@ -111,28 +116,22 @@ export function DiscoverLeadersModal({ visible, onClose, onOpenLeader, onSubscri
               <View key={l.userId} style={{ backgroundColor: palette.surface, borderRadius: 12, borderWidth: 1, borderColor: palette.border, padding: 14, gap: 8 }}>
                 <Pressable onPress={() => onOpenLeader?.(l.userId)} style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1, gap: 3 })}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                    <Text style={{ color: palette.ink, fontSize: 15, fontWeight: '800', flexShrink: 1 }} numberOfLines={1}>{l.displayName}</Text>
+                    <Text style={{ color: palette.ink, fontSize: 15, fontWeight: '800', flex: 1 }} numberOfLines={1}>{l.displayName}</Text>
                     {l.isAi ? (
-                      <View style={{ backgroundColor: (palette.purple ?? '#7c3aed') + '22', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 1, flexShrink: 0 }}>
+                      <View style={{ backgroundColor: (palette.purple ?? '#7c3aed') + '22', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 1 }}>
                         <Text style={{ color: palette.purple ?? '#7c3aed', fontSize: 9.5, fontWeight: '900' }}>AI · 💎 PRO</Text>
                       </View>
                     ) : null}
+                    <Text style={{ color: palette.inkFaint, fontSize: 10, fontWeight: '700' }}>구독 {l.followerCount}</Text>
                   </View>
                   {l.bio ? <Text style={{ color: palette.inkMuted, fontSize: 12, lineHeight: 17 }} numberOfLines={2}>{l.bio}</Text> : null}
                   {l.isAi && l.totalCalls === 0 ? (
-                    // 시황 위주 AI 리더는 종목 콜 성과를 산출할 수 없어 리딩 정보로 안내한다.
-                    <View style={{ flexDirection: 'row', gap: 10, marginTop: 2 }}>
-                      <Stat label="리딩" value="AI 시황" accent={palette.purple ?? '#7c3aed'} palette={palette} />
-                      <Stat label="발행" value="매일" palette={palette} />
-                      <Stat label="구독자" value={`${l.followerCount}`} palette={palette} />
+                    <View style={{ backgroundColor: (palette.purple ?? '#7c3aed') + '10', borderRadius: 10, padding: 11, gap: 2, marginTop: 3 }}>
+                      <Text style={{ color: palette.purple ?? '#7c3aed', fontSize: 12, fontWeight: '900' }}>AI 시황 리딩</Text>
+                      <Text style={{ color: palette.inkMuted, fontSize: 10.5, lineHeight: 15 }}>종목 콜 대신 장 흐름과 주요 재료를 정리해요.</Text>
                     </View>
                   ) : (
-                    <View style={{ flexDirection: 'row', gap: 10, marginTop: 2 }}>
-                      <Stat label={l.resolvedCalls > 0 ? `확정 ${l.resolvedCalls}건 기준` : '확정 콜 없음'} value={l.resolvedCalls > 0 ? `${Math.round(l.hitRate * 100)}%` : '—'} accent={palette.up} palette={palette} />
-                      <Stat label="평균 수익률" value={l.avgReturnPct == null ? '—' : fmtPct(l.avgReturnPct)} accent={l.avgReturnPct != null && l.avgReturnPct < 0 ? palette.down : palette.up} palette={palette} />
-                      <Stat label="누적 콜" value={`${l.totalCalls}`} palette={palette} />
-                      <Stat label="구독자" value={`${l.followerCount}`} palette={palette} />
-                    </View>
+                    <PerformanceSummary leader={l} palette={palette} />
                   )}
                 </Pressable>
                 <Pressable
@@ -162,11 +161,36 @@ export function DiscoverLeadersModal({ visible, onClose, onOpenLeader, onSubscri
   )
 }
 
-function Stat({ label, value, palette, accent }: { label: string; value: string; palette: Palette; accent?: string }) {
+function PerformanceSummary({ leader, palette }: { leader: LeaderCard; palette: Palette }) {
+  const hasResolvedCalls = leader.resolvedCalls > 0
+  const comparable = leader.resolvedCalls >= MIN_COMPARABLE_CALLS
+  if (!hasResolvedCalls) {
+    return (
+      <View style={{ backgroundColor: palette.surfaceAlt, borderRadius: 10, padding: 11, gap: 2, marginTop: 3 }}>
+        <Text style={{ color: palette.inkSub, fontSize: 12, fontWeight: '800' }}>성과 집계 준비 중</Text>
+        <Text style={{ color: palette.inkMuted, fontSize: 10.5, lineHeight: 15 }}>확정된 콜이 쌓이면 목표 달성률과 평균 수익률을 확인할 수 있어요.</Text>
+      </View>
+    )
+  }
   return (
-    <View style={{ gap: 1 }}>
-      <Text style={{ color: accent ?? palette.ink, fontSize: 13, fontWeight: '900', fontVariant: ['tabular-nums'] }}>{value}</Text>
-      <Text style={{ color: palette.inkFaint, fontSize: 9, fontWeight: '700' }}>{label}</Text>
+    <View style={{ gap: 7, marginTop: 3 }}>
+      <View style={{ flexDirection: 'row', gap: 8 }}>
+        <View style={{ flex: 1, backgroundColor: palette.upSoft, borderRadius: 10, paddingHorizontal: 11, paddingVertical: 9, gap: 2 }}>
+          <Text style={{ color: palette.inkMuted, fontSize: 9.5, fontWeight: '800' }}>목표 달성률 · 확정 {leader.resolvedCalls}건</Text>
+          <Text style={{ color: palette.up, fontSize: 18, fontWeight: '900', fontVariant: ['tabular-nums'] }}>{Math.round(leader.hitRate * 100)}%</Text>
+        </View>
+        <View style={{ flex: 1, backgroundColor: palette.surfaceAlt, borderRadius: 10, paddingHorizontal: 11, paddingVertical: 9, gap: 2 }}>
+          <Text style={{ color: palette.inkMuted, fontSize: 9.5, fontWeight: '800' }}>평균 수익률</Text>
+          <Text style={{ color: leader.avgReturnPct != null && leader.avgReturnPct < 0 ? palette.down : palette.up, fontSize: 18, fontWeight: '900', fontVariant: ['tabular-nums'] }}>
+            {leader.avgReturnPct == null ? '—' : fmtPct(leader.avgReturnPct)}
+          </Text>
+        </View>
+      </View>
+      <Text style={{ color: comparable ? palette.inkFaint : palette.orange, fontSize: 10.5, lineHeight: 15 }}>
+        {comparable
+          ? `확정된 콜 ${leader.resolvedCalls}건 기준 · 누적 콜 ${leader.totalCalls}건`
+          : `표본 수집 중 · 확정 ${leader.resolvedCalls}건, 3건부터 성과 비교 순위에 반영`}
+      </Text>
     </View>
   )
 }
