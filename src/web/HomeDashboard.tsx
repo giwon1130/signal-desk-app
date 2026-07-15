@@ -91,7 +91,11 @@ export const HomeDashboard = memo(function HomeDashboard(props: Props) {
         <View style={[{ gap: 14 }, webGrid('minmax(0, 2fr) minmax(0, 1fr)')]}>
           <View style={{ gap: 14 }}>
             {props.summary?.preMarketDirection ? (
-              <PreMarketDirectionCard data={props.summary.preMarketDirection} onUpgrade={props.onUpgrade} />
+              <PreMarketDirectionCard
+                data={props.summary.preMarketDirection}
+                stats={props.summary.preMarketForecastStats}
+                onUpgrade={props.onUpgrade}
+              />
             ) : null}
             {showBrief ? (
               <BriefHero

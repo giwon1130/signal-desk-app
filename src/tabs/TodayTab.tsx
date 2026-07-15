@@ -182,7 +182,11 @@ export const TodayTab = memo(function TodayTab({
       {/* ── 🌙 야간 방향성 (PRO) — 장 시작 전 한국장 출발 방향 미리보기 ── */}
       {summary?.preMarketDirection ? (
         <Entrance index={3}>
-          <PreMarketDirectionCard data={summary.preMarketDirection} onUpgrade={onUpgrade} />
+          <PreMarketDirectionCard
+            data={summary.preMarketDirection}
+            stats={summary.preMarketForecastStats}
+            onUpgrade={onUpgrade}
+          />
         </Entrance>
       ) : null}
 

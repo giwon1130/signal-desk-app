@@ -7,10 +7,11 @@
 import { Pressable, Text, View } from 'react-native'
 import { Moon, Lock, TrendingUp, TrendingDown, Minus } from 'lucide-react-native'
 import { useTheme } from '../../theme'
-import type { PreMarketDirection, DirectionQuote } from '../../types/market'
+import type { PreMarketDirection, DirectionQuote, PreMarketForecastStats } from '../../types/market'
 
 type Props = {
   data?: PreMarketDirection | null
+  stats?: PreMarketForecastStats | null
   onUpgrade?: () => void
 }
 
@@ -19,7 +20,7 @@ const confidenceLabel: Record<string, string> = {
   HIGH: '높음', MEDIUM: '보통', LOW: '낮음', INSUFFICIENT: '자료 부족',
 }
 
-export function PreMarketDirectionCard({ data, onUpgrade }: Props) {
+export function PreMarketDirectionCard({ data, stats, onUpgrade }: Props) {
   const { palette } = useTheme()
   if (!data) return null
 
@@ -48,6 +49,20 @@ export function PreMarketDirectionCard({ data, onUpgrade }: Props) {
     backgroundColor: palette.surface, borderRadius: 18, borderWidth: 1, borderColor: palette.border,
     padding: 16, gap: 12,
   } as const
+  // 초기 몇 건의 결과는 우연 변동이 커서, 최소 5건이 쌓인 뒤에만 수치로 보여준다.
+  const hasForecastStats = (stats?.evaluatedCount ?? 0) >= 5 && stats?.accuracyPct != null
+  const forecastStatsBlock = hasForecastStats ? (
+    <View style={{ backgroundColor: palette.surfaceAlt, borderRadius: 10, padding: 11, gap: 3 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+        <Text style={{ color: palette.inkSub, fontSize: 12, fontWeight: '800' }}>야간 방향성 검증</Text>
+        <Text style={{ color: purple, fontSize: 13, fontWeight: '900' }}>{stats!.accuracyPct}% 적중</Text>
+      </View>
+      <Text style={{ color: palette.inkMuted, fontSize: 10.5, lineHeight: 15 }}>
+        최근 {stats!.evaluatedCount}건 중 {stats!.correctCount}건 · 방향을 제시한 날만 집계
+        {stats!.lastCorrect != null ? ` · 최근 결과 ${stats!.lastCorrect ? '적중' : '불일치'}` : ''}
+      </Text>
+    </View>
+  ) : null
 
   // ── 잠금(FREE): 라벨 티저 + 마스킹된 값 + 업그레이드 CTA ──
   if (data.locked) {
@@ -87,7 +102,18 @@ export function PreMarketDirectionCard({ data, onUpgrade }: Props) {
     ...(data.kospiFutures ? [data.kospiFutures] : []),
     ...(data.overseas ?? []),
   ]
-  if (quotes.length === 0) return null
+  if (quotes.length === 0) {
+    if (!forecastStatsBlock) return null
+    return (
+      <View style={cardStyle}>
+        {Header}
+        {forecastStatsBlock}
+        <Text style={{ color: palette.inkFaint, fontSize: 10.5, lineHeight: 15 }}>
+          장전 신호는 한국장 시작 전에만 제공해요. 성과는 실제 KOSPI 시초가 기준으로 기록됩니다.
+        </Text>
+      </View>
+    )
+  }
 
   const biasColor = data.bias === 'RISING' ? palette.up : data.bias === 'FALLING' ? palette.down : palette.blue
   const biasBg = data.bias === 'RISING' ? palette.upSoft : data.bias === 'FALLING' ? palette.downSoft : palette.orangeSoft
@@ -116,6 +142,8 @@ export function PreMarketDirectionCard({ data, onUpgrade }: Props) {
           {data.asOf ? ` · ${new Date(data.asOf).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })} 기준` : ''}
         </Text>
       ) : null}
+
+      {forecastStatsBlock}
 
       {/* 지표별 등락 */}
       <View style={{ gap: 8 }}>

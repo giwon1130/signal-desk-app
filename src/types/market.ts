@@ -154,6 +154,7 @@ export type MarketSummaryData = {
   tradingDayStatus?: TradingDayStatus
   briefing?: DailyBriefing
   preMarketDirection?: PreMarketDirection
+  preMarketForecastStats?: PreMarketForecastStats
   riskWeight?: RiskWeightInfo          // 시장 분위기 가중 프리셋(현재값+PRO여부+선택지)
 }
 
@@ -178,6 +179,17 @@ export type PreMarketDirection = {
   confidence?: 'HIGH' | 'MEDIUM' | 'LOW' | 'INSUFFICIENT' | null
   coverage?: number | null
   inputCount?: number | null
+}
+
+/** 최근 야간 방향성 평가 성과. 방향을 실제로 제시한 날만 집계한다. */
+export type PreMarketForecastStats = {
+  evaluatedCount: number
+  correctCount: number
+  accuracyPct?: number | null
+  windowSize: number
+  lastPredictionDate?: string | null
+  lastCorrect?: boolean | null
+  lastActualGapRate?: number | null
 }
 
 export type DirectionQuote = {
