@@ -16,11 +16,12 @@ import * as Notifications from 'expo-notifications'
 import { ArrowRight, Bell, Check, Sparkles } from 'lucide-react-native'
 import { useTheme } from '../theme'
 import type { MarketPreference } from '../api/alertPreferences'
-import { syncMarketPreference } from '../api/alertPreferences'
+import { updateAlertPreferences, type AlertPreferences } from '../api/alertPreferences'
 import { quickAddWatchItem } from '../api'
 import { seedFor } from '../data/seedStocks'
 import { markOnboardingCompleted } from '../utils/onboarding'
 import type { StockSearchResult } from '../types'
+import { setKrOpenEnabled, setUsOpenEnabled } from '../hooks/useMarketReminder'
 
 type Props = {
   authToken: string
@@ -28,6 +29,7 @@ type Props = {
 }
 
 type Step = 1 | 2 | 3 | 4 | 5
+type NotificationMode = 'essential' | 'signals'
 
 export function OnboardingScreen({ authToken, onComplete }: Props) {
   const { palette } = useTheme()
@@ -36,6 +38,8 @@ export function OnboardingScreen({ authToken, onComplete }: Props) {
   const [pickedSeeds, setPickedSeeds] = useState<Set<string>>(new Set())
   const [busy, setBusy] = useState(false)
   const [destination, setDestination] = useState<'today' | 'stocks'>('today')
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false)
+  const [notificationMode, setNotificationMode] = useState<NotificationMode>('essential')
 
   // 시장 선택 직후 호출. 추천 시드 default 전체 선택 상태로 초기화.
   const handlePickMarket = (m: MarketPreference) => {
@@ -48,7 +52,8 @@ export function OnboardingScreen({ authToken, onComplete }: Props) {
   const handleAllowNotifications = async () => {
     setBusy(true)
     try {
-      await Notifications.requestPermissionsAsync()
+      const { status } = await Notifications.requestPermissionsAsync()
+      setNotificationsEnabled(status === 'granted')
     } finally {
       setBusy(false)
       setStep(4)
@@ -59,8 +64,8 @@ export function OnboardingScreen({ authToken, onComplete }: Props) {
     if (!pref) return
     setBusy(true)
     try {
-      // marketPreference 저장 — 알림 토글은 디폴트값(이미 백엔드 DEFAULT 적용) 그대로.
-      await syncMarketPreference(authToken, pref)
+      // 시장 선호와 선택한 알림 강도를 함께 저장한다.
+      await applyNotificationProfile(authToken, pref, notificationsEnabled, notificationMode)
 
       // 선택된 시드 종목 일괄 등록
       const seeds = seedFor(pref).filter((s) => pickedSeeds.has(`${s.market}:${s.ticker}`))
@@ -81,7 +86,7 @@ export function OnboardingScreen({ authToken, onComplete }: Props) {
     if (!pref) return
     setBusy(true)
     try {
-      await syncMarketPreference(authToken, pref)
+      await applyNotificationProfile(authToken, pref, false, notificationMode)
       await markOnboardingCompleted()
       setDestination('today')
       setStep(5)
@@ -123,8 +128,10 @@ export function OnboardingScreen({ authToken, onComplete }: Props) {
           <Step3Notifications
             palette={palette}
             busy={busy}
+            mode={notificationMode}
+            onModeChange={setNotificationMode}
             onAllow={() => void handleAllowNotifications()}
-            onSkip={() => setStep(4)}
+            onSkip={() => { setNotificationsEnabled(false); setStep(4) }}
           />
         ) : null}
         {step === 4 && pref ? (
@@ -206,7 +213,18 @@ function Step2Market({ palette, onPick }: { palette: any; onPick: (m: MarketPref
 }
 
 // ─── Step 3: 알림 권한 (스킵 가능) ───────────────────────────────────────────
-function Step3Notifications({ palette, busy, onAllow, onSkip }: { palette: any; busy: boolean; onAllow: () => void; onSkip: () => void }) {
+function Step3Notifications({ palette, busy, mode, onModeChange, onAllow, onSkip }: {
+  palette: any
+  busy: boolean
+  mode: NotificationMode
+  onModeChange: (mode: NotificationMode) => void
+  onAllow: () => void
+  onSkip: () => void
+}) {
+  const modes: Array<{ key: NotificationMode; title: string; desc: string }> = [
+    { key: 'essential', title: '핵심만', desc: '장 시작·관심/보유 종목·시작 전 브리프만 받아요' },
+    { key: 'signals', title: '시장 신호까지', desc: '거래량 급증·위험도·마감 브리프도 받아요' },
+  ]
   return (
     <View style={{ flex: 1, justifyContent: 'space-between' }}>
       <ScrollView contentContainerStyle={{ paddingVertical: 20, gap: 14 }}>
@@ -218,13 +236,26 @@ function Step3Notifications({ palette, busy, onAllow, onSkip }: { palette: any; 
         </View>
         <Text style={{ color: palette.ink, fontSize: 22, fontWeight: '900' }}>알림 받을래요?</Text>
         <Text style={{ color: palette.inkMuted, fontSize: 13, lineHeight: 19 }}>
-          관심 종목 ±5% 급등락, 모닝/이브닝 브리프, 보유 종목 공시 같은 핵심 알림만 골라 보냅니다.
-          나중에 알림 설정에서 켜고 끌 수 있습니다.
+          처음부터 너무 많이 울리지 않도록 알림 강도를 골라주세요. 설정에서 언제든 바꿀 수 있어요.
         </Text>
-        <View style={{ marginTop: 6, gap: 6 }}>
-          {['📈 관심종목 급등락', '🌅 모닝 브리프 (08:30 KST)', '⚠️ 합성 위험도 경계', '📢 보유 종목 공시 즉시'].map((it) => (
-            <Text key={it} style={{ color: palette.inkSub, fontSize: 12 }}>• {it}</Text>
-          ))}
+        <View style={{ marginTop: 6, gap: 8 }}>
+          {modes.map((item) => {
+            const selected = mode === item.key
+            return (
+              <Pressable
+                key={item.key}
+                onPress={() => onModeChange(item.key)}
+                style={({ pressed }) => ({
+                  backgroundColor: selected ? palette.blueSoft : palette.surface,
+                  borderWidth: 1.5, borderColor: selected ? palette.blue : palette.border,
+                  borderRadius: 12, padding: 13, gap: 3, opacity: pressed ? 0.75 : 1,
+                })}
+              >
+                <Text style={{ color: selected ? palette.blue : palette.ink, fontSize: 14, fontWeight: '800' }}>{item.title}</Text>
+                <Text style={{ color: palette.inkMuted, fontSize: 11.5, lineHeight: 16 }}>{item.desc}</Text>
+              </Pressable>
+            )
+          })}
         </View>
       </ScrollView>
       <View style={{ gap: 8 }}>
@@ -233,6 +264,38 @@ function Step3Notifications({ palette, busy, onAllow, onSkip }: { palette: any; 
       </View>
     </View>
   )
+}
+
+/** 신규 사용자의 알림을 선택한 시장·강도에 맞춘다. 건너뛰면 모든 푸시/로컬 알림을 끈다. */
+async function applyNotificationProfile(
+  authToken: string,
+  marketPreference: MarketPreference,
+  enabled: boolean,
+  mode: NotificationMode,
+) {
+  const followsKr = marketPreference !== 'US'
+  const followsUs = marketPreference !== 'KR'
+  const expanded = enabled && mode === 'signals'
+  const prefs: AlertPreferences = {
+    krEnabled: enabled && followsKr,
+    usEnabled: enabled && followsUs,
+    premarketEnabled: enabled && followsKr,
+    compositeRiskEnabled: expanded,
+    marketPreference,
+    eveningBriefEnabled: false,
+    middayBriefEnabled: false,
+    closeBriefEnabled: expanded && followsKr,
+    volumeAlertEnabled: expanded,
+    quietHoursEnabled: false,
+    quietStartHour: 22,
+    quietEndHour: 7,
+    readingPostEnabled: false,
+  }
+  await updateAlertPreferences(authToken, prefs)
+  await Promise.all([
+    setKrOpenEnabled(enabled && followsKr),
+    setUsOpenEnabled(enabled && followsUs),
+  ])
 }
 
 // ─── Step 4: 추천 관심종목 + 보유 종목 등록 진입 ───────────────────────────────

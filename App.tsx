@@ -258,8 +258,8 @@ function AppShell() {
     ])
   }, [handleDeleteAccount])
 
-  // 로그인 후 1회: 권한 요청 + 켜진 알림 다시 예약
-  useMarketReminderBootstrap(!!user)
+  // 신규 사용자는 온보딩에서 고른 뒤에만 로컬 알림을 예약한다.
+  useMarketReminderBootstrap(!!user && onboardingState === 'done')
 
   const handleTabChange = useCallback((key: TabKey) => {
     if (key === activeTab) return
