@@ -1,4 +1,4 @@
-import { memo, useMemo } from 'react'
+import { memo, useCallback, useMemo, useRef } from 'react'
 import { Platform, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native'
 import { useLivePrices } from '../hooks/useLivePrices'
 import {
@@ -32,6 +32,7 @@ import { SeasonRulesCard } from './today_parts/SeasonRulesCard'
 import { Entrance } from '../components/effects'
 import { MarketMoodCard } from './market_parts/MarketMoodCard'
 import { WatchAlertList } from './market_parts/WatchAlertList'
+import { TodayFocusCard, type TodayFocusTarget } from './today_parts/TodayFocusCard'
 
 type Props = {
   summary: MarketSummaryData | null
@@ -62,6 +63,8 @@ export const TodayTab = memo(function TodayTab({
 }: Props) {
   const styles = useStyles()
   const { palette } = useTheme()
+  const scrollRef = useRef<ScrollView>(null)
+  const sectionOffsets = useRef<Partial<Record<TodayFocusTarget, number>>>({})
 
   const isWeb = Platform.OS === 'web'
   // 웹(데스크톱)에선 정보 밀도 ↑ — 더 많은 후보/모니터/알림 노출
@@ -86,6 +89,19 @@ export const TodayTab = memo(function TodayTab({
 
   const tradingDay = summary?.tradingDayStatus
   const marketClosedToday = !!tradingDay && !tradingDay.krOpen && !tradingDay.usOpen
+  const selectedSessions = (summary?.marketSessions ?? []).filter((session) =>
+    (session.market === 'KR' && showKr) || (session.market === 'US' && showUs) || (session.market !== 'KR' && session.market !== 'US'),
+  )
+  // FREE 사용자도 야간 방향성 카드가 잠금 티저로 내려오는 동안에는 장전 안내를 받는다.
+  const isPremarketWindow = !!summary?.preMarketDirection &&
+    (summary.preMarketDirection.locked || !!summary.preMarketDirection.bias)
+  const registerSection = useCallback((target: TodayFocusTarget) => (event: { nativeEvent: { layout: { y: number } } }) => {
+    sectionOffsets.current[target] = event.nativeEvent.layout.y
+  }, [])
+  const openSection = useCallback((target: TodayFocusTarget) => {
+    const y = sectionOffsets.current[target]
+    if (y != null) scrollRef.current?.scrollTo({ y: Math.max(0, y - 10), animated: true })
+  }, [])
 
   // 요약 지표(Fear Meter 글로벌 / KR Heat·Flow Bias KR / US Heat US) 필터.
   const filteredMetrics = (summary?.marketSummary ?? []).filter((m) => {
@@ -98,6 +114,7 @@ export const TodayTab = memo(function TodayTab({
 
   return (
     <ScrollView
+      ref={scrollRef}
       style={styles.scroll}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       contentContainerStyle={[styles.content, isWeb && styles.contentWeb]}
@@ -146,62 +163,83 @@ export const TodayTab = memo(function TodayTab({
         </View>
       ) : null}
 
+      <TodayFocusCard
+        sessions={selectedSessions}
+        positionsCount={positions.length}
+        alertCount={(summary?.watchAlerts ?? []).length}
+        isPremarketWindow={isPremarketWindow}
+        hasBrief={mediaSummaries.length > 0 || !!summary?.briefing}
+        onOpenSection={openSection}
+      />
+
       {/* 정보 우선순위: 내 종목(보유·관심) → 시장 맥락(무드·뉴스) → 읽을거리(브리프) → 시즌·이벤트.
           아침에 "내 종목 어떻게 됐지"가 1순위라 개인·액션 카드를 맨 위로. 무보유/무신호 카드는
           자동으로 미렌더되어 신규 사용자에겐 자연히 브리프가 상단에 온다. */}
 
       {/* ── 보유 종목 모니터 (내 종목 최우선) ── */}
       {positions.length > 0 ? (
-        <Entrance index={0}>
-          <HoldingMonitor monitorTargets={monitorTargets} marketClosedToday={marketClosedToday} />
-        </Entrance>
+        <View onLayout={registerSection('portfolio')}>
+          <Entrance index={0}>
+            <HoldingMonitor monitorTargets={monitorTargets} marketClosedToday={marketClosedToday} />
+          </Entrance>
+        </View>
       ) : null}
 
       {/* ── 관심종목 시그널 — 보유 모니터와 묶어 '내 종목' 블록으로 ── */}
-      <Entrance index={1}>
-        <WatchAlertList alerts={summary?.watchAlerts ?? []} />
-      </Entrance>
+      <View onLayout={registerSection('watch')}>
+        <Entrance index={1}>
+          <WatchAlertList alerts={summary?.watchAlerts ?? []} />
+        </Entrance>
+      </View>
 
       {/* ── 오늘 시장 분위기 — 위험도 + 요약 지표 통합, 쉬운 용어 ── */}
-      <Entrance index={2}>
-        <MarketMoodCard
-          krRisk={summary?.compositeRiskKr ?? summary?.compositeRisk ?? null}
-          usRisk={summary?.compositeRiskUs ?? summary?.compositeRisk ?? null}
-          metrics={filteredMetrics}
-          marketPreference={marketPreference}
-        />
-      </Entrance>
+      <View onLayout={registerSection('mood')}>
+        <Entrance index={2}>
+          <MarketMoodCard
+            krRisk={summary?.compositeRiskKr ?? summary?.compositeRisk ?? null}
+            usRisk={summary?.compositeRiskUs ?? summary?.compositeRisk ?? null}
+            metrics={filteredMetrics}
+            marketPreference={marketPreference}
+          />
+        </Entrance>
+      </View>
 
       {/* ── 오늘의 뉴스 — 헤드라인 회전(KR/US 번갈아), 시장 분위기 카드와 한 블록 ── */}
       {(krSentiment || usSentiment) ? (
-        <Entrance index={3}>
-          <NewsHero sentiments={[krSentiment, usSentiment].filter((s): s is NewsSentiment => !!s)} />
-        </Entrance>
+        <View onLayout={registerSection('news')}>
+          <Entrance index={3}>
+            <NewsHero sentiments={[krSentiment, usSentiment].filter((s): s is NewsSentiment => !!s)} />
+          </Entrance>
+        </View>
       ) : null}
 
       {/* ── 🌙 야간 방향성 (PRO) — 장 시작 전 한국장 출발 방향 미리보기 ── */}
       {summary?.preMarketDirection ? (
-        <Entrance index={3}>
-          <PreMarketDirectionCard
-            data={summary.preMarketDirection}
-            stats={summary.preMarketForecastStats}
-            onUpgrade={onUpgrade}
-          />
-        </Entrance>
+        <View onLayout={registerSection('premarket')}>
+          <Entrance index={3}>
+            <PreMarketDirectionCard
+              data={summary.preMarketDirection}
+              stats={summary.preMarketForecastStats}
+              onUpgrade={onUpgrade}
+            />
+          </Entrance>
+        </View>
       ) : null}
 
       {/* ── 브리프 Hero — 최신 브리프 1건 + 개인화(브리핑) 통합 ── */}
       {(mediaSummaries.length > 0 || summary?.briefing) ? (
-        <Entrance index={4}>
-          <BriefHero
-            items={mediaSummaries}
-            briefing={summary?.briefing ?? null}
-            onTickerPress={(t) => {
-              const isKr = /^\d{6}$/.test(t)
-              onOpenDetail(isKr ? 'KR' : 'US', t)
-            }}
-          />
-        </Entrance>
+        <View onLayout={registerSection('brief')}>
+          <Entrance index={4}>
+            <BriefHero
+              items={mediaSummaries}
+              briefing={summary?.briefing ?? null}
+              onTickerPress={(t) => {
+                const isKr = /^\d{6}$/.test(t)
+                onOpenDetail(isKr ? 'KR' : 'US', t)
+              }}
+            />
+          </Entrance>
+        </View>
       ) : null}
 
       {/* ── 이번 달 시즌 (저장한 시즌 규칙 중 진행 중인 것 — 없으면 미렌더) ── */}
