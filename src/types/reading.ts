@@ -54,6 +54,8 @@ export type ReadingPost = {
 
 export type LeaderStats = {
   totalCalls: number
+  /** 목표 도달률·평균 수익률의 계산 표본(HIT 또는 CLOSED). */
+  resolvedCalls: number
   hitCount: number
   hitRate: number          // 0~1
   avgReturnPct: number | null

@@ -147,7 +147,7 @@ export const ReadingTab = memo(function ReadingTab({ authToken, refreshing, refr
         icon={Megaphone}
         title="리딩"
         tagline="검증된 콜 구독 · 사람 무료, AI는 PRO"
-        description="리더가 종목을 콜하면 진입가가 자동 박제되고 이후 수익률이 그대로 추적돼요. 적중률로 검증된 리더를 구독하면 그분의 콜이 내 피드에 올라옵니다. 🤖 AI 리더는 PRO 전용이에요."
+        description="리더가 종목을 콜하면 진입가가 자동 박제되고 이후 수익률이 그대로 추적돼요. 확정된 콜 성과를 보고 리더를 구독하면 그분의 콜이 내 피드에 올라옵니다. 🤖 AI 리더는 PRO 전용이에요."
         accent={palette.brandAccent}
       />
 

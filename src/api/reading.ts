@@ -83,6 +83,7 @@ export type LeaderCard = {
   bio: string
   followerCount: number
   totalCalls: number
+  resolvedCalls: number
   hitRate: number
   avgReturnPct: number | null
   following: boolean

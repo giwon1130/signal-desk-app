@@ -128,7 +128,7 @@ export function DiscoverLeadersModal({ visible, onClose, onOpenLeader, onSubscri
                     </View>
                   ) : (
                     <View style={{ flexDirection: 'row', gap: 10, marginTop: 2 }}>
-                      <Stat label="목표 달성률" value={l.totalCalls > 0 ? `${Math.round(l.hitRate * 100)}%` : '—'} accent={palette.up} palette={palette} />
+                      <Stat label={l.resolvedCalls > 0 ? `확정 ${l.resolvedCalls}건 기준` : '확정 콜 없음'} value={l.resolvedCalls > 0 ? `${Math.round(l.hitRate * 100)}%` : '—'} accent={palette.up} palette={palette} />
                       <Stat label="평균 수익률" value={l.avgReturnPct == null ? '—' : fmtPct(l.avgReturnPct)} accent={l.avgReturnPct != null && l.avgReturnPct < 0 ? palette.down : palette.up} palette={palette} />
                       <Stat label="누적 콜" value={`${l.totalCalls}`} palette={palette} />
                       <Stat label="구독자" value={`${l.followerCount}`} palette={palette} />

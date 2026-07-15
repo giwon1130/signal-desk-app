@@ -130,24 +130,29 @@ export function LeaderProfileModal({ visible, leaderUserId, myUserId, isPro, onU
                 </View>
               ) : null}
 
-              {/* 통계 */}
+              {/* 성과는 결과가 확정된 콜(HIT/CLOSED)만으로 계산한다. */}
               {stats ? (
+                <>
                 <View style={{ flexDirection: 'row', gap: 8 }}>
-                  <Stat label="총 콜" value={`${stats.totalCalls}개`} palette={palette} />
-                  <Stat label="적중" value={`${stats.hitCount}개`} palette={palette} />
+                  <Stat label="누적 콜" value={`${stats.totalCalls}개`} palette={palette} />
+                  <Stat label="확정 콜" value={`${stats.resolvedCalls}개`} palette={palette} />
                   <Stat
-                    label="적중률"
-                    value={stats.totalCalls > 0 ? `${Math.round(stats.hitRate * 100)}%` : '—'}
+                    label={stats.resolvedCalls > 0 ? '목표 달성률' : '성과 대기'}
+                    value={stats.resolvedCalls > 0 ? `${Math.round(stats.hitRate * 100)}%` : '—'}
                     palette={palette}
                     accent={palette.up}
                   />
                   <Stat
-                    label="평균 수익"
+                    label="평균 수익률"
                     value={stats.avgReturnPct == null ? '—' : fmtPct(stats.avgReturnPct)}
                     palette={palette}
                     accent={stats.avgReturnPct != null && stats.avgReturnPct < 0 ? palette.down : palette.up}
                   />
                 </View>
+                <Text style={{ color: palette.inkFaint, fontSize: 10.5, lineHeight: 15 }}>
+                  목표 달성률과 평균 수익률은 확정된 콜 {stats.resolvedCalls}건 기준이에요.
+                </Text>
+                </>
               ) : null}
 
               {/* 구독 버튼 (본인 아니고 코드 있을 때). 구독 완료면 비활성 '구독 중 ✓' */}

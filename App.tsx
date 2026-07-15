@@ -664,7 +664,7 @@ function AppShell() {
         >
           {tabContent}
         </WebLayout>
-        {user ? <AssistantFab onPress={handleOpenAssistant} /> : null}
+        {user && activeTab !== 'ai' ? <AssistantFab onPress={handleOpenAssistant} /> : null}
         {overlays}
       </SafeAreaView>
     )
@@ -707,7 +707,7 @@ function AppShell() {
         onClose={() => setIndexDetail(null)}
       />
 
-      {user ? <AssistantFab onPress={handleOpenAssistant} /> : null}
+      {user && activeTab !== 'ai' ? <AssistantFab onPress={handleOpenAssistant} /> : null}
       {overlays}
     </SafeAreaView>
   )
