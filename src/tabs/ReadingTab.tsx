@@ -262,7 +262,7 @@ export const ReadingTab = memo(function ReadingTab({ authToken, refreshing, refr
           <Compass size={16} color={palette.brandAccent} strokeWidth={2.4} />
           <View style={{ flex: 1 }}>
             <Text style={{ color: palette.ink, fontSize: 13, fontWeight: '800' }}>리더 둘러보기</Text>
-            <Text style={{ color: palette.inkMuted, fontSize: 11 }}>적중률 검증된 리더를 코드 없이 바로 구독</Text>
+            <Text style={{ color: palette.inkMuted, fontSize: 11 }}>공개 리딩과 확정된 콜 성과를 비교해 구독</Text>
           </View>
           <Text style={{ color: palette.inkFaint, fontSize: 14 }}>›</Text>
         </Pressable>

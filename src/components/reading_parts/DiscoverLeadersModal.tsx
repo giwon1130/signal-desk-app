@@ -1,5 +1,5 @@
 /**
- * 리딩 둘러보기 — 승인된 리더 목록(적중률·구독자 순)에서 코드 없이 바로 구독.
+ * 리딩 둘러보기 — 승인된 리더의 누적 콜·확정 성과를 비교해 코드 없이 구독.
  * 신규 사용자가 친구 코드 없이도 리더를 발견해 구독할 수 있는 진입점.
  */
 import { useEffect, useState } from 'react'
@@ -41,7 +41,7 @@ export function DiscoverLeadersModal({ visible, onClose, onOpenLeader, onSubscri
   }
   useEffect(() => { if (visible) void load() }, [visible])
 
-  // 정렬 — 적중률(검증)/구독자(인기)/콜 많은 순. 콜 0건은 항상 뒤로(통계 의미 없음).
+  // 정렬 — 목표 달성률/구독자/누적 콜 순. 콜 0건은 성과 비교에서 항상 뒤로 보낸다.
   const sortedLeaders = [...leaders].sort((a, b) => {
     if (sort === 'hit') {
       if ((a.totalCalls === 0) !== (b.totalCalls === 0)) return a.totalCalls === 0 ? 1 : -1
@@ -75,12 +75,12 @@ export function DiscoverLeadersModal({ visible, onClose, onOpenLeader, onSubscri
         <ModalHeader icon={Megaphone} title="리더 둘러보기" onClose={onClose} />
         <ScrollView contentContainerStyle={{ padding: 14, gap: 10 }}>
           <Text style={{ color: palette.inkMuted, fontSize: 12, lineHeight: 18 }}>
-            적중률이 검증된 리더를 구독하면 그분의 종목 콜이 내 피드에 올라와요.
+            공개 리딩과 결과가 확정된 종목 콜 성과를 보고 구독해요.
           </Text>
-          {/* 정렬 탭 — 적중률(검증)/구독자(인기)/콜 많은 순 */}
+          {/* 정렬 탭 — 목표 달성률/구독자/누적 콜 순 */}
           {leaders.length > 1 ? (
             <View style={{ flexDirection: 'row', gap: 6 }}>
-              {([['hit', '적중률순'], ['followers', '인기순'], ['calls', '콜 많은 순']] as const).map(([k, label]) => {
+              {([['hit', '목표 달성순'], ['followers', '인기순'], ['calls', '콜 많은 순']] as const).map(([k, label]) => {
                 const active = sort === k
                 return (
                   <Pressable
@@ -120,17 +120,17 @@ export function DiscoverLeadersModal({ visible, onClose, onOpenLeader, onSubscri
                   </View>
                   {l.bio ? <Text style={{ color: palette.inkMuted, fontSize: 12, lineHeight: 17 }} numberOfLines={2}>{l.bio}</Text> : null}
                   {l.isAi && l.totalCalls === 0 ? (
-                    // 시황 위주 AI 리더는 종목 콜이 없어 적중률/콜 통계가 무의미 — 안내 라인으로 대체.
+                    // 시황 위주 AI 리더는 종목 콜 성과를 산출할 수 없어 리딩 정보로 안내한다.
                     <View style={{ flexDirection: 'row', gap: 10, marginTop: 2 }}>
-                      <Stat label="유형" value="AI 시황" accent={palette.purple ?? '#7c3aed'} palette={palette} />
-                      <Stat label="업데이트" value="매일" palette={palette} />
+                      <Stat label="리딩" value="AI 시황" accent={palette.purple ?? '#7c3aed'} palette={palette} />
+                      <Stat label="발행" value="매일" palette={palette} />
                       <Stat label="구독자" value={`${l.followerCount}`} palette={palette} />
                     </View>
                   ) : (
                     <View style={{ flexDirection: 'row', gap: 10, marginTop: 2 }}>
-                      <Stat label="적중률" value={l.totalCalls > 0 ? `${Math.round(l.hitRate * 100)}%` : '—'} accent={palette.up} palette={palette} />
-                      <Stat label="평균" value={l.avgReturnPct == null ? '—' : fmtPct(l.avgReturnPct)} accent={l.avgReturnPct != null && l.avgReturnPct < 0 ? palette.down : palette.up} palette={palette} />
-                      <Stat label="콜" value={`${l.totalCalls}`} palette={palette} />
+                      <Stat label="목표 달성률" value={l.totalCalls > 0 ? `${Math.round(l.hitRate * 100)}%` : '—'} accent={palette.up} palette={palette} />
+                      <Stat label="평균 수익률" value={l.avgReturnPct == null ? '—' : fmtPct(l.avgReturnPct)} accent={l.avgReturnPct != null && l.avgReturnPct < 0 ? palette.down : palette.up} palette={palette} />
+                      <Stat label="누적 콜" value={`${l.totalCalls}`} palette={palette} />
                       <Stat label="구독자" value={`${l.followerCount}`} palette={palette} />
                     </View>
                   )}
