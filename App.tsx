@@ -178,8 +178,9 @@ function AppShell() {
     }
   }, [user?.token, toast])
 
-  const handleOnboardingComplete = useCallback((pref: MarketPreference) => {
+  const handleOnboardingComplete = useCallback((pref: MarketPreference, destination: 'today' | 'stocks' = 'today') => {
     setMarketPreference(pref)
+    setActiveTab(destination)
     setOnboardingState('done')
   }, [])
   // 선호값을 최초 1회만 종목 탭 검색 필터 디폴트에 반영. 이후 사용자 토글은 보존.

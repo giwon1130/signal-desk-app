@@ -4,10 +4,10 @@
  * Step 1: 시작 화면 (로고 + 시작)
  * Step 2: 시장 선택 (필수, 3카드 KR/US/BOTH) — Spec 결정 1
  * Step 3: 알림 권한 (스킵 가능) — Spec 결정 3
- * Step 4: 추천 종목 시드 (스킵 가능) — Spec 결정 2
- * Step 5: 완료 → 자동으로 홈 진입
+ * Step 4: 추천 관심종목 + 보유 종목 등록 진입점
+ * Step 5: 완료 → 오늘 또는 종목 탭으로 이동
  *
- * 마지막에 onComplete(marketPreference) 호출 — App 이 상태 갱신.
+ * 마지막에 onComplete(marketPreference, destination) 호출 — App 이 상태·첫 탭을 갱신.
  */
 import { useState } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
@@ -24,7 +24,7 @@ import type { StockSearchResult } from '../types'
 
 type Props = {
   authToken: string
-  onComplete: (pref: MarketPreference) => void
+  onComplete: (pref: MarketPreference, destination: 'today' | 'stocks') => void
 }
 
 type Step = 1 | 2 | 3 | 4 | 5
@@ -35,6 +35,7 @@ export function OnboardingScreen({ authToken, onComplete }: Props) {
   const [pref, setPref] = useState<MarketPreference | null>(null)
   const [pickedSeeds, setPickedSeeds] = useState<Set<string>>(new Set())
   const [busy, setBusy] = useState(false)
+  const [destination, setDestination] = useState<'today' | 'stocks'>('today')
 
   // 시장 선택 직후 호출. 추천 시드 default 전체 선택 상태로 초기화.
   const handlePickMarket = (m: MarketPreference) => {
@@ -54,7 +55,7 @@ export function OnboardingScreen({ authToken, onComplete }: Props) {
     }
   }
 
-  const handleSaveAndContinue = async () => {
+  const handleSaveAndContinue = async (next: 'today' | 'stocks') => {
     if (!pref) return
     setBusy(true)
     try {
@@ -67,9 +68,10 @@ export function OnboardingScreen({ authToken, onComplete }: Props) {
         try { await quickAddWatchItem(s) } catch { /* 실패해도 진행 */ }
       }
       await markOnboardingCompleted()
+      setDestination(next)
       setStep(5)
-      // 잠시 완료 화면 보여준 후 진입
-      setTimeout(() => onComplete(pref), 700)
+      // 잠시 완료 화면을 보여준 뒤 선택한 첫 화면으로 이동.
+      setTimeout(() => onComplete(pref, next), 700)
     } finally {
       setBusy(false)
     }
@@ -81,8 +83,9 @@ export function OnboardingScreen({ authToken, onComplete }: Props) {
     try {
       await syncMarketPreference(authToken, pref)
       await markOnboardingCompleted()
+      setDestination('today')
       setStep(5)
-      setTimeout(() => onComplete(pref), 700)
+      setTimeout(() => onComplete(pref, 'today'), 700)
     } finally {
       setBusy(false)
     }
@@ -131,11 +134,12 @@ export function OnboardingScreen({ authToken, onComplete }: Props) {
             picked={pickedSeeds}
             busy={busy}
             onToggle={toggleSeed}
-            onConfirm={() => void handleSaveAndContinue()}
+            onStartToday={() => void handleSaveAndContinue('today')}
+            onRegisterHoldings={() => void handleSaveAndContinue('stocks')}
             onSkip={() => void handleSkipSeeds()}
           />
         ) : null}
-        {step === 5 ? <Step5Done palette={palette} /> : null}
+        {step === 5 ? <Step5Done palette={palette} destination={destination} /> : null}
       </View>
     </SafeAreaView>
   )
@@ -231,14 +235,15 @@ function Step3Notifications({ palette, busy, onAllow, onSkip }: { palette: any; 
   )
 }
 
-// ─── Step 4: 추천 종목 시드 (스킵 가능) ──────────────────────────────────────
-function Step4Seeds({ palette, pref, picked, busy, onToggle, onConfirm, onSkip }: {
+// ─── Step 4: 추천 관심종목 + 보유 종목 등록 진입 ───────────────────────────────
+function Step4Seeds({ palette, pref, picked, busy, onToggle, onStartToday, onRegisterHoldings, onSkip }: {
   palette: any
   pref: MarketPreference
   picked: Set<string>
   busy: boolean
   onToggle: (s: StockSearchResult) => void
-  onConfirm: () => void
+  onStartToday: () => void
+  onRegisterHoldings: () => void
   onSkip: () => void
 }) {
   const seeds = seedFor(pref)
@@ -247,10 +252,10 @@ function Step4Seeds({ palette, pref, picked, busy, onToggle, onConfirm, onSkip }
     <View style={{ flex: 1, justifyContent: 'space-between' }}>
       <ScrollView contentContainerStyle={{ paddingBottom: 12 }}>
         <Text style={{ color: palette.ink, fontSize: 22, fontWeight: '900', marginBottom: 6 }}>
-          관심 종목 시드
+          관심 종목을 골라보세요
         </Text>
         <Text style={{ color: palette.inkMuted, fontSize: 13, marginBottom: 16, lineHeight: 19 }}>
-          시총 상위 종목들입니다. 탭으로 토글하고, 원하지 않으면 건너뛰세요.
+          시총 상위 종목들이에요. 추적할 종목만 고르고, 보유 종목은 다음 화면에서 매수가와 수량을 입력해 등록할 수 있어요.
         </Text>
         <View style={{ gap: 8 }}>
           {seeds.map((s) => {
@@ -287,19 +292,20 @@ function Step4Seeds({ palette, pref, picked, busy, onToggle, onConfirm, onSkip }
       </ScrollView>
       <View style={{ gap: 8 }}>
         <PrimaryButton
-          label={busy ? '등록 중…' : count > 0 ? `${count}개 등록하고 시작` : '시작하기'}
+          label={busy ? '등록 중…' : '보유 종목 등록하기'}
           palette={palette}
-          onPress={onConfirm}
+          onPress={onRegisterHoldings}
           disabled={busy}
         />
-        <SecondaryButton label="건너뛰기" palette={palette} onPress={onSkip} disabled={busy} />
+        <SecondaryButton label={count > 0 ? `${count}개 관심종목 등록하고 오늘 보기` : '관심종목 없이 오늘 보기'} palette={palette} onPress={onStartToday} disabled={busy} />
+        <SecondaryButton label="모두 나중에 할게" palette={palette} onPress={onSkip} disabled={busy} />
       </View>
     </View>
   )
 }
 
-// ─── Step 5: 완료 (잠시 노출 후 자동 진입) ──────────────────────────────────
-function Step5Done({ palette }: { palette: any }) {
+// ─── Step 5: 완료 (잠시 노출 후 선택한 탭으로 이동) ──────────────────────────
+function Step5Done({ palette, destination }: { palette: any; destination: 'today' | 'stocks' }) {
   return (
     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', gap: 14 }}>
       <View style={{
@@ -310,7 +316,9 @@ function Step5Done({ palette }: { palette: any }) {
         <Check size={32} color={palette.brandAccent} strokeWidth={3} />
       </View>
       <Text style={{ color: palette.ink, fontSize: 18, fontWeight: '800' }}>준비 완료</Text>
-      <Text style={{ color: palette.inkMuted, fontSize: 12 }}>잠시만요…</Text>
+      <Text style={{ color: palette.inkMuted, fontSize: 12 }}>
+        {destination === 'stocks' ? '보유 종목 등록으로 이동 중…' : '오늘 시장으로 이동 중…'}
+      </Text>
     </View>
   )
 }
