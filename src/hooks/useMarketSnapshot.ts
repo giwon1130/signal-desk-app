@@ -5,6 +5,7 @@ import { fetchRecentDisclosures } from '../api/disclosures'
 import { fetchUpcomingEvents } from '../api/events'
 import { fetchMarketInsight } from '../api/insights'
 import { fetchRecentMediaSummaries } from '../api/media'
+import { fetchActiveMarketRound } from '../api/marketRounds'
 import { fetchAlertHistory } from '../api/pushDevice'
 import { fetchSystemStatus, type SystemStatus } from '../api/system'
 import { formatSyncStamp } from '../utils'
@@ -20,6 +21,7 @@ import type {
   MarketEvent,
   MarketInsightData,
   MarketSectionsData,
+  MarketRound,
   MarketSummaryData,
   MediaSummaryItem,
   MoverReason,
@@ -39,6 +41,7 @@ export function useMarketSnapshot(authToken: string | null, enabled: boolean) {
   const [topMovers, setTopMovers] = useState<TopMoversResponse | null>(null)
   const [moverReasons, setMoverReasons] = useState<MoverReason[]>([])
   const [mediaSummaries, setMediaSummaries] = useState<MediaSummaryItem[]>([])
+  const [marketRound, setMarketRound] = useState<MarketRound | null>(null)
   const [marketInsight, setMarketInsight] = useState<MarketInsightData | null>(null)
   const [upcomingEvents, setUpcomingEvents] = useState<MarketEvent[]>([])
   const [disclosures, setDisclosures] = useState<DisclosureItem[]>([])
@@ -83,6 +86,7 @@ export function useMarketSnapshot(authToken: string | null, enabled: boolean) {
       void fetchTopMovers(10).then(fresh(setTopMovers)).catch(() => {})
       void fetchMoverReasons().then(fresh(setMoverReasons)).catch(() => {})
       void fetchRecentMediaSummaries(6).then(fresh(setMediaSummaries)).catch(() => {})
+      void fetchActiveMarketRound().then(fresh(setMarketRound)).catch(() => {})
       void fetchMarketInsight().then(fresh(setMarketInsight)).catch(() => {})
       void fetchUpcomingEvents(14).then(fresh(setUpcomingEvents)).catch(() => {})
       void fetchSystemStatus().then(fresh(setSystemStatus)).catch(() => {})
@@ -106,7 +110,7 @@ export function useMarketSnapshot(authToken: string | null, enabled: boolean) {
       setSummary(null); setSections(null); setAiRecommendation(null)
       setWatchlist([]); setPortfolio(null); setAlertHistory([])
       setFortune(null); setTopMovers(null); setMoverReasons([])
-      setMediaSummaries([]); setMarketInsight(null); setUpcomingEvents([])
+      setMediaSummaries([]); setMarketRound(null); setMarketInsight(null); setUpcomingEvents([])
       setDisclosures([]); setAiPicks(null); setHiddenSignals(null)
       setApiHealth(null); setSystemStatus(null)
       setError(''); setLastSyncedAt('')
@@ -133,6 +137,7 @@ export function useMarketSnapshot(authToken: string | null, enabled: boolean) {
     topMovers,
     moverReasons,
     mediaSummaries,
+    marketRound,
     marketInsight,
     upcomingEvents,
     disclosures,

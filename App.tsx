@@ -78,7 +78,7 @@ function AppShell() {
   const market = useMarketSnapshot(user?.token ?? null, !!user)
   const {
     summary, sections, aiRecommendation, watchlist, portfolio, fortune, topMovers, moverReasons,
-    mediaSummaries, marketInsight, upcomingEvents, disclosures, aiPicks, hiddenSignals, alertHistory, apiHealth, systemStatus, lastSyncedAt, loading, refreshing, error, refresh,
+    mediaSummaries, marketRound, marketInsight, upcomingEvents, disclosures, aiPicks, hiddenSignals, alertHistory, apiHealth, systemStatus, lastSyncedAt, loading, refreshing, error, refresh,
     fetchData, setLoading, setWatchlist, setPortfolio, setAlertHistory,
   } = market
   const search = useStockSearch()
@@ -477,6 +477,7 @@ function AppShell() {
             positions={portfolioPositions}
             alertHistory={alertHistory}
             mediaSummaries={mediaSummaries}
+            marketRound={marketRound}
             upcomingEvents={filteredUpcomingEvents}
             marketPreference={marketPreference}
             onOpenDetail={handleOpenDetail}

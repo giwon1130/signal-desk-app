@@ -14,6 +14,7 @@ import type {
   AlertHistoryItem,
   HoldingPosition,
   MarketEvent,
+  MarketRound,
   MarketSummaryData,
   MediaSummaryItem,
   NewsSentiment,
@@ -33,12 +34,14 @@ import { Entrance } from '../components/effects'
 import { MarketMoodCard } from './market_parts/MarketMoodCard'
 import { WatchAlertList } from './market_parts/WatchAlertList'
 import { TodayFocusCard, type TodayFocusTarget } from './today_parts/TodayFocusCard'
+import { MarketRoundCard } from './today_parts/MarketRoundCard'
 
 type Props = {
   summary: MarketSummaryData | null
   positions: HoldingPosition[]
   alertHistory: AlertHistoryItem[]
   mediaSummaries: MediaSummaryItem[]
+  marketRound: MarketRound | null
   upcomingEvents: MarketEvent[]
   // v2: Market 탭 흡수 — 합성위험도/시장 무드 지표/watch alerts. (급등락은 지수 상세 모달로 이동)
   marketPreference: MarketPreference
@@ -54,6 +57,7 @@ export const TodayTab = memo(function TodayTab({
   positions,
   alertHistory,
   mediaSummaries,
+  marketRound,
   upcomingEvents,
   marketPreference,
   onOpenDetail,
@@ -226,10 +230,17 @@ export const TodayTab = memo(function TodayTab({
         </View>
       ) : null}
 
+      {/* 급락·실적 등 이벤트가 있을 때만. 리딩/자유게시판과 분리된 검수형 정보 라운드. */}
+      {marketRound ? (
+        <Entrance index={4}>
+          <MarketRoundCard round={marketRound} />
+        </Entrance>
+      ) : null}
+
       {/* ── 브리프 Hero — 최신 브리프 1건 + 개인화(브리핑) 통합 ── */}
       {(mediaSummaries.length > 0 || summary?.briefing) ? (
         <View onLayout={registerSection('brief')}>
-          <Entrance index={4}>
+          <Entrance index={5}>
             <BriefHero
               items={mediaSummaries}
               briefing={summary?.briefing ?? null}
