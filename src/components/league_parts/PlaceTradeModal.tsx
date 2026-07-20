@@ -51,13 +51,18 @@ export function PlaceTradeModal({
   const [selected, setSelected] = useState<Selected | null>(null)
   const [quantity, setQuantity] = useState('1')
   const [busy, setBusy] = useState(false)
+  const [tradeFeedback, setTradeFeedback] = useState<string | null>(null)
 
   // 모달 재진입 시 reset.
   useEffect(() => {
     if (visible) {
-      setSide('BUY'); setQuery(''); setResults([]); setSelected(null); setQuantity('1'); setSearchError(false)
+      setSide('BUY'); setQuery(''); setResults([]); setSelected(null); setQuantity('1'); setSearchError(false); setTradeFeedback(null)
     }
   }, [visible])
+
+  useEffect(() => {
+    setTradeFeedback(null)
+  }, [side, selected?.market, selected?.ticker, quantity])
 
   // 검색 시장 파라미터 — 리그 시장 범위로 제한.
   const searchMarket: 'KR' | 'US' | 'ALL' = marketScope === 'BOTH' ? 'ALL' : marketScope
@@ -117,21 +122,26 @@ export function PlaceTradeModal({
   // 장중에만 리그는 마감 시 막힘(백엔드도 거부). 24시간 리그는 마지막 시세로 허용 + 안내만.
   const hoursBlocked = marketClosed && tradingHours === 'MARKET_HOURS_ONLY'
 
-  // 백엔드가 거절하는 조건은 버튼 단계에서도 동일하게 막아 헛주문을 없앤다.
-  const blocked = busy || qty <= 0 || overQty || insufficientCash || over30 || hoursBlocked
-  const blockedLabel = busy
+  // 백엔드가 거절하는 조건은 전송 전에 안내한다. 버튼 자체는 busy 외에는 탭을 받아
+  // 사용자가 "왜 안 되는지" 주문 화면 안에서 바로 확인할 수 있게 한다.
+  const validationMessage = qty <= 0
+    ? '매수할 수량을 1주 이상 입력해 주세요.'
+    : overQty
+      ? `보유 수량(${selected?.heldQty ?? 0}주)보다 많이 팔 수 없습니다.`
+      : insufficientCash
+        ? `현금이 부족합니다. 현재 보유 현금은 ${fmtMoney(cashBalance, currency)}입니다.`
+        : over30
+          ? '한 종목은 리그 시작 자본의 30%까지만 담을 수 있습니다. 수량을 줄여 주세요.'
+          : hoursBlocked
+            ? `${selected?.market === 'KR' ? '한국장' : '미국장'}이 마감됐습니다. 이 리그는 장중에만 거래할 수 있습니다.`
+            : null
+  const buttonLabel = busy
     ? '체결 중…'
-    : qty <= 0
-      ? '수량을 입력해 주세요'
-      : overQty
-        ? '보유 수량을 확인해 주세요'
-        : insufficientCash
-          ? '현금이 부족해요'
-          : over30
-            ? '한 종목은 시드의 30%까지'
-            : hoursBlocked
-              ? '장 마감 — 거래 불가'
-              : null
+    : validationMessage
+      ? '거래 조건 확인'
+      : side === 'BUY'
+        ? '매수 체결'
+        : '매도 체결'
 
   // 빠른 비율 — 매수: 보유 현금 기준 최대 매수가능 수량의 %, 매도: 보유 수량의 %.
   // (매수 100% 는 수수료까지 포함해 현금 안에서 살 수 있는 최대치)
@@ -149,7 +159,12 @@ export function PlaceTradeModal({
   }
 
   const handleConfirm = async () => {
-    if (!selected || blocked) return
+    if (!selected || busy) return
+    if (validationMessage) {
+      setTradeFeedback(validationMessage)
+      return
+    }
+    setTradeFeedback(null)
     setBusy(true)
     try {
       await placeTrade(leagueId, {
@@ -159,7 +174,9 @@ export function PlaceTradeModal({
       onTraded()
       onClose()
     } catch (e: any) {
-      toast?.show(tradeErrorMessage(e?.message || ''), 'error')
+      const message = tradeErrorMessage(e?.message || '')
+      setTradeFeedback(message)
+      toast?.show(message, 'error')
     } finally {
       setBusy(false)
     }
@@ -440,27 +457,36 @@ export function PlaceTradeModal({
 
         {/* 하단 체결 버튼 (선택 후만) */}
         {selected ? (
-          <View style={{ padding: 16, borderTopWidth: 1, borderTopColor: palette.border, backgroundColor: palette.surface }}>
+          <View style={{ padding: 16, borderTopWidth: 1, borderTopColor: palette.border, backgroundColor: palette.surface, gap: 8 }}>
+            {tradeFeedback ? (
+              <Text
+                accessibilityRole="alert"
+                style={{ color: palette.down, fontSize: 12, fontWeight: '700', lineHeight: 17, textAlign: 'center' }}
+              >
+                {tradeFeedback}
+              </Text>
+            ) : null}
             <Pressable
               onPress={() => void handleConfirm()}
-              disabled={blocked}
+              disabled={busy}
               accessibilityRole="button"
-              accessibilityLabel={blockedLabel ?? (side === 'BUY' ? '매수 체결' : '매도 체결')}
-              accessibilityState={{ disabled: blocked, busy }}
+              accessibilityLabel={buttonLabel}
+              accessibilityHint={validationMessage ?? '선택한 종목 주문을 전송합니다'}
+              accessibilityState={{ disabled: busy, busy }}
               style={({ pressed }) => ({
                 backgroundColor: side === 'BUY'
                   ? (pressed ? palette.up + 'cc' : palette.up)
                   : (pressed ? palette.down + 'cc' : palette.down),
                 borderRadius: 12, paddingVertical: 14,
                 flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
-                opacity: blocked ? 0.5 : 1,
+                opacity: busy || validationMessage ? 0.62 : 1,
               })}
             >
               {side === 'BUY'
                 ? <ArrowDownToLine size={16} color="#fff" strokeWidth={2.5} />
                 : <ArrowUpFromLine size={16} color="#fff" strokeWidth={2.5} />}
               <Text style={{ color: '#fff', fontSize: 15, fontWeight: '900' }}>
-                {blockedLabel ?? (side === 'BUY' ? '매수 체결' : '매도 체결')}
+                {buttonLabel}
               </Text>
             </Pressable>
           </View>
