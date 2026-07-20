@@ -6,8 +6,6 @@ import { apiErrorMessage } from '../../utils/apiError'
 
 /** 거래 수수료 0.3% (매수 시 추가 비용, 매도 시 수령액에서 차감). 백엔드 TradeService 와 동일. */
 export const LEAGUE_FEE = 0.003
-/** 한 종목 최대 비중 30%. 백엔드 TradeService 가 '누적 매수원가 ≤ 시드 × 30%' 로 강제 — FE 는 동일 규칙으로 사전 경고. */
-export const MAX_POSITION_PCT = 0.3
 /** 호스트/참가자 아바타 선택지. */
 export const LEAGUE_AVATARS = ['🐱', '🦊', '🐶', '🐼', '🦁', '🐯', '🐵', '🐰', '🐸', '🐨', '🦄', '🐲']
 

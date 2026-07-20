@@ -332,8 +332,6 @@ export function LeagueDetailModal({ visible, leagueId, myUserId, marketSessions,
             cashBalance={me?.cashBalance ?? 0}
             currency={league.currency}
             marketScope={league.marketScope}
-            totalAssets={me?.totalAssets ?? 0}
-            startingCapital={league.startingCapital}
             tradingHours={league.tradingHours}
             marketSessions={marketSessions ?? []}
             onClose={() => setTradeOpen(false)}

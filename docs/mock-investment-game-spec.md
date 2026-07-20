@@ -37,7 +37,7 @@
 | `fee` | double | **0.003 (0.3%) 일괄 매수·매도** (결정 7 단순화) |
 | `tax` | double | **0** — V1 매도세 없음 (게임 단순화, 결정 7) |
 | `allowShort` | bool | false (V1 X, 추후) |
-| `maxPositionPct` | double | 0.30 (한 종목 최대 30% 비중 제한) |
+| `maxPositionPct` | double | 0 (제한 없음, 레거시 호환 필드) |
 | `createdAt` | Instant | |
 
 상태 흐름:
@@ -105,7 +105,7 @@ DB 저장 X — 매번 trade 에서 derived (성능 이슈 시 캐시).
    - 검증:
      - 시장 거래 가능 시간? (MARKET_HOURS_ONLY 면 닫혔으면 거부)
      - 현금 충분? (notional + fee ≤ cashBalance)
-     - 한 종목 비중 제한? (매수 후 평가금 / 총자산 ≤ maxPositionPct)
+     - 단일 종목 비중 제한 없음
      - 시세 유효? (null/0 거부)
    - 통과 시 trade INSERT + participant.cashBalance 차감
 3. 클라이언트는 결과 받음 (체결가, 수수료, 새 현금)
@@ -195,7 +195,7 @@ create table signal_desk_mock_league (
   trading_hours   text not null default 'MARKET_HOURS_ONLY' check (trading_hours in ('MARKET_HOURS_ONLY','ALWAYS')),
   fee             numeric(6,5) not null default 0.003,
   tax             numeric(6,5) not null default 0.0023,
-  max_position_pct numeric(4,3) not null default 0.30,
+  max_position_pct numeric(4,3) not null default 0,
   visibility      text not null default 'OPEN' check (visibility in ('OPEN','CLOSED')),
   created_at      timestamptz not null default now()
 );

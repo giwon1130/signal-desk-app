@@ -1,8 +1,8 @@
 /**
  * 리그 안에서 매수/매도. 백엔드가 시세 lock + 검증 + 체결.
- * FE 는 체결 전 미리보기(수수료 포함)·현금부족·수량초과·30% 비중 제한으로 헛주문을 막는다.
+ * FE 는 체결 전 미리보기(수수료 포함)·현금부족·수량초과로 헛주문을 막는다.
  */
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ActivityIndicator, FlatList, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { ArrowDownToLine, ArrowUpFromLine, Search, X } from 'lucide-react-native'
@@ -10,17 +10,15 @@ import { useTheme } from '../../theme'
 import { placeTrade } from '../../api/league'
 import { searchStocks } from '../../api'
 import type { LeaguePosition, MarketScope, MarketSessionStatus, StockSearchResult, TradeSide, TradingHours } from '../../types'
-import { LEAGUE_FEE, MAX_POSITION_PCT, fmtMoney, fmtNum, tradeErrorMessage } from './leagueShared'
+import { LEAGUE_FEE, fmtMoney, fmtNum, tradeErrorMessage } from './leagueShared'
 
 type Props = {
   visible: boolean
   leagueId: string
-  positions: LeaguePosition[]            // 내 보유 — 매도 시 종목 빠른 선택용 + 30% 비중 계산
+  positions: LeaguePosition[]            // 내 보유 — 매도 시 종목 빠른 선택용
   cashBalance: number                    // league 통화
   currency: 'KRW' | 'USD'
   marketScope: MarketScope
-  totalAssets: number                    // league 통화 — 표시용
-  startingCapital: number                // league 통화 — 30% 비중 기준(백엔드와 동일: 시드 기준)
   tradingHours: TradingHours             // 장중에만 / 24시간
   marketSessions: MarketSessionStatus[]  // KR/US 개장 여부 (장 마감 안내용)
   onClose: () => void
@@ -39,7 +37,7 @@ type Selected = {
 }
 
 export function PlaceTradeModal({
-  visible, leagueId, positions, cashBalance, currency, marketScope, totalAssets, startingCapital, tradingHours, marketSessions, onClose, onTraded, toast,
+  visible, leagueId, positions, cashBalance, currency, marketScope, tradingHours, marketSessions, onClose, onTraded, toast,
 }: Props) {
   const { palette } = useTheme()
   const insets = useSafeAreaInsets()
@@ -108,15 +106,6 @@ export function PlaceTradeModal({
   // 검증
   const overQty = side === 'SELL' && selected?.heldQty != null && qty > selected.heldQty
   const insufficientCash = side === 'BUY' && sameCcy && qty > 0 && buyCost > cashBalance
-  // 30% 비중 경고 — 백엔드 규칙과 동일: '누적 매수원가 + 이번 주문액 ≤ 시드 × 30%'.
-  // (이전엔 시총/현재총자산 기준이라 수익 후 BE 는 거부하는데 FE 는 경고 안 뜨는 불일치가 있었음.)
-  const over30 = useMemo(() => {
-    if (side !== 'BUY' || !sameCcy || !selected || qty <= 0 || startingCapital <= 0) return false
-    const held = positions.find((p) => p.market === selected.market && p.ticker === selected.ticker)
-    const existingCost = held ? held.averageCost * held.quantity : 0
-    return (existingCost + notional) > startingCapital * MAX_POSITION_PCT
-  }, [side, sameCcy, selected, qty, startingCapital, positions, notional])
-
   // 선택 종목 시장의 개장 여부 (백엔드 marketSessions 권위값). 없으면 열린 것으로 간주.
   const marketClosed = !!selected && marketSessions.find((s) => s.market === selected.market)?.isOpen === false
   // 장중에만 리그는 마감 시 막힘(백엔드도 거부). 24시간 리그는 마지막 시세로 허용 + 안내만.
@@ -130,11 +119,9 @@ export function PlaceTradeModal({
       ? `보유 수량(${selected?.heldQty ?? 0}주)보다 많이 팔 수 없습니다.`
       : insufficientCash
         ? `현금이 부족합니다. 현재 보유 현금은 ${fmtMoney(cashBalance, currency)}입니다.`
-        : over30
-          ? '한 종목은 리그 시작 자본의 30%까지만 담을 수 있습니다. 수량을 줄여 주세요.'
-          : hoursBlocked
-            ? `${selected?.market === 'KR' ? '한국장' : '미국장'}이 마감됐습니다. 이 리그는 장중에만 거래할 수 있습니다.`
-            : null
+        : hoursBlocked
+          ? `${selected?.market === 'KR' ? '한국장' : '미국장'}이 마감됐습니다. 이 리그는 장중에만 거래할 수 있습니다.`
+          : null
   const buttonLabel = busy
     ? '체결 중…'
     : validationMessage
@@ -428,11 +415,6 @@ export function PlaceTradeModal({
               {insufficientCash ? (
                 <Text style={{ color: palette.down, fontSize: 12, fontWeight: '700' }}>
                   현금 부족 — 보유 {fmtMoney(cashBalance, currency)}
-                </Text>
-              ) : null}
-              {over30 && !insufficientCash ? (
-                <Text style={{ color: palette.orange, fontSize: 12, fontWeight: '700' }}>
-                  ⚠️ 한 종목 비중 30% 초과 — 분산 권장
                 </Text>
               ) : null}
               {!sameCcy ? null : (
