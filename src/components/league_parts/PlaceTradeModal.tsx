@@ -1,9 +1,9 @@
 /**
  * 리그 안에서 매수/매도. 백엔드가 시세 lock + 검증 + 체결.
- * FE 는 체결 전 미리보기(수수료 포함)·현금부족·수량초과·30% 비중 경고로 헛주문을 막는다.
+ * FE 는 체결 전 미리보기(수수료 포함)·현금부족·수량초과·30% 비중 제한으로 헛주문을 막는다.
  */
 import { useEffect, useMemo, useState } from 'react'
-import { ActivityIndicator, FlatList, KeyboardAvoidingView, Modal, Platform, Pressable, Text, TextInput, View } from 'react-native'
+import { ActivityIndicator, FlatList, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { ArrowDownToLine, ArrowUpFromLine, Search, X } from 'lucide-react-native'
 import { useTheme } from '../../theme'
@@ -117,7 +117,21 @@ export function PlaceTradeModal({
   // 장중에만 리그는 마감 시 막힘(백엔드도 거부). 24시간 리그는 마지막 시세로 허용 + 안내만.
   const hoursBlocked = marketClosed && tradingHours === 'MARKET_HOURS_ONLY'
 
-  const blocked = busy || qty <= 0 || overQty || insufficientCash || hoursBlocked
+  // 백엔드가 거절하는 조건은 버튼 단계에서도 동일하게 막아 헛주문을 없앤다.
+  const blocked = busy || qty <= 0 || overQty || insufficientCash || over30 || hoursBlocked
+  const blockedLabel = busy
+    ? '체결 중…'
+    : qty <= 0
+      ? '수량을 입력해 주세요'
+      : overQty
+        ? '보유 수량을 확인해 주세요'
+        : insufficientCash
+          ? '현금이 부족해요'
+          : over30
+            ? '한 종목은 시드의 30%까지'
+            : hoursBlocked
+              ? '장 마감 — 거래 불가'
+              : null
 
   // 빠른 비율 — 매수: 보유 현금 기준 최대 매수가능 수량의 %, 매도: 보유 수량의 %.
   // (매수 100% 는 수수료까지 포함해 현금 안에서 살 수 있는 최대치)
@@ -274,7 +288,13 @@ export function PlaceTradeModal({
           )
         ) : (
           // 선택 후 수량 입력 + 체결
-          <View style={{ padding: 16, gap: 14 }}>
+          <ScrollView
+            style={{ flex: 1 }}
+            contentContainerStyle={{ padding: 16, paddingBottom: 24, gap: 14 }}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
+            showsVerticalScrollIndicator={false}
+          >
             <View style={{
               backgroundColor: palette.surfaceAlt, borderRadius: 10, padding: 14, gap: 4,
               borderLeftWidth: 3, borderLeftColor: side === 'BUY' ? palette.up : palette.down,
@@ -415,7 +435,7 @@ export function PlaceTradeModal({
             >
               <Text style={{ color: palette.inkMuted, fontSize: 12, fontWeight: '700' }}>← 다른 종목 선택</Text>
             </Pressable>
-          </View>
+          </ScrollView>
         )}
 
         {/* 하단 체결 버튼 (선택 후만) */}
@@ -425,6 +445,8 @@ export function PlaceTradeModal({
               onPress={() => void handleConfirm()}
               disabled={blocked}
               accessibilityRole="button"
+              accessibilityLabel={blockedLabel ?? (side === 'BUY' ? '매수 체결' : '매도 체결')}
+              accessibilityState={{ disabled: blocked, busy }}
               style={({ pressed }) => ({
                 backgroundColor: side === 'BUY'
                   ? (pressed ? palette.up + 'cc' : palette.up)
@@ -438,7 +460,7 @@ export function PlaceTradeModal({
                 ? <ArrowDownToLine size={16} color="#fff" strokeWidth={2.5} />
                 : <ArrowUpFromLine size={16} color="#fff" strokeWidth={2.5} />}
               <Text style={{ color: '#fff', fontSize: 15, fontWeight: '900' }}>
-                {busy ? '체결 중…' : side === 'BUY' ? '매수 체결' : '매도 체결'}
+                {blockedLabel ?? (side === 'BUY' ? '매수 체결' : '매도 체결')}
               </Text>
             </Pressable>
           </View>
