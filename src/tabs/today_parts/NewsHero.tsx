@@ -4,7 +4,7 @@
  * KR/US 헤드라인을 번갈아 보여줘 "내용이 굴러가며" 한 화면에 들어온다.
  */
 import { useMemo } from 'react'
-import { Animated, Linking, Pressable, Text, View } from 'react-native'
+import { Animated, Linking, PanResponder, Pressable, Text, View } from 'react-native'
 import { ChevronLeft, ChevronRight, Newspaper } from 'lucide-react-native'
 import { useRotatingIndex } from '../../hooks/useRotatingIndex'
 import { useTheme } from '../../theme'
@@ -41,6 +41,23 @@ export function NewsHero({ sentiments }: Props) {
 
   const { index: i, opacity, goTo: fadeTo } = useRotatingIndex(items.length, 3500, 220)
 
+  // 세로로 오늘 탭을 스크롤할 때는 건드리지 않고, 의도가 분명한 좌우 제스처만 받는다.
+  const swipeResponder = useMemo(() => PanResponder.create({
+    onMoveShouldSetPanResponder: (_, gesture) => {
+      const horizontal = Math.abs(gesture.dx)
+      const vertical = Math.abs(gesture.dy)
+      return items.length > 1 && horizontal >= 12 && horizontal > vertical * 1.4
+    },
+    onPanResponderRelease: (_, gesture) => {
+      const shouldMove = Math.abs(gesture.dx) >= 42 || Math.abs(gesture.vx) >= 0.35
+      if (!shouldMove || items.length <= 1) return
+      fadeTo(gesture.dx < 0
+        ? (i + 1) % items.length
+        : (i - 1 + items.length) % items.length)
+    },
+    onPanResponderTerminationRequest: () => true,
+  }), [fadeTo, i, items.length])
+
   if (sentiments.length === 0) return null
   const cur = items.length > 0 ? items[Math.min(i, items.length - 1)] : null
 
@@ -70,24 +87,28 @@ export function NewsHero({ sentiments }: Props) {
 
       {/* ── 회전 헤드라인 (내용이 번갈아 보임) ── */}
       {cur ? (
-        <Pressable
-          onPress={() => { if (cur.url) void Linking.openURL(cur.url) }}
-          accessibilityRole="button"
-          style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
-        >
-          <Animated.View style={{ opacity, gap: 7, minHeight: 78, justifyContent: 'center' }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <View style={{ width: 7, height: 7, borderRadius: 999, backgroundColor: toneColor(cur.tone) }} />
-              <Text style={{ color: toneColor(cur.tone), fontSize: 11, fontWeight: '900' }}>{cur.tone}</Text>
-              <Text style={{ color: palette.inkFaint, fontSize: 11 }}>
-                {cur.market === 'KR' ? '🇰🇷' : '🇺🇸'} {cur.source}{cur.when ? ` · ${cur.when}` : ''}
+        <View {...swipeResponder.panHandlers}>
+          <Pressable
+            onPress={() => { if (cur.url) void Linking.openURL(cur.url) }}
+            accessibilityRole="link"
+            accessibilityLabel={cur.title}
+            accessibilityHint="뉴스 원문을 엽니다. 좌우로 쓸어 다른 뉴스를 볼 수 있습니다."
+            style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
+          >
+            <Animated.View style={{ opacity, gap: 7, minHeight: 78, justifyContent: 'center' }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <View style={{ width: 7, height: 7, borderRadius: 999, backgroundColor: toneColor(cur.tone) }} />
+                <Text style={{ color: toneColor(cur.tone), fontSize: 11, fontWeight: '900' }}>{cur.tone}</Text>
+                <Text style={{ color: palette.inkFaint, fontSize: 11 }}>
+                  {cur.market === 'KR' ? '🇰🇷' : '🇺🇸'} {cur.source}{cur.when ? ` · ${cur.when}` : ''}
+                </Text>
+              </View>
+              <Text style={{ color: palette.ink, fontSize: 16, fontWeight: '800', lineHeight: 23 }} numberOfLines={3}>
+                {cur.title}
               </Text>
-            </View>
-            <Text style={{ color: palette.ink, fontSize: 16, fontWeight: '800', lineHeight: 23 }} numberOfLines={3}>
-              {cur.title}
-            </Text>
-          </Animated.View>
-        </Pressable>
+            </Animated.View>
+          </Pressable>
+        </View>
       ) : (
         <Text style={{ color: palette.inkFaint, fontSize: 12, paddingVertical: 12 }}>표시할 헤드라인이 없습니다</Text>
       )}
@@ -99,7 +120,7 @@ export function NewsHero({ sentiments }: Props) {
             <ChevronLeft size={18} color={palette.inkMuted} strokeWidth={2.5} />
           </Pressable>
           <Text style={{ color: palette.inkFaint, fontSize: 11, fontWeight: '700', marginHorizontal: 6, fontVariant: ['tabular-nums'] }}>
-            {Math.min(i, items.length - 1) + 1} / {items.length}
+            좌우로 넘기기 · {Math.min(i, items.length - 1) + 1} / {items.length}
           </Text>
           <Pressable onPress={() => fadeTo((i + 1) % items.length)} hitSlop={8} accessibilityLabel="다음 뉴스" style={{ padding: 2 }}>
             <ChevronRight size={18} color={palette.inkMuted} strokeWidth={2.5} />
