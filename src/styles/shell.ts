@@ -10,35 +10,36 @@ export function shellStyles(C: Palette): StyleObj {
     container: { flex: 1, backgroundColor: C.bg },
 
     // ── Header (compact: 헤더는 짧게, 콘텐츠 영역은 넓게) ──────────────────────
-    headerWrap: { paddingHorizontal: 14, paddingTop: 4, paddingBottom: 2 },
+    headerWrap: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 6 },
     headerGradient: {
-      borderRadius: 16, paddingHorizontal: 16, paddingTop: 10, paddingBottom: 10,
-      backgroundColor: C.brand, ...shadow.md,
+      paddingHorizontal: 0, paddingTop: 2, paddingBottom: 2,
+      backgroundColor: 'transparent',
     },
     headerTopRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-    brand: { color: C.brandAccent, fontWeight: '900', fontSize: 10, letterSpacing: 2 },
-    headerTitle: { fontSize: 17, fontWeight: '800', color: C.headerOnDark, letterSpacing: -0.3 },
-    headerSubtitle: { color: C.headerSubtitle, fontSize: 11, fontWeight: '500', marginTop: 4 },
+    brand: { color: C.brandAccent, fontWeight: '900', fontSize: 9, letterSpacing: 1.4 },
+    headerTitle: { fontSize: 20, fontWeight: '900', color: C.ink, letterSpacing: -0.6 },
+    headerSubtitle: { color: C.inkMuted, fontSize: 10.5, fontWeight: '600' },
     headerStatusPill: {
       flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 999,
-      paddingHorizontal: 10, paddingVertical: 5, marginTop: 2,
+      paddingHorizontal: 7, paddingVertical: 4,
     },
-    headerStatusPillUp:   { backgroundColor: 'rgba(34,197,94,0.15)' },
-    headerStatusPillDown: { backgroundColor: 'rgba(239,68,68,0.15)' },
-    headerStatusDot:      { width: 6, height: 6, borderRadius: 999 },
-    headerStatusDotUp:    { backgroundColor: '#4ade80' },
-    headerStatusDotDown:  { backgroundColor: '#f87171' },
-    headerStatusText:     { fontSize: 11, fontWeight: '800', letterSpacing: 1 },
-    headerStatusTextUp:   { color: '#4ade80' },
-    headerStatusTextDown: { color: '#f87171' },
+    headerStatusPillUp:   { backgroundColor: C.greenSoft },
+    headerStatusPillDown: { backgroundColor: C.redSoft },
+    headerStatusDot:      { width: 5, height: 5, borderRadius: 999 },
+    headerStatusDotUp:    { backgroundColor: C.green },
+    headerStatusDotDown:  { backgroundColor: C.red },
+    headerStatusText:     { fontSize: 9, fontWeight: '900', letterSpacing: 0.8 },
+    headerStatusTextUp:   { color: C.green },
+    headerStatusTextDown: { color: C.red },
     themeToggleBtn: {
-      borderRadius: 10, paddingHorizontal: 9, paddingVertical: 8,
-      backgroundColor: C.blueSoft, borderWidth: 1, borderColor: C.blue, marginLeft: 8,
-      flexDirection: 'row', alignItems: 'center', gap: 4,
+      width: 36, height: 36, borderRadius: 12,
+      backgroundColor: C.surface, borderWidth: 1, borderColor: C.borderLight,
+      alignItems: 'center', justifyContent: 'center',
     },
     headerIconBtn: {
-      borderRadius: 10, padding: 8,
-      backgroundColor: 'rgba(255,255,255,0.08)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.14)',
+      width: 36, height: 36, borderRadius: 12,
+      backgroundColor: C.surface, borderWidth: 1, borderColor: C.borderLight,
+      alignItems: 'center', justifyContent: 'center',
     },
     headerIconBadge: {
       position: 'absolute', top: -4, right: -4, minWidth: 16, height: 16, borderRadius: 999,
@@ -48,18 +49,18 @@ export function shellStyles(C: Palette): StyleObj {
 
     // ── Tab Bar ─────────────────────────────────────────────────────────────────
     tabBar: {
-      flexDirection: 'row', backgroundColor: C.surface, marginHorizontal: 14, marginTop: 6,
-      borderRadius: 14, borderWidth: 1, borderColor: C.border, ...shadow.sm, paddingVertical: 3,
+      flexDirection: 'row', backgroundColor: C.surface, marginHorizontal: 16, marginTop: 4, marginBottom: 2,
+      borderRadius: 16, borderWidth: 1, borderColor: C.borderLight, ...shadow.sm, padding: 4,
     },
     tabItem: {
-      flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 8, gap: 3,
+      flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 7, gap: 2,
       position: 'relative', borderRadius: 12,
     },
-    tabItemActive:  { backgroundColor: C.scheme === 'dark' ? '#1e293b' : '#eff6ff' },
+    tabItemActive:  { backgroundColor: C.greenSoft },
     tabItemPressed: { opacity: 0.7 },
-    tabLabel:       { fontSize: 11, fontWeight: '600', color: C.inkFaint },
-    tabLabelActive: { color: C.blue, fontWeight: '700' },
-    tabActiveBar:   { position: 'absolute', bottom: 0, width: 20, height: 2, backgroundColor: C.blue, borderRadius: 999 },
+    tabLabel:       { fontSize: 10, fontWeight: '700', color: C.inkFaint },
+    tabLabelActive: { color: C.green, fontWeight: '900' },
+    tabActiveBar:   { display: 'none' },
 
     // ── Loading / Error ──────────────────────────────────────────────────────────
     loadingWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 },
@@ -80,7 +81,7 @@ export function shellStyles(C: Palette): StyleObj {
 
     // ── Scroll / Content ────────────────────────────────────────────────────────
     scroll:  { flex: 1 },
-    content: { padding: 14, gap: 10, paddingBottom: 32 },
+    content: { padding: 16, gap: 14, paddingBottom: 40 },
     // 웹 데스크톱 전용: 카드를 CSS grid 로 재배치. 420px 이상 컬럼을 auto-fit.
     // 특정 카드는 cardFull 로 컬럼 span 을 덮어씀.
     // (RN Web 은 display/grid/gridTemplateColumns 등을 그대로 CSS 로 넘김)

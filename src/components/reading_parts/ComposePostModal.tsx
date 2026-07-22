@@ -244,7 +244,7 @@ export function ComposePostModal({ visible, onClose, onPublished, toast }: Props
               opacity: !title.trim() || publishing ? 0.5 : 1,
             })}
           >
-            <Text style={{ color: palette.bg, fontSize: 15, fontWeight: '900' }}>
+            <Text style={{ color: '#07150f', fontSize: 15, fontWeight: '900' }}>
               {publishing ? '게시 중…' : selectedCount > 0 ? `게시 + ${selectedCount}개 콜 박제` : '게시'}
             </Text>
           </Pressable>

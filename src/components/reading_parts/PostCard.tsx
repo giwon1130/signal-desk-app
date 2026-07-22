@@ -7,7 +7,7 @@ import { TrendingUp } from 'lucide-react-native'
 import { useTheme } from '../../theme'
 import type { ReadingCall, ReadingPost } from '../../types'
 import { callStatusBadge, fmtPct, fmtPrice, returnColor } from './readingShared'
-import { GradientBackground, PressableScale, glow } from '../effects'
+import { PressableScale } from '../effects'
 
 // memo — 피드/프로필 글 목록에서 부모 상태 변화 시 변경 없는 글이 재렌더되지 않게.
 // onPressLeader 는 (leaderUserId)=>void 안정 참조를 받아 인라인 클로저 없이 memo 가 동작하도록.
@@ -23,13 +23,11 @@ export const PostCard = memo(function PostCard({ post, onPressLeader, showLeader
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
         {showLeader ? (
           <PressableScale onPress={() => onPressLeader?.(post.leaderUserId)} accessibilityLabel={`${post.leaderName} 프로필`} scaleTo={0.93} style={{ borderRadius: 999 }}>
-            <View style={[
-              { flexDirection: 'row', alignItems: 'center', gap: 5, paddingLeft: 7, paddingRight: 10, paddingVertical: 4, borderRadius: 999, overflow: 'hidden' },
-              glow(palette.brandAccent, 8, 0.55),
-            ]}>
-              <GradientBackground colors={[{ offset: '0', color: palette.brandAccent }, { offset: '1', color: palette.blue }]} radius={999} />
-              <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#ffffff' }} />
-              <Text style={{ color: '#ffffff', fontSize: 12, fontWeight: '900' }}>{post.leaderName}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingRight: 8, paddingVertical: 3, borderRadius: 999 }}>
+              <View style={{ width: 22, height: 22, borderRadius: 8, backgroundColor: palette.greenSoft, alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ color: palette.brandAccent, fontSize: 10, fontWeight: '900' }}>{post.leaderName.slice(0, 1)}</Text>
+              </View>
+              <Text style={{ color: palette.inkSub, fontSize: 12, fontWeight: '900' }}>{post.leaderName}</Text>
             </View>
           </PressableScale>
         ) : null}
@@ -63,18 +61,14 @@ function CallRow({ call, palette }: { call: ReadingCall; palette: any }) {
   const flag = call.market === 'KR' ? '🇰🇷' : '🇺🇸'
   const badge = callStatusBadge(call.status, palette)
   const closed = call.status === 'CLOSED'
-  const big = ret != null && Math.abs(ret) >= 5   // 큰 수익/손실은 글로우로 "팡"
   return (
-    <View style={[
-      {
+    <View style={{
         flexDirection: 'row', alignItems: 'center', gap: 8,
-        backgroundColor: palette.surfaceAlt, borderRadius: 8,
-        borderLeftWidth: 3, borderLeftColor: retColor,
-        paddingHorizontal: 10, paddingVertical: 8,
+        backgroundColor: palette.surfaceAlt, borderRadius: 12,
+        borderWidth: 1, borderColor: palette.borderLight,
+        paddingHorizontal: 11, paddingVertical: 9,
         opacity: closed ? 0.6 : 1,
-      },
-      big && !closed ? glow(retColor, 8, 0.45) : null,
-    ]}>
+      }}>
       <Text style={{ fontSize: 12 }}>{flag}</Text>
       <View style={{ flex: 1 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>

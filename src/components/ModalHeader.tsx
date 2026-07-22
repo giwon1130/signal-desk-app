@@ -24,20 +24,28 @@ export function ModalHeader({ icon: Icon, title, onClose, right, titleNumberOfLi
     <View
       style={{
         flexDirection: 'row', alignItems: 'center', gap: 10,
-        paddingHorizontal: 16, paddingVertical: 12,
-        borderBottomWidth: 1, borderBottomColor: palette.border,
+        paddingHorizontal: 16, paddingVertical: 11,
+        borderBottomWidth: 1, borderBottomColor: palette.borderLight,
       }}
     >
-      <Icon size={18} color={palette.brandAccent} strokeWidth={2.5} />
+      <View style={{ width: 34, height: 34, borderRadius: 11, backgroundColor: palette.greenSoft, alignItems: 'center', justifyContent: 'center' }}>
+        <Icon size={17} color={palette.brandAccent} strokeWidth={2.5} />
+      </View>
       <Text
-        style={{ flex: 1, color: palette.ink, fontSize: 17, fontWeight: '900' }}
+        style={{ flex: 1, color: palette.ink, fontSize: 18, fontWeight: '900', letterSpacing: -0.35 }}
         numberOfLines={titleNumberOfLines}
       >
         {title}
       </Text>
       {right}
-      <Pressable onPress={onClose} hitSlop={20} accessibilityRole="button" accessibilityLabel="닫기">
-        <X size={20} color={palette.inkMuted} strokeWidth={2.5} />
+      <Pressable
+        onPress={onClose}
+        hitSlop={12}
+        accessibilityRole="button"
+        accessibilityLabel="닫기"
+        style={({ pressed }) => ({ width: 34, height: 34, borderRadius: 11, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? palette.surfaceAlt : 'transparent' })}
+      >
+        <X size={19} color={palette.inkMuted} strokeWidth={2.4} />
       </Pressable>
     </View>
   )

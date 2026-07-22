@@ -46,15 +46,19 @@ export function TabIntro({ tabKey, icon: Icon, title, tagline, description, acce
 
   return (
     <View style={{
-      backgroundColor: expanded ? accent + '12' : 'transparent',
-      borderWidth: expanded ? 1 : 0, borderColor: accent + '44',
-      borderRadius: 14, paddingHorizontal: expanded ? 14 : 2, paddingVertical: expanded ? 13 : 2,
-      gap: expanded ? 8 : 0,
+      backgroundColor: expanded ? palette.surface : 'transparent',
+      borderWidth: expanded ? 1 : 0, borderColor: palette.borderLight,
+      borderRadius: 16, paddingHorizontal: expanded ? 14 : 2, paddingVertical: expanded ? 13 : 2,
+      gap: expanded ? 10 : 0,
     }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        <Icon size={17} color={accent} strokeWidth={2.5} />
-        <Text style={{ color: palette.ink, fontSize: 16, fontWeight: '900', flexShrink: 0 }}>{title}</Text>
-        <Text style={{ color: palette.inkMuted, fontSize: 11.5, flex: 1, minWidth: 0 }} numberOfLines={1}>{tagline}</Text>
+        <View style={{ width: 34, height: 34, borderRadius: 11, backgroundColor: accent + '18', alignItems: 'center', justifyContent: 'center' }}>
+          <Icon size={17} color={accent} strokeWidth={2.5} />
+        </View>
+        <View style={{ flex: 1, minWidth: 0, gap: 1 }}>
+          <Text style={{ color: palette.ink, fontSize: 18, fontWeight: '900', letterSpacing: -0.4 }}>{title}</Text>
+          <Text style={{ color: palette.inkMuted, fontSize: 11.5 }} numberOfLines={1}>{tagline}</Text>
+        </View>
         {expanded ? (
           <Pressable onPress={() => setExpanded(false)} hitSlop={8} accessibilityLabel="설명 접기">
             <X size={16} color={palette.inkMuted} strokeWidth={2.4} />
@@ -66,7 +70,10 @@ export function TabIntro({ tabKey, icon: Icon, title, tagline, description, acce
         )}
       </View>
       {expanded ? (
-        <Text style={{ color: palette.inkSub, fontSize: 12.5, lineHeight: 18 }}>{description}</Text>
+        <View style={{ flexDirection: 'row', gap: 10 }}>
+          <View style={{ width: 2, borderRadius: 2, backgroundColor: accent, opacity: 0.75 }} />
+          <Text style={{ flex: 1, color: palette.inkSub, fontSize: 12.5, lineHeight: 19 }}>{description}</Text>
+        </View>
       ) : null}
     </View>
   )

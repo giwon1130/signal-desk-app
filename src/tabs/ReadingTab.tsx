@@ -219,8 +219,8 @@ export const ReadingTab = memo(function ReadingTab({ authToken, refreshing, refr
                   flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
                 })}
               >
-                <Plus size={14} color={palette.bg} strokeWidth={3} />
-                <Text style={{ color: palette.bg, fontSize: 14, fontWeight: '800' }}>새 리딩 쓰기</Text>
+                <Plus size={14} color="#07150f" strokeWidth={3} />
+                <Text style={{ color: '#07150f', fontSize: 14, fontWeight: '900' }}>새 리딩 쓰기</Text>
               </Pressable>
             </>
           )}
@@ -254,8 +254,8 @@ export const ReadingTab = memo(function ReadingTab({ authToken, refreshing, refr
               opacity: busy ? 0.6 : 1,
             })}
           >
-            <PenLine size={14} color={palette.bg} strokeWidth={3} />
-            <Text style={{ color: palette.bg, fontSize: 14, fontWeight: '800' }}>리더 되기</Text>
+            <PenLine size={14} color="#07150f" strokeWidth={3} />
+            <Text style={{ color: '#07150f', fontSize: 14, fontWeight: '900' }}>리더 되기</Text>
           </Pressable>
         </View>
       ) : null}
@@ -319,7 +319,7 @@ export const ReadingTab = memo(function ReadingTab({ authToken, refreshing, refr
               opacity: !code.trim() || busy ? 0.5 : 1,
             })}
           >
-            <Text style={{ color: palette.bg, fontSize: 13, fontWeight: '800' }}>구독</Text>
+            <Text style={{ color: '#ffffff', fontSize: 13, fontWeight: '900' }}>구독</Text>
           </Pressable>
         </View>
         <Text style={{ color: palette.inkFaint, fontSize: 11, lineHeight: 16 }}>

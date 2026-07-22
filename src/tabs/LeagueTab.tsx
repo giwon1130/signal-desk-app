@@ -9,7 +9,7 @@ import { useStyles } from '../styles'
 import { useTheme } from '../theme'
 import type { League } from '../types'
 import { fetchMyLeagues } from '../api/league'
-import { Entrance, GradientBackground, PressableScale, glow } from '../components/effects'
+import { Entrance, PressableScale } from '../components/effects'
 import { TabIntro } from '../components/guide/TabIntro'
 import { ProUpgradeSheet } from '../components/pro/ProUpgrade'
 import { FREE_LIMITS, PRO_LIMITS } from '../lib/entitlements'
@@ -85,19 +85,19 @@ export const LeagueTab = memo(function LeagueTab({ authToken, refreshing, onOpen
 
       {/* 액션 */}
       <View style={[styles.card, { gap: 12 }]}>
+        <View style={{ gap: 3 }}>
+          <Text style={{ color: palette.ink, fontSize: 15, fontWeight: '900' }}>리그 시작하기</Text>
+          <Text style={{ color: palette.inkMuted, fontSize: 11.5 }}>새 경쟁을 만들거나 받은 코드로 바로 참가해요.</Text>
+        </View>
         {atLeagueLimit ? (
           <Text style={{ color: palette.inkMuted, fontSize: 11, fontWeight: '600' }}>
             무료는 진행 중 리그 {FREE_LIMITS.leagues}개까지예요 · PRO는 {PRO_LIMITS.leagues}개 💎
           </Text>
         ) : null}
-        <PressableScale onPress={handleCreate} accessibilityLabel="새 리그 만들기" style={{ borderRadius: 12, overflow: 'hidden' }}>
-          <View style={[
-            { paddingVertical: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 12, overflow: 'hidden' },
-            glow(palette.brandAccent, 12, 0.5),
-          ]}>
-            <GradientBackground colors={[{ offset: '0', color: palette.brandAccent }, { offset: '1', color: palette.blue }]} radius={12} x1="0" y1="0" x2="1" y2="0" />
-            <Plus size={15} color="#ffffff" strokeWidth={3} />
-            <Text style={{ color: '#ffffff', fontSize: 15, fontWeight: '900' }}>새 리그 만들기</Text>
+        <PressableScale onPress={handleCreate} accessibilityLabel="새 리그 만들기" style={{ borderRadius: 13, overflow: 'hidden' }}>
+          <View style={{ paddingVertical: 13, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 13, backgroundColor: palette.brandAccent }}>
+            <Plus size={15} color="#07150f" strokeWidth={3} />
+            <Text style={{ color: '#07150f', fontSize: 14, fontWeight: '900' }}>새 리그 만들기</Text>
           </View>
         </PressableScale>
 
@@ -114,8 +114,8 @@ export const LeagueTab = memo(function LeagueTab({ authToken, refreshing, onOpen
               onSubmitEditing={handleJoin}
               style={{
                 backgroundColor: palette.surfaceAlt, color: palette.ink,
-                borderWidth: 1, borderColor: palette.border, borderRadius: 8,
-                paddingHorizontal: 12, paddingVertical: 10,
+                borderWidth: 1, borderColor: palette.borderLight, borderRadius: 12,
+                paddingHorizontal: 13, paddingVertical: 11,
                 fontSize: 14, fontWeight: '700', letterSpacing: 2,
               }}
             />
@@ -126,12 +126,12 @@ export const LeagueTab = memo(function LeagueTab({ authToken, refreshing, onOpen
             accessibilityRole="button"
             accessibilityLabel="리그 참가"
             style={({ pressed }) => ({
-              backgroundColor: pressed ? palette.blue + 'cc' : palette.blue,
-              borderRadius: 8, paddingHorizontal: 16, paddingVertical: 10,
+              backgroundColor: pressed ? palette.inkSub : palette.ink,
+              borderRadius: 12, paddingHorizontal: 17, paddingVertical: 11,
               opacity: codeValid ? 1 : 0.5,
             })}
           >
-            <Text style={{ color: palette.bg, fontSize: 13, fontWeight: '800' }}>참가</Text>
+            <Text style={{ color: palette.surface, fontSize: 13, fontWeight: '900' }}>참가</Text>
           </Pressable>
         </View>
         <Text style={{ color: palette.inkFaint, fontSize: 11 }}>
@@ -199,20 +199,16 @@ function LeagueRow({ league, onPress }: { league: League; onPress: () => void })
     } catch { /* 취소 */ }
   }
 
-  const running = league.status === 'RUNNING'
   return (
     <PressableScale
       onPress={onPress}
       accessibilityLabel={`${league.name} 리그 열기`}
-      style={[
-        {
-          flexDirection: 'row', alignItems: 'center', gap: 10,
-          backgroundColor: palette.surfaceAlt, borderRadius: 12,
-          borderLeftWidth: 3, borderLeftColor: statusColor,
-          paddingVertical: 12, paddingHorizontal: 12, marginBottom: 8,
-        },
-        running ? glow(statusColor, 8, 0.32) : null,
-      ]}
+      style={{
+        flexDirection: 'row', alignItems: 'center', gap: 10,
+        backgroundColor: palette.surfaceAlt, borderRadius: 14,
+        borderWidth: 1, borderColor: palette.borderLight,
+        paddingVertical: 13, paddingHorizontal: 13, marginBottom: 8,
+      }}
     >
       <View style={{ width: 34, height: 34, borderRadius: 10, backgroundColor: statusColor + '22', alignItems: 'center', justifyContent: 'center' }}>
         <Trophy size={16} color={statusColor} strokeWidth={2.5} />
@@ -220,10 +216,7 @@ function LeagueRow({ league, onPress }: { league: League; onPress: () => void })
       <View style={{ flex: 1, gap: 3 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           <Text style={{ color: palette.ink, fontSize: 14, fontWeight: '800', flexShrink: 1, minWidth: 0 }} numberOfLines={1}>{league.name}</Text>
-          <View style={[
-            { backgroundColor: statusColor + '22', borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2, flexShrink: 0 },
-            running ? glow(statusColor, 6, 0.5) : null,
-          ]}>
+          <View style={{ backgroundColor: statusColor + '1c', borderRadius: 6, paddingHorizontal: 7, paddingVertical: 2, flexShrink: 0 }}>
             <Text style={{ color: statusColor, fontSize: 9, fontWeight: '900' }}>{leagueStatusLabel(league.status)}</Text>
           </View>
         </View>

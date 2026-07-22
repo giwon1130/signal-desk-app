@@ -113,7 +113,7 @@ export function AppGuideModal({ visible, onClose }: Props) {
               alignItems: 'center',
             })}
           >
-            <Text style={{ color: palette.bg, fontSize: 14, fontWeight: '800' }}>
+            <Text style={{ color: '#07150f', fontSize: 14, fontWeight: '900' }}>
               시작하기
             </Text>
           </Pressable>

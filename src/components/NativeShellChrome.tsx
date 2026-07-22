@@ -1,5 +1,5 @@
 import { Pressable, Text, View } from 'react-native'
-import { BarChart3, Bell, Bot, Megaphone, Settings as SettingsIcon, Sunrise, Trophy } from 'lucide-react-native'
+import { Activity, BarChart3, Bell, Bot, Megaphone, Settings as SettingsIcon, Sunrise, Trophy } from 'lucide-react-native'
 import { useStyles } from '../styles'
 import { useTheme } from '../theme'
 import type { MarketPreference } from '../api/alertPreferences'
@@ -39,17 +39,27 @@ export function NativeShellChrome({
       <View style={styles.headerWrap}>
         <View style={styles.headerGradient}>
           <View style={styles.headerTopRow}>
-            <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8, flexShrink: 1 }}>
-              <Text style={styles.headerTitle} numberOfLines={1}>투자 대시보드</Text>
-              <Text style={styles.brand}>SIGNAL</Text>
-            </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <View style={[styles.headerStatusPill, isUp ? styles.headerStatusPillUp : styles.headerStatusPillDown]}>
-                <View style={[styles.headerStatusDot, isUp ? styles.headerStatusDotUp : styles.headerStatusDotDown]} />
-                <Text style={[styles.headerStatusText, isUp ? styles.headerStatusTextUp : styles.headerStatusTextDown]}>
-                  {isUp ? 'LIVE' : 'OFF'}
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flexShrink: 1 }}>
+              <View style={{ width: 34, height: 34, borderRadius: 11, backgroundColor: palette.greenSoft, alignItems: 'center', justifyContent: 'center' }}>
+                <Activity size={18} color={palette.brandAccent} strokeWidth={2.8} />
+              </View>
+              <View style={{ gap: 1, flexShrink: 1 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}>
+                  <Text style={styles.headerTitle} numberOfLines={1}>Signal Desk</Text>
+                  <View style={[styles.headerStatusPill, isUp ? styles.headerStatusPillUp : styles.headerStatusPillDown]}>
+                    <View style={[styles.headerStatusDot, isUp ? styles.headerStatusDotUp : styles.headerStatusDotDown]} />
+                    <Text style={[styles.headerStatusText, isUp ? styles.headerStatusTextUp : styles.headerStatusTextDown]}>
+                      {isUp ? 'LIVE' : 'OFF'}
+                    </Text>
+                  </View>
+                </View>
+                <Text style={styles.headerSubtitle} numberOfLines={1}>
+                  {marketPreference === 'KR' ? '한국 시장' : marketPreference === 'US' ? '미국 시장' : '한국 · 미국 시장'}
+                  {lastSyncedAt ? `  ·  ${lastSyncedAt} 업데이트` : ''}
                 </Text>
               </View>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               {/* 최근 받은 알림 — 종 아이콘. 미수신 시에도 진입은 가능 */}
               <Pressable
                 onPress={onOpenAlerts}
@@ -57,32 +67,21 @@ export function NativeShellChrome({
                 accessibilityLabel="최근 받은 알림"
                 hitSlop={6}
               >
-                <Bell size={18} color={palette.orange ?? '#ea580c'} strokeWidth={2.4} />
+                <Bell size={17} color={palette.inkSub} strokeWidth={2.3} />
                 {unreadAlertCount > 0 ? (
                   <View style={styles.headerIconBadge}>
                     <Text style={styles.headerIconBadgeText}>{unreadAlertCount > 9 ? '9+' : unreadAlertCount}</Text>
                   </View>
                 ) : null}
               </Pressable>
-              {/* v2.2: 설정 진입 — 시장 선호도 여기로 이동. 잘 보이도록 라벨+테두리 강조 */}
               <Pressable
                 onPress={onOpenSettings}
                 style={({ pressed }) => [styles.themeToggleBtn, pressed && { opacity: 0.6 }]}
                 accessibilityLabel="설정"
               >
-                <SettingsIcon size={18} color={palette.blue} strokeWidth={2.4} />
-                <Text style={{ color: palette.blue, fontSize: 11, fontWeight: '800' }}>설정</Text>
+                <SettingsIcon size={17} color={palette.inkSub} strokeWidth={2.3} />
               </Pressable>
             </View>
-          </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 6, gap: 8 }}>
-            {/* v2.2: 시장 선호는 설정으로 이동 — 현재 선택만 작게 표시 */}
-            <Text style={[styles.headerSubtitle, { flexShrink: 0 }]}>
-              {marketPreference === 'KR' ? '🇰🇷 한국장' : marketPreference === 'US' ? '🇺🇸 미국장' : '🌐 한국·미국'}
-            </Text>
-            <Text style={[styles.headerSubtitle, { flexShrink: 1, textAlign: 'right' }]}>
-              {lastSyncedAt ? `${lastSyncedAt}` : '오늘 하루를 한 화면에서'}
-            </Text>
           </View>
         </View>
       </View>
@@ -98,8 +97,8 @@ export function NativeShellChrome({
               style={({ pressed }) => [styles.tabItem, active && styles.tabItemActive, pressed && styles.tabItemPressed]}
             >
               <Icon
-                size={20}
-                color={active ? palette.blue : palette.inkFaint}
+                size={19}
+                color={active ? palette.brandAccent : palette.inkFaint}
                 strokeWidth={active ? 2.5 : 1.8}
               />
               <Text style={[styles.tabLabel, active && styles.tabLabelActive]}>{label}</Text>

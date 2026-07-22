@@ -1,8 +1,8 @@
 // 도메인별 스타일에서 공용으로 쓰는 헬퍼.
 export const makeShadow = (color: string) => ({
-  sm: { shadowColor: color, shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 3,  elevation: 2 },
-  md: { shadowColor: color, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8,  elevation: 4 },
-  lg: { shadowColor: color, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.12, shadowRadius: 16, elevation: 6 },
+  sm: { shadowColor: color, shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.035, shadowRadius: 3,  elevation: 1 },
+  md: { shadowColor: color, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.055, shadowRadius: 10, elevation: 2 },
+  lg: { shadowColor: color, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.09, shadowRadius: 22, elevation: 4 },
 })
 
 // 숫자 정렬용 — 모든 숫자 표기에 동일 폭 글리프를 강제해서 가격이 흔들리지 않도록.

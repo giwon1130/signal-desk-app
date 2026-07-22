@@ -78,13 +78,15 @@ export function DiscoverLeadersModal({ visible, onClose, onOpenLeader, onSubscri
     <Modal visible={visible} animationType="slide" presentationStyle="fullScreen" onRequestClose={onClose}>
       <View style={{ flex: 1, backgroundColor: palette.bg, paddingTop: insets.top, paddingBottom: insets.bottom }}>
         <ModalHeader icon={Megaphone} title="리더 둘러보기" onClose={onClose} />
-        <ScrollView contentContainerStyle={{ padding: 14, gap: 10 }}>
-          <Text style={{ color: palette.inkMuted, fontSize: 12, lineHeight: 18 }}>
-            확정된 종목 콜의 결과와 표본 수를 함께 보고 구독해요.
-          </Text>
+        <ScrollView contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: 36 }}>
+          <View style={{ backgroundColor: palette.surfaceAlt, borderRadius: 14, paddingHorizontal: 13, paddingVertical: 11 }}>
+            <Text style={{ color: palette.inkMuted, fontSize: 12, lineHeight: 18 }}>
+              확정된 종목 콜의 결과와 표본 수를 함께 비교해요. 적중률만 높고 표본이 적은 리더는 순위에서 뒤로 배치합니다.
+            </Text>
+          </View>
           {/* 정렬 탭 — 성과 검증/구독자/누적 콜 순 */}
           {leaders.length > 1 ? (
-            <View style={{ flexDirection: 'row', gap: 6 }}>
+            <View style={{ flexDirection: 'row', gap: 4, backgroundColor: palette.surfaceAlt, borderRadius: 13, padding: 4 }}>
               {([['hit', '성과 확인순'], ['followers', '인기순'], ['calls', '콜 많은 순']] as const).map(([k, label]) => {
                 const active = sort === k
                 return (
@@ -92,12 +94,12 @@ export function DiscoverLeadersModal({ visible, onClose, onOpenLeader, onSubscri
                     key={k}
                     onPress={() => setSort(k)}
                     style={{
-                      paddingHorizontal: 11, paddingVertical: 6, borderRadius: 999,
-                      backgroundColor: active ? palette.brandAccent + '22' : 'transparent',
-                      borderWidth: 1, borderColor: active ? palette.brandAccent : palette.border,
+                      flex: 1, alignItems: 'center', paddingHorizontal: 7, paddingVertical: 8, borderRadius: 10,
+                      backgroundColor: active ? palette.surface : 'transparent',
+                      borderWidth: 1, borderColor: active ? palette.borderLight : 'transparent',
                     }}
                   >
-                    <Text style={{ fontSize: 11, fontWeight: '800', color: active ? palette.brandAccent : palette.inkMuted }}>{label}</Text>
+                    <Text style={{ fontSize: 11, fontWeight: active ? '900' : '700', color: active ? palette.ink : palette.inkMuted }}>{label}</Text>
                   </Pressable>
                 )
               })}
@@ -113,21 +115,26 @@ export function DiscoverLeadersModal({ visible, onClose, onOpenLeader, onSubscri
             </View>
           ) : (
             sortedLeaders.map((l) => (
-              <View key={l.userId} style={{ backgroundColor: palette.surface, borderRadius: 12, borderWidth: 1, borderColor: palette.border, padding: 14, gap: 8 }}>
+              <View key={l.userId} style={{ backgroundColor: palette.surface, borderRadius: 18, borderWidth: 1, borderColor: palette.borderLight, padding: 16, gap: 12 }}>
                 <Pressable onPress={() => onOpenLeader?.(l.userId)} style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1, gap: 3 })}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                    <Text style={{ color: palette.ink, fontSize: 15, fontWeight: '800', flex: 1 }} numberOfLines={1}>{l.displayName}</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                    <View style={{ width: 38, height: 38, borderRadius: 13, backgroundColor: l.isAi ? palette.purpleSoft : palette.greenSoft, alignItems: 'center', justifyContent: 'center' }}>
+                      <Text style={{ color: l.isAi ? palette.purple : palette.brandAccent, fontSize: 15, fontWeight: '900' }}>{l.displayName.slice(0, 1)}</Text>
+                    </View>
+                    <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
+                      <Text style={{ color: palette.ink, fontSize: 15, fontWeight: '900' }} numberOfLines={1}>{l.displayName}</Text>
+                      <Text style={{ color: palette.inkFaint, fontSize: 10.5, fontWeight: '700' }}>구독자 {l.followerCount}명 · 누적 콜 {l.totalCalls}건</Text>
+                    </View>
                     {l.isAi ? (
-                      <View style={{ backgroundColor: (palette.purple ?? '#7c3aed') + '22', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 1 }}>
-                        <Text style={{ color: palette.purple ?? '#7c3aed', fontSize: 9.5, fontWeight: '900' }}>AI · 💎 PRO</Text>
+                      <View style={{ backgroundColor: palette.purpleSoft, borderRadius: 7, paddingHorizontal: 7, paddingVertical: 3 }}>
+                        <Text style={{ color: palette.purple, fontSize: 9.5, fontWeight: '900' }}>AI · PRO</Text>
                       </View>
                     ) : null}
-                    <Text style={{ color: palette.inkFaint, fontSize: 10, fontWeight: '700' }}>구독 {l.followerCount}</Text>
                   </View>
-                  {l.bio ? <Text style={{ color: palette.inkMuted, fontSize: 12, lineHeight: 17 }} numberOfLines={2}>{l.bio}</Text> : null}
+                  {l.bio ? <Text style={{ color: palette.inkMuted, fontSize: 12, lineHeight: 18, marginTop: 7 }} numberOfLines={2}>{l.bio}</Text> : null}
                   {l.isAi && l.totalCalls === 0 ? (
-                    <View style={{ backgroundColor: (palette.purple ?? '#7c3aed') + '10', borderRadius: 10, padding: 11, gap: 2, marginTop: 3 }}>
-                      <Text style={{ color: palette.purple ?? '#7c3aed', fontSize: 12, fontWeight: '900' }}>AI 시황 리딩</Text>
+                    <View style={{ backgroundColor: palette.surfaceAlt, borderRadius: 12, padding: 12, gap: 2, marginTop: 7 }}>
+                      <Text style={{ color: palette.purple, fontSize: 12, fontWeight: '900' }}>AI 시황 리딩</Text>
                       <Text style={{ color: palette.inkMuted, fontSize: 10.5, lineHeight: 15 }}>종목 콜 대신 장 흐름과 주요 재료를 정리해요.</Text>
                     </View>
                   ) : (
@@ -138,16 +145,16 @@ export function DiscoverLeadersModal({ visible, onClose, onOpenLeader, onSubscri
                   onPress={() => void handleSubscribe(l)}
                   disabled={l.following || busyId === l.userId}
                   style={({ pressed }) => ({
-                    backgroundColor: l.following ? palette.surfaceAlt : (pressed ? palette.brandAccent + 'cc' : palette.brandAccent),
-                    borderRadius: 10, paddingVertical: 10, alignItems: 'center',
-                    borderWidth: l.following ? 1 : 0, borderColor: palette.border,
+                    backgroundColor: l.following ? palette.surfaceAlt : (pressed ? palette.green : palette.brandAccent),
+                    borderRadius: 12, paddingVertical: 11, alignItems: 'center',
+                    borderWidth: 1, borderColor: l.following ? palette.borderLight : palette.brandAccent,
                     opacity: busyId === l.userId ? 0.6 : 1,
                   })}
                 >
-                  <Text style={{ color: l.following ? palette.inkSub : palette.bg, fontSize: 13, fontWeight: '800' }}>
+                  <Text style={{ color: l.following ? palette.inkSub : '#07150f', fontSize: 13, fontWeight: '900' }}>
                     {busyId === l.userId ? '구독 중…'
                       : l.following ? '구독 중 ✓'
-                      : (l.isAi && !isPro) ? '💎 PRO로 구독'
+                      : (l.isAi && !isPro) ? 'PRO로 구독'
                       : '구독하기'}
                   </Text>
                 </Pressable>
@@ -166,20 +173,20 @@ function PerformanceSummary({ leader, palette }: { leader: LeaderCard; palette: 
   const comparable = leader.resolvedCalls >= MIN_COMPARABLE_CALLS
   if (!hasResolvedCalls) {
     return (
-      <View style={{ backgroundColor: palette.surfaceAlt, borderRadius: 10, padding: 11, gap: 2, marginTop: 3 }}>
+      <View style={{ backgroundColor: palette.surfaceAlt, borderRadius: 12, padding: 12, gap: 2, marginTop: 7 }}>
         <Text style={{ color: palette.inkSub, fontSize: 12, fontWeight: '800' }}>성과 집계 준비 중</Text>
         <Text style={{ color: palette.inkMuted, fontSize: 10.5, lineHeight: 15 }}>확정된 콜이 쌓이면 목표 달성률과 평균 수익률을 확인할 수 있어요.</Text>
       </View>
     )
   }
   return (
-    <View style={{ gap: 7, marginTop: 3 }}>
-      <View style={{ flexDirection: 'row', gap: 8 }}>
-        <View style={{ flex: 1, backgroundColor: palette.upSoft, borderRadius: 10, paddingHorizontal: 11, paddingVertical: 9, gap: 2 }}>
+    <View style={{ gap: 8, marginTop: 7 }}>
+      <View style={{ flexDirection: 'row', gap: 1, backgroundColor: palette.borderLight, borderRadius: 12, overflow: 'hidden' }}>
+        <View style={{ flex: 1, backgroundColor: palette.surfaceAlt, paddingHorizontal: 12, paddingVertical: 11, gap: 2 }}>
           <Text style={{ color: palette.inkMuted, fontSize: 9.5, fontWeight: '800' }}>목표 달성률 · 확정 {leader.resolvedCalls}건</Text>
           <Text style={{ color: palette.up, fontSize: 18, fontWeight: '900', fontVariant: ['tabular-nums'] }}>{Math.round(leader.hitRate * 100)}%</Text>
         </View>
-        <View style={{ flex: 1, backgroundColor: palette.surfaceAlt, borderRadius: 10, paddingHorizontal: 11, paddingVertical: 9, gap: 2 }}>
+        <View style={{ flex: 1, backgroundColor: palette.surfaceAlt, paddingHorizontal: 12, paddingVertical: 11, gap: 2 }}>
           <Text style={{ color: palette.inkMuted, fontSize: 9.5, fontWeight: '800' }}>평균 수익률</Text>
           <Text style={{ color: leader.avgReturnPct != null && leader.avgReturnPct < 0 ? palette.down : palette.up, fontSize: 18, fontWeight: '900', fontVariant: ['tabular-nums'] }}>
             {leader.avgReturnPct == null ? '—' : fmtPct(leader.avgReturnPct)}

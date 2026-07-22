@@ -136,7 +136,7 @@ export function JoinLeagueModal({ visible, code, onClose, onJoined, toast }: Pro
               opacity: canJoin ? 1 : 0.5,
             })}
           >
-            <Text style={{ color: palette.bg, fontSize: 15, fontWeight: '800' }}>
+            <Text style={{ color: '#07150f', fontSize: 15, fontWeight: '900' }}>
               {joining ? '참가 중…' : `${avatar} ${nickname.trim() || '닉네임'} 으로 참가`}
             </Text>
           </Pressable>

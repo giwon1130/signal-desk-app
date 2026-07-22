@@ -226,7 +226,7 @@ export function LeagueDetailModal({ visible, leagueId, myUserId, marketSessions,
                 borderRadius: 12, paddingVertical: 14, alignItems: 'center',
               })}
             >
-              <Text style={{ color: palette.bg, fontSize: 15, fontWeight: '900' }}>거래하기</Text>
+              <Text style={{ color: '#07150f', fontSize: 15, fontWeight: '900' }}>거래하기</Text>
             </Pressable>
           ) : league?.status === 'RUNNING' && !me && myUserId ? (
             <Text style={{ color: palette.inkFaint, fontSize: 11, textAlign: 'center' }}>내 정보 불러오는 중…</Text>

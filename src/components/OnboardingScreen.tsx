@@ -342,7 +342,7 @@ function Step4Seeds({ palette, pref, picked, busy, onToggle, onStartToday, onReg
                   borderWidth: 1, borderColor: on ? palette.brandAccent : palette.border,
                   alignItems: 'center', justifyContent: 'center',
                 }}>
-                  {on ? <Check size={14} color={palette.bg} strokeWidth={3} /> : null}
+                  {on ? <Check size={14} color="#07150f" strokeWidth={3} /> : null}
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={{ color: palette.ink, fontSize: 14, fontWeight: '800' }}>{s.name}</Text>
@@ -399,8 +399,8 @@ function PrimaryButton({ label, palette, onPress, disabled }: { label: string; p
         opacity: disabled ? 0.6 : 1,
       })}
     >
-      <Text style={{ color: palette.bg, fontSize: 15, fontWeight: '800' }}>{label}</Text>
-      {!disabled ? <ArrowRight size={16} color={palette.bg} strokeWidth={2.5} /> : null}
+      <Text style={{ color: disabled ? palette.inkMuted : '#07150f', fontSize: 15, fontWeight: '900' }}>{label}</Text>
+      {!disabled ? <ArrowRight size={16} color="#07150f" strokeWidth={2.5} /> : null}
     </Pressable>
   )
 }

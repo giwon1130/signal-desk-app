@@ -8,20 +8,20 @@ export function cardStyles(C: Palette): StyleObj {
   return {
     // ── Cards ───────────────────────────────────────────────────────────────────
     primaryCard: {
-      borderRadius: 18, backgroundColor: C.surface, borderWidth: 1, borderColor: C.border,
-      padding: 16, gap: 8, ...shadow.md,
+      borderRadius: 20, backgroundColor: C.surface, borderWidth: 1, borderColor: C.borderLight,
+      padding: 17, gap: 10, ...shadow.md,
     },
     card: {
-      borderRadius: 16, backgroundColor: C.surface, borderWidth: 1, borderColor: C.border,
-      padding: 14, gap: 10, ...shadow.sm,
+      borderRadius: 18, backgroundColor: C.surface, borderWidth: 1, borderColor: C.borderLight,
+      padding: 16, gap: 12, ...shadow.sm,
     },
     cardEyebrow: { color: C.blue, fontSize: 10, fontWeight: '800', letterSpacing: 1.2, textTransform: 'uppercase' },
-    cardTitle:   { color: C.ink, fontSize: 15, fontWeight: '800', letterSpacing: -0.2 },
+    cardTitle:   { color: C.ink, fontSize: 16, fontWeight: '900', letterSpacing: -0.3 },
 
     // ── Inputs ──────────────────────────────────────────────────────────────────
     searchInput: {
-      borderRadius: 12, borderWidth: 1, borderColor: C.border, backgroundColor: C.surfaceAlt,
-      paddingHorizontal: 14, paddingVertical: 11, color: C.ink, fontSize: 14,
+      borderRadius: 13, borderWidth: 1, borderColor: C.borderLight, backgroundColor: C.surfaceAlt,
+      paddingHorizontal: 14, paddingVertical: 12, color: C.ink, fontSize: 14,
     },
     noteInput: { minHeight: 88, textAlignVertical: 'top' },
 
@@ -37,12 +37,12 @@ export function cardStyles(C: Palette): StyleObj {
     cardSection: { gap: 10, marginTop: 6 },
     inlineButtonRow: { flexDirection: 'row', gap: 8 },
     primaryActionButton: {
-      flex: 1, borderRadius: 12, backgroundColor: C.ink, alignItems: 'center', justifyContent: 'center',
+      flex: 1, borderRadius: 13, backgroundColor: C.brandAccent, alignItems: 'center', justifyContent: 'center',
       paddingHorizontal: 14, paddingVertical: 13,
     },
-    primaryActionButtonText: { color: C.surface, fontSize: 14, fontWeight: '800' },
+    primaryActionButtonText: { color: '#07150f', fontSize: 14, fontWeight: '900' },
     secondaryActionButton: {
-      borderRadius: 12, borderWidth: 1.5, borderColor: C.border, backgroundColor: C.surface,
+      borderRadius: 13, borderWidth: 1, borderColor: C.borderLight, backgroundColor: C.surfaceAlt,
       alignItems: 'center', justifyContent: 'center', paddingHorizontal: 14, paddingVertical: 13,
     },
     secondaryActionButtonText: { color: C.inkSub, fontSize: 14, fontWeight: '700' },
@@ -108,7 +108,7 @@ export function cardStyles(C: Palette): StyleObj {
 
     // ── Summary Row ──────────────────────────────────────────────────────────────
     summaryRow: {
-      borderRadius: 12, borderWidth: 1, borderColor: C.border, padding: 12,
+      borderRadius: 14, borderWidth: 1, borderColor: C.borderLight, padding: 13,
       backgroundColor: C.surfaceAlt, flexDirection: 'row', justifyContent: 'space-between',
       alignItems: 'center', gap: 10,
     },
@@ -150,12 +150,12 @@ export function cardStyles(C: Palette): StyleObj {
     // ── Filter Chips ─────────────────────────────────────────────────────────────
     filterRow:        { flexDirection: 'row', gap: 6, marginTop: 4, marginBottom: 4, flexWrap: 'wrap' },
     filterChip: {
-      borderRadius: 999, borderWidth: 1.5, borderColor: C.border, backgroundColor: C.surface,
-      paddingHorizontal: 14, paddingVertical: 7,
+      borderRadius: 999, borderWidth: 1, borderColor: C.borderLight, backgroundColor: C.surface,
+      paddingHorizontal: 13, paddingVertical: 7,
     },
-    filterChipActive: { borderColor: C.ink, backgroundColor: C.ink },
+    filterChipActive: { borderColor: C.brandAccent, backgroundColor: C.greenSoft },
     filterText:       { color: C.inkSub, fontWeight: '700', fontSize: 12 },
-    filterTextActive: { color: C.surface },
+    filterTextActive: { color: C.green, fontWeight: '900' },
 
     // ── Index Chips ───────────────────────────────────────────────────────────────
     indexChipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },

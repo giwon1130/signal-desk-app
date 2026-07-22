@@ -46,87 +46,86 @@ export type Palette = {
   headerOnDark: string
 }
 
-// ─── v2 라이트 팔레트 ──────────────────────────────────────────────────────
-// "대시보드 프로" 라이트 변종 — 단단한 grey, contrast 강화. v1 보다 또렷.
+// ─── v3 라이트 팔레트 ──────────────────────────────────────────────────────
+// 차갑고 무거운 HTS 톤을 덜어낸 금융 앱 팔레트. 정보는 또렷하되 카드 경계는 조용하게.
 const light: Palette = {
   scheme: 'light',
-  bg: '#f5f7fa',
+  bg: '#f6f7f9',
   surface: '#ffffff',
-  surfaceAlt: '#f0f4f9',
-  border: '#d4dae3',
-  borderLight: '#e8edf3',
-  ink: '#0a0d12',
-  inkSub: '#3a4256',
-  inkMuted: '#5a6478',
-  inkFaint: '#8b95a8',
-  brand: '#0a0d12',
-  brandAccent: '#16a34a',
-  blue: '#2563eb',
-  blueSoft: '#dbeafe',
-  blueDark: '#1d4ed8',
-  teal: '#0d9488',
-  tealSoft: '#ccfbf1',
+  surfaceAlt: '#f1f3f6',
+  border: '#dde2e9',
+  borderLight: '#eaedf2',
+  ink: '#111827',
+  inkSub: '#374151',
+  inkMuted: '#6b7280',
+  inkFaint: '#9aa2af',
+  brand: '#111827',
+  brandAccent: '#16b979',
+  blue: '#3578e5',
+  blueSoft: '#eaf2ff',
+  blueDark: '#245fbd',
+  teal: '#0f9f8f',
+  tealSoft: '#e4f8f3',
   up: '#dc2626',
   upSoft: '#fee2e2',
   down: '#2563eb',
   downSoft: '#dbeafe',
-  green: '#16a34a',
-  greenSoft: '#dcfce7',
-  orange: '#d97706',
-  orangeSoft: '#fef3c7',
-  purple: '#7c3aed',
-  purpleSoft: '#ede9fe',
+  green: '#16a36a',
+  greenSoft: '#e5f7ee',
+  orange: '#c97a10',
+  orangeSoft: '#fff5df',
+  purple: '#7857d6',
+  purpleSoft: '#f0ecfb',
   red: '#dc2626',
   redSoft: '#fee2e2',
-  skeleton: '#e2e8f0',
-  toastSuccessBg: '#dcfce7',
+  skeleton: '#e8ebf0',
+  toastSuccessBg: '#e5f7ee',
   toastErrorBg: '#fee2e2',
   toastInfoBg: '#f1f5f9',
-  shadowColor: '#0a0d12',
-  headerSubtitle: '#93c5fd',
-  headerOnDark: '#f8fafc',
+  shadowColor: '#111827',
+  headerSubtitle: '#6b7280',
+  headerOnDark: '#111827',
 }
 
-// ─── v2 다크 팔레트 (기본) ─────────────────────────────────────────────────
-// "대시보드 프로" — Bloomberg/HTS 톤. 거의 검정 배경 + 푸른빛 grey + mint accent.
-// 야간 사용 (US 이브닝 브리프 06:30 KST, 미장 새벽 시간) 부담 최소화.
+// ─── v3 다크 팔레트 ─────────────────────────────────────────────────────────
+// 순검정 대신 청회색 레이어를 써서 긴 리포트와 야간 사용에서 눈의 피로를 줄인다.
 const dark: Palette = {
   scheme: 'dark',
-  bg: '#0a0d12',           // 거의 검정, 미세한 푸른빛
-  surface: '#131820',       // 카드 배경
-  surfaceAlt: '#1c2330',    // hover/active/입력 필드
-  border: '#2a3445',        // 단단한 grey — 카드 경계 또렷
-  borderLight: '#1f2632',
-  ink: '#e8eef5',           // 본문 — 순백 대비 약간 부드럽게
-  inkSub: '#c5cdd9',        // 부제 / 강조 안된 본문
-  inkMuted: '#8b95a8',      // 메타 / 보조
-  inkFaint: '#5a6478',      // 미세 텍스트 / disabled
-  brand: '#0a0d12',         // flat — bg 와 동일
-  brandAccent: '#4ade80',   // mint — accent (US 상승)
-  blue: '#60a5fa',
-  blueSoft: '#1e3a5f',
-  blueDark: '#3b82f6',
-  teal: '#5eead4',
-  tealSoft: '#0f3530',
+  bg: '#080c12',
+  surface: '#10161f',
+  surfaceAlt: '#171f2b',
+  border: '#283344',
+  borderLight: '#1c2633',
+  ink: '#f2f5f9',
+  inkSub: '#cbd2dc',
+  inkMuted: '#8591a3',
+  inkFaint: '#596577',
+  brand: '#10161f',
+  brandAccent: '#35d690',
+  blue: '#6aa8ff',
+  blueSoft: '#182c47',
+  blueDark: '#4d8fe8',
+  teal: '#5bd6c2',
+  tealSoft: '#12342f',
   up: '#f87171',            // KR 상승 = 빨강
   upSoft: '#3a0e0e',
   down: '#60a5fa',          // KR 하락 = 파랑
   downSoft: '#1e3a5f',
-  green: '#4ade80',         // US 상승 = 민트
-  greenSoft: '#0f3520',
-  orange: '#fbbf24',
-  orangeSoft: '#3a2a0e',
-  purple: '#c084fc',        // AI 강조
-  purpleSoft: '#2d1b69',
+  green: '#35d690',
+  greenSoft: '#113424',
+  orange: '#f5b94c',
+  orangeSoft: '#38290f',
+  purple: '#b89cf5',
+  purpleSoft: '#292041',
   red: '#f87171',
   redSoft: '#3a0e0e',
-  skeleton: '#1c2330',
-  toastSuccessBg: '#0f3520',
+  skeleton: '#171f2b',
+  toastSuccessBg: '#113424',
   toastErrorBg: '#3a0e0e',
-  toastInfoBg: '#1c2330',
+  toastInfoBg: '#171f2b',
   shadowColor: '#000000',
-  headerSubtitle: '#93c5fd',
-  headerOnDark: '#f8fafc',
+  headerSubtitle: '#8591a3',
+  headerOnDark: '#f2f5f9',
 }
 
 export const PALETTES = { light, dark }

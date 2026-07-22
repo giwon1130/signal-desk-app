@@ -53,7 +53,7 @@ export const AITab = memo(function AITab({
     <>
     <ScrollView
       style={{ flex: 1, backgroundColor: palette.bg }}
-      contentContainerStyle={{ padding: 14, gap: 14, paddingBottom: 32 }}
+      contentContainerStyle={{ padding: 16, gap: 14, paddingBottom: 40 }}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.inkMuted} />}
     >
       {/* 탭 인트로 — 컴팩트 타이틀, 처음 몇 번만 펼친 설명 */}
@@ -71,17 +71,20 @@ export const AITab = memo(function AITab({
         onPress={onOpenAssistant}
         style={({ pressed }) => ({
           flexDirection: 'row', alignItems: 'center', gap: 10,
-          backgroundColor: palette.blueSoft ?? palette.surfaceAlt,
-          borderRadius: 12, paddingHorizontal: 14, paddingVertical: 13,
+          backgroundColor: palette.scheme === 'dark' ? palette.surfaceAlt : palette.ink,
+          borderWidth: 1, borderColor: palette.scheme === 'dark' ? palette.borderLight : palette.ink,
+          borderRadius: 16, paddingHorizontal: 15, paddingVertical: 15,
           opacity: pressed ? 0.8 : 1,
         })}
       >
-        <Sparkles size={18} color={palette.blue} strokeWidth={2.4} />
-        <View style={{ flex: 1 }}>
-          <Text style={{ color: palette.ink, fontSize: 14, fontWeight: '800' }}>시데 AI에게 물어보기</Text>
-          <Text style={{ color: palette.inkMuted, fontSize: 11 }}>내 보유·관심 종목과 오늘 시장을 알고 답하는 비서</Text>
+        <View style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: palette.brandAccent, alignItems: 'center', justifyContent: 'center' }}>
+          <Sparkles size={18} color="#07150f" strokeWidth={2.5} />
         </View>
-        <ChevronRight size={18} color={palette.inkFaint} strokeWidth={2.4} />
+        <View style={{ flex: 1 }}>
+          <Text style={{ color: palette.scheme === 'dark' ? palette.ink : '#ffffff', fontSize: 14, fontWeight: '900' }}>시데 AI에게 물어보기</Text>
+          <Text style={{ color: palette.scheme === 'dark' ? palette.inkMuted : '#aeb8c7', fontSize: 11, marginTop: 2 }}>내 종목과 오늘 시장을 이어서 답해요</Text>
+        </View>
+        <ChevronRight size={18} color={palette.scheme === 'dark' ? palette.inkMuted : '#aeb8c7'} strokeWidth={2.4} />
       </Pressable>
 
       {/* ── 시즌 규칙 · 섹터 로테이션 — 보조 도구는 칩 2개로 압축(본문이 폴드 아래로 안 밀리게) ── */}
@@ -90,12 +93,14 @@ export const AITab = memo(function AITab({
           onPress={() => setRulesOpen(true)}
           style={({ pressed }) => ({
             flex: 1, flexDirection: 'row', alignItems: 'center', gap: 7,
-            backgroundColor: palette.purpleSoft ?? palette.surfaceAlt,
-            borderRadius: 12, paddingHorizontal: 12, paddingVertical: 11,
+            backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.borderLight,
+            borderRadius: 14, paddingHorizontal: 12, paddingVertical: 12,
             opacity: pressed ? 0.8 : 1,
           })}
         >
-          <CalendarRange size={16} color={palette.purple ?? '#7c3aed'} strokeWidth={2.4} />
+          <View style={{ width: 28, height: 28, borderRadius: 9, backgroundColor: palette.purpleSoft, alignItems: 'center', justifyContent: 'center' }}>
+            <CalendarRange size={15} color={palette.purple} strokeWidth={2.4} />
+          </View>
           <Text style={{ color: palette.ink, fontSize: 12.5, fontWeight: '800', flex: 1 }} numberOfLines={1}>내 시즌 규칙</Text>
           {rulesCount ? (
             <View style={{ backgroundColor: palette.purple ?? '#7c3aed', borderRadius: 9, minWidth: 18, paddingHorizontal: 5, paddingVertical: 1, alignItems: 'center' }}>
@@ -107,12 +112,14 @@ export const AITab = memo(function AITab({
           onPress={() => setSectorOpen(true)}
           style={({ pressed }) => ({
             flex: 1, flexDirection: 'row', alignItems: 'center', gap: 7,
-            backgroundColor: palette.tealSoft ?? palette.surfaceAlt,
-            borderRadius: 12, paddingHorizontal: 12, paddingVertical: 11,
+            backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.borderLight,
+            borderRadius: 14, paddingHorizontal: 12, paddingVertical: 12,
             opacity: pressed ? 0.8 : 1,
           })}
         >
-          <Layers size={16} color={palette.teal ?? '#0d9488'} strokeWidth={2.4} />
+          <View style={{ width: 28, height: 28, borderRadius: 9, backgroundColor: palette.tealSoft, alignItems: 'center', justifyContent: 'center' }}>
+            <Layers size={15} color={palette.teal} strokeWidth={2.4} />
+          </View>
           <Text style={{ color: palette.ink, fontSize: 12.5, fontWeight: '800', flex: 1 }} numberOfLines={1}>섹터 로테이션</Text>
         </Pressable>
       </View>

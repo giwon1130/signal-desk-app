@@ -282,7 +282,7 @@ export function CreateLeagueModal({ visible, onClose, onCreated, toast }: Props)
               opacity: valid ? 1 : 0.5,
             })}
           >
-            <Text style={{ color: palette.bg, fontSize: 15, fontWeight: '800' }}>
+            <Text style={{ color: '#07150f', fontSize: 15, fontWeight: '900' }}>
               {busy ? '만드는 중…' : startMode === 'NOW' ? '리그 만들기 + 바로 시작' : '리그 만들기 + 모집 시작'}
             </Text>
           </Pressable>

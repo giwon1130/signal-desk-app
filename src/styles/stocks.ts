@@ -9,8 +9,8 @@ export function stocksStyles(C: Palette): StyleObj {
     // ── Stock Results ────────────────────────────────────────────────────────────
     stockResultRow: { gap: 8 },
     stockResultCard: {
-      borderRadius: 14, borderWidth: 1, borderColor: C.border, backgroundColor: C.surfaceAlt,
-      padding: 12, gap: 6, ...shadow.sm,
+      borderRadius: 15, borderWidth: 1, borderColor: C.borderLight, backgroundColor: C.surfaceAlt,
+      padding: 13, gap: 7,
     },
     stockResultCardActive: {
       borderColor: C.teal,

@@ -40,13 +40,13 @@ export function IndexPulse({ sections, marketPreference, onPress }: Props) {
       accessibilityRole={onPress ? 'button' : undefined}
       style={{
         flexDirection: 'row', alignItems: 'center', gap: 8,
-        paddingHorizontal: 16, paddingVertical: 7,
-        borderTopWidth: 1, borderTopColor: palette.border,
-        backgroundColor: palette.surface,
+        paddingHorizontal: 16, paddingVertical: 6,
+        borderTopWidth: 1, borderTopColor: palette.borderLight,
+        backgroundColor: palette.bg,
       }}
     >
       <Activity size={13} color={palette.inkMuted} strokeWidth={2.5} />
-      <Text style={{ color: palette.inkMuted, fontSize: 11, fontWeight: '800', letterSpacing: 0.5 }}>지수</Text>
+      <Text style={{ color: palette.inkMuted, fontSize: 10, fontWeight: '800', letterSpacing: 0.4 }}>MARKET</Text>
       <View style={{ flex: 1 }} />
       <Animated.View style={{ opacity, flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
         <Text style={{ color: palette.ink, fontSize: 12, fontWeight: '800' }}>{cur.label}</Text>
