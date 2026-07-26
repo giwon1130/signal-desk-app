@@ -136,6 +136,33 @@ export async function savePortfolioPosition(payload: {
   }
 }
 
+export type PortfolioImportPosition = {
+  market: string
+  ticker: string
+  name: string
+  buyPrice: number
+  currentPrice: number
+  quantity: number
+}
+
+export async function importPortfolioPositions(positions: PortfolioImportPosition[]): Promise<void> {
+  const response = await authedFetch(`${API_BASE_URL}/api/v1/workspace/portfolio/import`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      positions: positions.map((position) => ({
+        ...position,
+        buyPrice: Math.max(1, Math.round(position.buyPrice)),
+        currentPrice: Math.max(1, Math.round(position.currentPrice)),
+        quantity: Math.max(1, Math.round(position.quantity)),
+      })),
+    }),
+  })
+  if (!response.ok) {
+    throw new Error((await response.text()) || 'import-portfolio-failed')
+  }
+}
+
 export async function deletePortfolioPosition(id: string): Promise<void> {
   const response = await authedFetch(`${API_BASE_URL}/api/v1/workspace/portfolio/${id}`, {
     method: 'DELETE',

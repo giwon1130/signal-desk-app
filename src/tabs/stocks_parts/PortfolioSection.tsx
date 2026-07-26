@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { Pressable, Text, View } from 'react-native'
-import { Briefcase, Radio } from 'lucide-react-native'
+import { Briefcase, Images, Radio } from 'lucide-react-native'
 import { useStyles } from '../../styles'
 import { marketColor, useTheme } from '../../theme'
 import type { PortfolioSummary } from '../../types'
@@ -14,9 +14,10 @@ type Props = {
   portfolio: PortfolioSummary | null
   liveOf: LiveOf
   onOpenDetail: (market: string, ticker: string, name?: string) => void
+  onImportPress: () => void
 }
 
-export function PortfolioSection({ portfolio, liveOf, onOpenDetail }: Props) {
+export function PortfolioSection({ portfolio, liveOf, onOpenDetail, onImportPress }: Props) {
   const styles = useStyles()
   const { palette } = useTheme()
   const positions = portfolio?.positions ?? []
@@ -42,6 +43,19 @@ export function PortfolioSection({ portfolio, liveOf, onOpenDetail }: Props) {
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <Text style={styles.metaText}>{positions.length}개</Text>
+          <Pressable
+            onPress={onImportPress}
+            accessibilityRole="button"
+            accessibilityLabel="캡처로 보유 종목 등록"
+            hitSlop={8}
+            style={({ pressed }) => ({
+              flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 5,
+              borderRadius: 8, backgroundColor: `${palette.brandAccent}15`, opacity: pressed ? 0.65 : 1,
+            })}
+          >
+            <Images size={12} color={palette.brandAccent} strokeWidth={2.5} />
+            <Text style={{ color: palette.brandAccent, fontSize: 10, fontWeight: '900' }}>캡처 등록</Text>
+          </Pressable>
           {positions.length > 0 ? (
             <Text style={[styles.metaText, {
               color: totals.profit >= 0 ? palette.up : palette.down,
@@ -97,8 +111,17 @@ export function PortfolioSection({ portfolio, liveOf, onOpenDetail }: Props) {
             보유 중인 종목이 없어
           </Text>
           <Text style={{ color: palette.inkFaint, fontSize: 11, textAlign: 'center' }}>
-            종목 상세에서 매수가 · 수량 입력해 등록
+            증권앱 잔고 캡처 한 장으로 한 번에 등록할 수 있어
           </Text>
+          <Pressable
+            onPress={onImportPress}
+            style={({ pressed }) => ({
+              marginTop: 3, paddingHorizontal: 14, paddingVertical: 9, borderRadius: 9,
+              backgroundColor: `${palette.brandAccent}18`, opacity: pressed ? 0.65 : 1,
+            })}
+          >
+            <Text style={{ color: palette.brandAccent, fontSize: 11, fontWeight: '900' }}>캡처에서 가져오기</Text>
+          </Pressable>
         </View>
       )}
     </View>

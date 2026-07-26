@@ -17,6 +17,7 @@ import { PortfolioSection } from './stocks_parts/PortfolioSection'
 import { StockSearchSection } from './stocks_parts/StockSearchSection'
 import { WatchlistSection } from './stocks_parts/WatchlistSection'
 import { DisclosureCard } from './today_parts/DisclosureCard'
+import { PortfolioImportModal } from '../components/PortfolioImportModal'
 import {
   WorkspaceFilterBar,
   type WorkspaceMarketFilter,
@@ -72,6 +73,7 @@ export const StocksTab = memo(function StocksTab({
   // v2: 보유/관심 공통 정렬·필터 (Spec 결정 6)
   const [sortKey, setSortKey] = useState<WorkspaceSortKey>('added')
   const [marketFilter, setMarketFilter] = useState<WorkspaceMarketFilter>('ALL')
+  const [importVisible, setImportVisible] = useState(false)
 
   // KR 종목 라이브 시세는 검색결과/관심/보유 어디 등장하든 한 번에 fetch.
   const liveTickers = useMemo(() => {
@@ -150,6 +152,7 @@ export const StocksTab = memo(function StocksTab({
   }
 
   return (
+    <>
     <ScrollView
       ref={scrollRef}
       style={styles.scroll}
@@ -192,6 +195,7 @@ export const StocksTab = memo(function StocksTab({
         portfolio={sortedPortfolio}
         liveOf={liveOf}
         onOpenDetail={onOpenDetail}
+        onImportPress={() => setImportVisible(true)}
       />
       <WatchlistSection
         watchlist={sortedWatchlist}
@@ -207,5 +211,11 @@ export const StocksTab = memo(function StocksTab({
       {/* ── 보유/관심 종목 공시 (DART) — 오늘 탭에서 이동 ── */}
       <DisclosureCard disclosures={disclosures} onOpenDetail={onOpenDetail} />
     </ScrollView>
+    <PortfolioImportModal
+      visible={importVisible}
+      onClose={() => setImportVisible(false)}
+      onImported={onRefresh}
+    />
+    </>
   )
 })

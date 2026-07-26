@@ -2,7 +2,7 @@
   "expo": {
     "name": "signal-desk-app",
     "slug": "signal-desk-app",
-    "version": "1.0.6",
+    "version": "1.0.7",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -64,6 +64,13 @@
     "plugins": [
       "expo-web-browser",
       "expo-apple-authentication",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "보유 종목을 자동 등록할 증권앱 화면을 선택할 때 사용합니다.",
+          "microphonePermission": false
+        }
+      ],
       [
         "expo-notifications",
         {
