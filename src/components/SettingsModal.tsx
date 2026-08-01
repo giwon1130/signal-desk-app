@@ -18,6 +18,7 @@ import { ModalHeader } from './ModalHeader'
 import { MarketPreferencePicker } from './reminder_parts/MarketPreferencePicker'
 import { fetchMyPlanRequest, requestPro, type PlanRequestStatus } from '../api/plan'
 import { PRO_BENEFITS } from '../lib/entitlements'
+import { TraderConnectionSection } from './trader/TraderConnectionSection'
 
 type ThemeMode = 'system' | 'light' | 'dark'
 
@@ -69,6 +70,9 @@ export function SettingsModal({
 
           {/* 플랜 — PRO 신청 (결제 전 수동 승인 퍼널) */}
           {user && authToken ? <PlanSection plan={user.plan ?? 'FREE'} palette={palette} /> : null}
+
+          {/* 개인 trader — 토스 자격증명 없이 읽기 전용 상태만 연결 */}
+          {user && authToken ? <TraderConnectionSection active={visible} palette={palette} /> : null}
 
           {/* 시장 선호 — 헤더 칩과 동기 (둘 다에서 변경 가능) */}
           <Section title="시장 선호" palette={palette}>
