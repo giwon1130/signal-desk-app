@@ -19,6 +19,27 @@ export type AiPick = {
   riskNote: string
   changeRate?: number | null   // 후보의 당일 등락률 (근거 노출)
   flowTag?: string | null       // 수급 태그 (외인/기관 순매수)
+  /** 실제 주문이 아닌 검토용 계획. 가격 데이터가 없으면 null. */
+  tradePlan?: TradePlan | null
+}
+
+export type TradePlanRiskLevel = 'LOW' | 'MEDIUM' | 'HIGH'
+
+export type TradePlan = {
+  proposalId: string
+  side: 'BUY'
+  orderType: 'LIMIT'
+  currency: 'KRW' | 'USD'
+  referencePrice: number
+  entryLimitPrice: number
+  stopLossPrice: number
+  takeProfitPrice: number
+  riskLevel: TradePlanRiskLevel
+  maxPositionPercent: number
+  expiresAt: string
+  guardrails: string[]
+  /** 공개 앱에서는 항상 false. 실제 실행은 개인용 trader가 별도 검증한다. */
+  executable: boolean
 }
 
 export type AiPicksData = {
