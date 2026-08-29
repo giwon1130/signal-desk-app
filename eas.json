@@ -17,6 +17,9 @@
     "production": {
       "autoIncrement": true,
       "channel": "production",
+      "env": {
+        "ENTRY_FILE": "./index.ts"
+      },
       "ios": { "resourceClass": "m-medium" }
     },
     "production-v2": {
