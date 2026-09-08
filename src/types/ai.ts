@@ -21,6 +21,16 @@ export type AiPick = {
   flowTag?: string | null       // 수급 태그 (외인/기관 순매수)
   /** 실제 주문이 아닌 검토용 계획. 가격 데이터가 없으면 null. */
   tradePlan?: TradePlan | null
+  assessment?: PickAssessment | null
+}
+
+export type PickDecision = 'REVIEW' | 'WATCH' | 'AVOID' | 'INSUFFICIENT_DATA'
+
+export type PickAssessment = {
+  decision: PickDecision
+  reasons: string[]
+  blockers: string[]
+  rulesVersion: string
 }
 
 export type TradePlanRiskLevel = 'LOW' | 'MEDIUM' | 'HIGH'

@@ -11,17 +11,17 @@ export function Card({
   return (
     <View style={{
       backgroundColor: palette.surface,
-      borderRadius: 12,
+      borderRadius: 22,
       borderWidth: 1,
-      borderColor: palette.border,
-      padding: 14,
+      borderColor: palette.borderLight,
+      padding: 18,
     }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16 }}>
         {icon}
-        <Text style={{ flex: 1, color: palette.ink, fontSize: 13, fontWeight: '800' }} numberOfLines={1}>{title}</Text>
+        <Text style={{ flex: 1, color: palette.ink, fontSize: 17, fontWeight: '800' }} numberOfLines={1}>{title}</Text>
         {meta ? (
           typeof meta === 'string'
-            ? <Text style={{ color: palette.inkMuted, fontSize: 11, fontWeight: '600' }}>{meta}</Text>
+            ? <Text style={{ color: palette.inkMuted, fontSize: 12, fontWeight: '600' }}>{meta}</Text>
             : meta
         ) : null}
       </View>

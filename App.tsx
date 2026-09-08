@@ -675,7 +675,7 @@ function AppShell() {
   // ── 네이티브 ── (기존 헤더 + 탭바 셸)
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar style={isDark ? 'light' : 'light'} />
+      <StatusBar style={isDark ? 'light' : 'dark'} />
 
       {/* ── 헤더 + 탭 바 (네이티브 셸 크롬) ── */}
       <NativeShellChrome
@@ -707,6 +707,18 @@ function AppShell() {
         moverReasons={moverReasons}
         onOpenDetail={handleOpenDetail}
         onClose={() => setIndexDetail(null)}
+      />
+
+      <NativeShellChrome
+        placement="navigation"
+        isUp={isUp}
+        lastSyncedAt={lastSyncedAt}
+        marketPreference={marketPreference}
+        unreadAlertCount={alerts.unreadAlertCount}
+        activeTab={activeTab}
+        onOpenAlerts={alerts.handleOpenAlerts}
+        onOpenSettings={() => { void hapticLight(); setSettingsOpen(true) }}
+        onTabChange={handleTabChange}
       />
 
       {user && activeTab !== 'ai' ? <AssistantFab onPress={handleOpenAssistant} /> : null}

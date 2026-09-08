@@ -1,6 +1,5 @@
 import { Pressable, Text, View } from 'react-native'
 import { ChevronDown, ClipboardCheck, Moon, Radar } from 'lucide-react-native'
-import { useTheme } from '../../theme'
 import type { MarketSessionStatus } from '../../types'
 
 export type TodayFocusTarget = 'portfolio' | 'watch' | 'mood' | 'news' | 'premarket' | 'brief'
@@ -28,20 +27,19 @@ type Focus = {
  * 버튼은 같은 화면의 관련 섹션으로 이동한다.
  */
 export function TodayFocusCard({ sessions, positionsCount, alertCount, isPremarketWindow, hasBrief, onOpenSection }: Props) {
-  const { palette } = useTheme()
   const focus = buildFocus({ sessions, positionsCount, alertCount, isPremarketWindow, hasBrief })
-  const accent = focus.tone === 'premarket' ? (palette.purple ?? '#7c3aed') : focus.tone === 'regular' ? palette.brandAccent : palette.blue
+  const accent = '#85ead0'
   const Icon = focus.tone === 'premarket' ? Moon : focus.tone === 'regular' ? Radar : ClipboardCheck
 
   return (
-    <View style={{ backgroundColor: palette.surface, borderRadius: 16, borderWidth: 1, borderColor: accent + '66', padding: 14, gap: 9 }}>
+    <View style={{ backgroundColor: '#153c40', borderRadius: 24, padding: 22, gap: 18, overflow: 'hidden' }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-        <Icon size={14} color={accent} strokeWidth={2.6} />
-        <Text style={{ color: accent, fontSize: 11, fontWeight: '900', letterSpacing: 0.3 }}>지금 할 일 · {focus.label}</Text>
+        <Icon size={17} color={accent} strokeWidth={2.3} />
+        <Text style={{ color: accent, fontSize: 12, fontWeight: '700', letterSpacing: 0.3 }}>지금 할 일 · {focus.label}</Text>
       </View>
-      <View style={{ gap: 3 }}>
-        <Text style={{ color: palette.ink, fontSize: 16, fontWeight: '900' }}>{focus.title}</Text>
-        <Text style={{ color: palette.inkMuted, fontSize: 12, lineHeight: 18 }}>{focus.description}</Text>
+      <View style={{ gap: 10 }}>
+        <Text style={{ color: '#ffffff', fontSize: 23, lineHeight: 32, fontWeight: '800', letterSpacing: -0.7 }}>{focus.title}</Text>
+        <Text style={{ color: '#bed4d5', fontSize: 13, lineHeight: 21 }}>{focus.description}</Text>
       </View>
       <Pressable
         onPress={() => onOpenSection(focus.target)}
@@ -49,12 +47,12 @@ export function TodayFocusCard({ sessions, positionsCount, alertCount, isPremark
         accessibilityLabel={focus.action}
         style={({ pressed }) => ({
           alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 4,
-          backgroundColor: pressed ? accent + '16' : accent + '0d', borderRadius: 8,
-          paddingHorizontal: 10, paddingVertical: 7,
+          backgroundColor: pressed ? '#a1f0da' : accent, borderRadius: 12,
+          paddingHorizontal: 14, paddingVertical: 12, minHeight: 44,
         })}
       >
-        <Text style={{ color: accent, fontSize: 12, fontWeight: '800' }}>{focus.action}</Text>
-        <ChevronDown size={13} color={accent} strokeWidth={2.8} />
+        <Text style={{ color: '#153c40', fontSize: 13, fontWeight: '800' }}>{focus.action}</Text>
+        <ChevronDown size={15} color="#153c40" strokeWidth={2.8} />
       </Pressable>
     </View>
   )
@@ -73,7 +71,7 @@ function buildFocus({ sessions, positionsCount, alertCount, isPremarketWindow, h
     if (positionsCount > 0) {
       return {
         label: '장중', title: '보유 종목 변동부터 확인해',
-        description: `보유 ${positionsCount}개 중 손익 변동이 큰 종목을 먼저 점검해봐. 관심 시그널은 ${alertCount}건이야.`,
+        description: `보유 ${positionsCount}개의 목표가·손절가 도달 여부를 먼저 점검해봐. 관심 시그널은 ${alertCount}건이야.`,
         action: '보유 종목 모니터 보기', target: 'portfolio', tone: 'regular',
       }
     }

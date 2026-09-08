@@ -12,11 +12,11 @@ export function cardStyles(C: Palette): StyleObj {
       padding: 17, gap: 10, ...shadow.md,
     },
     card: {
-      borderRadius: 18, backgroundColor: C.surface, borderWidth: 1, borderColor: C.borderLight,
-      padding: 16, gap: 12, ...shadow.sm,
+      borderRadius: 22, backgroundColor: C.surface, borderWidth: 1, borderColor: C.borderLight,
+      padding: 18, gap: 16, ...shadow.sm,
     },
     cardEyebrow: { color: C.blue, fontSize: 10, fontWeight: '800', letterSpacing: 1.2, textTransform: 'uppercase' },
-    cardTitle:   { color: C.ink, fontSize: 16, fontWeight: '900', letterSpacing: -0.3 },
+    cardTitle:   { color: C.ink, fontSize: 17, fontWeight: '800', letterSpacing: -0.3 },
 
     // ── Inputs ──────────────────────────────────────────────────────────────────
     searchInput: {
@@ -40,7 +40,7 @@ export function cardStyles(C: Palette): StyleObj {
       flex: 1, borderRadius: 13, backgroundColor: C.brandAccent, alignItems: 'center', justifyContent: 'center',
       paddingHorizontal: 14, paddingVertical: 13,
     },
-    primaryActionButtonText: { color: '#07150f', fontSize: 14, fontWeight: '900' },
+    primaryActionButtonText: { color: '#07150f', fontSize: 14, fontWeight: '800' },
     secondaryActionButton: {
       borderRadius: 13, borderWidth: 1, borderColor: C.borderLight, backgroundColor: C.surfaceAlt,
       alignItems: 'center', justifyContent: 'center', paddingHorizontal: 14, paddingVertical: 13,
@@ -151,7 +151,7 @@ export function cardStyles(C: Palette): StyleObj {
     filterRow:        { flexDirection: 'row', gap: 6, marginTop: 4, marginBottom: 4, flexWrap: 'wrap' },
     filterChip: {
       borderRadius: 999, borderWidth: 1, borderColor: C.borderLight, backgroundColor: C.surface,
-      paddingHorizontal: 13, paddingVertical: 7,
+      paddingHorizontal: 14, paddingVertical: 11, minHeight: 44, justifyContent: 'center',
     },
     filterChipActive: { borderColor: C.brandAccent, backgroundColor: C.greenSoft },
     filterText:       { color: C.inkSub, fontWeight: '700', fontSize: 12 },

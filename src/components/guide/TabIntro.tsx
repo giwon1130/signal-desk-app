@@ -25,7 +25,7 @@ type Props = {
   autoExpandTimes?: number
 }
 
-export function TabIntro({ tabKey, icon: Icon, title, tagline, description, accent, autoExpandTimes = 2 }: Props) {
+export function TabIntro({ tabKey, title, tagline, description, accent, autoExpandTimes = 2 }: Props) {
   const { palette } = useTheme()
   const [expanded, setExpanded] = useState(false)
   const storeKey = `signal:tabintro:${tabKey}`
@@ -48,23 +48,20 @@ export function TabIntro({ tabKey, icon: Icon, title, tagline, description, acce
     <View style={{
       backgroundColor: expanded ? palette.surface : 'transparent',
       borderWidth: expanded ? 1 : 0, borderColor: palette.borderLight,
-      borderRadius: 16, paddingHorizontal: expanded ? 14 : 2, paddingVertical: expanded ? 13 : 2,
+      borderRadius: 22, paddingHorizontal: expanded ? 18 : 0, paddingVertical: expanded ? 18 : 8,
       gap: expanded ? 10 : 0,
     }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        <View style={{ width: 34, height: 34, borderRadius: 11, backgroundColor: accent + '18', alignItems: 'center', justifyContent: 'center' }}>
-          <Icon size={17} color={accent} strokeWidth={2.5} />
-        </View>
-        <View style={{ flex: 1, minWidth: 0, gap: 1 }}>
-          <Text style={{ color: palette.ink, fontSize: 18, fontWeight: '900', letterSpacing: -0.4 }}>{title}</Text>
-          <Text style={{ color: palette.inkMuted, fontSize: 11.5 }} numberOfLines={1}>{tagline}</Text>
+        <View style={{ flex: 1, minWidth: 0, gap: 6 }}>
+          <Text style={{ color: palette.ink, fontSize: 28, fontWeight: '800', letterSpacing: -1 }}>{title}</Text>
+          <Text style={{ color: palette.inkMuted, fontSize: 13, lineHeight: 19 }}>{tagline}</Text>
         </View>
         {expanded ? (
-          <Pressable onPress={() => setExpanded(false)} hitSlop={8} accessibilityLabel="설명 접기">
+          <Pressable onPress={() => setExpanded(false)} accessibilityRole="button" accessibilityLabel="설명 접기" style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
             <X size={16} color={palette.inkMuted} strokeWidth={2.4} />
           </Pressable>
         ) : (
-          <Pressable onPress={() => setExpanded(true)} hitSlop={8} accessibilityLabel="이 탭 설명 보기">
+          <Pressable onPress={() => setExpanded(true)} accessibilityRole="button" accessibilityLabel="이 탭 설명 보기" style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
             <HelpCircle size={15} color={palette.inkFaint} strokeWidth={2.2} />
           </Pressable>
         )}
@@ -72,7 +69,7 @@ export function TabIntro({ tabKey, icon: Icon, title, tagline, description, acce
       {expanded ? (
         <View style={{ flexDirection: 'row', gap: 10 }}>
           <View style={{ width: 2, borderRadius: 2, backgroundColor: accent, opacity: 0.75 }} />
-          <Text style={{ flex: 1, color: palette.inkSub, fontSize: 12.5, lineHeight: 19 }}>{description}</Text>
+          <Text style={{ flex: 1, color: palette.inkSub, fontSize: 13, lineHeight: 21 }}>{description}</Text>
         </View>
       ) : null}
     </View>

@@ -1,226 +1,177 @@
 import { useState } from 'react'
 import { Pressable, Share, Text, View } from 'react-native'
-import { AlertTriangle, Check, ChevronDown, ChevronUp, Plus, Share2, ShieldCheck } from 'lucide-react-native'
+import { AlertTriangle, ArrowUpRight, Check, ChevronDown, ChevronUp, Plus, Share2 } from 'lucide-react-native'
 import type { AiPick } from '../../../types'
-import type { Palette } from '../../../theme'
+import { marketColor, type Palette } from '../../../theme'
 import { formatSignedRate } from '../../../utils'
 import { hapticLight } from '../../../utils/haptics'
-import {
-  buildTradePlanShareText,
-  formatTradePlanPrice,
-  isTradePlanExpired,
-  tradePlanRiskLabel,
-} from '../../../utils/tradePlan'
+import { canReviewPick, isPickSnapshotStale, PICK_DECISION_LABELS } from '../../../utils/pickReview'
+import { buildTradePlanShareText, formatTradePlanPrice, isTradePlanExpired, tradePlanRiskLabel } from '../../../utils/tradePlan'
 
 type Props = {
   pick: AiPick
   palette: Palette
+  generatedAt?: string
+  now?: number
   inWatch: boolean
   onOpenDetail: (m: string, t: string, n?: string) => void
   onQuickAdd: () => Promise<void>
 }
 
-/**
- * AI 픽 카드 (모바일) — 확신 % + 기대 수익률 + reason + riskNote + 관심 추가 액션.
- * 웹용 `web/widgets/aiplaybook_parts/PickCard` 는 RecommendationExecutionLog 기반이지만
- * 모바일은 AiPick 기반 (다른 데이터 소스/스키마).
- */
-export function PickCard({ pick, palette, inWatch, onOpenDetail, onQuickAdd }: Props) {
+/** AI 의견과 규칙 기반 검토 결과를 구분한다. 모델 확신도를 수익 확률로 표시하지 않는다. */
+export function PickCard({ pick, palette, generatedAt, now = Date.now(), inWatch, onOpenDetail, onQuickAdd }: Props) {
   const [adding, setAdding] = useState(false)
   const [planOpen, setPlanOpen] = useState(false)
-  const exp = pick.expectedReturnRate
+  const [actionError, setActionError] = useState<string | null>(null)
+  const assessment = pick.assessment
+  const stale = isPickSnapshotStale(generatedAt, now)
   const plan = pick.tradePlan
-  const expired = plan ? isTradePlanExpired(plan) : false
+  const expired = !plan || isTradePlanExpired(plan, new Date(now))
+  const reviewable = canReviewPick(pick, generatedAt, now)
+  const hasPlan = !!plan && assessment?.decision === 'REVIEW'
+  const canShare = reviewable && !expired && plan?.executable === false
+  const tone = stale ? palette.orange : assessment?.decision === 'REVIEW' ? palette.teal
+    : assessment?.decision === 'AVOID' ? palette.red
+    : assessment?.decision === 'WATCH' ? palette.orange : palette.inkMuted
+  const statusLabel = stale ? '갱신 필요'
+    : assessment ? PICK_DECISION_LABELS[assessment.decision] ?? '검증 전' : '검증 전 · AI 의견'
 
   const sharePlan = async () => {
+    // 탭을 오래 열어두거나 공유 직전 만료되는 경우도 다시 확인한다.
+    if (!canReviewPick(pick, generatedAt)) return
     const message = buildTradePlanShareText(pick)
     if (!message) return
-    await Share.share({ message, title: `${pick.name} 매매 계획` })
+    try {
+      setActionError(null)
+      await Share.share({ message, title: pick.name + ' 검토 계획' })
+    } catch { setActionError('공유를 열지 못했어. 잠시 뒤 다시 시도해봐.') }
   }
+
   return (
-    <Pressable
-      onPress={() => { void hapticLight(); onOpenDetail(pick.market, pick.ticker, pick.name) }}
-      style={({ pressed }) => ({
-        backgroundColor: pressed ? palette.surfaceAlt : palette.bg,
-        borderRadius: 10,
-        borderWidth: 1,
-        borderColor: palette.border,
-        padding: 12,
-        gap: 6,
-      })}
-    >
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-        <Text style={{ color: palette.inkFaint, fontSize: 9, fontWeight: '800', letterSpacing: 0.6 }}>{pick.market}</Text>
-        <Text style={{ color: palette.inkMuted, fontSize: 11, fontWeight: '700' }}>{pick.ticker}</Text>
-        <View style={{ flex: 1 }} />
-        <Text style={{ color: palette.inkFaint, fontSize: 9, fontWeight: '700' }}>AI 추정</Text>
-        <Text style={{ color: palette.purple, fontSize: 10, fontWeight: '800' }}>
-          확신 {pick.confidence}%
-        </Text>
-        {exp != null ? (
-          <Text style={{ color: simpleDelta(exp, palette), fontSize: 10, fontWeight: '800' }}>
-            기대 {formatSignedRate(exp)}
-          </Text>
-        ) : null}
-      </View>
-      <Text numberOfLines={1} style={{ color: palette.ink, fontSize: 14, fontWeight: '800' }}>
-        {pick.name}
-      </Text>
-      {/* 근거 데이터 — 당일 등락률 + 수급 태그 (왜 골랐는지 투명하게) */}
-      {(pick.changeRate != null || pick.flowTag) ? (
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
-          {pick.changeRate != null ? (
-            <View style={{ backgroundColor: simpleDelta(pick.changeRate, palette) + '1f', borderRadius: 5, paddingHorizontal: 6, paddingVertical: 2 }}>
-              <Text style={{ color: simpleDelta(pick.changeRate, palette), fontSize: 9, fontWeight: '800' }}>
+    <View style={{ backgroundColor: palette.surface, borderRadius: 18, borderWidth: 1, borderColor: palette.border, overflow: 'hidden' }}>
+      <View style={{ height: 3, backgroundColor: tone }} />
+      <View style={{ padding: 16, gap: 14 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <View style={{ borderRadius: 6, backgroundColor: tone + '16', paddingHorizontal: 8, paddingVertical: 5 }}>
+            <Text style={{ color: tone, fontSize: 11, fontWeight: '800' }}>{statusLabel}</Text>
+          </View>
+          <Text style={{ flex: 1, textAlign: 'right', color: palette.inkMuted, fontSize: 11 }}>{pick.market} · {pick.ticker}</Text>
+        </View>
+        <Pressable
+          onPress={() => { void hapticLight(); onOpenDetail(pick.market, pick.ticker, pick.name) }}
+          accessibilityRole="button"
+          accessibilityLabel={pick.name + ' 종목 상세 보기'}
+          style={{ flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 44 }}
+        >
+          <Text style={{ flex: 1, color: palette.ink, fontSize: 21, fontWeight: '800', letterSpacing: -0.6 }}>{pick.name}</Text>
+          <ArrowUpRight size={20} color={palette.inkMuted} />
+        </Pressable>
+        {(Number.isFinite(pick.changeRate) || pick.flowTag) ? (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            {pick.changeRate != null && Number.isFinite(pick.changeRate) ? (
+              <Text style={{ color: marketColor(palette, pick.market, pick.changeRate), fontSize: 13, fontWeight: '800' }}>
                 당일 {formatSignedRate(pick.changeRate)}
               </Text>
-            </View>
-          ) : null}
-          {pick.flowTag ? (
-            <View style={{ backgroundColor: palette.blueSoft, borderRadius: 5, paddingHorizontal: 6, paddingVertical: 2 }}>
-              <Text style={{ color: palette.blue, fontSize: 9, fontWeight: '800' }}>{pick.flowTag}</Text>
-            </View>
-          ) : null}
+            ) : null}
+            {pick.flowTag ? <Text style={{ color: palette.inkSub, fontSize: 11 }}>{pick.flowTag}</Text> : null}
+          </View>
+        ) : null}
+        <View style={{ gap: 6 }}>
+          <Text style={{ color: palette.inkMuted, fontSize: 11, fontWeight: '700' }}>AI가 주목한 이유</Text>
+          <Text style={{ color: palette.inkSub, fontSize: 13, lineHeight: 21 }}>{pick.reason || '아직 정리된 근거가 없어'}</Text>
         </View>
-      ) : null}
-      <Text numberOfLines={3} style={{ color: palette.inkMuted, fontSize: 11, lineHeight: 15 }}>
-        {pick.reason || '—'}
-      </Text>
-      {pick.riskNote ? (
-        <View style={{
-          flexDirection: 'row', alignItems: 'center', gap: 4,
-          backgroundColor: palette.downSoft, borderRadius: 6, paddingHorizontal: 7, paddingVertical: 4,
-        }}>
-          <AlertTriangle size={10} color={palette.down} strokeWidth={2.5} />
-          <Text style={{ color: palette.down, fontSize: 10, fontWeight: '700', flex: 1 }} numberOfLines={1}>
-            {pick.riskNote}
-          </Text>
-        </View>
-      ) : null}
-      {plan && planOpen ? (
-        <View style={{
-          backgroundColor: palette.surfaceAlt, borderRadius: 9,
-          borderWidth: 1, borderColor: palette.borderLight,
-          padding: 10, gap: 9,
-        }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <ShieldCheck size={13} color={expired ? palette.down : palette.blue} strokeWidth={2.5} />
-            <Text style={{ color: palette.ink, fontSize: 11, fontWeight: '900', flex: 1 }}>
-              검토용 매매 계획
-            </Text>
-            <View style={{
-              backgroundColor: plan.riskLevel === 'HIGH' ? palette.downSoft : plan.riskLevel === 'LOW' ? palette.upSoft : palette.blueSoft,
-              borderRadius: 5, paddingHorizontal: 6, paddingVertical: 2,
-            }}>
-              <Text style={{
-                color: plan.riskLevel === 'HIGH' ? palette.down : plan.riskLevel === 'LOW' ? palette.up : palette.blue,
-                fontSize: 9, fontWeight: '900',
-              }}>
-                위험 {tradePlanRiskLabel(plan.riskLevel)}
-              </Text>
+        {assessment?.reasons.length ? (
+          <Text style={{ color: palette.teal, fontSize: 12, lineHeight: 19 }}>{assessment.reasons.join('\n')}</Text>
+        ) : null}
+        {pick.riskNote ? (
+          <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 7, backgroundColor: palette.orangeSoft, borderRadius: 12, padding: 12 }}>
+            <AlertTriangle size={15} color={palette.orange} style={{ marginTop: 2 }} />
+            <Text style={{ color: palette.orange, fontSize: 12, lineHeight: 19, flex: 1 }}>{pick.riskNote}</Text>
+          </View>
+        ) : null}
+        {hasPlan && planOpen ? (
+          <View style={{ backgroundColor: palette.surfaceAlt, borderRadius: 14, padding: 14, gap: 14 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Text style={{ flex: 1, color: palette.ink, fontSize: 14, fontWeight: '800' }}>검토용 가격 시나리오</Text>
+              <Text style={{ color: palette.orange, fontSize: 11 }}>위험 {tradePlanRiskLabel(plan.riskLevel)}</Text>
             </View>
-          </View>
-
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', rowGap: 8 }}>
-            <PlanMetric label="기준가" value={formatTradePlanPrice(plan.referencePrice, plan.currency)} palette={palette} />
-            <PlanMetric label="진입 상한" value={formatTradePlanPrice(plan.entryLimitPrice, plan.currency)} palette={palette} accent={palette.blue} />
-            <PlanMetric label="손절 기준" value={formatTradePlanPrice(plan.stopLossPrice, plan.currency)} palette={palette} accent={palette.down} />
-            <PlanMetric label="목표가" value={formatTradePlanPrice(plan.takeProfitPrice, plan.currency)} palette={palette} accent={palette.up} />
-          </View>
-
-          <View style={{ gap: 3 }}>
-            <Text style={{ color: palette.inkSub, fontSize: 10, fontWeight: '800' }}>
-              종목 비중 최대 {plan.maxPositionPercent}%
-            </Text>
-            {plan.guardrails.slice(0, 3).map((item) => (
-              <Text key={item} style={{ color: palette.inkMuted, fontSize: 9.5, lineHeight: 14 }}>· {item}</Text>
-            ))}
-          </View>
-
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <Text style={{ color: expired ? palette.down : palette.inkFaint, fontSize: 9.5, flex: 1, fontWeight: expired ? '800' : '600' }}>
-              {expired ? '계획 만료됨 · 새로고침 후 다시 확인' : '30분 유효 · 실제 주문 아님'}
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', rowGap: 14 }}>
+              <PlanMetric label="기준가" value={formatTradePlanPrice(plan.referencePrice, plan.currency)} palette={palette} />
+              <PlanMetric label="진입 상한" value={formatTradePlanPrice(plan.entryLimitPrice, plan.currency)} palette={palette} />
+              <PlanMetric label="손절 기준" value={formatTradePlanPrice(plan.stopLossPrice, plan.currency)} palette={palette} accent={palette.red} />
+              <PlanMetric label="목표가" value={formatTradePlanPrice(plan.takeProfitPrice, plan.currency)} palette={palette} accent={palette.teal} />
+            </View>
+            <Text style={{ color: palette.inkSub, fontSize: 12, fontWeight: '700' }}>종목 비중 최대 {plan.maxPositionPercent}%</Text>
+            <View style={{ gap: 5 }}>
+              {plan.guardrails.map((item, index) => (
+                <Text key={index} style={{ color: palette.inkMuted, fontSize: 11, lineHeight: 18 }}>· {item}</Text>
+              ))}
+            </View>
+            <Text style={{ color: !canShare ? palette.orange : palette.inkMuted, fontSize: 12, lineHeight: 19 }}>
+              {!canShare ? '만료됐거나 재검증이 필요해 · 새로고침 후 다시 확인해봐' : '30분 유효 · 실제 주문이 아닌 검토 자료야'}
             </Text>
             <Pressable
-              onPress={(e: any) => { e?.stopPropagation?.(); void hapticLight(); void sharePlan() }}
+              disabled={!canShare}
+              onPress={() => { void hapticLight(); void sharePlan() }}
               accessibilityRole="button"
-              accessibilityLabel="매매 계획 공유"
+              accessibilityState={{ disabled: !canShare }}
+              accessibilityLabel="검토 계획 공유"
               style={({ pressed }) => ({
-                flexDirection: 'row', alignItems: 'center', gap: 4,
-                backgroundColor: palette.blueSoft, borderRadius: 6,
-                paddingHorizontal: 8, paddingVertical: 5, opacity: pressed ? 0.65 : 1,
+                minHeight: 44, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 7,
+                borderWidth: 1, borderColor: palette.border, borderRadius: 12,
+                backgroundColor: palette.surface, opacity: !canShare ? 0.45 : pressed ? 0.65 : 1,
               })}
             >
-              <Share2 size={10} color={palette.blue} strokeWidth={2.6} />
-              <Text style={{ color: palette.blue, fontSize: 9.5, fontWeight: '900' }}>공유</Text>
+              <Share2 size={15} color={palette.teal} />
+              <Text style={{ color: palette.teal, fontSize: 13, fontWeight: '700' }}>검토 계획 공유</Text>
             </Pressable>
           </View>
-        </View>
-      ) : null}
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-        {plan ? (
+        ) : null}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, borderTopWidth: 1, borderColor: palette.borderLight, paddingTop: 8 }}>
+          {hasPlan ? (
+            <Pressable
+              onPress={() => setPlanOpen((value) => !value)}
+              accessibilityRole="button"
+              accessibilityState={{ expanded: planOpen }}
+              style={{ flex: 1, minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 5 }}
+            >
+              <Text style={{ color: palette.teal, fontSize: 13, fontWeight: '700' }}>{planOpen ? '계획 접기' : '가격 시나리오'}</Text>
+              {planOpen ? <ChevronUp size={15} color={palette.teal} /> : <ChevronDown size={15} color={palette.teal} />}
+            </Pressable>
+          ) : (
+            <Text style={{ flex: 1, color: palette.inkMuted, fontSize: 11, lineHeight: 17 }}>진입 계획 없이 관찰해봐</Text>
+          )}
           <Pressable
-            onPress={(e: any) => {
-              e?.stopPropagation?.()
-              void hapticLight()
-              setPlanOpen((value) => !value)
-            }}
+            disabled={inWatch || adding}
             accessibilityRole="button"
-            accessibilityLabel={planOpen ? '매매 계획 접기' : '매매 계획 보기'}
-            style={{ flexDirection: 'row', alignItems: 'center', gap: 3, paddingVertical: 4 }}
-          >
-            {planOpen
-              ? <ChevronUp size={11} color={palette.blue} strokeWidth={2.8} />
-              : <ChevronDown size={11} color={palette.blue} strokeWidth={2.8} />}
-            <Text style={{ color: palette.blue, fontSize: 10, fontWeight: '900' }}>
-              {planOpen ? '계획 접기' : '매매 계획'}
-            </Text>
-          </Pressable>
-        ) : <View />}
-        {inWatch ? (
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
-            <Check size={10} color={palette.up} strokeWidth={3} />
-            <Text style={{ color: palette.up, fontSize: 10, fontWeight: '800' }}>관심</Text>
-          </View>
-        ) : (
-          <Pressable
-            onPress={async (e: any) => {
-              e?.stopPropagation?.()
+            accessibilityLabel={inWatch ? '관심종목에 추가됨' : '관심종목 추가'}
+            accessibilityState={{ disabled: inWatch || adding }}
+            onPress={async () => {
               if (adding) return
-              void hapticLight()
-              setAdding(true)
-              try { await onQuickAdd() } finally { setAdding(false) }
+              setAdding(true); setActionError(null)
+              try { await onQuickAdd() } catch { setActionError('관심종목에 추가하지 못했어. 다시 시도해봐.') }
+              finally { setAdding(false) }
             }}
-            style={{
-              flexDirection: 'row', alignItems: 'center', gap: 3,
-              backgroundColor: palette.blueSoft, borderRadius: 4, paddingHorizontal: 7, paddingVertical: 4,
-            }}
+            style={({ pressed }) => ({
+              minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 5,
+              backgroundColor: palette.surfaceAlt, borderRadius: 12, paddingHorizontal: 12, opacity: pressed ? 0.65 : 1,
+            })}
           >
-            <Plus size={10} color={palette.blue} strokeWidth={3} />
-            <Text style={{ color: palette.blue, fontSize: 10, fontWeight: '800' }}>
-              {adding ? '추가 중…' : '관심'}
-            </Text>
+            {inWatch ? <Check size={14} color={palette.teal} /> : <Plus size={14} color={palette.teal} />}
+            <Text style={{ color: palette.teal, fontSize: 12, fontWeight: '700' }}>{inWatch ? '관심 등록됨' : adding ? '추가 중' : '관심 추가'}</Text>
           </Pressable>
-        )}
+        </View>
+        {actionError ? <Text accessibilityRole="alert" style={{ color: palette.red, fontSize: 12 }}>{actionError}</Text> : null}
       </View>
-    </Pressable>
-  )
-}
-
-function PlanMetric({
-  label, value, palette, accent,
-}: { label: string; value: string; palette: Palette; accent?: string }) {
-  return (
-    <View style={{ width: '50%', gap: 2 }}>
-      <Text style={{ color: palette.inkFaint, fontSize: 8.5, fontWeight: '700' }}>{label}</Text>
-      <Text style={{ color: accent ?? palette.ink, fontSize: 11, fontWeight: '900' }}>{value}</Text>
     </View>
   )
 }
 
-function simpleDelta(value: number | null | undefined, palette: Palette) {
-  if (value == null || Number.isNaN(value)) return palette.inkSub
-  if (value > 0) return palette.up
-  if (value < 0) return palette.down
-  return palette.inkSub
+function PlanMetric({ label, value, palette, accent }: { label: string; value: string; palette: Palette; accent?: string }) {
+  return (
+    <View style={{ width: '50%', gap: 5 }}>
+      <Text style={{ color: palette.inkMuted, fontSize: 11 }}>{label}</Text>
+      <Text style={{ color: accent ?? palette.ink, fontSize: 15, fontWeight: '800', fontVariant: ['tabular-nums'] }}>{value}</Text>
+    </View>
+  )
 }

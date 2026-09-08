@@ -23,12 +23,13 @@ type Props = {
   onOpenAlerts: () => void
   onOpenSettings: () => void
   onTabChange: (key: TabKey) => void
+  placement?: 'header' | 'navigation'
 }
 
-/** 네이티브 셸 크롬 — 상단 헤더(LIVE 핍·알림함·설정) + 5탭 탭바. */
+/** 네이티브 셸 크롬 — 상단 상태 헤더와 하단 5탭 탐색바. */
 export function NativeShellChrome({
   isUp, lastSyncedAt, marketPreference, unreadAlertCount, activeTab,
-  onOpenAlerts, onOpenSettings, onTabChange,
+  onOpenAlerts, onOpenSettings, onTabChange, placement = 'header',
 }: Props) {
   const styles = useStyles()
   const { palette } = useTheme()
@@ -36,7 +37,7 @@ export function NativeShellChrome({
   return (
     <>
       {/* ── 헤더 ─────────────────────────────────────── */}
-      <View style={styles.headerWrap}>
+      {placement === 'header' ? <View style={styles.headerWrap}>
         <View style={styles.headerGradient}>
           <View style={styles.headerTopRow}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flexShrink: 1 }}>
@@ -46,16 +47,10 @@ export function NativeShellChrome({
               <View style={{ gap: 1, flexShrink: 1 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}>
                   <Text style={styles.headerTitle} numberOfLines={1}>Signal Desk</Text>
-                  <View style={[styles.headerStatusPill, isUp ? styles.headerStatusPillUp : styles.headerStatusPillDown]}>
-                    <View style={[styles.headerStatusDot, isUp ? styles.headerStatusDotUp : styles.headerStatusDotDown]} />
-                    <Text style={[styles.headerStatusText, isUp ? styles.headerStatusTextUp : styles.headerStatusTextDown]}>
-                      {isUp ? 'LIVE' : 'OFF'}
-                    </Text>
-                  </View>
                 </View>
                 <Text style={styles.headerSubtitle} numberOfLines={1}>
                   {marketPreference === 'KR' ? '한국 시장' : marketPreference === 'US' ? '미국 시장' : '한국 · 미국 시장'}
-                  {lastSyncedAt ? `  ·  ${lastSyncedAt} 업데이트` : ''}
+                  {isUp ? (lastSyncedAt ? ` · ${lastSyncedAt} 갱신` : ' · 서버 연결') : ' · 연결 확인 중'}
                 </Text>
               </View>
             </View>
@@ -65,6 +60,7 @@ export function NativeShellChrome({
                 onPress={onOpenAlerts}
                 style={({ pressed }) => [styles.headerIconBtn, pressed && { opacity: 0.6 }]}
                 accessibilityLabel="최근 받은 알림"
+                accessibilityRole="button"
                 hitSlop={6}
               >
                 <Bell size={17} color={palette.inkSub} strokeWidth={2.3} />
@@ -78,26 +74,30 @@ export function NativeShellChrome({
                 onPress={onOpenSettings}
                 style={({ pressed }) => [styles.themeToggleBtn, pressed && { opacity: 0.6 }]}
                 accessibilityLabel="설정"
+                accessibilityRole="button"
               >
                 <SettingsIcon size={17} color={palette.inkSub} strokeWidth={2.3} />
               </Pressable>
             </View>
           </View>
         </View>
-      </View>
+      </View> : null}
 
       {/* ── 탭 바 ────────────────────────────────────── */}
-      <View style={styles.tabBar}>
+      {placement === 'navigation' ? <View style={styles.tabBar}>
         {TABS.map(({ key, label, Icon }) => {
           const active = activeTab === key
           return (
             <Pressable
               key={key}
               onPress={() => onTabChange(key)}
+              accessibilityRole="tab"
+              accessibilityLabel={label}
+              accessibilityState={{ selected: active }}
               style={({ pressed }) => [styles.tabItem, active && styles.tabItemActive, pressed && styles.tabItemPressed]}
             >
               <Icon
-                size={19}
+                size={21}
                 color={active ? palette.brandAccent : palette.inkFaint}
                 strokeWidth={active ? 2.5 : 1.8}
               />
@@ -106,7 +106,7 @@ export function NativeShellChrome({
             </Pressable>
           )
         })}
-      </View>
+      </View> : null}
     </>
   )
 }

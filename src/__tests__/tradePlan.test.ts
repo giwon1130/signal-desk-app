@@ -35,7 +35,7 @@ describe('tradePlan', () => {
   })
 
   it('공유 문구에 실행 오해를 막는 정보가 포함된다', () => {
-    const text = buildTradePlanShareText(pick)
+    const text = buildTradePlanShareText(pick, new Date('2026-08-01T01:29:59Z'))
     expect(text).toContain('SK하이닉스 (KR 000660)')
     expect(text).toContain('진입 상한 197,000원')
     expect(text).toContain('종목 비중 최대 3%')
@@ -43,6 +43,8 @@ describe('tradePlan', () => {
   })
 
   it('만료와 위험도 라벨을 판정한다', () => {
+    expect(buildTradePlanShareText(pick, new Date('2026-08-01T01:30:00Z'))).toBeNull()
+    expect(buildTradePlanShareText({ ...pick, tradePlan: { ...plan, executable: true } }, new Date('2026-08-01T01:29:00Z'))).toBeNull()
     expect(isTradePlanExpired(plan, new Date('2026-08-01T01:29:59Z'))).toBe(false)
     expect(isTradePlanExpired(plan, new Date('2026-08-01T01:30:00Z'))).toBe(true)
     expect(tradePlanRiskLabel('HIGH')).toBe('높음')

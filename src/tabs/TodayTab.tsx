@@ -29,6 +29,7 @@ import { PreMarketDirectionCard } from './today_parts/PreMarketDirectionCard'
 import { NewsHero } from './today_parts/NewsHero'
 import { EventsCard } from './today_parts/EventsCard'
 import { HoldingMonitor } from './today_parts/HoldingMonitor'
+import { assessHolding } from '../utils/holdingDecision'
 import { SeasonRulesCard } from './today_parts/SeasonRulesCard'
 import { Entrance } from '../components/effects'
 import { MarketMoodCard } from './market_parts/MarketMoodCard'
@@ -81,15 +82,15 @@ export const TodayTab = memo(function TodayTab({
   const krSentiment = showKr ? summary?.newsSentiments?.find((s) => s.market === 'KR') : undefined
   const usSentiment = showUs ? summary?.newsSentiments?.find((s) => s.market === 'US') : undefined
 
-  // 보유 종목 모니터 — KR 실시간 시세로 손익 재계산(종목 탭과 % 일치). 손익 절대값 큰 순.
+  // 기준가 도달 종목을 우선 노출하고 선택한 시장만 표시한다.
   const liveTickers = useMemo(() => positions.filter((p) => p.market === 'KR').map((p) => p.ticker), [positions])
   const livePrices = useLivePrices(liveTickers)
-  const monitorTargets = useMemo(() => positions.map((p) => {
+  const monitorTargets = useMemo(() => positions.filter((p) => p.market === 'KR' ? showKr : p.market === 'US' && showUs).map((p) => {
     const lp = p.market === 'KR' ? livePrices[p.ticker] : undefined
-    if (!lp || p.buyPrice <= 0) return p
+    if (!lp || !Number.isFinite(lp.price) || lp.price <= 0 || p.buyPrice <= 0) return p
     return { ...p, currentPrice: lp.price, profitRate: ((lp.price - p.buyPrice) / p.buyPrice) * 100 }
-  }).sort((a, b) => Math.abs(b.profitRate) - Math.abs(a.profitRate)).slice(0, listLimit),
-  [positions, livePrices, listLimit])
+  }).sort((a, b) => assessHolding(a).priority - assessHolding(b).priority || Math.abs(b.profitRate) - Math.abs(a.profitRate)).slice(0, listLimit),
+  [positions, livePrices, listLimit, showKr, showUs])
 
   const tradingDay = summary?.tradingDayStatus
   const marketClosedToday = !!tradingDay && !tradingDay.krOpen && !tradingDay.usOpen
@@ -184,7 +185,7 @@ export const TodayTab = memo(function TodayTab({
       {positions.length > 0 ? (
         <View onLayout={registerSection('portfolio')}>
           <Entrance index={0}>
-            <HoldingMonitor monitorTargets={monitorTargets} marketClosedToday={marketClosedToday} />
+            <HoldingMonitor monitorTargets={monitorTargets} sessions={selectedSessions} onOpenDetail={onOpenDetail} />
           </Entrance>
         </View>
       ) : null}

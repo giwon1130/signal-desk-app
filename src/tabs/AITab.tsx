@@ -53,27 +53,28 @@ export const AITab = memo(function AITab({
     <>
     <ScrollView
       style={{ flex: 1, backgroundColor: palette.bg }}
-      contentContainerStyle={{ padding: 16, gap: 14, paddingBottom: 40 }}
+      contentContainerStyle={{ padding: 20, gap: 20, paddingBottom: 80 }}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.inkMuted} />}
     >
       {/* 탭 인트로 — 컴팩트 타이틀, 처음 몇 번만 펼친 설명 */}
       <TabIntro
         tabKey="ai"
         icon={Sparkles}
-        title="AI"
-        tagline="물어보고 · 추천받고 · 시그널 확인"
-        description="시데 AI에게 종목·시장을 직접 물어보거나, 마켓 브리핑·오늘의 AI 픽·내 종목의 숨은 시그널을 받아보세요. 시즌 규칙과 섹터 로테이션도 여기서 확인할 수 있어요."
+        title="AI 인사이트"
+        tagline="추천보다 근거를 먼저, 판단은 차분하게"
+        description="시장 흐름을 읽고 종목별 검토 근거와 보류 이유를 확인해봐. 가격 시나리오는 실제 주문이 아니고, 투자 성과를 보장하지 않아."
         accent={palette.blue ?? palette.brandAccent}
       />
 
       {/* ── 시데 AI 비서 — 주력 진입(풀 너비) ── */}
       <Pressable
         onPress={onOpenAssistant}
+        accessibilityRole="button"
         style={({ pressed }) => ({
           flexDirection: 'row', alignItems: 'center', gap: 10,
           backgroundColor: palette.scheme === 'dark' ? palette.surfaceAlt : palette.ink,
           borderWidth: 1, borderColor: palette.scheme === 'dark' ? palette.borderLight : palette.ink,
-          borderRadius: 16, paddingHorizontal: 15, paddingVertical: 15,
+          borderRadius: 22, paddingHorizontal: 18, paddingVertical: 20,
           opacity: pressed ? 0.8 : 1,
         })}
       >
@@ -81,8 +82,8 @@ export const AITab = memo(function AITab({
           <Sparkles size={18} color="#07150f" strokeWidth={2.5} />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={{ color: palette.scheme === 'dark' ? palette.ink : '#ffffff', fontSize: 14, fontWeight: '900' }}>시데 AI에게 물어보기</Text>
-          <Text style={{ color: palette.scheme === 'dark' ? palette.inkMuted : '#aeb8c7', fontSize: 11, marginTop: 2 }}>내 종목과 오늘 시장을 이어서 답해요</Text>
+          <Text style={{ color: palette.scheme === 'dark' ? palette.ink : '#ffffff', fontSize: 16, fontWeight: '800' }}>시데 AI에게 물어보기</Text>
+          <Text style={{ color: palette.scheme === 'dark' ? palette.inkMuted : '#bfcfd0', fontSize: 12, lineHeight: 19, marginTop: 4 }}>내 종목과 오늘 시장을 함께 살펴봐</Text>
         </View>
         <ChevronRight size={18} color={palette.scheme === 'dark' ? palette.inkMuted : '#aeb8c7'} strokeWidth={2.4} />
       </Pressable>

@@ -18,8 +18,8 @@ export function AssistantFab({ onPress }: { onPress: () => void }) {
       style={{
         position: 'absolute',
         right: 16,
-        // 네이티브는 하단 지수 펄스(≈36px)를 피해서, 웹은 여백만.
-        bottom: Platform.OS === 'web' ? 24 : 52,
+        // 네이티브는 하단 탐색바와 지수 펄스 위에 배치한다.
+        bottom: Platform.OS === 'web' ? 24 : 118,
         zIndex: 50,
       }}
     >

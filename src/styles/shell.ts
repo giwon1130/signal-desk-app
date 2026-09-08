@@ -10,15 +10,15 @@ export function shellStyles(C: Palette): StyleObj {
     container: { flex: 1, backgroundColor: C.bg },
 
     // ── Header (compact: 헤더는 짧게, 콘텐츠 영역은 넓게) ──────────────────────
-    headerWrap: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 6 },
+    headerWrap: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 12, backgroundColor: C.surface },
     headerGradient: {
       paddingHorizontal: 0, paddingTop: 2, paddingBottom: 2,
       backgroundColor: 'transparent',
     },
     headerTopRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
     brand: { color: C.brandAccent, fontWeight: '900', fontSize: 9, letterSpacing: 1.4 },
-    headerTitle: { fontSize: 20, fontWeight: '900', color: C.ink, letterSpacing: -0.6 },
-    headerSubtitle: { color: C.inkMuted, fontSize: 10.5, fontWeight: '600' },
+    headerTitle: { fontSize: 18, fontWeight: '800', color: C.ink, letterSpacing: -0.5 },
+    headerSubtitle: { color: C.inkMuted, fontSize: 11, fontWeight: '500' },
     headerStatusPill: {
       flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 999,
       paddingHorizontal: 7, paddingVertical: 4,
@@ -32,12 +32,12 @@ export function shellStyles(C: Palette): StyleObj {
     headerStatusTextUp:   { color: C.green },
     headerStatusTextDown: { color: C.red },
     themeToggleBtn: {
-      width: 36, height: 36, borderRadius: 12,
+      width: 44, height: 44, borderRadius: 14,
       backgroundColor: C.surface, borderWidth: 1, borderColor: C.borderLight,
       alignItems: 'center', justifyContent: 'center',
     },
     headerIconBtn: {
-      width: 36, height: 36, borderRadius: 12,
+      width: 44, height: 44, borderRadius: 14,
       backgroundColor: C.surface, borderWidth: 1, borderColor: C.borderLight,
       alignItems: 'center', justifyContent: 'center',
     },
@@ -49,16 +49,16 @@ export function shellStyles(C: Palette): StyleObj {
 
     // ── Tab Bar ─────────────────────────────────────────────────────────────────
     tabBar: {
-      flexDirection: 'row', backgroundColor: C.surface, marginHorizontal: 16, marginTop: 4, marginBottom: 2,
-      borderRadius: 16, borderWidth: 1, borderColor: C.borderLight, ...shadow.sm, padding: 4,
+      flexDirection: 'row', backgroundColor: C.surface, borderTopWidth: 1, borderColor: C.borderLight,
+      paddingHorizontal: 12, paddingTop: 8, paddingBottom: 6,
     },
     tabItem: {
-      flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 7, gap: 2,
-      position: 'relative', borderRadius: 12,
+      flex: 1, minHeight: 52, alignItems: 'center', justifyContent: 'center', paddingVertical: 7, gap: 4,
+      position: 'relative', borderRadius: 16,
     },
     tabItemActive:  { backgroundColor: C.greenSoft },
     tabItemPressed: { opacity: 0.7 },
-    tabLabel:       { fontSize: 10, fontWeight: '700', color: C.inkFaint },
+    tabLabel:       { fontSize: 11, fontWeight: '600', color: C.inkMuted },
     tabLabelActive: { color: C.green, fontWeight: '900' },
     tabActiveBar:   { display: 'none' },
 
@@ -81,7 +81,7 @@ export function shellStyles(C: Palette): StyleObj {
 
     // ── Scroll / Content ────────────────────────────────────────────────────────
     scroll:  { flex: 1 },
-    content: { padding: 16, gap: 14, paddingBottom: 40 },
+    content: { padding: 20, gap: 20, paddingBottom: 80 },
     // 웹 데스크톱 전용: 카드를 CSS grid 로 재배치. 420px 이상 컬럼을 auto-fit.
     // 특정 카드는 cardFull 로 컬럼 span 을 덮어씀.
     // (RN Web 은 display/grid/gridTemplateColumns 등을 그대로 CSS 로 넘김)

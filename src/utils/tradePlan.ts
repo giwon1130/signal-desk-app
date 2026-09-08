@@ -19,9 +19,9 @@ export function isTradePlanExpired(plan: TradePlan, now = new Date()): boolean {
   return Number.isNaN(expiresAt.getTime()) || expiresAt.getTime() <= now.getTime()
 }
 
-export function buildTradePlanShareText(pick: AiPick): string | null {
+export function buildTradePlanShareText(pick: AiPick, now = new Date()): string | null {
   const plan = pick.tradePlan
-  if (!plan) return null
+  if (!plan || isTradePlanExpired(plan, now) || plan.executable !== false) return null
   const expiry = new Date(plan.expiresAt)
   const expiryLabel = Number.isNaN(expiry.getTime())
     ? '확인 필요'
@@ -40,6 +40,7 @@ export function buildTradePlanShareText(pick: AiPick): string | null {
     `유효 시각 ${expiryLabel}`,
     `근거: ${pick.reason || '확인 필요'}`,
     pick.riskNote ? `주의: ${pick.riskNote}` : null,
+    ...plan.guardrails.map((guard) => `확인: ${guard}`),
     '',
     '※ 실제 주문이 아닌 검토용 계획입니다. 주문 전 가격과 거래 가능 시간을 다시 확인하세요.',
   ].filter((line): line is string => line != null).join('\n')
