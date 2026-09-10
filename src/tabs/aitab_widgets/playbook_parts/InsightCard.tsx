@@ -1,4 +1,5 @@
-import { Text, View } from 'react-native'
+import { useState } from 'react'
+import { Linking, Pressable, Text, View } from 'react-native'
 import { AlertTriangle, Sparkles, TrendingDown, TrendingUp } from 'lucide-react-native'
 import type { MarketInsightData } from '../../../types'
 import type { Palette } from '../../../theme'
@@ -9,9 +10,15 @@ type Props = {
 }
 
 /**
- * Gemini 마켓 종합 인사이트 카드 — headline + summary + keyPoints 불릿 + sentiment 배지.
+ * 근거 기반 시황 — 데이터 품질/관측 시각과 해석을 구분한다.
  */
 export function InsightCard({ insight, palette }: Props) {
+  const [expanded, setExpanded] = useState(false)
+  const assessment = insight.assessment
+  const regimeLabel = assessment ? ({
+    INSUFFICIENT_DATA: '판단 보류', RISK_CAUTION: '위험 주의',
+    SUPPORTIVE: '우호 조건', PRESSURED: '부담 우세', MIXED: '혼재',
+  }[assessment.regime] ?? '검토 중') : '검증 전'
   const sentimentColor =
     insight.sentiment === 'BULLISH' ? palette.up :
     insight.sentiment === 'BEARISH' ? palette.down : palette.inkSub
@@ -28,12 +35,12 @@ export function InsightCard({ insight, palette }: Props) {
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         <Sparkles size={13} color={palette.purple} strokeWidth={2.5} />
         <Text style={{ color: palette.inkFaint, fontSize: 9, fontWeight: '800', letterSpacing: 1.5, flex: 1 }}>
-          GEMINI · 오늘의 마켓 종합 인사이트
+          시데 · 근거 기반 시황
         </Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
           <SentimentIcon size={11} color={sentimentColor} strokeWidth={2.5} />
           <Text style={{ color: sentimentColor, fontSize: 10, fontWeight: '800' }}>
-            {insight.sentiment === 'BULLISH' ? '강세' : insight.sentiment === 'BEARISH' ? '약세' : '중립'}
+            {regimeLabel}
           </Text>
         </View>
       </View>
@@ -43,13 +50,37 @@ export function InsightCard({ insight, palette }: Props) {
       <Text style={{ color: palette.inkSub, fontSize: 12, lineHeight: 18 }}>
         {insight.summary}
       </Text>
-      {insight.keyPoints.length > 0 ? (
+      {assessment ? (
+        <View style={{ gap: 5 }}>
+          <Text style={{ color: palette.inkMuted, fontSize: 11, lineHeight: 17 }}>
+            유효 입력 {assessment.coveragePercent}% · 적중률이 아니야
+          </Text>
+          <Text style={{ color: palette.inkFaint, fontSize: 11, lineHeight: 17 }}>
+            분석 {Number.isFinite(Date.parse(assessment.asOf)) ? new Date(assessment.asOf).toLocaleString('ko-KR') : '시각 미확인'} · {assessment.rulesVersion}
+          </Text>
+        </View>
+      ) : null}
+      <Pressable accessibilityRole="button" accessibilityState={{ expanded }} onPress={() => setExpanded(!expanded)} style={{ paddingVertical: 10 }}>
+        <Text style={{ color: palette.purple, fontSize: 12, fontWeight: '700' }}>{expanded ? '분석 근거 접기' : '지표·관측 시각·제외 사유 보기'}</Text>
+      </Pressable>
+      {expanded && insight.keyPoints.length > 0 ? (
         <View style={{ gap: 4 }}>
           {insight.keyPoints.map((pt, i) => (
             <View key={i} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 6 }}>
               <Text style={{ color: palette.purple, fontSize: 11, fontWeight: '800', marginTop: 1 }}>·</Text>
               <Text style={{ color: palette.inkMuted, fontSize: 11, lineHeight: 16, flex: 1 }}>{pt}</Text>
             </View>
+          ))}
+        </View>
+      ) : null}
+      {expanded && assessment ? (
+        <View style={{ gap: 10 }}>
+          {assessment.evidence.filter(e => e.sourceUrl && e.source).map(e => (
+            <Pressable key={e.id} accessibilityRole="link" onPress={() => {
+              if (e.sourceUrl?.startsWith('https://')) void Linking.openURL(e.sourceUrl).catch(() => {})
+            }}>
+              <Text style={{ color: palette.purple, fontSize: 11 }}>{e.label} · {e.source} 출처 확인</Text>
+            </Pressable>
           ))}
         </View>
       ) : null}
@@ -68,14 +99,14 @@ export function InsightCardSkeleton({ palette }: { palette: Palette }) {
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         <Sparkles size={13} color={palette.inkFaint} strokeWidth={2.5} />
         <Text style={{ color: palette.inkFaint, fontSize: 9, fontWeight: '800', letterSpacing: 1.5 }}>
-          GEMINI · 오늘의 마켓 종합 인사이트
+          시데 · 근거 기반 시황
         </Text>
       </View>
       <Text style={{ color: palette.inkMuted, fontSize: 13, lineHeight: 19 }}>
-        AI 인사이트 불러오는 중…
+        시황 근거 불러오는 중…
       </Text>
       <Text style={{ color: palette.inkFaint, fontSize: 11, lineHeight: 16 }}>
-        VIX·지수·뉴스 종합 분석에 잠시 시간이 걸려.
+        지표의 관측 시각과 품질을 확인하고 있어.
       </Text>
     </View>
   )

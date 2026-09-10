@@ -7,6 +7,32 @@ export type MarketInsightData = {
   summary: string
   sentiment: 'BULLISH' | 'BEARISH' | 'NEUTRAL'
   keyPoints: string[]
+  assessment?: MarketEvidenceAssessment | null
+}
+
+export type MarketEvidenceAssessment = {
+  rulesVersion: string
+  asOf: string
+  horizon: string
+  regime: 'INSUFFICIENT_DATA' | 'RISK_CAUTION' | 'SUPPORTIVE' | 'PRESSURED' | 'MIXED'
+  riskLevel: 'HIGH' | 'ELEVATED' | 'UNKNOWN' | 'NORMAL'
+  coveragePercent: number
+  /** 설명용 점수이며 상승 확률/수익률이 아님. */
+  balanceScore: number | null
+  headline: string
+  conclusion: string
+  factors: Array<{
+    id: string; label: string; weight: number; score: number | null
+    coverage: number; evidenceIds: string[]; interpretation: string
+  }>
+  evidence: Array<{
+    id: string; label: string; source: string | null; sourceUrl: string | null
+    observedAt: string | null; observationDate: string | null
+    status: 'MISSING' | 'INVALID' | 'UNDATED' | 'STALE' | 'OBSERVED' | 'DELAYED'
+    value: number | null; change: number | null; unit: string; detail: string
+  }>
+  warnings: string[]
+  newsEvidence: Array<{ market: string; title: string; source: string; url: string; impact: string; publishedAt?: string | null }>
 }
 
 export type AiPick = {

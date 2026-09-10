@@ -12,9 +12,26 @@ import { Playbook } from '../tabs/aitab_widgets/Playbook'
 import { PortfolioSection } from '../tabs/stocks_parts/PortfolioSection'
 import { LeagueTab } from '../tabs/LeagueTab'
 import { ReadingTab } from '../tabs/ReadingTab'
-import type { AiPick, HoldingPosition, MarketSessionStatus, TabKey } from '../types'
+import type { AiPick, HoldingPosition, MarketInsightData, MarketSessionStatus, TabKey } from '../types'
 
 const generatedAt = new Date().toISOString()
+const marketInsight: MarketInsightData = {
+  headline: '우호 요인과 부담 요인이 엇갈리고 있어',
+  summary: '미리보기 데이터야. 실제 시황이 아니야. 반도체 강세와 금리 부담이 함께 있는 예시를 보여줘.',
+  sentiment: 'NEUTRAL',
+  keyPoints: ['반도체 동행 지표: 우호적인 조건을 보여줘. 샘플 반도체 ETF +1.50% · 실측 아님',
+    '미 국채 10년물: 샘플 4.30%, 이전 관측 대비 +10.00bp · 일간 공표치(실시간 아님)',
+    '한국 야간선물: 검증된 시세 피드 미연결 — 방향 판단에서 제외했어.',
+    '관측 시각 없는 수급·월간 지표는 단기 점수에서 제외했어. 이 비중은 적중률이 아니야.'],
+  assessment: {
+    rulesVersion: 'preview-market-evidence-v1', asOf: generatedAt,
+    horizon: 'CURRENT_CONDITIONS_KR_WITH_GLOBAL_CONTEXT', regime: 'MIXED', riskLevel: 'ELEVATED',
+    coveragePercent: 75, balanceScore: null, headline: '샘플 혼재 조건', conclusion: '화면 점검용 샘플',
+    factors: [], evidence: [{ id: 'DGS10', label: '미 국채 10년물', source: 'FRED:DGS10', sourceUrl: 'https://fred.stlouisfed.org/series/DGS10',
+      observedAt: null, observationDate: null, status: 'DELAYED', value: 4.3, change: 10, unit: 'BASIS_POINTS', detail: '실측 아닌 화면 점검용 샘플' }],
+    warnings: ['투자 판단에 사용하지 마.'], newsEvidence: [],
+  },
+}
 const sessions: MarketSessionStatus[] = [
   { market: 'KR', label: '한국', phase: 'REGULAR', status: 'OPEN', isOpen: true, localTime: '10:20', note: '샘플' },
   { market: 'US', label: '미국', phase: 'CLOSED', status: 'CLOSED', isOpen: false, localTime: '21:20', note: '샘플' },
@@ -57,7 +74,7 @@ function Preview() {
             <HoldingMonitor monitorTargets={positions} sessions={sessions} onOpenDetail={previewAction} />
           </> : activeTab === 'stocks' ? (
             <PortfolioSection portfolio={{ totalCost: 0, totalValue: 0, totalProfit: 0, totalProfitRate: 0, positions }} liveOf={(_m, _t, price) => ({ price, changeRate: 0, live: false })} onImportPress={previewAction} onOpenDetail={previewAction} />
-          ) : <Playbook aiPicks={{ generatedAt, summary: '시장 소음보다 확인된 근거에 집중해봐', picks }} summary={null} watchlist={watch ? [{ id: 'preview', market: 'KR', ticker: '000000', name: '샘플', price: 100000, changeRate: 2.4, sector: '', stance: 'WATCH', note: '', source: 'PREVIEW' }] : []} marketInsight={{ headline: '차분하게 기회를 살펴볼 시간', summary: '미리보기 데이터야. 투자 판단에 사용하지 마.', sentiment: 'NEUTRAL', keyPoints: ['장 상태 확인', '보유 종목 대응 기준 확인'] }} palette={palette} onOpenDetail={previewAction} onQuickAddWatch={async () => setWatch(true)} />}
+          ) : <Playbook aiPicks={{ generatedAt, summary: '시장 소음보다 확인된 근거에 집중해봐', picks }} summary={null} watchlist={watch ? [{ id: 'preview', market: 'KR', ticker: '000000', name: '샘플', price: 100000, changeRate: 2.4, sector: '', stance: 'WATCH', note: '', source: 'PREVIEW' }] : []} marketInsight={marketInsight} palette={palette} onOpenDetail={previewAction} onQuickAddWatch={async () => setWatch(true)} />}
         </ScrollView>
       )}
       <NativeShellChrome {...chrome} placement="navigation" />
