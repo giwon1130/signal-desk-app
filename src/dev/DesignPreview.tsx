@@ -16,20 +16,20 @@ import type { AiPick, HoldingPosition, MarketInsightData, MarketSessionStatus, T
 
 const generatedAt = new Date().toISOString()
 const marketInsight: MarketInsightData = {
-  headline: '우호 요인과 부담 요인이 엇갈리고 있어',
-  summary: '미리보기 데이터야. 실제 시황이 아니야. 반도체 강세와 금리 부담이 함께 있는 예시를 보여줘.',
+  headline: '긍정 요인과 부담 요인이 엇갈리고 있습니다',
+  summary: '반도체 관련 흐름은 국내 시장에 힘을 보태고 있습니다. 반면 미국 금리 흐름은 주식시장에 부담으로 작용하고 있습니다. 방향이 뚜렷해질 때까지 장중 흐름을 조금 더 확인할 필요가 있습니다.',
   sentiment: 'NEUTRAL',
-  keyPoints: ['반도체 동행 지표: 우호적인 조건을 보여줘. 샘플 반도체 ETF +1.50% · 실측 아님',
+  keyPoints: ['반도체 동행 지표: 우호적인 조건을 보여주고 있습니다. 샘플 반도체 ETF +1.50% · 실측 아님',
     '미 국채 10년물: 샘플 4.30%, 이전 관측 대비 +10.00bp · 일간 공표치(실시간 아님)',
-    '한국 야간선물: 검증된 시세 피드 미연결 — 방향 판단에서 제외했어.',
-    '관측 시각 없는 수급·월간 지표는 단기 점수에서 제외했어. 이 비중은 적중률이 아니야.'],
+    '한국 야간선물: 검증된 시세 피드가 연결되지 않아 방향 판단에서 제외했습니다.',
+    '관측 시각이 없는 수급·월간 지표는 단기 판단에서 제외했습니다. 이 비중은 적중률을 의미하지 않습니다.'],
   assessment: {
     rulesVersion: 'preview-market-evidence-v1', asOf: generatedAt,
     horizon: 'CURRENT_CONDITIONS_KR_WITH_GLOBAL_CONTEXT', regime: 'MIXED', riskLevel: 'ELEVATED',
-    coveragePercent: 75, balanceScore: null, headline: '샘플 혼재 조건', conclusion: '화면 점검용 샘플',
+    coveragePercent: 75, balanceScore: null, headline: '긍정 요인과 부담 요인이 엇갈립니다', conclusion: '방향이 확인될 때까지 무리한 진입은 피하는 편이 좋습니다.',
     factors: [], evidence: [{ id: 'DGS10', label: '미 국채 10년물', source: 'FRED:DGS10', sourceUrl: 'https://fred.stlouisfed.org/series/DGS10',
       observedAt: null, observationDate: null, status: 'DELAYED', value: 4.3, change: 10, unit: 'BASIS_POINTS', detail: '실측 아닌 화면 점검용 샘플' }],
-    warnings: ['투자 판단에 사용하지 마.'], newsEvidence: [],
+    warnings: ['화면 점검용 샘플이며 실제 투자 판단에 사용하면 안 됩니다.'], newsEvidence: [],
   },
 }
 const sessions: MarketSessionStatus[] = [
