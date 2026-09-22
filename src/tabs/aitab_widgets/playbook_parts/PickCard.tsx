@@ -44,7 +44,7 @@ export function PickCard({ pick, palette, generatedAt, now = Date.now(), inWatch
     try {
       setActionError(null)
       await Share.share({ message, title: pick.name + ' 검토 계획' })
-    } catch { setActionError('공유를 열지 못했어. 잠시 뒤 다시 시도해봐.') }
+    } catch { setActionError('공유를 열지 못했습니다. 잠시 뒤 다시 시도해 주세요.') }
   }
 
   return (
@@ -78,7 +78,7 @@ export function PickCard({ pick, palette, generatedAt, now = Date.now(), inWatch
         ) : null}
         <View style={{ gap: 6 }}>
           <Text style={{ color: palette.inkMuted, fontSize: 11, fontWeight: '700' }}>AI가 주목한 이유</Text>
-          <Text style={{ color: palette.inkSub, fontSize: 13, lineHeight: 21 }}>{pick.reason || '아직 정리된 근거가 없어'}</Text>
+          <Text style={{ color: palette.inkSub, fontSize: 14, lineHeight: 23 }}>{pick.reason || '아직 확인된 근거가 없습니다.'}</Text>
         </View>
         {assessment?.reasons.length ? (
           <Text style={{ color: palette.teal, fontSize: 12, lineHeight: 19 }}>{assessment.reasons.join('\n')}</Text>
@@ -108,7 +108,7 @@ export function PickCard({ pick, palette, generatedAt, now = Date.now(), inWatch
               ))}
             </View>
             <Text style={{ color: !canShare ? palette.orange : palette.inkMuted, fontSize: 12, lineHeight: 19 }}>
-              {!canShare ? '만료됐거나 재검증이 필요해 · 새로고침 후 다시 확인해봐' : '30분 유효 · 실제 주문이 아닌 검토 자료야'}
+              {!canShare ? '만료됐거나 재검증이 필요합니다. 새로고침 후 다시 확인해 주세요.' : '생성 후 30분간 유효합니다. 실제 주문이 아닌 검토 자료입니다.'}
             </Text>
             <Pressable
               disabled={!canShare}
@@ -139,7 +139,7 @@ export function PickCard({ pick, palette, generatedAt, now = Date.now(), inWatch
               {planOpen ? <ChevronUp size={15} color={palette.teal} /> : <ChevronDown size={15} color={palette.teal} />}
             </Pressable>
           ) : (
-            <Text style={{ flex: 1, color: palette.inkMuted, fontSize: 11, lineHeight: 17 }}>진입 계획 없이 관찰해봐</Text>
+            <Text style={{ flex: 1, color: palette.inkMuted, fontSize: 12, lineHeight: 19 }}>검토 자료를 확인하며 관찰해 주세요.</Text>
           )}
           <Pressable
             disabled={inWatch || adding}

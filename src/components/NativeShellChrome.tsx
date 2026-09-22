@@ -8,10 +8,10 @@ import type { TabKey } from '../types'
 // v2.2: 5탭 (today/stocks/ai/league/reading). reading 은 종목·시황 콜 공유 신규.
 const TABS: Array<{ key: TabKey; label: string; Icon: typeof Sunrise }> = [
   { key: 'today',   label: '오늘', Icon: Sunrise },
-  { key: 'stocks',  label: '종목', Icon: BarChart3 },
-  { key: 'ai',      label: 'AI',   Icon: Bot },
-  { key: 'league',  label: '리그', Icon: Trophy },
-  { key: 'reading', label: '리딩', Icon: Megaphone },
+  { key: 'stocks',  label: '내 종목', Icon: BarChart3 },
+  { key: 'ai',      label: 'AI 분석', Icon: Bot },
+  { key: 'league',  label: '모의투자', Icon: Trophy },
+  { key: 'reading', label: '공유', Icon: Megaphone },
 ]
 
 type Props = {

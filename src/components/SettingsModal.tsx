@@ -19,6 +19,7 @@ import { MarketPreferencePicker } from './reminder_parts/MarketPreferencePicker'
 import { fetchMyPlanRequest, requestPro, type PlanRequestStatus } from '../api/plan'
 import { PRO_BENEFITS } from '../lib/entitlements'
 import { TraderConnectionSection } from './trader/TraderConnectionSection'
+import { CollapsibleCard } from './CollapsibleCard'
 
 type ThemeMode = 'system' | 'light' | 'dark'
 
@@ -68,13 +69,7 @@ export function SettingsModal({
             </View>
           ) : null}
 
-          {/* 플랜 — PRO 신청 (결제 전 수동 승인 퍼널) */}
-          {user && authToken ? <PlanSection plan={user.plan ?? 'FREE'} palette={palette} /> : null}
-
-          {/* 개인 trader — 토스 자격증명 없이 읽기 전용 상태만 연결 */}
-          {user && authToken ? <TraderConnectionSection active={visible} palette={palette} /> : null}
-
-          {/* 시장 선호 — 헤더 칩과 동기 (둘 다에서 변경 가능) */}
+          {/* 자주 쓰는 환경 설정을 먼저 제공한다. */}
           <Section title="시장 선호" palette={palette}>
             <MarketPreferencePicker
               value={marketPreference}
@@ -82,7 +77,7 @@ export function SettingsModal({
               onChange={onMarketPreferenceChange}
             />
             <Text style={{ color: palette.inkFaint, fontSize: 11, marginTop: 4 }}>
-              헤더 칩과 같이 동작 — 어디서 바꿔도 즉시 반영
+              오늘 화면과 지수에 표시할 시장을 선택해 주세요.
             </Text>
           </Section>
 
@@ -95,8 +90,10 @@ export function SettingsModal({
                 return (
                   <Pressable
                     key={m}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: active }}
                     onPress={() => onThemeChange(m)}
-                    style={[styles.filterChip, active && styles.filterChipActive, { flex: 1 }]}
+                    style={[styles.filterChip, active && styles.filterChipActive, { flex: 1, minHeight: 44, justifyContent: 'center' }]}
                   >
                     <Text style={[styles.filterText, active && styles.filterTextActive]}>{label}</Text>
                   </Pressable>
@@ -104,12 +101,13 @@ export function SettingsModal({
               })}
             </View>
             <Text style={{ color: palette.inkFaint, fontSize: 11, marginTop: 4 }}>
-              v2 는 다크 기본 — '대시보드 프로' 톤
+              시스템을 선택하면 기기의 화면 모드를 따릅니다.
             </Text>
           </Section>
 
           {/* 알림 진입 */}
           <Pressable
+            accessibilityRole="button"
             onPress={() => {
               // iOS 는 닫히는 모달 위에 다른 모달을 즉시 띄우면 무시되는 경우가 있음 → 닫힘 애니메이션 후 열기.
               onClose()
@@ -136,6 +134,19 @@ export function SettingsModal({
             </View>
             <Text style={{ color: palette.inkFaint, fontSize: 14 }}>›</Text>
           </Pressable>
+
+          {user && authToken && visible ? <>
+            <CollapsibleCard defaultCollapsed title={<Text style={{ color: palette.ink, fontSize: 14, fontWeight: '700' }}>내 플랜 · {user.plan === 'PRO' ? 'PRO' : 'FREE'}</Text>}>
+              <PlanSection plan={user.plan ?? 'FREE'} palette={palette} />
+            </CollapsibleCard>
+            <CollapsibleCard defaultCollapsed title={<View style={{ gap: 5 }}>
+              <Text style={{ color: palette.ink, fontSize: 14, fontWeight: '700' }}>개인 자동매매 연동</Text>
+              <Text style={{ color: palette.inkMuted, fontSize: 12, lineHeight: 18 }}>별도 프로그램의 상태 확인 · 선택 기능</Text>
+            </View>}>
+              <Text style={{ color: palette.inkSub, fontSize: 13, lineHeight: 21 }}>이 앱에서는 실제 주문을 실행하지 않습니다. 개인 trader 프로그램이 보내는 보유·주문 상태만 확인합니다.</Text>
+              <TraderConnectionSection active={visible} palette={palette} />
+            </CollapsibleCard>
+          </> : null}
 
           {/* 로그아웃 */}
           <Pressable

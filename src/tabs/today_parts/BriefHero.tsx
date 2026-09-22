@@ -1,143 +1,85 @@
-/**
- * 브리프 히어로 — 오늘 탭 상단의 브리프 카드.
- * 모닝/마감 브리프 중 "가장 최근 1건"만 보여준다(덮어쓰기, 공존·회전 없음).
- * 뉴스(NEWS_DIGEST)는 아래 NewsHero 가 담당하므로 여기서 제외한다.
- */
-import { Linking, Pressable, Text, View } from 'react-native'
-import { ExternalLink, Moon, Sun, Sunrise } from 'lucide-react-native'
+import { useState } from 'react'
+import { Pressable, Text, View } from 'react-native'
+import { ChevronDown, ChevronUp, Moon, Sunrise } from 'lucide-react-native'
 import { useTheme } from '../../theme'
 import type { DailyBriefing, MediaSummaryItem } from '../../types'
+import { briefPresentation, selectLatestBrief } from '../../utils/briefPresentation'
 import { BriefingDetails } from './BriefingDetails'
 
 type Props = {
   items: MediaSummaryItem[]
   briefing?: DailyBriefing | null
+  marketPreference?: 'KR' | 'US' | 'BOTH'
   onTickerPress?: (ticker: string) => void
 }
 
-const sentimentLabel = (s: MediaSummaryItem['sentiment']) =>
-  s === 'BULLISH' ? '강세' : s === 'BEARISH' ? '약세' : '관망'
-
-// 뉴스/유튜브가 아닌 모든 브리프(모닝/장중/마감/미장).
-const isBriefSource = (s: MediaSummaryItem['source']) => s !== 'NEWS_DIGEST' && s !== 'YOUTUBE'
-
-const sourceMeta = (item: MediaSummaryItem): { label: string; Icon: typeof Sunrise } => {
-  switch (item.source) {
-    case 'MORNING_BRIEF': return { label: '모닝 브리프', Icon: Sunrise }
-    case 'MIDDAY_BRIEF': return { label: '장중 브리프', Icon: Sun }
-    case 'CLOSE_BRIEF': return { label: '마감 브리프', Icon: Moon }
-    case 'EVENING_BRIEF': return { label: '미장 브리프', Icon: Moon }
-    default: return { label: item.channelTitle || '브리프', Icon: Sunrise }
-  }
-}
-
-export function BriefHero({ items, briefing, onTickerPress }: Props) {
+/** 결론과 읽는 방법을 먼저, 지표/상세 근거는 사용자가 펼쳤을 때만 표시한다. */
+export function BriefHero({ items, briefing, marketPreference = 'BOTH', onTickerPress }: Props) {
   const { palette } = useTheme()
-
-  // 뉴스/유튜브 제외, 가장 최근 브리프 1건만. (items 는 최신순)
-  const item = items.find((s) => isBriefSource(s.source)) ?? null
-
-  // 브리프도 개인화도 없으면 카드 자체를 띄우지 않음.
+  const [expandedId, setExpandedId] = useState<string | null>(null)
+  const item = selectLatestBrief(items, marketPreference)
   if (!item && !briefing) return null
-
-  const { label: srcLabel, Icon } = item ? sourceMeta(item) : { label: '오늘의 브리핑', Icon: Sunrise }
-
-  const accent =
-    item?.sentiment === 'BULLISH' ? palette.up
-      : item?.sentiment === 'BEARISH' ? palette.down
-        : palette.blue
-  const accentBg =
-    item?.sentiment === 'BULLISH' ? palette.upSoft
-      : item?.sentiment === 'BEARISH' ? palette.downSoft
-        : palette.orangeSoft
-
-  const publishedLabel = (() => {
-    if (!item) return ''
-    const d = new Date(item.publishedAt)
-    if (Number.isNaN(d.getTime())) return ''
-    return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
-  })()
+  const content = item ? briefPresentation(item) : null
+  const expanded = !!item && expandedId === item.id
+  const evening = item?.source === 'CLOSE_BRIEF' || item?.source === 'EVENING_BRIEF'
+  const Icon = evening ? Moon : Sunrise
+  const label = item?.source === 'EVENING_BRIEF' ? '미국장 마감 브리프'
+    : item?.source === 'CLOSE_BRIEF' ? '한국장 마감 브리프'
+    : item?.source === 'MIDDAY_BRIEF' ? '한국장 장중 브리프' : '모닝 브리프'
+  const accent = content?.stale ? palette.inkMuted : palette.brandAccent
+  const timestamp = item && Number.isFinite(Date.parse(item.publishedAt))
+    ? new Date(item.publishedAt).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Seoul' }) + ' KST'
+    : '발행 시각 확인 중'
 
   return (
-    <View style={{
-      backgroundColor: palette.surface, borderRadius: 18, borderWidth: 1, borderColor: palette.border,
-      padding: 16, gap: 12,
-    }}>
-      {/* ── 상단: 소스 + 분위기 ── */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        <View style={{
-          flexDirection: 'row', alignItems: 'center', gap: 5,
-          backgroundColor: accentBg, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5,
-        }}>
-          <Icon size={13} color={accent} strokeWidth={2.6} />
-          <Text style={{ color: accent, fontSize: 12, fontWeight: '900' }}>{srcLabel}</Text>
-        </View>
-        {item ? (
-          <View style={{ backgroundColor: accentBg, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 4 }}>
-            <Text style={{ color: accent, fontSize: 11, fontWeight: '800' }}>{sentimentLabel(item.sentiment)}</Text>
-          </View>
-        ) : null}
-        <View style={{ flex: 1 }} />
-        {publishedLabel ? <Text style={{ color: palette.inkFaint, fontSize: 11 }}>{publishedLabel}</Text> : null}
+    <View style={{ backgroundColor: palette.surface, borderRadius: 20, borderWidth: 1, borderColor: palette.border, padding: 20, gap: 16 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+        <Icon size={17} color={accent} strokeWidth={2.2} />
+        <Text style={{ color: palette.ink, fontSize: 14, fontWeight: '800', flex: 1 }}>{item ? label : '나의 확인 사항'}</Text>
+        {content ? <Text style={{ color: accent, fontSize: 12, fontWeight: '700' }}>{content.label}</Text> : null}
       </View>
-
-      {/* ── 브리프 본문 ── */}
-      {item ? (
-        <View style={{ gap: 12 }}>
-          <Text style={{ color: palette.ink, fontSize: 18, fontWeight: '900', lineHeight: 25 }}>
-            {item.videoTitle}
-          </Text>
-
-          <Text style={{ color: palette.ink, fontSize: 14, lineHeight: 22 }}>{item.summary}</Text>
-
-          <View style={{
-            backgroundColor: accentBg, borderRadius: 12, padding: 13,
-            borderLeftWidth: 3, borderLeftColor: accent,
-          }}>
-            <Text style={{ color: accent, fontSize: 10, fontWeight: '900', letterSpacing: 0.5, marginBottom: 5 }}>시장 흐름</Text>
-            <Text style={{ color: palette.ink, fontSize: 13, lineHeight: 20 }}>{item.flowAnalysis}</Text>
-          </View>
-
-          {item.keyTickers.length > 0 ? (
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-              {item.keyTickers.map((t) => (
-                <Pressable
-                  key={t}
-                  onPress={() => onTickerPress?.(t)}
-                  style={({ pressed }) => ({
-                    paddingHorizontal: 11, paddingVertical: 5, borderRadius: 999,
-                    backgroundColor: pressed ? palette.surfaceAlt : palette.surface,
-                    borderWidth: 1, borderColor: palette.border,
-                  })}
-                >
-                  <Text style={{ color: palette.ink, fontSize: 12, fontWeight: '700' }}>{t}</Text>
-                </Pressable>
-              ))}
+      {item && content ? <>
+        <View style={{ gap: 8 }}>
+          <Text style={{ color: palette.inkMuted, fontSize: 12 }}>{timestamp} 기준</Text>
+          <Text accessibilityRole="header" style={{ color: palette.ink, fontSize: 21, fontWeight: '800', lineHeight: 30, letterSpacing: -0.5 }}>{content.headline}</Text>
+        </View>
+        <View style={{ backgroundColor: palette.surfaceAlt, borderRadius: 14, padding: 15, gap: 7 }}>
+          <Text style={{ color: palette.brandAccent, fontSize: 12, fontWeight: '800' }}>이렇게 살펴보세요</Text>
+          <Text style={{ color: palette.inkSub, fontSize: 15, lineHeight: 24 }}>{content.guide}</Text>
+        </View>
+        <View style={{ borderTopWidth: 1, borderTopColor: palette.borderLight }}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={expanded ? '시장 흐름 닫기' : '시장 흐름 열기'}
+            accessibilityState={{ expanded }}
+            aria-expanded={expanded}
+            onPress={() => setExpandedId(expanded ? null : item.id)}
+            style={({ pressed }) => ({ minHeight: 52, paddingTop: 10, flexDirection: 'row', alignItems: 'center', gap: 8, opacity: pressed ? 0.65 : 1 })}
+          >
+            <View style={{ flex: 1, gap: 4 }}>
+              <Text style={{ color: palette.ink, fontSize: 14, fontWeight: '700' }}>시장 흐름 · 판단 근거</Text>
+              <Text style={{ color: palette.inkMuted, fontSize: 12 }}>{expanded ? '확인한 내용을 접을 수 있습니다' : '지표와 세부 내용이 궁금할 때 열어보세요'}</Text>
             </View>
-          ) : null}
-
-          {item.source === 'YOUTUBE' && item.videoUrl ? (
-            <Pressable
-              onPress={() => { void Linking.openURL(item.videoUrl) }}
-              style={({ pressed }) => ({
-                flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start',
-                paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8,
-                backgroundColor: pressed ? palette.surfaceAlt : 'transparent',
-              })}
-            >
-              <ExternalLink size={12} color={palette.blue} strokeWidth={2.5} />
-              <Text style={{ color: palette.blue, fontSize: 12, fontWeight: '700' }}>유튜브에서 영상 보기</Text>
-            </Pressable>
-          ) : null}
+            <Text style={{ color: palette.brandAccent, fontSize: 12, fontWeight: '700' }}>{expanded ? '닫기' : '열기'}</Text>
+            {expanded ? <ChevronUp size={17} color={palette.inkMuted} /> : <ChevronDown size={17} color={palette.inkMuted} />}
+          </Pressable>
+          {expanded ? <View style={{ gap: 16, paddingTop: 18 }}>
+            {content.narrative ? <Text style={{ color: palette.inkSub, fontSize: 14, lineHeight: 23 }}>{content.narrative}</Text> : null}
+            {content.points.length ? <View style={{ gap: 0 }}>
+              {content.points.map((point, index) => <View key={index} style={{ paddingVertical: 12, borderTopWidth: 1, borderTopColor: palette.borderLight }}>
+                <Text selectable style={{ color: palette.inkMuted, fontSize: 13, lineHeight: 21 }}>{point}</Text>
+              </View>)}
+            </View> : <Text style={{ color: palette.inkMuted, fontSize: 13 }}>추가로 확인된 상세 근거가 없습니다.</Text>}
+            {item.keyTickers.length && onTickerPress ? <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+              {item.keyTickers.map((ticker) => <Pressable key={ticker} accessibilityRole="button" accessibilityLabel={ticker + ' 종목 보기'} onPress={() => onTickerPress(ticker)}
+                style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: 12, borderRadius: 10, backgroundColor: palette.surfaceAlt }}>
+                <Text style={{ color: palette.ink, fontSize: 13, fontWeight: '700' }}>{ticker}</Text>
+              </Pressable>)}
+            </View> : null}
+          </View> : null}
         </View>
-      ) : null}
-
-      {/* ── 개인화: 내 보유/관심/이벤트 + 액션 ── */}
-      {briefing ? (
-        <View style={item ? { borderTopWidth: 1, borderTopColor: palette.border, paddingTop: 10 } : undefined}>
-          <BriefingDetails briefing={briefing} />
-        </View>
-      ) : null}
+      </> : <Text style={{ color: palette.inkMuted, fontSize: 14, lineHeight: 22 }}>새 브리프가 아직 도착하지 않았습니다. 내 종목과 예정된 일정을 먼저 확인해 주세요.</Text>}
+      {briefing ? <BriefingDetails briefing={briefing} /> : null}
     </View>
   )
 }

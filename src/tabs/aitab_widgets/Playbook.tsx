@@ -64,8 +64,8 @@ export function Playbook({
         {actionItems.length === 0 ? (
           <View style={{ paddingVertical: 18, alignItems: 'center', gap: 4 }}>
             <Check size={20} color={palette.inkFaint} />
-            <Text style={{ color: palette.inkMuted, fontSize: 12, fontWeight: '600' }}>오늘 따로 액션 없음</Text>
-            <Text style={{ color: palette.inkFaint, fontSize: 11 }}>시장 흐름만 확인하고 현금 지키기</Text>
+            <Text style={{ color: palette.inkMuted, fontSize: 14, fontWeight: '600' }}>현재 등록된 확인 사항이 없습니다</Text>
+            <Text style={{ color: palette.inkFaint, fontSize: 12 }}>새로운 신호가 확인되면 이곳에 안내합니다.</Text>
           </View>
         ) : (
           <View style={{ gap: 8 }}>
@@ -90,10 +90,10 @@ export function Playbook({
       >
         <View style={{ backgroundColor: palette.surfaceAlt, padding: 14, borderRadius: 14, gap: 7, marginBottom: 16 }}>
           <Text style={{ color: stale && picks.length > 0 ? palette.orange : palette.ink, fontSize: 15, fontWeight: '800' }}>
-            {stale && picks.length > 0 ? '새로운 검토 자료가 필요해' : `지금 검토 가능한 후보 ${reviewCount}개`}
+            {stale && picks.length > 0 ? '최신 검토 자료를 확인해 주세요' : `지금 검토 가능한 후보 ${reviewCount}개`}
           </Text>
           <Text style={{ color: palette.inkMuted, fontSize: 12, lineHeight: 19 }}>
-            {stale && picks.length > 0 ? '30분이 지났거나 생성 시각이 불명확해. 화면을 내려 새로고침해봐.' : 'AI 의견에 가격·급등락 필터를 적용했어. 검토 가능은 매수 지시나 상승 확률이 아니야.'}
+            {stale && picks.length > 0 ? '생성 후 30분이 지났거나 생성 시각이 불명확합니다. 화면을 내려 새로고침해 주세요.' : '가격과 변동 폭을 확인한 검토 후보입니다. 매수 지시나 상승 확률을 뜻하지 않습니다.'}
           </Text>
         </View>
         {aiPicks?.summary ? (
@@ -103,8 +103,8 @@ export function Playbook({
         ) : null}
         {picks.length === 0 ? (
           <View style={{ paddingVertical: 18, alignItems: 'center', gap: 4 }}>
-            <Text style={{ color: palette.inkMuted, fontSize: 13, fontWeight: '600' }}>{aiPicks ? '지금은 검토할 후보가 없어' : 'AI 검토 자료를 기다리고 있어'}</Text>
-            <Text style={{ color: palette.inkFaint, fontSize: 12 }}>근거가 부족하면 추천을 쉬어가도 괜찮아</Text>
+            <Text style={{ color: palette.inkMuted, fontSize: 14, fontWeight: '600' }}>{aiPicks ? '현재 검토할 후보가 없습니다' : 'AI 검토 자료를 기다리고 있습니다'}</Text>
+            <Text style={{ color: palette.inkFaint, fontSize: 12 }}>확인할 근거가 충분할 때 후보를 안내합니다.</Text>
           </View>
         ) : (
           <View style={{ gap: 14 }}>

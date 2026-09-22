@@ -25,10 +25,10 @@ export function HoldingMonitor({ monitorTargets, sessions, onOpenDetail }: Props
         <Text style={styles.metaText}>확인 우선순</Text>
       </View>
       <Text style={{ color: palette.inkMuted, fontSize: 12, lineHeight: 19 }}>
-        내가 정한 목표가·손절가 기준이야. 자동 매도하지 않아.
+        직접 정한 목표가·손절가와 비교합니다. 자동으로 매도하지 않습니다.
       </Text>
       {monitorTargets.length === 0 ? (
-        <Text style={styles.metaText}>종목 탭에서 보유 종목과 대응 기준을 등록해봐</Text>
+        <Text style={styles.metaText}>내 종목에서 보유종목과 대응 기준을 등록해 주세요.</Text>
       ) : monitorTargets.map((position) => {
         const decision = assessHolding(position)
         const session = sessions.find((item) => item.market === position.market)
@@ -68,7 +68,7 @@ export function HoldingMonitor({ monitorTargets, sessions, onOpenDetail }: Props
               <Text style={{ color: palette.inkSub, fontSize: 12, lineHeight: 19 }}>{decision.detail}</Text>
               {!isRegular ? (
                 <Text style={{ color: palette.inkMuted, fontSize: 11, lineHeight: 17 }}>
-                  {session ? '정규장 밖이야 · 개장 후 최신 시세로 다시 확인해봐' : '장 상태를 확인할 수 없어 · 시세와 거래 시간을 확인해봐'}
+                  {session ? '정규장 밖입니다. 개장 후 최신 시세로 다시 확인해 주세요.' : '장 상태를 확인할 수 없습니다. 시세와 거래 시간을 확인해 주세요.'}
                 </Text>
               ) : null}
             </View>

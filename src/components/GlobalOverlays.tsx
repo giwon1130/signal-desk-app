@@ -11,7 +11,6 @@ import { JoinLeagueModal } from './league_parts/JoinLeagueModal'
 import { ComposePostModal } from './reading_parts/ComposePostModal'
 import { LeaderProfileModal } from './reading_parts/LeaderProfileModal'
 import { SettingsModal } from './SettingsModal'
-import { DailyGreetingModal } from './DailyGreetingModal'
 import { AssistantModal } from './AssistantModal'
 import { LoadingScreen } from './LoadingScreen'
 import { ProUpgradeSheet } from './pro/ProUpgrade'
@@ -25,7 +24,7 @@ import type { useToast } from '../hooks/useToast'
 import type { useAlertsInbox } from '../hooks/useAlertsInbox'
 import type { useLeagueOrchestration } from '../hooks/useLeagueOrchestration'
 import type { useReadingOrchestration } from '../hooks/useReadingOrchestration'
-import type { AlertHistoryItem, DailyFortune, MarketSummaryData, TabKey, WatchItem } from '../types'
+import type { AlertHistoryItem, MarketSummaryData, TabKey, WatchItem } from '../types'
 
 type StockDetailModalProps = ComponentProps<typeof StockDetailModal>
 
@@ -35,7 +34,6 @@ type Props = {
   loading: boolean
   marketPreference: MarketPreference
   summary: MarketSummaryData | null
-  fortune: DailyFortune | null
   watchlist: WatchItem[]
   alertHistory: AlertHistoryItem[]
   // 종목 상세
@@ -69,26 +67,22 @@ type Props = {
   onMarketPreferenceChange: (p: MarketPreference) => void
   onLogout: () => void
   onDeleteAccount: () => void
-  // 오늘의 운세 팝업
-  greetingOpen: boolean
-  setGreetingOpen: (v: boolean) => void
   assistantOpen: boolean
   setAssistantOpen: (v: boolean) => void
 }
 
 /**
  * 전역 모달/오버레이 스택 — 웹·네이티브 레이아웃이 공유.
- * (종목 상세·알림함·설정·리그·리딩·마이그레이션·운세·토스트·로딩 오버레이)
+ * (종목 상세·알림함·설정·리그·리딩·토스트·로딩 오버레이)
  */
 export function GlobalOverlays({
-  user, toast, loading, marketPreference, summary, fortune, watchlist, alertHistory,
+  user, toast, loading, marketPreference, summary, watchlist, alertHistory,
   detailKey, detailContext, onCloseDetail, onToggleWatch, onSaveWatchAlerts, onSavePortfolio, onDeletePortfolio,
   onOpenDetail, onNavigateTab,
   reminderOpen, setReminderOpen, onRefreshSummary, alerts,
   guideOpen, setGuideOpen,
   league, reading,
   settingsOpen, setSettingsOpen, proUpgradeOpen, setProUpgradeOpen, onMarketPreferenceChange, onLogout, onDeleteAccount,
-  greetingOpen, setGreetingOpen,
   assistantOpen, setAssistantOpen,
 }: Props) {
   const { mode, setMode } = useTheme()
@@ -182,11 +176,6 @@ export function GlobalOverlays({
         onOpenReminder={() => setReminderOpen(true)}
         onLogout={() => { setSettingsOpen(false); onLogout() }}
         onDeleteAccount={() => { setSettingsOpen(false); onDeleteAccount() }}
-      />
-      <DailyGreetingModal
-        visible={greetingOpen}
-        fortune={fortune ?? null}
-        onClose={() => setGreetingOpen(false)}
       />
       {/* 시데 AI — 글로벌 1개 인스턴스 (mounted 유지로 세션 동안 대화 보존) */}
       <AssistantModal visible={assistantOpen} onClose={() => setAssistantOpen(false)} />

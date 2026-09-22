@@ -77,9 +77,9 @@ export const LeagueTab = memo(function LeagueTab({ authToken, refreshing, onOpen
       <TabIntro
         tabKey="league"
         icon={Trophy}
-        title="리그"
+        title="모의투자"
         tagline="친구와 모의투자 수익률 경쟁"
-        description="자본금·기간을 정해 친구들과 가상으로 경쟁해요. 매수가는 실시간 시세로 잠기고, 마감 때 시상대에서 순위가 갈립니다. 리그를 만들거나 친구 코드로 참가하세요."
+        description="가상 자금으로 투자 경험을 쌓는 공간입니다. 실제 돈이나 증권 계좌는 사용하지 않습니다. 리그를 만들거나 친구가 보낸 코드로 참가해 주세요."
         accent="#f59e0b"
       />
 

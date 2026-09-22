@@ -44,7 +44,6 @@ import { AssistantFab } from './src/components/AssistantFab'
 import { isPro } from './src/lib/entitlements'
 import { AdminPage } from './src/web/AdminPage'
 import { getAlertPreferences, syncMarketPreference, type MarketPreference } from './src/api/alertPreferences'
-import { getFortuneGreetingShownDate, markFortuneGreetingShown } from './src/utils/fortuneGreeting'
 import { useAlertsInbox } from './src/hooks/useAlertsInbox'
 import { useLeagueOrchestration } from './src/hooks/useLeagueOrchestration'
 import { useReadingOrchestration } from './src/hooks/useReadingOrchestration'
@@ -196,33 +195,13 @@ function AppShell() {
     }
   }, [marketPreference, setStockMarketFilter])
 
-  // ── 오늘의 운세 팝업 (앱 전용, 하루 1회) ──
-  const [greetingOpen, setGreetingOpen] = useState(false)
-  const greetingTriggered = useRef(false)
+  // 투자 정보와 무관한 운세 자동 팝업은 노출하지 않는다.
   useEffect(() => {
     if (Platform.OS === 'web') return
-    if (!fortune || greetingTriggered.current) return
-    // 가이드 모달과 동시에 뜨면 iOS 에서 화면 터치가 막힘 → 가이드가 떠 있으면 닫힐 때까지 대기(effect 재실행).
-    if (guideOpen) return
-    greetingTriggered.current = true
-    void (async () => {
-      // 같은 날 이미 띄웠으면 skip — 날짜가 바뀌어야 다시 노출.
-      const shownDate = await getFortuneGreetingShownDate()
-      if (shownDate !== fortune.date) {
-        setGreetingOpen(true)
-        await markFortuneGreetingShown(fortune.date)
-      }
-    })()
-  }, [fortune, guideOpen])
-
-  // 가이드 모달은 운세 모달과 절대 동시에 뜨지 않게 — 운세가 닫힌 뒤(또는 운세가 없으면 잠시 후) 단독 노출.
-  // 두 모달이 겹치면 iOS RN 에서 안 보이는 모달이 터치를 가로채 화면이 먹통이 된다.
-  useEffect(() => {
-    if (Platform.OS === 'web') return
-    if (!guidePending || greetingOpen || guideOpen) return
+    if (!guidePending || guideOpen) return
     const t = setTimeout(() => { setGuidePending(false); setGuideOpen(true) }, 1200)
     return () => clearTimeout(t)
-  }, [guidePending, greetingOpen, guideOpen])
+  }, [guidePending, guideOpen])
 
   const confirmLogout = useCallback(() => {
     // 웹: RN Alert 의 버튼 onPress 가 동작하지 않아 window.confirm 으로 분기.
@@ -606,7 +585,6 @@ function AppShell() {
       loading={loading}
       marketPreference={marketPreference}
       summary={summary}
-      fortune={fortune}
       watchlist={watchlist}
       alertHistory={alertHistory}
       detailKey={detailKey}
@@ -633,8 +611,6 @@ function AppShell() {
       onMarketPreferenceChange={handleMarketPreferenceChange}
       onLogout={confirmLogout}
       onDeleteAccount={confirmDeleteAccount}
-      greetingOpen={greetingOpen}
-      setGreetingOpen={setGreetingOpen}
       assistantOpen={assistantOpen}
       setAssistantOpen={setAssistantOpen}
     />

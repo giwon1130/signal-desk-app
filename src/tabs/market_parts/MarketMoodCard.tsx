@@ -22,14 +22,14 @@ type Props = {
 
 // 어려운 지표명 → 쉬운 말. 백엔드 라벨을 화면에서만 친근하게 치환.
 const FRIENDLY_LABEL: Record<string, string> = {
-  'PizzINT 종합': '시장 신호 종합',
-  PizzINT: '시장 신호 종합',
+  'PizzINT 종합': '실험 지표(PizzINT)',
+  PizzINT: '실험 지표(PizzINT)',
   'CBOE VIX': '美 변동성(VIX)',
   'VIX 변동성': '美 변동성(VIX)',
   VIX: '美 변동성(VIX)',
   '한국 지수 변동': '한국 지수 변동',
   '뉴스 키워드': '뉴스 위험도',
-  'Fear Meter': '공포·탐욕',
+  'Fear Meter': '미국 변동성 심리',
   'KR Heat': '한국 강도',
   'US Heat': '미국 강도',
   'KR Overheat': '한국 과열도',
@@ -54,11 +54,11 @@ const METRIC_MARKET: Record<string, 'KR' | 'US'> = {
 // 백엔드 level(안정/관망/주의/경계/고위험)에 1:1 매핑해 라벨 일관 유지.
 type MiseLevel = { emoji: string; action: string; color: string; bg: string }
 const MISE: Record<string, MiseLevel> = {
-  안정: { emoji: '😎', action: '진입하기 무난한 날 — 계획대로 진행하세요', color: '#15803d', bg: '#dcfce7' },
-  관망: { emoji: '🙂', action: '평소 페이스 유지 — 무리한 추격만 피하면 돼요', color: '#0d9488', bg: '#d1fae5' },
-  주의: { emoji: '😐', action: '분할·소액으로 신중하게 — 손절선 먼저 정해두세요', color: '#b45309', bg: '#fef3c7' },
-  경계: { emoji: '😟', action: '신규 진입은 자제 — 보유 비중·리스크부터 점검', color: '#c2410c', bg: '#ffedd5' },
-  고위험: { emoji: '😱', action: '지금은 쉬어가기 — 진입 보류, 현금·관리 우선', color: '#b91c1c', bg: '#fee2e2' },
+  안정: { emoji: '😎', action: '관측된 시장 위험이 낮은 편입니다. 개별 종목 위험은 따로 확인해 주세요.', color: '#15803d', bg: '#dcfce7' },
+  관망: { emoji: '🙂', action: '방향을 서두르기보다 관심종목의 변화를 살펴보세요.', color: '#0d9488', bg: '#d1fae5' },
+  주의: { emoji: '😐', action: '변동성에 주의가 필요합니다. 미리 정한 대응 기준을 점검해 주세요.', color: '#b45309', bg: '#fef3c7' },
+  경계: { emoji: '😟', action: '시장 위험 신호가 커졌습니다. 보유 비중과 변동 폭을 확인해 주세요.', color: '#c2410c', bg: '#ffedd5' },
+  고위험: { emoji: '😱', action: '강한 위험 신호가 관측됐습니다. 최신 시세와 관련 공시를 우선 확인해 주세요.', color: '#b91c1c', bg: '#fee2e2' },
 }
 const miseOf = (level: string): MiseLevel => MISE[level] ?? MISE['주의']
 

@@ -1,4 +1,4 @@
-import { Text, View } from 'react-native'
+import { Pressable, Text, View } from 'react-native'
 import { Bell } from 'lucide-react-native'
 import { useStyles } from '../../styles'
 import { useTheme } from '../../theme'
@@ -6,9 +6,10 @@ import type { MarketSummaryData } from '../../types'
 
 type Props = {
   alerts: MarketSummaryData['watchAlerts']
+  onOpenDetail?: (market: string, ticker: string, name?: string) => void
 }
 
-export function WatchAlertList({ alerts }: Props) {
+export function WatchAlertList({ alerts, onOpenDetail }: Props) {
   const styles = useStyles()
   const { palette } = useTheme()
   return (
@@ -24,8 +25,12 @@ export function WatchAlertList({ alerts }: Props) {
         alerts.map((item) => {
           const tone = alertTone(item.severity, palette.scheme === 'dark')
           return (
-            <View
+            <Pressable
             key={`${item.category}-${item.market}-${item.ticker}`}
+            disabled={!onOpenDetail}
+            accessibilityRole={onOpenDetail ? 'button' : undefined}
+            accessibilityLabel={`${item.name} 신호 상세 보기`}
+            onPress={() => onOpenDetail?.(item.market, item.ticker, item.name)}
             style={[
               styles.metricRow,
               styles.alertMetricRow,
@@ -42,7 +47,6 @@ export function WatchAlertList({ alerts }: Props) {
               </Text>
             </View>
             <View style={styles.alternativeMetricTopRow}>
-              <Text style={[styles.metricScore, { color: tone.scoreColor }]}>{item.score}</Text>
               <Text
                 style={[
                   styles.alternativeScoreBadge,
@@ -52,7 +56,7 @@ export function WatchAlertList({ alerts }: Props) {
                   },
                 ]}
               >
-                {item.severity.toUpperCase()}
+                {item.severity === 'high' ? '우선 확인' : item.severity === 'medium' ? '변화 확인' : '참고'}
               </Text>
             </View>
             <View style={styles.alternativeHighlightsRow}>
@@ -63,13 +67,13 @@ export function WatchAlertList({ alerts }: Props) {
               ))}
             </View>
             <Text style={styles.metricNote} numberOfLines={3} ellipsizeMode="tail">{item.note}</Text>
-          </View>
+          </Pressable>
           )
         })
       ) : (
         <View style={styles.emptyStateRow}>
           <Bell size={14} color="#94a3b8" strokeWidth={2} />
-          <Text style={styles.metaText}>지금 주목할 시그널은 없습니다. 안정 구간입니다.</Text>
+          <Text style={[styles.metaText, { flex: 1, lineHeight: 21 }]}>현재 확인된 관심종목 신호가 없습니다. 신호가 없다는 것이 가격 안정을 뜻하지는 않습니다.</Text>
         </View>
       )}
     </View>

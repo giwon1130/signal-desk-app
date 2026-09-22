@@ -38,7 +38,6 @@ export function CollapsibleCard({
   const { palette } = useTheme()
   const [internal, setInternal] = useState(defaultCollapsed)
   const isCollapsed = controlled ?? internal
-  const isWeb = Platform.OS === 'web'
 
   const handlePress = () => {
     void hapticLight()
@@ -52,18 +51,21 @@ export function CollapsibleCard({
   return (
     <View style={[styles.card, cardStyle as any]}>
       <Pressable
+        accessibilityRole="button"
+        accessibilityState={{ expanded: !isCollapsed }}
+        aria-expanded={!isCollapsed}
         onPress={handlePress}
         style={({ pressed }) => [
           styles.collapsibleHeader,
+          { minHeight: 44 },
           headerStyle as any,
           pressed && { opacity: 0.7 },
         ]}
         hitSlop={8}
       >
         <View style={styles.collapsibleHeaderMain}>{title}</View>
-        {preview && !isWeb ? <View style={styles.collapsibleHeaderPreview}>{preview}</View> : null}
-        {/* 웹에선 접을 일이 없으니 셰브론 숨김 (헤더를 눌러도 토글은 되지만 UI 는 깔끔하게) */}
-        {!isWeb ? <Chevron size={16} color={palette.inkMuted} strokeWidth={2.5} /> : null}
+        {preview ? <View style={styles.collapsibleHeaderPreview}>{preview}</View> : null}
+        <Chevron size={16} color={palette.inkMuted} strokeWidth={2.5} />
       </Pressable>
       {!isCollapsed ? <View style={styles.collapsibleBody}>{children}</View> : null}
     </View>

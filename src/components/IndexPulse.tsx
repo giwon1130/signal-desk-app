@@ -1,6 +1,4 @@
-import { Animated, Pressable, Text, View } from 'react-native'
-import { Activity } from 'lucide-react-native'
-import { useRotatingIndex } from '../hooks/useRotatingIndex'
+import { Pressable, ScrollView, Text, View } from 'react-native'
 import { useTheme } from '../theme'
 import type { MarketKey, MarketSectionsData } from '../types'
 import { formatNumber, formatSignedRate } from '../utils'
@@ -14,10 +12,7 @@ type Props = {
 
 type Idx = { market: MarketKey; label: string; value: number; changeRate: number }
 
-/**
- * 상단 지수 펄스 — 선호 시장 지수(코스피/코스닥/나스닥/S&P)를 ~2.8초마다
- * 페이드로 번갈아 한 줄에 보여준다. (급등락 미리보기 회전과 동일 톤)
- */
+/** 자동 회전 없이 지수를 비교한다. 숫자는 부호와 색을 함께 사용한다. */
 export function IndexPulse({ sections, marketPreference, onPress }: Props) {
   const { palette } = useTheme()
 
@@ -27,36 +22,29 @@ export function IndexPulse({ sections, marketPreference, onPress }: Props) {
   if (showKr) for (const it of sections?.koreaMarket?.indices ?? []) items.push({ market: 'KR', label: it.label, value: it.value, changeRate: it.changeRate })
   if (showUs) for (const it of sections?.usMarket?.indices ?? []) items.push({ market: 'US', label: it.label, value: it.value, changeRate: it.changeRate })
 
-  const { index: i, opacity } = useRotatingIndex(items.length, 2800)
-
   if (items.length === 0) return null
-  const cur = items[i] ?? items[0]
-  const color = cur.changeRate > 0 ? palette.up : cur.changeRate < 0 ? palette.down : palette.inkMuted
 
   return (
-    <Pressable
-      onPress={() => onPress?.(cur.market, cur.label)}
-      disabled={!onPress}
-      accessibilityRole={onPress ? 'button' : undefined}
-      style={{
-        flexDirection: 'row', alignItems: 'center', gap: 8,
-        paddingHorizontal: 16, paddingVertical: 6,
-        borderTopWidth: 1, borderTopColor: palette.borderLight,
-        backgroundColor: palette.bg,
-      }}
-    >
-      <Activity size={13} color={palette.inkMuted} strokeWidth={2.5} />
-      <Text style={{ color: palette.inkMuted, fontSize: 10, fontWeight: '800', letterSpacing: 0.4 }}>MARKET</Text>
-      <View style={{ flex: 1 }} />
-      <Animated.View style={{ opacity, flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
-        <Text style={{ color: palette.ink, fontSize: 12, fontWeight: '800' }}>{cur.label}</Text>
-        <Text style={{ color: palette.ink, fontSize: 12, fontWeight: '700', fontVariant: ['tabular-nums'] }}>
-          {formatNumber(cur.value, 2)}
-        </Text>
-        <Text style={{ color, fontSize: 12, fontWeight: '900', fontVariant: ['tabular-nums'] }}>
-          {formatSignedRate(cur.changeRate)}
-        </Text>
-      </Animated.View>
-    </Pressable>
+    <View style={{ borderTopWidth: 1, borderTopColor: palette.borderLight, backgroundColor: palette.bg }}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 12, paddingVertical: 8, gap: 8 }}>
+        {items.map((item) => {
+          const valid = Number.isFinite(item.value) && item.value > 0 && Number.isFinite(item.changeRate)
+          const color = !valid ? palette.inkMuted : item.changeRate > 0 ? palette.up : item.changeRate < 0 ? palette.down : palette.inkMuted
+          return (
+            <Pressable key={`${item.market}-${item.label}`} disabled={!onPress}
+              accessibilityRole={onPress ? 'button' : undefined}
+              accessibilityLabel={`${item.label}, ${valid ? `${formatNumber(item.value, 2)}, ${formatSignedRate(item.changeRate)}` : '시세 확인 중'}${onPress ? ', 상세 보기' : ''}`}
+              onPress={() => onPress?.(item.market, item.label)}
+              style={({ pressed }) => ({ minWidth: 142, minHeight: 52, paddingHorizontal: 12, paddingVertical: 8, gap: 5, borderRadius: 10, backgroundColor: palette.surface, opacity: pressed ? 0.65 : 1 })}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 12 }}>
+                <Text style={{ color: palette.inkSub, fontSize: 12, fontWeight: '700' }}>{item.label}</Text>
+                <Text style={{ color, fontSize: 12, fontWeight: '700', fontVariant: ['tabular-nums'] }}>{valid ? formatSignedRate(item.changeRate) : '—'}</Text>
+              </View>
+              <Text style={{ color: palette.ink, fontSize: 15, fontWeight: '800', fontVariant: ['tabular-nums'] }}>{valid ? formatNumber(item.value, 2) : '확인 중'}</Text>
+            </Pressable>
+          )
+        })}
+      </ScrollView>
+    </View>
   )
 }

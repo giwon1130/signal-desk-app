@@ -36,6 +36,7 @@ import { MarketMoodCard } from './market_parts/MarketMoodCard'
 import { WatchAlertList } from './market_parts/WatchAlertList'
 import { TodayFocusCard, type TodayFocusTarget } from './today_parts/TodayFocusCard'
 import { MarketRoundCard } from './today_parts/MarketRoundCard'
+import { selectLatestBrief } from '../utils/briefPresentation'
 
 type Props = {
   summary: MarketSummaryData | null
@@ -81,6 +82,9 @@ export const TodayTab = memo(function TodayTab({
 
   const krSentiment = showKr ? summary?.newsSentiments?.find((s) => s.market === 'KR') : undefined
   const usSentiment = showUs ? summary?.newsSentiments?.find((s) => s.market === 'US') : undefined
+  const selectedPositions = positions.filter((p) => (p.market === 'KR' && showKr) || (p.market === 'US' && showUs))
+  const selectedAlerts = (summary?.watchAlerts ?? []).filter((a) => (a.market === 'KR' && showKr) || (a.market === 'US' && showUs))
+  const hasBrief = !!selectLatestBrief(mediaSummaries, marketPreference) || !!summary?.briefing
 
   // 기준가 도달 종목을 우선 노출하고 선택한 시장만 표시한다.
   const liveTickers = useMemo(() => positions.filter((p) => p.market === 'KR').map((p) => p.ticker), [positions])
@@ -97,9 +101,7 @@ export const TodayTab = memo(function TodayTab({
   const selectedSessions = (summary?.marketSessions ?? []).filter((session) =>
     (session.market === 'KR' && showKr) || (session.market === 'US' && showUs) || (session.market !== 'KR' && session.market !== 'US'),
   )
-  // FREE 사용자도 야간 방향성 카드가 잠금 티저로 내려오는 동안에는 장전 안내를 받는다.
-  const isPremarketWindow = !!summary?.preMarketDirection &&
-    (summary.preMarketDirection.locked || !!summary.preMarketDirection.bias)
+  const isPremarketWindow = showKr && !!summary?.preMarketDirection?.bias && !summary.preMarketDirection.locked
   const registerSection = useCallback((target: TodayFocusTarget) => (event: { nativeEvent: { layout: { y: number } } }) => {
     sectionOffsets.current[target] = event.nativeEvent.layout.y
   }, [])
@@ -129,8 +131,8 @@ export const TodayTab = memo(function TodayTab({
         tabKey="today"
         icon={Sparkles}
         title="오늘"
-        tagline="내 종목·시장을 하루 한눈에"
-        description="장 세션 상태, 보유·관심 종목 모니터, 시장 지수와 핵심 시그널을 모아 보여줘요. 위에서부터 내 종목 → 시장 순으로 중요한 것부터 정렬돼 있습니다."
+        tagline="오늘의 흐름과 내 종목을 한눈에"
+        description="브리프로 시장의 큰 흐름을 확인하고 내 종목을 살펴보세요. 시장 흐름과 상세 근거는 필요한 때 펼쳐볼 수 있습니다."
         accent={palette.brandAccent}
       />
 
@@ -145,7 +147,7 @@ export const TodayTab = memo(function TodayTab({
               <View key={session.market} style={[styles.todaySessionPill, { backgroundColor: tone.backgroundColor }]}>
                 <Clock size={11} color={tone.textColor} strokeWidth={2.5} />
                 <Text style={[styles.todaySessionLabel, { color: tone.textColor }]}>{session.label}</Text>
-                <Text style={[styles.todaySessionStatus, { color: tone.textColor }]}>{session.status}</Text>
+                <Text style={[styles.todaySessionStatus, { color: tone.textColor }]}>{session.status === '휴장' ? '휴장' : ({ REGULAR: '정규장 거래 중', PRE_MARKET: '장 시작 전', AFTER_HOURS: '시간외', POST_MARKET: '시간외', CLOSED: '정규장 종료', HOLIDAY: '휴장' } as Record<string, string>)[session.phase] ?? '상태 확인 중'}</Text>
               </View>
             )
           })}
@@ -170,19 +172,23 @@ export const TodayTab = memo(function TodayTab({
 
       <TodayFocusCard
         sessions={selectedSessions}
-        positionsCount={positions.length}
-        alertCount={(summary?.watchAlerts ?? []).length}
+        positionsCount={selectedPositions.length}
+        alertCount={selectedAlerts.length}
         isPremarketWindow={isPremarketWindow}
-        hasBrief={mediaSummaries.length > 0 || !!summary?.briefing}
+        hasBrief={hasBrief}
         onOpenSection={openSection}
       />
 
-      {/* 정보 우선순위: 내 종목(보유·관심) → 시장 맥락(무드·뉴스) → 읽을거리(브리프) → 시즌·이벤트.
-          아침에 "내 종목 어떻게 됐지"가 1순위라 개인·액션 카드를 맨 위로. 무보유/무신호 카드는
-          자동으로 미렌더되어 신규 사용자에겐 자연히 브리프가 상단에 온다. */}
+      {/* 큰 흐름 → 내 종목 → 세부 지표. 긴 근거는 기본 접힘으로 제공한다. */}
+      {hasBrief ? (
+        <View onLayout={registerSection('brief')}>
+          <BriefHero items={mediaSummaries} briefing={summary?.briefing ?? null} marketPreference={marketPreference}
+            onTickerPress={(ticker) => onOpenDetail(/^\d{6}$/.test(ticker) ? 'KR' : 'US', ticker)} />
+        </View>
+      ) : null}
 
       {/* ── 보유 종목 모니터 (내 종목 최우선) ── */}
-      {positions.length > 0 ? (
+      {monitorTargets.length > 0 ? (
         <View onLayout={registerSection('portfolio')}>
           <Entrance index={0}>
             <HoldingMonitor monitorTargets={monitorTargets} sessions={selectedSessions} onOpenDetail={onOpenDetail} />
@@ -193,7 +199,7 @@ export const TodayTab = memo(function TodayTab({
       {/* ── 관심종목 시그널 — 보유 모니터와 묶어 '내 종목' 블록으로 ── */}
       <View onLayout={registerSection('watch')}>
         <Entrance index={1}>
-          <WatchAlertList alerts={summary?.watchAlerts ?? []} />
+          <WatchAlertList alerts={selectedAlerts} onOpenDetail={onOpenDetail} />
         </Entrance>
       </View>
 
@@ -219,7 +225,7 @@ export const TodayTab = memo(function TodayTab({
       ) : null}
 
       {/* ── 🌙 야간 방향성 (PRO) — 장 시작 전 한국장 출발 방향 미리보기 ── */}
-      {summary?.preMarketDirection ? (
+      {showKr && summary?.preMarketDirection ? (
         <View onLayout={registerSection('premarket')}>
           <Entrance index={3}>
             <PreMarketDirectionCard
@@ -236,22 +242,6 @@ export const TodayTab = memo(function TodayTab({
         <Entrance index={4}>
           <MarketRoundCard round={marketRound} />
         </Entrance>
-      ) : null}
-
-      {/* ── 브리프 Hero — 최신 브리프 1건 + 개인화(브리핑) 통합 ── */}
-      {(mediaSummaries.length > 0 || summary?.briefing) ? (
-        <View onLayout={registerSection('brief')}>
-          <Entrance index={5}>
-            <BriefHero
-              items={mediaSummaries}
-              briefing={summary?.briefing ?? null}
-              onTickerPress={(t) => {
-                const isKr = /^\d{6}$/.test(t)
-                onOpenDetail(isKr ? 'KR' : 'US', t)
-              }}
-            />
-          </Entrance>
-        </View>
       ) : null}
 
       {/* ── 이번 달 시즌 (저장한 시즌 규칙 중 진행 중인 것 — 없으면 미렌더) ── */}

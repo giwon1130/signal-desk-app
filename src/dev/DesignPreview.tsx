@@ -1,6 +1,6 @@
 /** EXPO_PUBLIC_DESIGN_PREVIEW=1 개발 전용. 실제 계정·주문·시세 호출 없이 UI를 점검한다. */
 import { useState } from 'react'
-import { ScrollView, Text, View } from 'react-native'
+import { Pressable, ScrollView, Text, View } from 'react-native'
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context'
 import { Sparkles, Sunrise, BarChart3 } from 'lucide-react-native'
 import { ThemeProvider, useTheme } from '../theme'
@@ -8,13 +8,23 @@ import { NativeShellChrome } from '../components/NativeShellChrome'
 import { TabIntro } from '../components/guide/TabIntro'
 import { TodayFocusCard } from '../tabs/today_parts/TodayFocusCard'
 import { HoldingMonitor } from '../tabs/today_parts/HoldingMonitor'
+import { BriefHero } from '../tabs/today_parts/BriefHero'
+import { WatchAlertList } from '../tabs/market_parts/WatchAlertList'
+import { IndexPulse } from '../components/IndexPulse'
 import { Playbook } from '../tabs/aitab_widgets/Playbook'
 import { PortfolioSection } from '../tabs/stocks_parts/PortfolioSection'
 import { LeagueTab } from '../tabs/LeagueTab'
 import { ReadingTab } from '../tabs/ReadingTab'
-import type { AiPick, HoldingPosition, MarketInsightData, MarketSessionStatus, TabKey } from '../types'
+import type { AiPick, HoldingPosition, MarketInsightData, MarketSessionStatus, MediaSummaryItem, TabKey } from '../types'
 
 const generatedAt = new Date().toISOString()
+const sampleBrief: MediaSummaryItem = {
+  id: 'preview-brief', source: 'CLOSE_BRIEF', channelTitle: '화면 점검용 샘플',
+  videoTitle: '한국장 마감 브리프', videoUrl: '', publishedAt: generatedAt,
+  summary: '긍정 요인과 부담 요인이 엇갈리고 있습니다\n\n반도체 관련 흐름은 국내 시장에 힘을 보태고 있습니다. 반면 미국 금리 흐름은 주식시장에 부담이 될 수 있습니다. 방향이 뚜렷해질 때까지 장중 흐름을 함께 확인할 필요가 있습니다.',
+  flowAnalysis: '반도체 관련 흐름: 우호적인 조건입니다. 화면 점검용 샘플이며 실측값이 아닙니다.\n미국 금리: 샘플 지표가 높아져 주식시장 부담 요인으로 표시했습니다.\n야간선물: 검증 가능한 최신 자료가 없어 이번 판단에서 제외했습니다.\n뉴스: 확인된 기사가 없다면 상승·하락 원인을 추정하지 않습니다.',
+  keyTickers: [], sentiment: 'NEUTRAL', hasTranscript: false,
+}
 const marketInsight: MarketInsightData = {
   headline: '긍정 요인과 부담 요인이 엇갈리고 있습니다',
   summary: '반도체 관련 흐름은 국내 시장에 힘을 보태고 있습니다. 반면 미국 금리 흐름은 주식시장에 부담으로 작용하고 있습니다. 방향이 뚜렷해질 때까지 장중 흐름을 조금 더 확인할 필요가 있습니다.',
@@ -42,15 +52,15 @@ const positions: HoldingPosition[] = [
 ]
 const picks: AiPick[] = [
   {
-    market: 'KR', ticker: '000000', name: '근거를 확인할 후보', reason: '순매수 수급과 완만한 가격 움직임을 함께 확인한 샘플이야. 실제 종목 추천은 아니야.', expectedReturnRate: null, confidence: 75,
-    riskNote: '거래량과 변동성 이력이 없어 추가 확인이 필요해', changeRate: 2.4, flowTag: '외인 순매수',
-    assessment: { decision: 'REVIEW', reasons: ['기준가와 당일 등락률을 확인했어'], blockers: [], rulesVersion: 'review-v1' },
-    tradePlan: { proposalId: 'preview-only', side: 'BUY', orderType: 'LIMIT', currency: 'KRW', referencePrice: 100000, entryLimitPrice: 100000, stopLossPrice: 97500, takeProfitPrice: 105000, riskLevel: 'MEDIUM', maxPositionPercent: 5, expiresAt: new Date(Date.now() + 1800000).toISOString(), executable: false, guardrails: ['손절 2.5%·목표 5%의 예시 시나리오이며 예상 수익률이 아니야', '주문 직전 시세 신선도·장 시간·호가 단위를 다시 확인'] },
+    market: 'KR', ticker: '000000', name: '근거를 확인할 후보', reason: '순매수 수급과 완만한 가격 움직임을 함께 확인한 샘플입니다. 실제 종목 추천이 아닙니다.', expectedReturnRate: null, confidence: 75,
+    riskNote: '거래량과 변동성 이력이 없어 추가 확인이 필요합니다.', changeRate: 2.4, flowTag: '외인 순매수',
+    assessment: { decision: 'REVIEW', reasons: ['기준가와 당일 등락률을 확인했습니다.'], blockers: [], rulesVersion: 'review-v1' },
+    tradePlan: { proposalId: 'preview-only', side: 'BUY', orderType: 'LIMIT', currency: 'KRW', referencePrice: 100000, entryLimitPrice: 100000, stopLossPrice: 97500, takeProfitPrice: 105000, riskLevel: 'MEDIUM', maxPositionPercent: 5, expiresAt: new Date(Date.now() + 1800000).toISOString(), executable: false, guardrails: ['손절 2.5%·목표 5%의 예시 시나리오이며 예상 수익률이 아닙니다.', '주문 직전 시세 신선도·장 시간·호가 단위를 다시 확인해야 합니다.'] },
   },
   {
-    market: 'US', ticker: 'WAIT', name: '가격 안정을 기다릴 후보', reason: '당일 가격이 크게 움직여 관찰 중인 샘플이야.', expectedReturnRate: null, confidence: 95,
-    riskNote: '당일 6% 이상 상승해 추격 위험을 먼저 확인해야 해', changeRate: 8.1,
-    assessment: { decision: 'WATCH', reasons: ['기준가와 당일 등락률을 확인했어'], blockers: ['추격 위험'], rulesVersion: 'review-v1' },
+    market: 'US', ticker: 'WAIT', name: '가격 안정을 기다릴 후보', reason: '당일 가격이 크게 움직여 관찰 중인 샘플입니다.', expectedReturnRate: null, confidence: 95,
+    riskNote: '당일 6% 이상 상승해 추격 위험을 먼저 확인해야 합니다.', changeRate: 8.1,
+    assessment: { decision: 'WATCH', reasons: ['기준가와 당일 등락률을 확인했습니다.'], blockers: ['추격 위험'], rulesVersion: 'review-v1' },
   },
 ]
 
@@ -59,7 +69,10 @@ function Preview() {
   const [activeTab, setActiveTab] = useState<TabKey>('today')
   const [notice, setNotice] = useState('샘플 화면 · 계정 연결과 실제 주문 없음')
   const [watch, setWatch] = useState(false)
-  const previewAction = () => setNotice('미리보기야 · 실제 데이터는 변경하지 않았어')
+  const [briefVariant, setBriefVariant] = useState<'normal' | 'stale' | 'missing'>('normal')
+  const brief = briefVariant === 'stale' ? { ...sampleBrief, id: 'preview-stale', publishedAt: new Date(Date.now() - 48 * 3600000).toISOString() }
+    : briefVariant === 'missing' ? { ...sampleBrief, id: 'preview-missing', sentiment: 'NEUTRAL' as const, summary: '시장 판단을 잠시 보류합니다\n\n검증된 자료가 충분하지 않습니다.', flowAnalysis: '' } : sampleBrief
+  const previewAction = () => setNotice('미리보기입니다 · 실제 데이터는 변경하지 않았습니다')
   const chrome = { isUp: true, lastSyncedAt: '10:20', marketPreference: 'BOTH' as const, unreadAlertCount: 2, activeTab, onOpenAlerts: previewAction, onOpenSettings: toggle, onTabChange: setActiveTab }
   return (
     <SafeAreaView style={{ flex: 1, width: '100%', maxWidth: 440, alignSelf: 'center', backgroundColor: palette.bg }}>
@@ -68,15 +81,23 @@ function Preview() {
       {activeTab === 'league' ? <LeagueTab authToken={null} onOpenLeague={previewAction} onCreateLeague={previewAction} onRequestJoin={previewAction} />
         : activeTab === 'reading' ? <ReadingTab authToken={null} onCompose={previewAction} /> : (
         <ScrollView key={activeTab} contentContainerStyle={{ padding: 20, gap: 20, paddingBottom: 60 }}>
-          <TabIntro tabKey={'preview-' + activeTab} title={activeTab === 'today' ? '오늘' : activeTab === 'stocks' ? '내 종목' : 'AI 인사이트'} tagline={activeTab === 'ai' ? '추천보다 근거를 먼저, 판단은 차분하게' : '오늘의 흐름과 나의 기준을 한눈에'} description="실제 컴포넌트에 샘플 데이터를 넣은 개발 전용 화면이야." icon={activeTab === 'today' ? Sunrise : activeTab === 'stocks' ? BarChart3 : Sparkles} accent={palette.teal} autoExpandTimes={0} />
+          <TabIntro tabKey={'preview-' + activeTab} title={activeTab === 'today' ? '오늘' : activeTab === 'stocks' ? '내 종목' : 'AI 분석'} tagline={activeTab === 'ai' ? '추천보다 근거를 먼저, 판단은 차분하게' : '오늘의 흐름과 나의 기준을 한눈에'} description="실제 컴포넌트에 샘플 데이터를 넣은 개발 전용 화면입니다." icon={activeTab === 'today' ? Sunrise : activeTab === 'stocks' ? BarChart3 : Sparkles} accent={palette.teal} autoExpandTimes={0} />
           {activeTab === 'today' ? <>
-            <TodayFocusCard sessions={sessions} positionsCount={2} alertCount={3} isPremarketWindow={false} hasBrief onOpenSection={previewAction} />
+            <TodayFocusCard sessions={sessions} positionsCount={2} alertCount={0} isPremarketWindow={false} hasBrief onOpenSection={previewAction} />
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              {(['normal', 'stale', 'missing'] as const).map((variant) => <Pressable key={variant} accessibilityRole="button" accessibilityState={{ selected: variant === briefVariant }} onPress={() => setBriefVariant(variant)} style={{ flex: 1, minHeight: 44, justifyContent: 'center', alignItems: 'center', borderRadius: 10, backgroundColor: variant === briefVariant ? palette.greenSoft : palette.surface }}>
+                <Text style={{ color: palette.ink, fontSize: 12 }}>{variant === 'normal' ? '일반 샘플' : variant === 'stale' ? '이전 자료' : '자료 부족'}</Text>
+              </Pressable>)}
+            </View>
+            <BriefHero items={[brief]} />
             <HoldingMonitor monitorTargets={positions} sessions={sessions} onOpenDetail={previewAction} />
+            <WatchAlertList alerts={[]} />
           </> : activeTab === 'stocks' ? (
             <PortfolioSection portfolio={{ totalCost: 0, totalValue: 0, totalProfit: 0, totalProfitRate: 0, positions }} liveOf={(_m, _t, price) => ({ price, changeRate: 0, live: false })} onImportPress={previewAction} onOpenDetail={previewAction} />
-          ) : <Playbook aiPicks={{ generatedAt, summary: '시장 소음보다 확인된 근거에 집중해봐', picks }} summary={null} watchlist={watch ? [{ id: 'preview', market: 'KR', ticker: '000000', name: '샘플', price: 100000, changeRate: 2.4, sector: '', stance: 'WATCH', note: '', source: 'PREVIEW' }] : []} marketInsight={marketInsight} palette={palette} onOpenDetail={previewAction} onQuickAddWatch={async () => setWatch(true)} />}
+          ) : <Playbook aiPicks={{ generatedAt, summary: '화면 점검용 후보입니다. 실제 투자 판단에 사용하지 마세요.', picks }} summary={null} watchlist={watch ? [{ id: 'preview', market: 'KR', ticker: '000000', name: '샘플', price: 100000, changeRate: 2.4, sector: '', stance: 'WATCH', note: '', source: 'PREVIEW' }] : []} marketInsight={marketInsight} palette={palette} onOpenDetail={previewAction} onQuickAddWatch={async () => setWatch(true)} />}
         </ScrollView>
       )}
+      <IndexPulse marketPreference="BOTH" onPress={previewAction} sections={{ generatedAt, koreaMarket: { market: 'KR', title: '한국 샘플', indices: [{ label: '코스피(샘플)', value: 2800, changeRate: 0.72, periods: [] }, { label: '코스닥(샘플)', value: 850, changeRate: -0.38, periods: [] }] }, usMarket: { market: 'US', title: '미국 샘플', indices: [{ label: '나스닥(샘플)', value: 19000, changeRate: 1.2, periods: [] }] } }} />
       <NativeShellChrome {...chrome} placement="navigation" />
     </SafeAreaView>
   )

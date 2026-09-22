@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { Platform } from 'react-native'
 import { API_BASE_URL, fetchDailyFortune, fetchMoverReasons, fetchTopMovers, loadAllData } from '../api'
 import { fetchAiPicks, fetchHiddenSignals } from '../api/ai'
 import { fetchRecentDisclosures } from '../api/disclosures'
@@ -82,7 +83,8 @@ export function useMarketSnapshot(authToken: string | null, enabled: boolean) {
         void fetchHiddenSignals(authToken).then(fresh(setHiddenSignals)).catch(() => {})
       }
       void fetchAiPicks().then(fresh(setAiPicks)).catch(() => {})
-      void fetchDailyFortune().then(fresh(setFortune)).catch(() => {})
+      // 웹 전용 부가 콘텐츠. 모바일에서는 사용하지 않는 요청을 보내지 않는다.
+      if (Platform.OS === 'web') void fetchDailyFortune().then(fresh(setFortune)).catch(() => {})
       void fetchTopMovers(10).then(fresh(setTopMovers)).catch(() => {})
       void fetchMoverReasons().then(fresh(setMoverReasons)).catch(() => {})
       void fetchRecentMediaSummaries(6).then(fresh(setMediaSummaries)).catch(() => {})

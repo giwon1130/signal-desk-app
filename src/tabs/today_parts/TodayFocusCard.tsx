@@ -32,14 +32,14 @@ export function TodayFocusCard({ sessions, positionsCount, alertCount, isPremark
   const Icon = focus.tone === 'premarket' ? Moon : focus.tone === 'regular' ? Radar : ClipboardCheck
 
   return (
-    <View style={{ backgroundColor: '#153c40', borderRadius: 24, padding: 22, gap: 18, overflow: 'hidden' }}>
+    <View style={{ backgroundColor: '#153c40', borderRadius: 18, padding: 16, gap: 12, overflow: 'hidden' }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
         <Icon size={17} color={accent} strokeWidth={2.3} />
-        <Text style={{ color: accent, fontSize: 12, fontWeight: '700', letterSpacing: 0.3 }}>지금 할 일 · {focus.label}</Text>
+        <Text style={{ color: accent, fontSize: 12, fontWeight: '700', letterSpacing: 0.3 }}>지금 확인할 내용 · {focus.label}</Text>
       </View>
       <View style={{ gap: 10 }}>
-        <Text style={{ color: '#ffffff', fontSize: 23, lineHeight: 32, fontWeight: '800', letterSpacing: -0.7 }}>{focus.title}</Text>
-        <Text style={{ color: '#bed4d5', fontSize: 13, lineHeight: 21 }}>{focus.description}</Text>
+        <Text style={{ color: '#ffffff', fontSize: 18, lineHeight: 26, fontWeight: '800', letterSpacing: -0.4 }}>{focus.title}</Text>
+        <Text style={{ color: '#d0e1e2', fontSize: 14, lineHeight: 22 }}>{focus.description}</Text>
       </View>
       <Pressable
         onPress={() => onOpenSection(focus.target)}
@@ -58,11 +58,11 @@ export function TodayFocusCard({ sessions, positionsCount, alertCount, isPremark
   )
 }
 
-function buildFocus({ sessions, positionsCount, alertCount, isPremarketWindow, hasBrief }: Omit<Props, 'onOpenSection'>): Focus {
+export function buildFocus({ sessions, positionsCount, alertCount, isPremarketWindow, hasBrief }: Omit<Props, 'onOpenSection'>): Focus {
   if (isPremarketWindow) {
     return {
-      label: '장전', title: '장전 재료부터 확인해',
-      description: '야간 방향성과 핵심 뉴스를 본 뒤 개장 직후의 대응 기준을 정해봐.',
+      label: '장전', title: '개장 전, 달라진 재료를 확인하세요',
+      description: '밤사이 시장 변화와 주요 뉴스를 살펴보세요. 개장 방향은 실제 시세로 다시 확인해야 합니다.',
       action: '야간 방향성 보기', target: 'premarket', tone: 'premarket',
     }
   }
@@ -70,38 +70,36 @@ function buildFocus({ sessions, positionsCount, alertCount, isPremarketWindow, h
   if (sessions.some((session) => session.phase === 'REGULAR')) {
     if (positionsCount > 0) {
       return {
-        label: '장중', title: '보유 종목 변동부터 확인해',
-        description: `보유 ${positionsCount}개의 목표가·손절가 도달 여부를 먼저 점검해봐. 관심 시그널은 ${alertCount}건이야.`,
+        label: '장중', title: '내 종목의 변화를 먼저 확인하세요',
+        description: `보유 ${positionsCount}종목의 목표가·손절가 도달 여부를 점검해 주세요.${alertCount ? ` 관심종목 신호도 ${alertCount}건 있습니다.` : ''}`,
         action: '보유 종목 모니터 보기', target: 'portfolio', tone: 'regular',
       }
     }
     if (alertCount > 0) {
       return {
-        label: '장중', title: '관심종목 시그널을 확인해',
-        description: `지금 확인할 관심종목 시그널이 ${alertCount}건 있어. 근거를 보고 대응 여부를 정해봐.`,
+        label: '장중', title: '관심종목에 새로운 신호가 있습니다',
+        description: `확인할 신호는 ${alertCount}건입니다. 신호만으로 매매를 결정하지 말고 종목의 최근 상황을 함께 살펴보세요.`,
         action: '관심종목 시그널 보기', target: 'watch', tone: 'regular',
       }
     }
     return {
-      label: '장중', title: '시장 분위기부터 확인해',
-      description: '급하게 진입하기보다 지금 시장의 위험도와 뉴스 흐름을 먼저 확인해봐.',
+      label: '장중', title: '시장 분위기부터 살펴보세요',
+      description: '지금 시장의 위험도와 주요 뉴스를 차례로 확인할 수 있습니다.',
       action: '시장 분위기 보기', target: 'mood', tone: 'regular',
     }
   }
 
   if (hasBrief) {
     return {
-      label: '마감 후', title: '오늘 흐름을 짧게 복기해',
-      description: positionsCount > 0
-        ? `보유 ${positionsCount}개의 손익과 마감 브리프를 함께 보고 다음 장 계획을 정해봐.`
-        : '마감 브리프로 오늘 시장 재료를 정리하고 다음 장의 관찰 포인트를 골라봐.',
+      label: sessions.some((s) => s.phase === 'PRE_MARKET') ? '장전' : '장외', title: '브리프로 시장 흐름을 살펴보세요',
+      description: '핵심 내용을 먼저 읽고, 궁금한 판단 근거만 펼쳐보세요. 브리프의 발행 시각도 함께 확인해 주세요.',
       action: '오늘 브리프 보기', target: 'brief', tone: 'closed',
     }
   }
 
   return {
-    label: '마감 후', title: '다음 장을 위한 재료를 정리해',
-    description: positionsCount > 0 ? '보유 종목의 손익과 대응 기준을 다시 확인해봐.' : '시장 분위기와 핵심 뉴스를 보고 다음 장을 준비해봐.',
+    label: sessions.length ? '장외' : '상태 확인 중', title: '다음 장을 차분하게 준비하세요',
+    description: positionsCount > 0 ? '보유종목의 손익과 미리 정한 대응 기준을 점검해 주세요.' : '새 브리프를 기다리는 동안 시장 분위기와 주요 뉴스를 확인해 주세요.',
     action: positionsCount > 0 ? '보유 종목 모니터 보기' : '시장 분위기 보기',
     target: positionsCount > 0 ? 'portfolio' : 'mood', tone: 'closed',
   }

@@ -52,7 +52,7 @@ export function ProUpgradeSheet({
             <Pressable onPress={onClose} hitSlop={8}><X size={20} color={palette.inkMuted} /></Pressable>
           </View>
           <Text style={{ color: palette.inkSub, fontSize: 12.5, lineHeight: 18, marginBottom: 12 }}>
-            FREE 는 맛보기, PRO 는 진짜 트레이딩 도구. 아래 혜택이 한 번에 열려요.
+            현재 플랜과 PRO 제공 기능을 비교해 보세요. PRO는 신청 후 승인된 계정에서 이용할 수 있습니다.
           </Text>
 
           <ScrollView style={{ alignSelf: 'stretch' }} contentContainerStyle={{ gap: 6, paddingBottom: 4 }}>

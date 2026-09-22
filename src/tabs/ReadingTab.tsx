@@ -9,7 +9,6 @@
  *  - 피드: 구독 리더 + 본인 글 (PostCard 공용)
  */
 import { memo, useCallback, useEffect, useMemo, useState } from 'react'
-import AsyncStorage from '@react-native-async-storage/async-storage'
 import { Pressable, RefreshControl, ScrollView, Share, Text, TextInput, View } from 'react-native'
 import { Compass, Megaphone, PenLine, Plus, Share2, X } from 'lucide-react-native'
 import { useStyles } from '../styles'
@@ -20,7 +19,6 @@ import { PostCard } from '../components/reading_parts/PostCard'
 import { Entrance } from '../components/effects'
 import { TabIntro } from '../components/guide/TabIntro'
 import { EmptyGuide } from '../components/guide/EmptyGuide'
-import { ReadingEventModal } from '../components/reading_parts/ReadingEventModal'
 import { DiscoverLeadersModal } from '../components/reading_parts/DiscoverLeadersModal'
 import { readingShareMessage, subscribeErrorMessage } from '../components/reading_parts/readingShared'
 import { apiErrorMessage } from '../utils/apiError'
@@ -59,22 +57,8 @@ export const ReadingTab = memo(function ReadingTab({ authToken, refreshing, refr
   const [code, setCode] = useState('')
   const [displayName, setDisplayName] = useState('')
   const [busy, setBusy] = useState(false)
-  const [showEvent, setShowEvent] = useState(false)
   const [showDiscover, setShowDiscover] = useState(false)
   const [feedFilter, setFeedFilter] = useState<FeedFilter>('all')
-
-  // 리딩 첫 진입 시 오픈 이벤트(무료) 안내 모달 — 1회만 (AsyncStorage 플래그).
-  useEffect(() => {
-    let alive = true
-    AsyncStorage.getItem('signal:reading:eventSeen')
-      .then((v) => { if (alive && v !== 'true') setShowEvent(true) })
-      .catch(() => {})
-    return () => { alive = false }
-  }, [])
-  const closeEvent = () => {
-    setShowEvent(false)
-    void AsyncStorage.setItem('signal:reading:eventSeen', 'true').catch(() => {})
-  }
 
   const load = useCallback(async () => {
     if (!authToken) return
@@ -166,9 +150,9 @@ export const ReadingTab = memo(function ReadingTab({ authToken, refreshing, refr
       <TabIntro
         tabKey="reading"
         icon={Megaphone}
-        title="리딩"
-        tagline="검증된 콜 구독 · 사람 무료, AI는 PRO"
-        description="리더가 종목을 콜하면 진입가가 자동 박제되고 이후 수익률이 그대로 추적돼요. 확정된 콜 성과를 보고 리더를 구독하면 그분의 콜이 내 피드에 올라옵니다. 🤖 AI 리더는 PRO 전용이에요."
+        title="공유"
+        tagline="다른 투자자의 시장 관점과 아이디어"
+        description="구독한 리더의 시장 의견과 종목 아이디어를 읽는 공간입니다. 게시물은 작성자의 의견이며 실제 주문이나 수익을 보장하지 않습니다. AI 리더 구독은 PRO에서 제공합니다."
         accent={palette.brandAccent}
       />
 
@@ -323,7 +307,7 @@ export const ReadingTab = memo(function ReadingTab({ authToken, refreshing, refr
           </Pressable>
         </View>
         <Text style={{ color: palette.inkFaint, fontSize: 11, lineHeight: 16 }}>
-          리더 구독은 정식 오픈 시 유료로 전환될 예정이에요. 지금은 오픈 이벤트 기간이라 무료로 구독할 수 있습니다. 친구가 보낸 링크를 누르면 코드가 자동으로 채워집니다.
+          사람 리더 구독은 무료이며 AI 리더는 PRO 계정에서 이용할 수 있습니다. 친구가 보낸 링크를 누르면 코드가 자동으로 채워집니다.
         </Text>
 
         {/* 구독 중인 리더 */}
@@ -396,8 +380,8 @@ export const ReadingTab = memo(function ReadingTab({ authToken, refreshing, refr
           <EmptyGuide
             icon={Megaphone}
             accent={palette.brandAccent}
-            title="아직 리딩이 없어요"
-            description="검증된 리더가 종목을 콜하면 그 분의 매매 아이디어가 여기 실시간으로 올라옵니다."
+            title="아직 구독한 게시물이 없습니다"
+            description="리더를 구독하면 새 시장 의견과 종목 아이디어를 이곳에서 확인할 수 있습니다. 과거 성과는 미래 수익을 보장하지 않습니다."
             steps={[
               { n: 1, text: '리더 둘러보기에서 적중률·구독자 수를 비교해 마음에 드는 리더를 찾으세요.' },
               { n: 2, text: '구독하면 그 리더의 콜이 이 피드에 쌓입니다.' },
@@ -432,7 +416,6 @@ export const ReadingTab = memo(function ReadingTab({ authToken, refreshing, refr
         )}
       </View>
     </ScrollView>
-    <ReadingEventModal visible={showEvent} monthlyPriceWon={9900} onClose={closeEvent} />
     <DiscoverLeadersModal
       visible={showDiscover}
       onClose={() => setShowDiscover(false)}

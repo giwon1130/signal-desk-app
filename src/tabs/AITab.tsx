@@ -60,9 +60,9 @@ export const AITab = memo(function AITab({
       <TabIntro
         tabKey="ai"
         icon={Sparkles}
-        title="AI 인사이트"
+        title="AI 분석"
         tagline="추천보다 근거를 먼저, 판단은 차분하게"
-        description="시장 흐름을 읽고 종목별 검토 근거와 보류 이유를 확인해봐. 가격 시나리오는 실제 주문이 아니고, 투자 성과를 보장하지 않아."
+        description="시장 흐름과 종목별 검토 근거를 확인해 주세요. 근거가 부족하면 판단을 보류합니다. 가격 시나리오는 실제 주문이 아니며 투자 성과를 보장하지 않습니다."
         accent={palette.blue ?? palette.brandAccent}
       />
 
@@ -83,7 +83,7 @@ export const AITab = memo(function AITab({
         </View>
         <View style={{ flex: 1 }}>
           <Text style={{ color: palette.scheme === 'dark' ? palette.ink : '#ffffff', fontSize: 16, fontWeight: '800' }}>시데 AI에게 물어보기</Text>
-          <Text style={{ color: palette.scheme === 'dark' ? palette.inkMuted : '#bfcfd0', fontSize: 12, lineHeight: 19, marginTop: 4 }}>내 종목과 오늘 시장을 함께 살펴봐</Text>
+          <Text style={{ color: palette.scheme === 'dark' ? palette.inkMuted : '#bfcfd0', fontSize: 13, lineHeight: 20, marginTop: 4 }}>내 종목과 오늘 시장을 함께 살펴보세요.</Text>
         </View>
         <ChevronRight size={18} color={palette.scheme === 'dark' ? palette.inkMuted : '#aeb8c7'} strokeWidth={2.4} />
       </Pressable>
