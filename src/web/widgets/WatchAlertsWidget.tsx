@@ -15,7 +15,7 @@ export function WatchAlertsWidget({
   return (
     <Widget
       palette={palette}
-      title="경보"
+      title="관심종목 시그널"
       icon={<AlertTriangle size={13} color={palette.orange} strokeWidth={2.5} />}
       meta={
         <Text style={{ color: palette.inkFaint, fontSize: 11, fontWeight: '700' }}>
@@ -25,7 +25,7 @@ export function WatchAlertsWidget({
     >
       {alerts.length === 0 ? (
         <View style={{ paddingVertical: 18, alignItems: 'center' }}>
-          <Text style={{ color: palette.inkMuted, fontSize: 12 }}>주의 신호 없음</Text>
+          <Text style={{ color: palette.inkMuted, fontSize: 12, lineHeight: 19 }}>새로 확인된 시그널이 없습니다. 가격 안정이나 위험 없음을 뜻하지는 않습니다.</Text>
         </View>
       ) : (
         alerts.map((a) => (

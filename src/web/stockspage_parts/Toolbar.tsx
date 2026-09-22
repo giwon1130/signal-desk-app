@@ -52,6 +52,8 @@ export function Toolbar({
             return (
               <Pressable
                 key={m}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: active }}
                 onPress={() => onModeChange(m)}
                 style={(state) => {
                   const hovered = (state as { hovered?: boolean }).hovered
@@ -78,9 +80,9 @@ export function Toolbar({
 
         {/* 검색 */}
         {mode === 'search' ? (
-          <View style={{ flex: 1, minWidth: 280, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <View style={{ flex: 1, minWidth: 250, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
             <View style={{
-              flex: 1,
+              flex: 1, minWidth: 220,
               flexDirection: 'row', alignItems: 'center', gap: 8,
               paddingHorizontal: 12, paddingVertical: 8,
               borderRadius: 8, borderWidth: 1, borderColor: palette.border,
@@ -91,6 +93,7 @@ export function Toolbar({
                 value={stockSearch}
                 onChangeText={onStockSearchChange}
                 placeholder="종목명 · 티커 · 섹터 검색"
+                accessibilityLabel="종목 검색"
                 placeholderTextColor={palette.inkFaint}
                 style={{
                   flex: 1,
@@ -127,7 +130,7 @@ export function Toolbar({
                       color: active ? palette.ink : palette.inkMuted,
                       fontSize: 11, fontWeight: '800',
                     }}>
-                      {f === 'ALL' ? '전체' : f === 'KR' ? '🇰🇷 한국' : '🇺🇸 미국'}
+                      {f === 'ALL' ? '전체' : f === 'KR' ? '한국' : '미국'}
                     </Text>
                   </Pressable>
                 )
@@ -141,7 +144,7 @@ export function Toolbar({
         ) : (
           <>
             <View style={{ flex: 1 }} />
-            {watchlistCount >= 2 ? (
+            {mode === 'watch' && watchlistCount >= 2 ? (
               <Pressable
                 onPress={onConfirmBulkDelete}
                 disabled={bulkDeleting}

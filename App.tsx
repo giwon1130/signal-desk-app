@@ -630,6 +630,8 @@ function AppShell() {
           onLogout={confirmLogout}
           onOpenReminder={() => { void hapticLight(); setReminderOpen(true) }}
           onOpenSettings={() => { void hapticLight(); setSettingsOpen(true) }}
+          onOpenAlerts={alerts.handleOpenAlerts}
+          onOpenIndex={(market, label) => setIndexDetail({ market, label })}
           marketPreference={marketPreference}
           onMarketPreferenceChange={handleMarketPreferenceChange}
           sections={sections}
@@ -642,6 +644,10 @@ function AppShell() {
         >
           {tabContent}
         </WebLayout>
+        <IndexDetailModal visible={!!indexDetail} sections={sections}
+          initialMarket={indexDetail?.market ?? 'KR'} initialLabel={indexDetail?.label ?? ''}
+          topMovers={topMovers} moverReasons={moverReasons} onOpenDetail={handleOpenDetail}
+          onClose={() => setIndexDetail(null)} />
         {user && activeTab !== 'ai' ? <AssistantFab onPress={handleOpenAssistant} /> : null}
         {overlays}
       </SafeAreaView>

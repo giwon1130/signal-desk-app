@@ -2,7 +2,7 @@
  * 데스크톱 좌측 고정 사이드바 — 브랜드 + LIVE 배지 + 네비 + 하단 유저/툴.
  */
 import { Pressable, Text, View } from 'react-native'
-import { Bell, LogOut, Moon, Sun, TrendingUp } from 'lucide-react-native'
+import { Bell, LogOut, Moon, Settings, Sun, TrendingUp } from 'lucide-react-native'
 import { useTheme } from '../../theme'
 import { hapticLight } from '../../utils/haptics'
 import type { TabKey } from '../../types'
@@ -18,13 +18,15 @@ type Props = {
   isDark: boolean
   onTabChange: (key: TabKey) => void
   onOpenReminder: () => void
+  onOpenSettings: () => void
+  onOpenAlerts: () => void
   onToggleTheme: () => void
   onLogout: () => void
 }
 
 export function LeftSidebar({
   width, user, activeTab, isUp, lastSyncedAt, isDark,
-  onTabChange, onOpenReminder, onToggleTheme, onLogout,
+  onTabChange, onOpenReminder, onOpenSettings, onOpenAlerts, onToggleTheme, onLogout,
 }: Props) {
   const { palette } = useTheme()
   return (
@@ -72,7 +74,7 @@ export function LeftSidebar({
         <Text style={{
           color: isUp ? palette.green : palette.red,
           fontSize: 10, fontWeight: '800', letterSpacing: 0.5,
-        }}>{isUp ? 'LIVE' : 'OFFLINE'}</Text>
+        }}>{isUp ? '서버 연결' : '연결 확인 필요'}</Text>
         <View style={{ flex: 1 }} />
         {lastSyncedAt ? (
           <Text style={{ color: palette.inkMuted, fontSize: 9 }}>{lastSyncedAt}</Text>
@@ -86,6 +88,8 @@ export function LeftSidebar({
           return (
             <Pressable
               key={key}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: active }}
               onPress={() => { if (!active) { void hapticLight(); onTabChange(key) } }}
               style={(state) => {
                 const { pressed } = state
@@ -143,8 +147,13 @@ export function LeftSidebar({
         ) : null}
         <SidebarAction
           icon={<Bell size={14} color={palette.inkSub} />}
-          label="알림 설정"
-          onPress={onOpenReminder}
+          label="알림함"
+          onPress={onOpenAlerts}
+        />
+        <SidebarAction
+          icon={<Settings size={14} color={palette.inkSub} />}
+          label="설정 · 개인 연동"
+          onPress={onOpenSettings}
         />
         <SidebarAction
           icon={isDark ? <Sun size={14} color={palette.orange} /> : <Moon size={14} color={palette.inkSub} />}

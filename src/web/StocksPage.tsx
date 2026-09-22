@@ -1,10 +1,8 @@
 import { memo, useCallback, useMemo, useState } from 'react'
-import { View } from 'react-native'
+import { Text, View } from 'react-native'
 import type { DisclosureItem, HoldingPosition, PortfolioSummary, StockMarketFilter, StockSearchResult, WatchItem } from '../types'
 import { useTheme } from '../theme'
 import { useLivePrices } from '../hooks/useLivePrices'
-import { Briefcase } from 'lucide-react-native'
-import { TabIntro } from '../components/guide/TabIntro'
 import { DisclosureCard } from '../tabs/today_parts/DisclosureCard'
 import { Toolbar, type Mode } from './stockspage_parts/Toolbar'
 import { DataTable, type Row } from './stockspage_parts/DataTable'
@@ -46,7 +44,7 @@ export const StocksPage = memo(function StocksPage(props: Props) {
   } = props
   const positions: HoldingPosition[] = portfolio?.positions ?? []
 
-  const [mode, setMode] = useState<Mode>('search')
+  const [mode, setMode] = useState<Mode>(positions.length ? 'holdings' : watchlist.length ? 'watch' : 'search')
   const [sortKey, setSortKey] = useState<SortKey>('changeRate')
   const [sortDir, setSortDir] = useState<SortDir>('desc')
   const [togglingKey, setTogglingKey] = useState('')
@@ -189,15 +187,7 @@ export const StocksPage = memo(function StocksPage(props: Props) {
 
   return (
     <View style={{ gap: 14 }}>
-      {/* 탭 인트로 — 컴팩트 타이틀, 처음 몇 번만 펼친 설명 (네이티브 탭과 동일) */}
-      <TabIntro
-        tabKey="web-stocks"
-        icon={Briefcase}
-        title="종목"
-        tagline="보유·관심 종목을 한 곳에서 관리"
-        description="검색해서 관심목록에 담거나 보유 내역을 기록하면, 실시간 손익과 정렬 가능한 테이블로 한눈에 추적돼요."
-        accent={palette.brandAccent}
-      />
+      <Text style={{ color: palette.inkMuted, fontSize: 13, lineHeight: 21 }}>종목을 선택하면 차트와 상세 정보를 확인하고 보유 내역을 등록할 수 있습니다.</Text>
       <Toolbar
         mode={mode}
         onModeChange={setMode}
@@ -213,6 +203,11 @@ export const StocksPage = memo(function StocksPage(props: Props) {
         bulkDeleting={bulkDeleting}
         palette={palette}
       />
+      {mode === 'holdings' ? <View style={{ padding: 14, borderRadius: 8, backgroundColor: palette.surfaceAlt, gap: 5 }}>
+        <Text style={{ color: palette.ink, fontSize: 13, fontWeight: '600' }}>캡처 등록은 모바일 앱에서</Text>
+        <Text style={{ color: palette.inkMuted, fontSize: 12, lineHeight: 19 }}>앱의 내 종목 → 캡처 등록에서 잔고 화면을 가져올 수 있습니다. 종목과 수량을 확인해 저장하면 같은 계정의 웹에도 표시됩니다. 웹에서는 종목 상세에서 직접 입력해 주세요.</Text>
+      </View> : null}
+      <Text style={{ color: palette.inkFaint, fontSize: 11 }}>표가 화면보다 넓으면 좌우로 스크롤할 수 있습니다. 시세는 수집 시점에 따라 지연될 수 있습니다.</Text>
       <DataTable
         mode={mode}
         rows={sorted}

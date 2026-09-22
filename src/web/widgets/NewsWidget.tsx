@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Linking, Pressable, Text, View } from 'react-native'
 import { ExternalLink, Newspaper } from 'lucide-react-native'
 import type { MarketSummaryData } from '../../types'
@@ -6,7 +6,8 @@ import type { Palette } from '../../theme'
 import { formatRelativeOrShortTime } from '../../utils'
 import { Widget } from '../shared'
 
-export function NewsWidget({ summary, palette }: { summary: MarketSummaryData | null; palette: Palette }) {
+export function NewsWidget({ summary, palette, marketPreference = 'BOTH' }: { summary: MarketSummaryData | null; palette: Palette; marketPreference?: 'KR' | 'US' | 'BOTH' }) {
+  const [expanded, setExpanded] = useState(false)
   // KR + US 뉴스 하이라이트를 섞어서 한 줄로. 각 마켓 앞에서부터 번갈아가며.
   const items = useMemo(() => {
     if (!summary?.newsSentiments) return []
@@ -18,8 +19,8 @@ export function NewsWidget({ summary, palette }: { summary: MarketSummaryData | 
       if (kr[i]) merged.push({ market: 'KR', h: kr[i] })
       if (us[i]) merged.push({ market: 'US', h: us[i] })
     }
-    return merged.slice(0, 20)
-  }, [summary])
+    return merged.filter((item) => marketPreference === 'BOTH' || item.market === marketPreference).slice(0, 20)
+  }, [summary, marketPreference])
 
   return (
     <Widget
@@ -34,11 +35,10 @@ export function NewsWidget({ summary, palette }: { summary: MarketSummaryData | 
     >
       {items.length === 0 ? (
         <View style={{ paddingVertical: 18, alignItems: 'center' }}>
-          <Text style={{ color: palette.inkMuted, fontSize: 12 }}>뉴스 수집 중…</Text>
-          <Text style={{ color: palette.inkFaint, fontSize: 11, marginTop: 4 }}>잠시 뒤 새로고침</Text>
+          <Text style={{ color: palette.inkMuted, fontSize: 12 }}>확인된 뉴스가 없습니다.</Text>
         </View>
       ) : (
-        items.map((it, i) => (
+        items.slice(0, expanded ? 20 : 5).map((it, i) => (
           <Pressable
             key={`${it.market}-${i}`}
             onPress={() => void Linking.openURL(it.h.url).catch(() => { /* noop */ })}
@@ -85,6 +85,10 @@ export function NewsWidget({ summary, palette }: { summary: MarketSummaryData | 
           </Pressable>
         ))
       )}
+      {items.length > 5 ? <Pressable accessibilityRole="button" accessibilityState={{ expanded }}
+        onPress={() => setExpanded((value) => !value)} style={{ minHeight: 44, justifyContent: 'center' }}>
+        <Text style={{ color: palette.inkSub, fontSize: 12 }}>{expanded ? '접기' : `뉴스 ${items.length - 5}건 더 보기`}</Text>
+      </Pressable> : null}
     </Widget>
   )
 }

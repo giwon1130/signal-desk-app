@@ -1,20 +1,18 @@
-/**
- * 좁은 뷰포트(모바일 폭) 상단 헤더 — 브랜드 + LIVE 배지 + 시장 칩 + 톱니(통합 설정).
- * v2.1: 종/Sun/로그아웃 3개 → 톱니 1개 (모바일 폭 단순화). 설정 모달이 다 처리.
- */
+/** 좁은 화면에서는 브랜드·동작과 시장 선택을 두 줄로 분리한다. */
 import { Pressable, Text, View } from 'react-native'
-import { Settings as SettingsIcon, TrendingUp } from 'lucide-react-native'
+import { Bell, Settings as SettingsIcon, TrendingUp } from 'lucide-react-native'
 import { useTheme } from '../../theme'
 import { MarketProfileChip } from '../../components/MarketProfileChip'
 import type { MarketPreference } from '../../api/alertPreferences'
 
 export function NarrowHeader({
-  isUp, lastSyncedAt, onOpenSettings,
+  isUp, lastSyncedAt, onOpenSettings, onOpenAlerts,
   marketPreference, onMarketPreferenceChange,
 }: {
   isUp: boolean
   lastSyncedAt: string
   onOpenSettings: () => void
+  onOpenAlerts: () => void
   marketPreference: MarketPreference
   onMarketPreferenceChange: (p: MarketPreference) => void
 }) {
@@ -26,10 +24,9 @@ export function NarrowHeader({
       borderBottomWidth: 1,
       borderBottomColor: palette.border,
       backgroundColor: palette.surface,
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 10,
+      gap: 6,
     }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
       <View style={{
         width: 26, height: 26, borderRadius: 7,
         backgroundColor: palette.brand,
@@ -38,25 +35,27 @@ export function NarrowHeader({
         <TrendingUp size={14} color={palette.brandAccent} strokeWidth={2.5} />
       </View>
       <Text style={{ color: palette.ink, fontSize: 14, fontWeight: '800' }}>Signal Desk</Text>
+      <View style={{ flex: 1 }} />
+      <Pressable accessibilityRole="button" accessibilityLabel="알림함" onPress={onOpenAlerts} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
+        <Bell size={18} color={palette.inkSub} />
+      </Pressable>
+      <Pressable accessibilityRole="button" accessibilityLabel="설정" onPress={onOpenSettings} style={({ pressed }) => [{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.6 : 1 }]}>
+        <SettingsIcon size={18} color={palette.inkSub} />
+      </Pressable>
+      </View>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
       <View style={{
-        marginLeft: 6,
         paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6,
         backgroundColor: isUp ? palette.greenSoft : palette.redSoft,
         flexDirection: 'row', alignItems: 'center', gap: 5,
       }}>
         <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: isUp ? palette.green : palette.red }} />
         <Text style={{ color: isUp ? palette.green : palette.red, fontSize: 10, fontWeight: '800' }}>
-          {isUp ? 'LIVE' : 'OFF'}
+          {isUp ? '서버 연결' : '연결 확인 필요'}
         </Text>
       </View>
-      <View style={{ flex: 1 }} />
-      <MarketProfileChip value={marketPreference} onChange={onMarketPreferenceChange} />
-      {lastSyncedAt ? (
-        <Text style={{ color: palette.inkFaint, fontSize: 10, fontWeight: '600' }}>{lastSyncedAt}</Text>
-      ) : null}
-      <Pressable onPress={onOpenSettings} style={({ pressed }) => [{ padding: 6, opacity: pressed ? 0.6 : 1 }]}>
-        <SettingsIcon size={15} color={palette.inkSub} />
-      </Pressable>
+      <MarketProfileChip value={marketPreference} onChange={onMarketPreferenceChange} textLabels />
+      </View>
     </View>
   )
 }

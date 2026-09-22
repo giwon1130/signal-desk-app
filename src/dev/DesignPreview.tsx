@@ -15,6 +15,10 @@ import { Playbook } from '../tabs/aitab_widgets/Playbook'
 import { PortfolioSection } from '../tabs/stocks_parts/PortfolioSection'
 import { LeagueTab } from '../tabs/LeagueTab'
 import { ReadingTab } from '../tabs/ReadingTab'
+import { WebLayout } from '../web/WebLayout'
+import { HomeDashboard } from '../web/HomeDashboard'
+import { StocksPage } from '../web/StocksPage'
+import { AIWorkspace } from '../web/AIWorkspace'
 import type { AiPick, HoldingPosition, MarketInsightData, MarketSessionStatus, MediaSummaryItem, TabKey } from '../types'
 
 const generatedAt = new Date().toISOString()
@@ -103,6 +107,38 @@ function Preview() {
   )
 }
 
+function WebPreview() {
+  const { palette } = useTheme()
+  const [activeTab, setActiveTab] = useState<TabKey>('today')
+  const [marketPreference, setMarketPreference] = useState<'KR' | 'US' | 'BOTH'>('BOTH')
+  const [notice, setNotice] = useState('웹 화면 점검용 샘플 · 계정 연결과 실제 주문 없음')
+  const previewAction = () => setNotice('미리보기입니다. 실제 계정이나 데이터는 변경하지 않았습니다.')
+  // US 샘플만 전달해 국내 종목 실시간 시세 구독도 발생하지 않게 한다.
+  const portfolio = { totalCost: 600, totalValue: 640, totalProfit: 40, totalProfitRate: 6.67, positions: positions.filter((p) => p.market === 'US') }
+  return <WebLayout user={{ nickname: '화면 점검' }} activeTab={activeTab} isUp lastSyncedAt="샘플"
+    onTabChange={setActiveTab} onLogout={previewAction} onOpenReminder={previewAction}
+    onOpenSettings={() => setNotice('설정·개인 연동 진입 확인 · 샘플에서는 연결 키를 생성하지 않습니다.')}
+    onOpenAlerts={() => setNotice('알림함 진입 확인 · 샘플 알림은 없습니다.')}
+    onOpenIndex={(_market, label) => setNotice(`${label} 지수 상세 진입 확인`)}
+    marketPreference={marketPreference} onMarketPreferenceChange={setMarketPreference}
+    sections={{ generatedAt, koreaMarket: { market: 'KR', title: '한국 샘플', indices: [{ label: '코스피(샘플)', value: 2800, changeRate: 0.72, periods: [] }] }, usMarket: { market: 'US', title: '미국 샘플', indices: [{ label: '나스닥(샘플)', value: 19000, changeRate: 1.2, periods: [] }] } }}
+    watchlist={[]} portfolio={portfolio} aiRecommendation={null} onOpenDetail={previewAction}>
+    <Text style={{ color: palette.orange, backgroundColor: palette.orangeSoft, padding: 10, fontSize: 12 }}>{notice}</Text>
+    {activeTab === 'today' ? <HomeDashboard summary={null} positions={positions} watchlist={[]} alertHistory={[]}
+      topMovers={null} portfolio={portfolio} mediaSummaries={[sampleBrief]} moverReasons={[]} upcomingEvents={[]}
+      marketPreference={marketPreference} onOpenDetail={previewAction} />
+      : activeTab === 'stocks' ? <StocksPage watchlist={[]} portfolio={portfolio} stockSearch="" stockMarketFilter="ALL"
+        stockResults={[]} stockSearchLoading={false} favoriteDeletingId="" bulkDeleting={false} disclosures={[]}
+        onStockSearchChange={previewAction} onStockMarketFilterChange={previewAction} onOpenDetail={previewAction}
+        onQuickAddWatch={async () => previewAction()} onDeleteFavorite={previewAction} onDeleteAllFavorites={previewAction} />
+        : activeTab === 'ai' ? <AIWorkspace aiRecommendation={null} summary={null} watchlist={[]}
+          aiPicks={{ generatedAt, summary: '화면 점검용 샘플입니다.', picks }} hiddenSignals={null} marketInsight={marketInsight}
+          marketPreference={marketPreference} onOpenDetail={previewAction} onQuickAddWatch={async () => previewAction()} onOpenAssistant={previewAction} />
+          : <Text style={{ color: palette.ink }}>이 탭은 이번 웹 레이아웃 점검 범위가 아닙니다.</Text>}
+  </WebLayout>
+}
+
 export default function DesignPreview() {
-  return <SafeAreaProvider style={{ backgroundColor: '#152b32' }}><ThemeProvider><Preview /></ThemeProvider></SafeAreaProvider>
+  const web = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('view') === 'web'
+  return <SafeAreaProvider style={{ backgroundColor: '#152b32' }}><ThemeProvider>{web ? <WebPreview /> : <Preview />}</ThemeProvider></SafeAreaProvider>
 }

@@ -1,5 +1,5 @@
 import { memo } from 'react'
-import { Pressable, Text, View } from 'react-native'
+import { Pressable, ScrollView, Text, View } from 'react-native'
 import { ArrowDown, ArrowUp, Minus, Plus, Radio, Star, X } from 'lucide-react-native'
 import { marketColor, type Palette } from '../../theme'
 import { formatPrice, formatSignedPrice, formatSignedRate } from '../../utils'
@@ -91,6 +91,8 @@ const DataRow = memo(function DataRow({ row, mode, isLive, toggling, onOpenDetai
       {/* ☆ 토글 */}
       <Pressable
         onPress={(e) => { (e as unknown as { stopPropagation: () => void }).stopPropagation?.(); void onToggleWatch(row) }}
+        accessibilityRole="button"
+        accessibilityLabel={`${row.name} ${row.isInWatch ? '관심종목 해제' : '관심종목 추가'}`}
         hitSlop={6}
         style={{ width: 34, alignItems: 'center' }}
         disabled={toggling}
@@ -264,7 +266,10 @@ export function DataTable({
   togglingKey, favoriteDeletingId, livePrices, stockSearch, stockSearchLoading, palette,
 }: Props) {
   return (
+    <ScrollView horizontal style={{ width: '100%' }} contentContainerStyle={{ flexGrow: 1 }}>
     <View style={{
+      minWidth: mode === 'holdings' ? 840 : 760,
+      flex: 1,
       backgroundColor: palette.surface,
       borderRadius: 12,
       borderWidth: 1,
@@ -346,5 +351,6 @@ export function DataTable({
         })
       )}
     </View>
+    </ScrollView>
   )
 }

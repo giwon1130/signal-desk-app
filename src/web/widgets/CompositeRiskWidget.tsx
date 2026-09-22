@@ -4,27 +4,24 @@ import type { MarketSummaryData, RiskComponent } from '../../types'
 import { type Palette } from '../../theme'
 import { Widget } from '../shared'
 
-// 미세미세 스타일 5단계 — 위험도(0~100, 높을수록 위험)별 이모지·직설 가이드·색.
+// 합성 위험도별 참고 안내. 개별 종목의 매매 판단으로 표현하지 않는다.
 // 색은 라이트/다크 모두 무난한 중간톤 + 반투명 배경(color+'22').
-const WEB_MISE: Record<string, { emoji: string; action: string; color: string }> = {
-  안정: { emoji: '😎', action: '진입하기 무난한 날 — 계획대로 진행하세요', color: '#16a34a' },
-  관망: { emoji: '🙂', action: '평소 페이스 유지 — 무리한 추격만 피하면 돼요', color: '#0d9488' },
-  주의: { emoji: '😐', action: '분할·소액으로 신중하게 — 손절선 먼저 정해두세요', color: '#d97706' },
-  경계: { emoji: '😟', action: '신규 진입은 자제 — 보유 비중·리스크부터 점검', color: '#ea580c' },
-  고위험: { emoji: '😱', action: '지금은 쉬어가기 — 진입 보류, 현금·관리 우선', color: '#dc2626' },
+const WEB_MISE: Record<string, { action: string; color: string }> = {
+  안정: { action: '일부 위험 지표가 낮습니다. 개별 종목의 변동 위험은 별도로 확인해 주세요.', color: '#16a34a' },
+  관망: { action: '시장 지표의 방향이 뚜렷하지 않습니다. 주요 일정과 가격 변화를 함께 확인해 주세요.', color: '#0d9488' },
+  주의: { action: '일부 위험 지표가 높아졌습니다. 변동성이 커질 수 있어 주의가 필요합니다.', color: '#d97706' },
+  경계: { action: '시장 부담 요인이 커진 상태입니다. 보유 비중과 미리 정한 대응 기준을 점검해 주세요.', color: '#ea580c' },
+  고위험: { action: '여러 위험 지표가 높은 상태입니다. 급격한 가격 변화와 자료의 최신 여부를 확인해 주세요.', color: '#dc2626' },
 }
 
-/**
- * 오늘 시장 분위기 — VIX·한국 지수·환율·금리·뉴스를 가중 합성한 0~100 위험도.
- * 미세미세 앱처럼 이모지 + 5단계 + 직설 투자 가이드로 표시.
- */
+/** 서버가 계산한 합성 위험도와 구성 지표를 표시한다. */
 export function CompositeRiskWidget({ summary, palette }: { summary: MarketSummaryData | null; palette: Palette }) {
   const risk = summary?.compositeRisk ?? null
   if (!risk) {
     return (
-      <Widget palette={palette} title="종합 위험도" icon={<ShieldAlert size={13} color={palette.orange} strokeWidth={2.5} />}>
+      <Widget palette={palette} title="시장 위험 지표" icon={<ShieldAlert size={13} color={palette.orange} strokeWidth={2.5} />}>
         <View style={{ paddingVertical: 18, alignItems: 'center' }}>
-          <Text style={{ color: palette.inkMuted, fontSize: 12 }}>위험도 분석 준비 중</Text>
+          <Text style={{ color: palette.inkMuted, fontSize: 12 }}>확인할 수 있는 위험 지표가 없습니다.</Text>
         </View>
       </Widget>
     )
@@ -33,17 +30,15 @@ export function CompositeRiskWidget({ summary, palette }: { summary: MarketSumma
   return (
     <Widget
       palette={palette}
-      title="오늘 시장 분위기"
+      title="시장 위험 지표"
       icon={<ShieldAlert size={13} color={mise.color} strokeWidth={2.5} />}
       meta={risk.level}
     >
       <View style={{ gap: 10 }}>
-        {/* 미세미세 히어로 — 이모지 + 0~100 점수 + 단계 + 직설 가이드 */}
         <View style={{
           flexDirection: 'row', alignItems: 'center', gap: 12,
           backgroundColor: mise.color + '22', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 11,
         }}>
-          <Text style={{ fontSize: 36 }}>{mise.emoji}</Text>
           <View style={{ flex: 1, gap: 2 }}>
             <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
               <Text style={{ color: mise.color, fontSize: 28, fontWeight: '900', fontVariant: ['tabular-nums'] }}>{risk.score100}</Text>
@@ -53,6 +48,7 @@ export function CompositeRiskWidget({ summary, palette }: { summary: MarketSumma
             <Text style={{ color: palette.inkSub, fontSize: 11.5, fontWeight: '600', lineHeight: 16 }}>{mise.action}</Text>
           </View>
         </View>
+        <Text style={{ color: palette.inkMuted, fontSize: 11, lineHeight: 17 }}>시장 전체의 참고 지표입니다. 매수 적합성이나 손실 가능성을 보장하지 않습니다.</Text>
         <View style={{ gap: 8 }}>
           {risk.components.map((component) => (
             <RiskRow key={component.label} component={component} palette={palette} />

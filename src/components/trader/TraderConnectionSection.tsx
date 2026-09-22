@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Alert, Pressable, Share, Text, View } from 'react-native'
+import { Alert, Platform, Pressable, Share, Text, View } from 'react-native'
 import { Cable, RefreshCw, Share2, ShieldCheck, Unplug } from 'lucide-react-native'
 import {
   createTraderConnection,
@@ -8,6 +8,7 @@ import {
 } from '../../api/traderBridge'
 import type { TraderConnectionStatus } from '../../types/trader'
 import type { Palette } from '../../theme'
+import { traderConnectionPresentation } from '../../utils/traderConnectionPresentation'
 
 type Props = {
   active: boolean
@@ -19,6 +20,8 @@ export function TraderConnectionSection({ active, palette }: Props) {
   const [connectionKey, setConnectionKey] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [now, setNow] = useState(Date.now())
+  const connection = traderConnectionPresentation(status, now)
 
   const pendingCount = useMemo(
     () => status.snapshot?.orders.filter((order) => order.status === 'PENDING_APPROVAL').length ?? 0,
@@ -29,8 +32,8 @@ export function TraderConnectionSection({ active, palette }: Props) {
     if (loading) return
     setLoading(true)
     setError('')
-    try { setStatus(await getTraderConnection()) }
-    catch (e) { setError(e instanceof Error ? e.message : '연결 상태를 확인하지 못했어요.') }
+    try { setStatus(await getTraderConnection()); setNow(Date.now()) }
+    catch (e) { setError(e instanceof Error ? e.message : '연결 상태를 확인하지 못했습니다.') }
     finally { setLoading(false) }
   }
 
@@ -52,9 +55,10 @@ export function TraderConnectionSection({ active, palette }: Props) {
     try {
       const created = await createTraderConnection()
       setStatus(created.status)
+      setNow(Date.now())
       setConnectionKey(created.connectionKey)
     } catch (e) {
-      setError(e instanceof Error ? e.message : '연결 키를 만들지 못했어요.')
+      setError(e instanceof Error ? e.message : '연결 키를 만들지 못했습니다.')
     } finally {
       setLoading(false)
     }
@@ -73,24 +77,29 @@ export function TraderConnectionSection({ active, palette }: Props) {
         ].join('\n'),
       })
     } catch {
-      setError('연결 키를 공유하지 못했어요. 키를 길게 눌러 직접 복사해 주세요.')
+      setError('연결 키를 공유하지 못했습니다. 키를 선택해 직접 복사해 주세요.')
     }
   }
 
   const confirmDisconnect = () => {
+    const disconnect = () => {
+      setLoading(true)
+      void disconnectTrader()
+        .then(() => { setStatus({ connected: false }); setConnectionKey(null); setError('') })
+        .catch(() => setError('연결을 해제하지 못했습니다. 다시 시도해 주세요.'))
+        .finally(() => setLoading(false))
+    }
+    if (Platform.OS === 'web') {
+      if (window.confirm('개인 trader 연결을 해제할까요? 연결 키와 마지막 수신 상태가 삭제됩니다. 실제 프로그램이나 토스 계정은 변경되지 않습니다.')) disconnect()
+      return
+    }
     Alert.alert(
       '개인 trader 연결을 끊을까요?',
-      '저장된 연결 키와 마지막 동기화 상태가 삭제돼요. 실제 trader 프로그램이나 토스 계정에는 영향을 주지 않아요.',
+      '저장된 연결 키와 마지막 수신 상태가 삭제됩니다. 실제 프로그램이나 토스 계정에는 영향을 주지 않습니다.',
       [
         { text: '취소', style: 'cancel' },
         {
-          text: '연결 끊기', style: 'destructive', onPress: () => {
-            setLoading(true)
-            void disconnectTrader()
-              .then(() => { setStatus({ connected: false }); setConnectionKey(null); setError('') })
-              .catch((e) => setError(e instanceof Error ? e.message : '연결을 끊지 못했어요.'))
-              .finally(() => setLoading(false))
-          },
+          text: '연결 끊기', style: 'destructive', onPress: disconnect,
         },
       ],
     )
@@ -113,8 +122,8 @@ export function TraderConnectionSection({ active, palette }: Props) {
           <Text style={{ color: palette.inkMuted, fontSize: 10.5, marginTop: 2 }}>상태 확인만 가능 · 앱에서 주문 실행 불가</Text>
         </View>
         {status.connected ? (
-          <View style={{ backgroundColor: palette.upSoft, borderRadius: 6, paddingHorizontal: 7, paddingVertical: 3 }}>
-            <Text style={{ color: palette.up, fontSize: 9.5, fontWeight: '900' }}>연결됨</Text>
+          <View style={{ backgroundColor: connection.receiving ? palette.upSoft : palette.surfaceAlt, borderRadius: 6, paddingHorizontal: 7, paddingVertical: 3 }}>
+            <Text style={{ color: connection.receiving ? palette.up : palette.inkMuted, fontSize: 10, fontWeight: '700' }}>{connection.label}</Text>
           </View>
         ) : null}
       </View>
@@ -122,7 +131,7 @@ export function TraderConnectionSection({ active, palette }: Props) {
       {!status.connected ? (
         <>
           <Text style={{ color: palette.inkMuted, fontSize: 11, lineHeight: 16 }}>
-            토스 자격증명은 개인 trader에만 두고, Signal Desk에는 보유·승인·체결 상태만 가져와요.
+            별도로 실행하는 개인 trader의 상태를 확인하는 기능입니다. 토스 자격증명은 개인 프로그램에만 보관하며, 앱이나 웹에서 주문하지 않습니다.
           </Text>
           <Pressable
             onPress={() => void create()}
@@ -153,13 +162,22 @@ export function TraderConnectionSection({ active, palette }: Props) {
                   킬 스위치 {status.snapshot.killSwitchEnabled ? `켜짐${status.snapshot.killSwitchReason ? ` · ${status.snapshot.killSwitchReason}` : ''}` : '꺼짐'}
                 </Text>
                 <Text style={{ color: palette.inkFaint, fontSize: 9.5 }}>최근 동기화 {formatDate(status.lastSeenAt ?? status.snapshot.asOf)}</Text>
+                <Text style={{ color: palette.inkMuted, fontSize: 10, lineHeight: 16 }}>조회 시점의 상태입니다. 최신 상태는 아래 새로고침으로 확인해 주세요.</Text>
               </>
             ) : (
               <Text style={{ color: palette.inkMuted, fontSize: 10.5, lineHeight: 15 }}>
-                연결 키를 개인 trader에 입력하면 첫 상태가 여기 표시돼요.
+                연결 키는 등록됐지만 아직 프로그램의 상태를 받지 못했습니다. Mac에서 trader 실행과 브리지 설정을 확인해 주세요.
               </Text>
             )}
           </View>
+
+          <Text style={{ color: palette.inkMuted, fontSize: 11, lineHeight: 18 }}>
+            {status.snapshot?.mode === 'DRY_RUN'
+              ? '모의 실행 상태입니다. 실제 계좌로 주문을 보내지 않습니다.'
+              : status.snapshot?.mode === 'READ_ONLY'
+                ? '읽기 전용 상태입니다. 계좌를 조회할 수 있지만 주문은 차단됩니다.'
+                : '이 화면의 수신 상태와 실제 자동매매 실행 여부는 다릅니다. 전략·승인 설정은 개인 프로그램에서 확인해 주세요.'}
+          </Text>
 
           {connectionKey ? (
             <View style={{ backgroundColor: palette.orangeSoft, borderRadius: 9, padding: 10, gap: 7 }}>

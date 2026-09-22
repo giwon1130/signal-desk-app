@@ -5,6 +5,7 @@ import type { MarketPreference } from '../api/alertPreferences'
 type Props = {
   value: MarketPreference
   disabled?: boolean
+  textLabels?: boolean
   onChange: (m: MarketPreference) => void
 }
 
@@ -16,12 +17,12 @@ type Props = {
  *
  * 사용자가 변경하면 즉시 카드 필터링 반영.
  */
-export function MarketProfileChip({ value, disabled, onChange }: Props) {
+export function MarketProfileChip({ value, disabled, onChange, textLabels = false }: Props) {
   const { palette } = useTheme()
   const options: Array<{ key: MarketPreference; label: string }> = [
-    { key: 'KR',   label: '🇰🇷' },
-    { key: 'BOTH', label: '🌍' },
-    { key: 'US',   label: '🇺🇸' },
+    { key: 'KR',   label: textLabels ? '한국' : '🇰🇷' },
+    { key: 'BOTH', label: textLabels ? '전체' : '🌍' },
+    { key: 'US',   label: textLabels ? '미국' : '🇺🇸' },
   ]
   return (
     <View
@@ -40,12 +41,15 @@ export function MarketProfileChip({ value, disabled, onChange }: Props) {
         return (
           <Pressable
             key={o.key}
+            accessibilityRole="button"
+            accessibilityLabel={`${o.key === 'KR' ? '한국' : o.key === 'US' ? '미국' : '전체'} 시장 보기`}
+            accessibilityState={{ selected: active, disabled }}
             onPress={() => onChange(o.key)}
             disabled={disabled}
             hitSlop={6}
             style={{
               paddingHorizontal: 8,
-              paddingVertical: 4,
+              paddingVertical: textLabels ? 7 : 4,
               borderRadius: 6,
               backgroundColor: active ? palette.brandAccent : 'transparent',
             }}

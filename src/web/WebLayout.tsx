@@ -30,15 +30,15 @@ import { LeftSidebar } from './layout_parts/LeftSidebar'
  *   └──────┴───────────────────────────────────┴──────────────────┘
  *
  * 폭별 동작:
- *   - ≥1280px : 사이드바 + 메인 + 컨텍스트 (full desktop)
- *   - 960 ~ 1280 : 사이드바 + 메인 (컨텍스트 숨김)
+ *   - ≥1600px : 사이드바 + 메인 + 컨텍스트 (full desktop)
+ *   - 960 ~ 1600 : 사이드바 + 메인 (컨텍스트 숨김)
  *   - <960 : 상단 탭바 + 메인 (기존 모바일 폴백)
  *
  * 모바일 셸은 App.tsx 의 Platform.OS !== 'web' 브랜치가 담당.
  */
 
 const SIDEBAR_WIDTH = 220
-const CONTEXT_BREAKPOINT = 1280
+const CONTEXT_BREAKPOINT = 1600
 const NARROW_BREAKPOINT  = 960
 
 type Props = {
@@ -51,6 +51,8 @@ type Props = {
   onOpenReminder: () => void
   // v2.1: 통합 설정 모달 진입 (NarrowHeader 톱니에서 호출)
   onOpenSettings: () => void
+  onOpenAlerts: () => void
+  onOpenIndex: (market: 'KR' | 'US', label: string) => void
   // v2: 시장 선호 헤더 칩
   marketPreference: import('../api/alertPreferences').MarketPreference
   onMarketPreferenceChange: (p: import('../api/alertPreferences').MarketPreference) => void
@@ -68,7 +70,7 @@ type Props = {
 export function WebLayout(props: Props) {
   const {
     user, activeTab, isUp, lastSyncedAt,
-    onTabChange, onLogout, onOpenReminder, onOpenSettings,
+    onTabChange, onLogout, onOpenReminder, onOpenSettings, onOpenAlerts, onOpenIndex,
     marketPreference, onMarketPreferenceChange,
     sections, summary, fortune, watchlist, portfolio, aiRecommendation, onOpenDetail,
     children,
@@ -89,12 +91,13 @@ export function WebLayout(props: Props) {
           sections={sections}
           sessions={sessions}
           marketPreference={marketPreference}
-          onClickIndex={() => onTabChange('today')}
+          onClickIndex={onOpenIndex}
         />
         <NarrowHeader
           isUp={isUp}
           lastSyncedAt={lastSyncedAt}
           onOpenSettings={onOpenSettings}
+          onOpenAlerts={onOpenAlerts}
           marketPreference={marketPreference}
           onMarketPreferenceChange={onMarketPreferenceChange}
         />
@@ -118,7 +121,7 @@ export function WebLayout(props: Props) {
         sections={sections}
         sessions={sessions}
         marketPreference={marketPreference}
-        onClickIndex={() => onTabChange('today')}
+        onClickIndex={onOpenIndex}
       />
 
       <View style={{ flex: 1, flexDirection: 'row' }}>
@@ -131,13 +134,15 @@ export function WebLayout(props: Props) {
           isDark={isDark}
           onTabChange={onTabChange}
           onOpenReminder={onOpenReminder}
+          onOpenSettings={onOpenSettings}
+          onOpenAlerts={onOpenAlerts}
           onToggleTheme={handleToggleTheme}
           onLogout={onLogout}
         />
 
         {/* ── 메인 컨텐츠 (flex 1, 최대 폭 없이 꽉 채움) ── */}
         <ScrollView
-          style={{ flex: 1 }}
+          style={{ flex: 1, minWidth: 0 }}
           contentContainerStyle={{ minHeight: '100%' }}
         >
           <View style={{
@@ -168,7 +173,6 @@ export function WebLayout(props: Props) {
             watchlist={watchlist}
             portfolio={portfolio}
             aiRecommendation={aiRecommendation}
-            fortune={fortune ?? null}
             onOpenDetail={onOpenDetail}
             onGotoStocks={() => onTabChange('stocks')}
             onGotoAi={() => onTabChange('ai')}

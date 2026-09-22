@@ -3,11 +3,12 @@
  * 공통으로 쓰는 카드 셸/행/뱃지/스파크라인. 각 파일에 Pressable hover 스타일이 흩어져
  * 있던 걸 한 곳에 모아서 일관된 UX + 유지보수 쉽게.
  */
-import React, { useMemo } from 'react'
+import React, { useMemo, useState } from 'react'
 import { Animated, Easing, Platform, Text, View, type StyleProp, type ViewStyle } from 'react-native'
 import type { Palette } from '../theme'
 import type { ChartPoint } from '../types'
 import { formatNumber } from '../utils'
+import { columnsForWidth } from '../utils/webPresentation'
 
 export const CARD_RADIUS = 14
 export const CARD_PADDING = 15
@@ -22,6 +23,18 @@ export const webGrid = (columns: string, gap = 14): object =>
   Platform.OS === 'web'
     ? ({ display: 'grid', gridTemplateColumns: columns, gap } as unknown as object)
     : ({ flexDirection: 'row', gap } as object)
+
+/** Use available content width, not browser width: sidebars also take space. */
+export function ResponsiveGrid({ children, columns = 2, minColumnWidth = 300 }: {
+  children: React.ReactNode; columns?: number; minColumnWidth?: number
+}) {
+  const [width, setWidth] = useState(0)
+  const count = columnsForWidth(width, columns, minColumnWidth)
+  return <View onLayout={(event) => setWidth(event.nativeEvent.layout.width)}
+    style={[{ width: '100%', minWidth: 0 }, webGrid(`repeat(${count}, minmax(0, 1fr))`, 16)]}>
+    {children}
+  </View>
+}
 
 /** direction 에 따른 색. threshold 0 기준 기본, 필요시 custom. */
 export function deltaColor(value: number | null | undefined, palette: Palette, neutralAt = 0) {

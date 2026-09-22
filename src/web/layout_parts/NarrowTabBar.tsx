@@ -22,10 +22,13 @@ export function NarrowTabBar({ activeTab, onTabChange, showAdmin = false }: { ac
         return (
           <Pressable
             key={key}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: active }}
             onPress={() => { if (!active) { void hapticLight(); onTabChange(key) } }}
             style={({ pressed }) => [
               {
                 flex: 1,
+                minHeight: 52,
                 alignItems: 'center',
                 justifyContent: 'center',
                 paddingVertical: 8,

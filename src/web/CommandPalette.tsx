@@ -17,11 +17,11 @@ type Entry =
 
 // v2.1: 'league' 추가. 'reading' — PC 작성용 리딩(종목 콜 공유).
 const TAB_ENTRIES: Array<{ tab: TabKey; label: string; hint: string }> = [
-  { tab: 'today', label: '오늘', hint: '시장 무드 · 모닝/이브닝 브리프 · 보유 모니터' },
-  { tab: 'stocks', label: '종목', hint: '검색 · 관심 · 보유' },
-  { tab: 'ai', label: 'AI', hint: 'AI 추천 · 숨은 시그널 · 인사이트' },
-  { tab: 'league', label: '리그', hint: '친구 모의투자 — 시즌별 경쟁' },
-  { tab: 'reading', label: '리딩', hint: '종목 콜 공유 · 리더 되기 · 구독' },
+  { tab: 'today', label: '오늘', hint: '시황 브리프 · 보유 종목 점검' },
+  { tab: 'stocks', label: '내 종목', hint: '검색 · 관심종목 · 보유종목' },
+  { tab: 'ai', label: 'AI 분석', hint: '분석 근거 · 검토 후보' },
+  { tab: 'league', label: '모의투자', hint: '가상 자금으로 투자 연습' },
+  { tab: 'reading', label: '공유', hint: '투자 아이디어 · 매매 기록' },
 ]
 
 export function CommandPalette({ watchlist, onNavigateTab, onOpenDetail, onOpenReminder }: Props) {

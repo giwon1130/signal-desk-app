@@ -24,12 +24,11 @@
  * 스코어카드는 widgets/AIScorecard.tsx.
  */
 import React, { useState } from 'react'
-import { Pressable, ScrollView, Text, View } from 'react-native'
+import { Pressable, Text, View } from 'react-native'
 import { BookOpen, CalendarRange, Layers, Sparkles, Trophy } from 'lucide-react-native'
 import { SeasonalityRulesModal } from '../components/SeasonalityRulesModal'
 import { SectorRotationModal } from '../components/SectorRotationModal'
-import { TabIntro } from '../components/guide/TabIntro'
-import { webGrid } from './shared'
+import { ResponsiveGrid } from './shared'
 import type {
   AiPicksData,
   AiRecommendationData,
@@ -44,7 +43,6 @@ import { Scorecard } from './widgets/AIScorecard'
 // 네이티브 AI탭과 동일 구성 — RN 위젯을 웹에서도 그대로 재사용.
 import { Playbook as NativePlaybook } from '../tabs/aitab_widgets/Playbook'
 import { HiddenSignals as NativeHiddenSignals } from '../tabs/aitab_widgets/HiddenSignals'
-import { Entrance, glow } from './web_effects'
 
 type Mode = 'playbook' | 'scorecard'
 
@@ -92,25 +90,18 @@ export const AIWorkspace = React.memo(function AIWorkspace({ aiRecommendation, s
   ]
 
   return (
-    <ScrollView style={{ flex: 1 }} contentContainerStyle={{ gap: 14, paddingBottom: 20 }}>
-      {/* 탭 인트로 — 컴팩트 타이틀, 처음 몇 번만 펼친 설명 (네이티브 탭과 동일) */}
-      <TabIntro
-        tabKey="web-ai"
-        icon={Sparkles}
-        title="AI"
-        tagline="물어보고 · 추천받고 · 시그널 확인"
-        description="시데 AI에게 직접 물어보거나, 오늘의 플레이북·AI 성적표로 추천 신뢰도를 검증하세요. 시즌 규칙과 섹터 로테이션도 여기서 확인할 수 있어요."
-        accent={palette.blue ?? palette.brandAccent}
-      />
-      <View style={[{ gap: 12 }, webGrid('minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr)')]}>
+    <View style={{ gap: 20, minWidth: 0 }}>
+      <Text style={{ color: palette.inkMuted, fontSize: 13, lineHeight: 20 }}>분석은 참고 자료입니다. 후보의 근거와 주의사항을 함께 확인해 주세요.</Text>
+      <ResponsiveGrid columns={3} minColumnWidth={230}>
         {tools.map((t) => (
           <Pressable
             key={t.key}
+            accessibilityRole="button"
             onPress={t.onPress}
             style={({ pressed }) => ({
               flexDirection: 'row', alignItems: 'center', gap: 10,
-              backgroundColor: t.bg,
-              borderRadius: 12, paddingHorizontal: 14, paddingVertical: 13,
+              backgroundColor: palette.surface,
+              borderRadius: 8, paddingHorizontal: 14, paddingVertical: 13,
               borderWidth: 1, borderColor: palette.border,
               opacity: pressed ? 0.8 : 1,
             })}
@@ -122,10 +113,10 @@ export const AIWorkspace = React.memo(function AIWorkspace({ aiRecommendation, s
             </View>
           </Pressable>
         ))}
-      </View>
+      </ResponsiveGrid>
 
       <Header mode={mode} onChange={setMode} palette={palette} />
-      <Entrance key={mode} delay={20}>
+      <View key={mode}>
         {mode === 'playbook' ? (
           <View style={{ gap: 14 }}>
             {/* 네이티브 AI탭과 동일: 마켓 인사이트 + 액션 + AI 픽 */}
@@ -148,14 +139,14 @@ export const AIWorkspace = React.memo(function AIWorkspace({ aiRecommendation, s
         ) : (
           <Scorecard aiRecommendation={aiRecommendation} palette={palette} onOpenDetail={onOpenDetail} />
         )}
-      </Entrance>
+      </View>
       <SeasonalityRulesModal visible={rulesOpen} onClose={() => setRulesOpen(false)} onOpenDetail={onOpenDetail} />
       <SectorRotationModal
         visible={sectorOpen}
         onClose={() => setSectorOpen(false)}
         initialMarket={marketPreference === 'US' ? 'US' : 'KR'}
       />
-    </ScrollView>
+    </View>
   )
 })
 
@@ -163,8 +154,8 @@ export const AIWorkspace = React.memo(function AIWorkspace({ aiRecommendation, s
 
 function Header({ mode, onChange, palette }: { mode: Mode; onChange: (m: Mode) => void; palette: Palette }) {
   const tabs: Array<{ key: Mode; label: string; icon: React.ReactNode; hint: string }> = [
-    { key: 'playbook', label: '오늘의 플레이북', icon: <BookOpen size={13} strokeWidth={2.5} />, hint: '지금 뭐 할지' },
-    { key: 'scorecard', label: '성적표', icon: <Trophy size={13} strokeWidth={2.5} />, hint: 'AI 검증' },
+    { key: 'playbook', label: '오늘의 분석', icon: <BookOpen size={13} strokeWidth={2.5} />, hint: '' },
+    { key: 'scorecard', label: '추천 기록', icon: <Trophy size={13} strokeWidth={2.5} />, hint: '' },
   ]
   return (
     <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
@@ -173,6 +164,8 @@ function Header({ mode, onChange, palette }: { mode: Mode; onChange: (m: Mode) =
         return (
           <Pressable
             key={t.key}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: active }}
             onPress={() => onChange(t.key)}
             style={[{
               flexDirection: 'row', alignItems: 'center', gap: 8,
@@ -181,7 +174,7 @@ function Header({ mode, onChange, palette }: { mode: Mode; onChange: (m: Mode) =
               backgroundColor: active ? palette.blue : palette.surface,
               borderWidth: 1,
               borderColor: active ? palette.blue : palette.border,
-            }, active ? glow(palette.blue, 0.3, 14) : null]}
+            }]}
           >
             {React.cloneElement(t.icon as any, { color: active ? '#ffffff' : palette.inkSub })}
             <Text style={{ color: active ? '#ffffff' : palette.ink, fontSize: 13, fontWeight: '800' }}>

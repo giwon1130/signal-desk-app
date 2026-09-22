@@ -3,6 +3,7 @@ import type { MarketSectionsData, IndexMetric, MarketSessionStatus } from '../ty
 import { marketColor, useTheme } from '../theme'
 import { formatNumber, formatSignedRate } from '../utils'
 import { Sparkline } from './shared'
+import { quoteState } from '../utils/webPresentation'
 
 /**
  * 최상단 고정 티커 리본.
@@ -21,11 +22,12 @@ type Props = {
   sessions?: MarketSessionStatus[] | null
   /** 시장 선호 — KR/US 선택 시 해당 시장 지수만 노출 (IndexPulse 와 동일 규칙). */
   marketPreference?: 'KR' | 'US' | 'BOTH'
-  onClickIndex?: (market: 'KR' | 'US') => void
+  onClickIndex?: (market: 'KR' | 'US', label: string) => void
 }
 
 export function TickerRibbon({ sections, sessions, marketPreference = 'BOTH', onClickIndex }: Props) {
   const { palette } = useTheme()
+  const state = quoteState(sections?.generatedAt)
 
   const showKr = marketPreference !== 'US'
   const showUs = marketPreference !== 'KR'
@@ -45,9 +47,9 @@ export function TickerRibbon({ sections, sessions, marketPreference = 'BOTH', on
         paddingHorizontal: 14,
         paddingVertical: 8,
         gap: 4,
-        backgroundColor: palette.scheme === 'dark' ? '#0b1220' : '#0f172a',
+        backgroundColor: palette.surface,
         borderBottomWidth: 1,
-        borderBottomColor: palette.scheme === 'dark' ? '#1e293b' : '#0b1220',
+        borderBottomColor: palette.border,
         ...(Platform.OS === 'web' ? ({ overflowX: 'auto', overflowY: 'hidden' } as object) : null),
       }}
     >
@@ -55,14 +57,15 @@ export function TickerRibbon({ sections, sessions, marketPreference = 'BOTH', on
         flexDirection: 'row', alignItems: 'center', gap: 5,
         paddingRight: 10, borderRightWidth: 1, borderRightColor: '#1e293b', marginRight: 10,
       }}>
-        <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#22c55e' }} />
-        <Text style={{ color: '#94a3b8', fontSize: 10, fontWeight: '800', letterSpacing: 2 }}>LIVE</Text>
+        <Text style={{ color: palette.inkMuted, fontSize: 11, fontWeight: '600' }}>
+          {state === 'missing' ? '시각 미확인' : state === 'stale' ? '이전 집계' : '최근 집계'}
+        </Text>
       </View>
 
       {/* 세션 배지 */}
       {sessions && sessions.length > 0 ? (
         <View style={{ flexDirection: 'row', gap: 6, paddingRight: 10, marginRight: 6, borderRightWidth: 1, borderRightColor: '#1e293b' }}>
-          {sessions.map((s) => (
+          {sessions.filter((s) => marketPreference === 'BOTH' || s.market === marketPreference).map((s) => (
             <SessionPill key={`${s.market}-${s.label}`} session={s} />
           ))}
         </View>
@@ -70,7 +73,7 @@ export function TickerRibbon({ sections, sessions, marketPreference = 'BOTH', on
 
       {indices.length === 0 ? (
         <Text style={{ color: '#94a3b8', fontSize: 11, fontWeight: '600' }}>
-          지수 데이터 불러오는 중…
+          표시할 지수 자료가 없습니다
         </Text>
       ) : (
         indices.map(({ market, item }) => {
@@ -79,7 +82,9 @@ export function TickerRibbon({ sections, sessions, marketPreference = 'BOTH', on
           return (
             <Pressable
               key={`${market}-${item.label}`}
-              onPress={() => onClickIndex?.(market)}
+              accessibilityRole="button"
+              accessibilityLabel={`${item.label} 상세 차트`}
+              onPress={() => onClickIndex?.(market, item.label)}
               style={(state) => {
                 const hovered = (state as { hovered?: boolean }).hovered
                 return [
@@ -90,19 +95,21 @@ export function TickerRibbon({ sections, sessions, marketPreference = 'BOTH', on
                     paddingHorizontal: 10,
                     paddingVertical: 4,
                     borderRadius: 6,
-                    backgroundColor: hovered ? '#1e293b' : 'transparent',
+                    backgroundColor: hovered ? palette.surfaceAlt : 'transparent',
+                    flexShrink: 0,
+                    minHeight: 36,
                   },
                 ]
               }}
             >
-              <Text style={{ color: '#e2e8f0', fontSize: 11, fontWeight: '800', letterSpacing: 0.3 }}>
+              <Text style={{ color: palette.ink, fontSize: 12, fontWeight: '600' }}>
                 {item.label}
               </Text>
-              <Text style={{ color: '#e2e8f0', fontSize: 11, fontWeight: '700', fontVariant: ['tabular-nums'] }}>
-                {formatNumber(item.value, 2)}
+              <Text style={{ color: palette.ink, fontSize: 12, fontWeight: '700', fontVariant: ['tabular-nums'] }}>
+                {Number.isFinite(item.value) && item.value > 0 ? formatNumber(item.value, 2) : '—'}
               </Text>
               <Text style={{ color, fontSize: 11, fontWeight: '800', fontVariant: ['tabular-nums'] }}>
-                {formatSignedRate(item.changeRate)}
+                {Number.isFinite(item.changeRate) ? formatSignedRate(item.changeRate) : '—'}
               </Text>
               {points.length > 1 ? (
                 <Sparkline points={points} width={48} height={14} color={color} palette={palette} />

@@ -11,6 +11,8 @@ export function SidebarAction({
   const { palette } = useTheme()
   return (
     <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
       onPress={onPress}
       style={(state) => {
         const { pressed } = state
@@ -21,6 +23,7 @@ export function SidebarAction({
           gap: 10,
           paddingHorizontal: 10,
           paddingVertical: 8,
+          minHeight: 42,
           borderRadius: 8,
           backgroundColor: hovered ? (danger ? palette.redSoft : palette.surfaceAlt) : 'transparent',
           opacity: pressed ? 0.7 : 1,
