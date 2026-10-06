@@ -196,6 +196,13 @@ export async function fetchMoverReasons(): Promise<MoverReason[]> {
   }
 }
 
+export async function fetchStockMoveContext(market: string, ticker: string): Promise<MoverReason | null> {
+  const response = await authedFetch(`${API_BASE_URL}/api/v1/market/stocks/context?market=${encodeURIComponent(market)}&ticker=${encodeURIComponent(ticker)}`)
+  if (!response.ok) throw new Error('stock-context-unavailable')
+  const json = (await response.json()) as ApiResponse<MoverReason | null>
+  return json.data
+}
+
 /** 오늘의 투자 운세 (userId + 날짜 시드) */
 export async function fetchDailyFortune(): Promise<DailyFortune | null> {
   try {

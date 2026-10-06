@@ -1,6 +1,7 @@
 /** EXPO_PUBLIC_DESIGN_PREVIEW=1 개발 전용. 실제 계정·주문·시세 호출 없이 UI를 점검한다. */
 import { useState } from 'react'
 import { MarketConditionPreview } from './MarketConditionPreview'
+import { MoverContextPreview } from './MoverContextPreview'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context'
 import { Sparkles, Sunrise, BarChart3 } from 'lucide-react-native'
@@ -140,7 +141,8 @@ function WebPreview() {
 }
 
 export default function DesignPreview() {
+  const movers = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('view') === 'movers'
   const indicators = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('view') === 'indicators'
   const web = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('view') === 'web'
-  return <SafeAreaProvider style={{ backgroundColor: '#152b32' }}><ThemeProvider>{indicators ? <MarketConditionPreview /> : web ? <WebPreview /> : <Preview />}</ThemeProvider></SafeAreaProvider>
+  return <SafeAreaProvider style={{ backgroundColor: '#152b32' }}><ThemeProvider>{movers ? <MoverContextPreview /> : indicators ? <MarketConditionPreview /> : web ? <WebPreview /> : <Preview />}</ThemeProvider></SafeAreaProvider>
 }

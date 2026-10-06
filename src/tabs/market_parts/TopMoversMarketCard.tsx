@@ -6,6 +6,8 @@ import { useStyles } from '../../styles'
 import { useTheme } from '../../theme'
 import type { MoverReason, TopMover, TopMoversResponse } from '../../types'
 import { formatSignedRate } from '../../utils'
+import { MoverContextDetails } from '../../components/MoverContextDetails'
+import { findMoverReason } from '../../utils/moverContext'
 
 type Props = {
   topMovers: TopMoversResponse
@@ -24,9 +26,9 @@ export function TopMoversMarketCard({ topMovers, moverReasons, market, onOpenDet
   const { palette } = useTheme()
   const isKr = market === 'KR'
 
-  // 급등락 사유 — ticker 기준 매핑 ("왜 올랐나/내렸나").
-  const reasonByTicker: Record<string, string> = {}
-  for (const r of moverReasons ?? []) reasonByTicker[r.ticker] = r.reason
+  // 종목 코드가 같아도 시장이 다르면 다른 자료입니다.
+  const reasonByTicker: Record<string, MoverReason> = {}
+  for (const r of moverReasons ?? []) if (r.market === market) reasonByTicker[r.ticker] = r
 
   const gainers: TopMover[] = isKr
     ? [...topMovers.kospi.gainers, ...topMovers.kosdaq.gainers].sort((a, b) => b.changeRate - a.changeRate).slice(0, TOP_N)
@@ -93,7 +95,7 @@ function Column({
   market: 'KR' | 'US'
   onOpenDetail: (market: string, ticker: string, name?: string) => void
   palette: any
-  reasonByTicker: Record<string, string>
+  reasonByTicker: Record<string, MoverReason>
 }) {
   return (
     <View style={{ flex: 1, gap: 2 }}>
@@ -105,10 +107,10 @@ function Column({
         <Text style={{ color: palette.inkFaint, fontSize: 11, paddingVertical: 6 }}>-</Text>
       ) : (
         items.map((m) => {
-          const reason = reasonByTicker[m.ticker]
+          const reason = findMoverReason(Object.values(reasonByTicker), market, m.ticker, m.changeRate)
           return (
+            <View key={`${m.market}-${m.ticker}`}>
             <Pressable
-              key={`${m.market}-${m.ticker}`}
               onPress={() => onOpenDetail(market, m.ticker, m.name)}
               accessibilityRole="button"
               style={({ pressed }) => ({
@@ -120,10 +122,9 @@ function Column({
                 <Text style={{ color: palette.ink, fontSize: 12, fontWeight: '700', flex: 1, minWidth: 0 }} numberOfLines={1} ellipsizeMode="tail">{m.name}</Text>
                 <Text style={{ color, fontSize: 12, fontWeight: '800', fontVariant: ['tabular-nums'], flexShrink: 0 }}>{formatSignedRate(m.changeRate)}</Text>
               </View>
-              {reason ? (
-                <Text style={{ color: palette.inkMuted, fontSize: 10, lineHeight: 14 }} numberOfLines={2}>{reason}</Text>
-              ) : null}
             </Pressable>
+            <MoverContextDetails reason={reason} />
+            </View>
           )
         })
       )}

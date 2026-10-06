@@ -244,7 +244,25 @@ export type TopMoversBlock = {
   losers: TopMover[]
 }
 
-/** 급등/급락 사유 — "왜 올랐나/내렸나" (뉴스 기반 한 줄). */
+export type StockMoveContext = {
+  asOf: string
+  status: 'EVIDENCE_FOUND' | 'MARKET_CONTEXT' | 'NO_RECENT_CATALYST' | 'UNAVAILABLE' | string
+  summary: string
+  rulesVersion: string
+  evidence: Array<{
+    kind: 'DISCLOSURE' | 'NEWS' | 'MARKET' | string
+    title: string
+    source: string
+    url: string
+    publishedAt?: string | null
+    publishedDate?: string | null
+    timing: string
+  }>
+  sourceChecks: Array<{ source: string; status: string; checkedAt?: string | null }>
+  notes: string[]
+}
+
+/** 확인된 소식과 시장 흐름. 관련성이 가격 변동의 인과관계를 뜻하지는 않습니다. */
 export type MoverReason = {
   market: string
   ticker: string
@@ -252,6 +270,7 @@ export type MoverReason = {
   direction: 'UP' | 'DOWN' | string
   changeRate: number
   reason: string
+  context?: StockMoveContext | null
 }
 
 export type TopMoversResponse = {

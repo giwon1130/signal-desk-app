@@ -17,7 +17,10 @@ import type {
   RecommendationExecutionLog,
   StockSearchResult,
   WatchItem,
+  MoverReason,
 } from '../types'
+import { fetchStockMoveContext } from '../api'
+import { MoverContextDetails } from './MoverContextDetails'
 import { useLivePrices } from '../hooks/useLivePrices'
 import { parsePriceInput } from '../utils'
 import { PriceHero } from './stock_detail/PriceHero'
@@ -86,9 +89,25 @@ export function StockDetailModal({
   const [alertSaving, setAlertSaving]         = useState(false)
   const [seasonalityOpen, setSeasonalityOpen] = useState(false)
   const [toggling, setToggling]             = useState(false)
+  const [moveReason, setMoveReason] = useState<MoverReason | null>(null)
+  const [moveLoading, setMoveLoading] = useState(false)
+  const [moveError, setMoveError] = useState(false)
+  const [loadMove, setLoadMove] = useState(0)
 
   const baseKey = context ? `${context.base.market}:${context.base.ticker}` : ''
   const positionId = context?.portfolioPosition?.id ?? ''
+
+  useEffect(() => {
+    setMoveReason(null); setMoveError(false); setMoveLoading(false)
+    if (!visible || !context || loadMove === 0) return
+    let active = true
+    setMoveLoading(true)
+    fetchStockMoveContext(context.base.market, context.base.ticker)
+      .then((result) => { if (active) { setMoveReason(result); setMoveError(!result) } })
+      .catch(() => { if (active) setMoveError(true) })
+      .finally(() => { if (active) setMoveLoading(false) })
+    return () => { active = false }
+  }, [visible, baseKey, loadMove])
 
   // 모달 컨텍스트가 바뀌면 폼 hydrate
   useEffect(() => {
@@ -209,6 +228,16 @@ export function StockDetailModal({
               />
 
               <QuickStats hasWatch={hasWatch} position={context.portfolioPosition} />
+
+              <View style={{ marginTop: 12, padding: 12, borderRadius: 12, backgroundColor: palette.surfaceAlt, gap: 6 }}>
+                <Text style={{ color: palette.ink, fontSize: 13, fontWeight: '700' }}>가격과 함께 볼 소식</Text>
+                <Text style={{ color: palette.inkMuted, fontSize: 12, lineHeight: 18 }}>공시와 관련 보도를 확인합니다. 가격이 움직인 이유를 임의로 추정하지 않습니다.</Text>
+                {moveReason ? <MoverContextDetails key={baseKey} reason={moveReason} /> : null}
+                {moveError ? <Text style={{ color: palette.inkMuted, fontSize: 12 }}>자료를 불러오지 못했습니다. 잠시 후 다시 확인해 주세요.</Text> : null}
+                <Pressable accessibilityRole="button" disabled={moveLoading} onPress={() => setLoadMove((n) => n + 1)} style={{ minHeight: 44, justifyContent: 'center' }}>
+                  <Text style={{ color: palette.teal, fontSize: 12, fontWeight: '700' }}>{moveLoading ? '공시·뉴스를 확인하고 있습니다…' : moveReason || moveError ? '다시 확인' : '최근 소식 확인'}</Text>
+                </Pressable>
+              </View>
 
               <WatchToggle
                 hasWatch={hasWatch}

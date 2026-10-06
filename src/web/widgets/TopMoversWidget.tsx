@@ -4,13 +4,15 @@ import type { MoverReason, TopMoversResponse } from '../../types'
 import { marketColor, type Palette } from '../../theme'
 import { formatSignedRate } from '../../utils'
 import { Widget, webGrid } from '../shared'
+import { MoverContextDetails } from '../../components/MoverContextDetails'
+import { findMoverReason } from '../../utils/moverContext'
 
 type Mover = { market: string; ticker: string; name: string; changeRate: number }
 
 /**
  * 오늘의 급등락 — 시장 선호에 따라 섹션 구성이 바뀐다.
  *  KR: KOSPI/KOSDAQ 상승·하락 4열 · US: US 상승·하락 2열 · BOTH: KR(통합)+US 4열
- * 급등락 사유(Gemini)는 해당 종목 행 아래 한 줄로.
+ * 확인된 자료를 종목 아래에 표시하고 출처는 기본 접힘으로 제공한다.
  */
 export function TopMoversWidget({
   topMovers, moverReasons = [], marketPreference = 'BOTH', palette, onOpenDetail,
@@ -21,7 +23,7 @@ export function TopMoversWidget({
   palette: Palette
   onOpenDetail: (m: string, t: string, n?: string) => void
 }) {
-  const reasonOf = (ticker: string) => moverReasons.find((r) => r.ticker === ticker)?.reason
+  const reasonOf = (mover: Mover) => findMoverReason(moverReasons, mover.market, mover.ticker, mover.changeRate)
 
   const krGainers = [...(topMovers?.kospi.gainers ?? []), ...(topMovers?.kosdaq.gainers ?? [])]
     .sort((a, b) => b.changeRate - a.changeRate)
@@ -69,10 +71,10 @@ export function TopMoversWidget({
               <Text style={{ color: palette.inkFaint, fontSize: 10, paddingVertical: 8 }}>—</Text>
             ) : (
               s.rows.map((r) => {
-                const reason = reasonOf(r.ticker)
+                const reason = reasonOf(r)
                 return (
+                  <View key={`${s.label}-${r.ticker}`}>
                   <Pressable
-                    key={`${s.label}-${r.ticker}`}
                     onPress={() => onOpenDetail(r.market, r.ticker, r.name)}
                     style={(state) => {
                       const hovered = (state as { hovered?: boolean }).hovered
@@ -99,12 +101,9 @@ export function TopMoversWidget({
                         {formatSignedRate(r.changeRate)}
                       </Text>
                     </View>
-                    {reason ? (
-                      <Text numberOfLines={1} style={{ color: palette.inkMuted, fontSize: 9.5 }}>
-                        💡 {reason}
-                      </Text>
-                    ) : null}
                   </Pressable>
+                  <MoverContextDetails reason={reason} />
+                  </View>
                 )
               })
             )}
