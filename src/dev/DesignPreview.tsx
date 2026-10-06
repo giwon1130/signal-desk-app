@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { MarketConditionPreview } from './MarketConditionPreview'
 import { MoverContextPreview } from './MoverContextPreview'
+import { UsMarketPreview } from './UsMarketPreview'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context'
 import { Sparkles, Sunrise, BarChart3 } from 'lucide-react-native'
@@ -141,8 +142,9 @@ function WebPreview() {
 }
 
 export default function DesignPreview() {
+  const usData = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('view') === 'us-data'
   const movers = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('view') === 'movers'
   const indicators = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('view') === 'indicators'
   const web = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('view') === 'web'
-  return <SafeAreaProvider style={{ backgroundColor: '#152b32' }}><ThemeProvider>{movers ? <MoverContextPreview /> : indicators ? <MarketConditionPreview /> : web ? <WebPreview /> : <Preview />}</ThemeProvider></SafeAreaProvider>
+  return <SafeAreaProvider style={{ backgroundColor: '#152b32' }}><ThemeProvider>{usData ? <UsMarketPreview /> : movers ? <MoverContextPreview /> : indicators ? <MarketConditionPreview /> : web ? <WebPreview /> : <Preview />}</ThemeProvider></SafeAreaProvider>
 }

@@ -4,9 +4,11 @@ import type { MarketEvent } from '../../types'
 import { useStyles } from '../../styles'
 import { useTheme } from '../../theme'
 import { CollapsibleCard } from '../../components/CollapsibleCard'
+import { earningsCoverageNote } from '../../utils/marketDataPresentation'
 
 type Props = {
   events: MarketEvent[]
+  earningsStatus?: string
 }
 
 const CATEGORY_ICON: Record<MarketEvent['category'], string> = {
@@ -24,11 +26,12 @@ const MARKET_FLAG: Record<MarketEvent['market'], string> = {
   GLOBAL: '🌐',
 }
 
-export function EventsCard({ events }: Props) {
+export function EventsCard({ events, earningsStatus }: Props) {
   const styles = useStyles()
   const { palette } = useTheme()
 
-  if (events.length === 0) return null
+  const statusNote = earningsCoverageNote(earningsStatus)
+  if (events.length === 0 && !statusNote) return null
 
   // 최대 5개만 보여줌
   const display = events.slice(0, 5)
@@ -37,21 +40,22 @@ export function EventsCard({ events }: Props) {
   return (
     <CollapsibleCard
       title={
-        <View style={styles.cardTitleRow}>
-          <Calendar size={14} color={palette.blue} strokeWidth={2.5} />
-          <Text style={styles.cardTitle}>다가오는 이벤트</Text>
-          <Text style={[styles.metaText, { marginLeft: 8 }]}>{events.length}건</Text>
+        <View style={{ gap: 8, minWidth: 0 }}>
+          <View style={[styles.cardTitleRow, { flexWrap: 'wrap' }]}>
+            <Calendar size={14} color={palette.blue} strokeWidth={2.5} />
+            <Text style={styles.cardTitle}>다가오는 이벤트</Text>
+            <Text style={styles.metaText}>{events.length > 0 ? `${events.length}건` : earningsStatus !== 'AVAILABLE' ? '자료 확인 필요' : '확인된 일정 없음'}</Text>
+          </View>
+          {next ? (
+            <Text style={styles.metaText} numberOfLines={2}>
+              {CATEGORY_ICON[next.category]} {formatDate(next.date)}{next.dateTimezone === 'America/New_York' ? ' ET' : ' KST'} {next.title}
+            </Text>
+          ) : statusNote ? <Text style={[styles.metaText, { lineHeight: 19 }]}>{statusNote}</Text> : null}
         </View>
-      }
-      preview={
-        next ? (
-          <Text style={styles.metaText} numberOfLines={1}>
-            {CATEGORY_ICON[next.category]} {formatDate(next.date)}{next.dateTimezone === 'America/New_York' ? ' ET' : ' KST'} {next.title}
-          </Text>
-        ) : undefined
       }
     >
       <View style={{ gap: 8 }}>
+        {statusNote && display.length > 0 ? <Text style={{ color: palette.inkMuted, fontSize: 12, lineHeight: 18 }}>{statusNote}</Text> : null}
         {display.map((event) => {
           const importanceColor =
             event.importance === 'HIGH' ? palette.down :

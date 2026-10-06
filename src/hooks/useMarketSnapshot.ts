@@ -3,7 +3,7 @@ import { AppState, Platform } from 'react-native'
 import { API_BASE_URL, fetchMoverReasons, fetchTopMovers, loadAllData, loadQuoteData } from '../api'
 import { fetchAiPicks, fetchHiddenSignals } from '../api/ai'
 import { fetchRecentDisclosures } from '../api/disclosures'
-import { fetchUpcomingEvents } from '../api/events'
+import { fetchEventSnapshot } from '../api/events'
 import { fetchMarketInsight } from '../api/insights'
 import { fetchRecentMediaSummaries } from '../api/media'
 import { fetchActiveMarketRound } from '../api/marketRounds'
@@ -46,6 +46,7 @@ export function useMarketSnapshot(authToken: string | null, enabled: boolean) {
   const [marketInsight, setMarketInsight] = useState<MarketInsightData | null>(null)
   const [usMarketInsight, setUsMarketInsight] = useState<MarketInsightData | null>(null)
   const [upcomingEvents, setUpcomingEvents] = useState<MarketEvent[]>([])
+  const [earningsStatus, setEarningsStatus] = useState('NOT_LOADED')
   const [disclosures, setDisclosures] = useState<DisclosureItem[]>([])
   const [aiPicks, setAiPicks] = useState<AiPicksData | null>(null)
   const [hiddenSignals, setHiddenSignals] = useState<HiddenSignalsData | null>(null)
@@ -94,7 +95,10 @@ export function useMarketSnapshot(authToken: string | null, enabled: boolean) {
       void fetchActiveMarketRound().then(fresh(setMarketRound)).catch(() => {})
       void fetchMarketInsight().then(fresh(setMarketInsight)).catch(() => {})
       void fetchMarketInsight('US').then(fresh(setUsMarketInsight)).catch(() => {})
-      void fetchUpcomingEvents(14).then(fresh(setUpcomingEvents)).catch(() => {})
+      void fetchEventSnapshot(14).then(fresh((snapshot) => {
+        setUpcomingEvents(snapshot.events)
+        setEarningsStatus(snapshot.earningsStatus)
+      })).catch(() => {})
       void fetchSystemStatus().then(fresh(setSystemStatus)).catch(() => {})
     } catch {
       if (seq !== requestSeq.current) return
@@ -180,6 +184,7 @@ export function useMarketSnapshot(authToken: string | null, enabled: boolean) {
     marketInsight,
     usMarketInsight,
     upcomingEvents,
+    earningsStatus,
     disclosures,
     aiPicks,
     hiddenSignals,

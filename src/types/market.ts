@@ -106,6 +106,8 @@ export type ChartPoint = {
   low: number
   close: number
   volume: number
+  date?: string | null
+  provisional?: boolean
 }
 
 export type ChartStats = {
@@ -122,6 +124,10 @@ export type ChartPeriodSnapshot = {
   label: string
   points: ChartPoint[]
   stats: ChartStats
+  source?: string | null
+  priceBasis?: string | null
+  asOf?: string | null
+  note?: string | null
 }
 
 export type IndexMetric = {
@@ -296,4 +302,9 @@ export type MarketEvent = {
   dateTimezone?: string
   sourceUrl?: string | null
   verifiedAt?: string | null
+  earnings?: {
+    epsEstimate: number | null; epsActual: number | null
+    revenueEstimate: number | null; revenueActual: number | null
+    currency?: string | null
+  } | null
 }

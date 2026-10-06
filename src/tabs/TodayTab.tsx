@@ -45,6 +45,7 @@ type Props = {
   mediaSummaries: MediaSummaryItem[]
   marketRound: MarketRound | null
   upcomingEvents: MarketEvent[]
+  earningsStatus?: string
   // v2: Market 탭 흡수 — 합성위험도/시장 무드 지표/watch alerts. (급등락은 지수 상세 모달로 이동)
   marketPreference: MarketPreference
   onOpenDetail: (market: string, ticker: string, name?: string) => void
@@ -61,6 +62,7 @@ export const TodayTab = memo(function TodayTab({
   mediaSummaries,
   marketRound,
   upcomingEvents,
+  earningsStatus,
   marketPreference,
   onOpenDetail,
   refreshing,
@@ -240,7 +242,7 @@ export const TodayTab = memo(function TodayTab({
           급등락은 하단 지수 펄스 → 지수 상세 모달로 이동. (오늘 탭은 시장 현황 중심) */}
 
       {/* ── 다가오는 이벤트 (FOMC/실적/휴장) — 선호 시장만, GLOBAL 은 항상 ── */}
-      <EventsCard events={upcomingEvents.filter((e) =>
+      <EventsCard earningsStatus={showUs ? earningsStatus : undefined} events={upcomingEvents.filter((e) =>
         e.market === 'GLOBAL' || (e.market === 'KR' ? showKr : showUs),
       )} />
 

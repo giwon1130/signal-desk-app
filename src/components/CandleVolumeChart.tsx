@@ -241,7 +241,7 @@ export function CandleVolumeChart({ points, width }: { points: ChartPoint[]; wid
       {sel ? (
         <View style={styles.candleTip}>
           <View style={styles.candleTipHeader}>
-            <Text style={styles.candleTipLabel}>{sel.label}</Text>
+            <Text style={styles.candleTipLabel}>{sel.date ?? sel.label}{sel.provisional ? ' · 미확정' : ''}</Text>
             <Text style={[styles.candleTipChange, { color: isUp ? upColor : downColor }]}>
               {isUp ? '▲' : '▼'} {(((sel.close - sel.open) / sel.open) * 100).toFixed(2)}%
             </Text>

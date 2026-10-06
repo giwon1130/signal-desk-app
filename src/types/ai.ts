@@ -57,6 +57,14 @@ export type PickAssessment = {
   reasons: string[]
   blockers: string[]
   rulesVersion: string
+  analysisDate?: string | null
+  metrics?: {
+    movingAverage20: number
+    momentum20Percent: number
+    dailyVolatilityPercent: number
+    averageTurnover20: number
+    completedVolumeRatio: number
+  } | null
 }
 
 export type TradePlanRiskLevel = 'LOW' | 'MEDIUM' | 'HIGH'

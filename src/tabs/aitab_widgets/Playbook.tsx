@@ -1,6 +1,6 @@
 /**
  * AITab — 마켓 인사이트 + 오늘 해야할 것 + 오늘의 AI 픽.
- * AI 픽은 Gemini 가 급등락/수급 universe 안에서 고른 단타 후보.
+ * 후보 선정과 판정은 완료 일봉 기반 규칙이 담당한다.
  * 섹션별 하위 컴포넌트로 분리됨 — playbook_parts/* 참조.
  */
 import { useEffect, useMemo, useState } from 'react'
@@ -84,7 +84,7 @@ export function Playbook({
 
       <Card
         palette={palette}
-        title="AI 종목 검토"
+        title="종목 검토"
         icon={<Sparkles size={13} color={palette.purple} strokeWidth={2.5} />}
         meta={picks.length > 0 ? `${picks.length}개 후보` : undefined}
       >
@@ -93,7 +93,7 @@ export function Playbook({
             {stale && picks.length > 0 ? '최신 검토 자료를 확인해 주세요' : `지금 검토 가능한 후보 ${reviewCount}개`}
           </Text>
           <Text style={{ color: palette.inkMuted, fontSize: 12, lineHeight: 19 }}>
-            {stale && picks.length > 0 ? '생성 후 30분이 지났거나 생성 시각이 불명확합니다. 화면을 내려 새로고침해 주세요.' : '가격과 변동 폭을 확인한 검토 후보입니다. 매수 지시나 상승 확률을 뜻하지 않습니다.'}
+            {stale && picks.length > 0 ? '생성 후 30분이 지났거나 생성 시각이 불명확합니다. 화면을 내려 새로고침해 주세요.' : '완료된 거래일의 추세·거래량·유동성·변동성을 살펴봅니다. 매수 지시나 상승 확률을 뜻하지 않습니다.'}
           </Text>
         </View>
         {aiPicks?.summary ? (

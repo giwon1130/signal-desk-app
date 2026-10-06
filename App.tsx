@@ -77,7 +77,7 @@ function AppShell() {
   const market = useMarketSnapshot(user?.token ?? null, !!user)
   const {
     summary, sections, aiRecommendation, watchlist, portfolio, fortune, topMovers, moverReasons,
-    mediaSummaries, marketRound, marketInsight, usMarketInsight, upcomingEvents, disclosures, aiPicks, hiddenSignals, alertHistory, apiHealth, systemStatus, lastSyncedAt, loading, refreshing, error, refresh,
+    mediaSummaries, marketRound, marketInsight, usMarketInsight, upcomingEvents, earningsStatus, disclosures, aiPicks, hiddenSignals, alertHistory, apiHealth, systemStatus, lastSyncedAt, loading, refreshing, error, refresh,
     fetchData, setLoading, setWatchlist, setPortfolio, setAlertHistory,
   } = market
   const search = useStockSearch()
@@ -455,6 +455,7 @@ function AppShell() {
             mediaSummaries={mediaSummaries}
             moverReasons={moverReasons}
             upcomingEvents={filteredUpcomingEvents}
+            earningsStatus={earningsStatus}
             marketPreference={marketPreference}
             onOpenDetail={handleOpenDetail}
             onUpgrade={() => setProUpgradeOpen(true)}
@@ -467,6 +468,7 @@ function AppShell() {
             mediaSummaries={mediaSummaries}
             marketRound={marketRound}
             upcomingEvents={filteredUpcomingEvents}
+            earningsStatus={earningsStatus}
             marketPreference={marketPreference}
             onOpenDetail={handleOpenDetail}
             refreshing={refreshing}

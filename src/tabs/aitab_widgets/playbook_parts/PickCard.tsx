@@ -77,11 +77,16 @@ export function PickCard({ pick, palette, generatedAt, now = Date.now(), inWatch
           </View>
         ) : null}
         <View style={{ gap: 6 }}>
-          <Text style={{ color: palette.inkMuted, fontSize: 11, fontWeight: '700' }}>AI가 주목한 이유</Text>
+          <Text style={{ color: palette.inkMuted, fontSize: 11, fontWeight: '700' }}>{assessment?.metrics ? '규칙으로 살펴본 흐름' : '검토 근거'}</Text>
           <Text style={{ color: palette.inkSub, fontSize: 14, lineHeight: 23 }}>{pick.reason || '아직 확인된 근거가 없습니다.'}</Text>
         </View>
         {assessment?.reasons.length ? (
-          <Text style={{ color: palette.teal, fontSize: 12, lineHeight: 19 }}>{assessment.reasons.join('\n')}</Text>
+          <Text style={{ color: palette.teal, fontSize: 12, lineHeight: 19 }}>{(assessment.metrics ? assessment.reasons.slice(1) : assessment.reasons).join('\n')}</Text>
+        ) : null}
+        {assessment?.analysisDate ? (
+          <Text style={{ color: palette.inkMuted, fontSize: 11 }}>
+            {assessment.analysisDate} {pick.market === 'US' ? '미 동부' : '한국'} 완료 거래일 기준 · 상승 확률이 아닙니다
+          </Text>
         ) : null}
         {pick.riskNote ? (
           <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 7, backgroundColor: palette.orangeSoft, borderRadius: 12, padding: 12 }}>
@@ -149,7 +154,7 @@ export function PickCard({ pick, palette, generatedAt, now = Date.now(), inWatch
             onPress={async () => {
               if (adding) return
               setAdding(true); setActionError(null)
-              try { await onQuickAdd() } catch { setActionError('관심종목에 추가하지 못했어. 다시 시도해봐.') }
+              try { await onQuickAdd() } catch { setActionError('관심종목에 추가하지 못했습니다. 다시 시도해 주세요.') }
               finally { setAdding(false) }
             }}
             style={({ pressed }) => ({

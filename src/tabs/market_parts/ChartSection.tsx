@@ -10,6 +10,7 @@ import type {
   PeriodKey,
 } from '../../types'
 import { formatCompactNumber, formatSignedRate } from '../../utils'
+import { formatChartDate } from '../../utils/marketDataPresentation'
 
 type Props = {
   activeSection: MarketSection | null
@@ -107,6 +108,12 @@ export function ChartSection({
           ) : null}
         </View>
         <CandleVolumeChart points={activePeriod?.points ?? []} width={chartWidth} />
+        {activePeriod?.source ? (
+          <Text style={styles.metaText}>
+            {activePeriod.source} · {formatChartDate(activePeriod.asOf)}{activePeriod.points.some((point) => point.provisional) ? ' · 미확정 봉 포함' : ''}
+          </Text>
+        ) : null}
+        {activePeriod?.note ? <Text style={styles.metaText}>{activePeriod.note}</Text> : null}
         <View style={styles.legendRow}>
           <Text style={[styles.legendText, { color: '#f59e0b' }]}>MA5</Text>
           <Text style={[styles.legendText, { color: '#6366f1' }]}>MA20</Text>
@@ -115,7 +122,7 @@ export function ChartSection({
         {activePeriod && activePeriod.points.length > 0 ? (
           <View style={styles.chartStatsRow}>
             <View style={styles.chartStat}>
-              <Text style={styles.kpiLabel}>최근 종가</Text>
+              <Text style={styles.kpiLabel}>{activePeriod.points.at(-1)?.provisional ? '최근 가격 (미확정)' : '최근 종가'}</Text>
               <Text style={styles.chartStatValue}>{activePeriod.stats.latest.toFixed(2)}</Text>
             </View>
             <View style={styles.chartStat}>
@@ -131,7 +138,7 @@ export function ChartSection({
               <Text style={styles.chartStatValue}>{formatCompactNumber(activePeriod.stats.averageVolume)}</Text>
             </View>
             <View style={styles.chartStat}>
-              <Text style={styles.kpiLabel}>등락률</Text>
+              <Text style={styles.kpiLabel}>직전 봉 대비</Text>
               <Text
                 style={[
                   styles.chartStatValue,

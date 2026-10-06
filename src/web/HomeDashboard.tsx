@@ -26,6 +26,7 @@ type Props = {
   mediaSummaries: MediaSummaryItem[]
   moverReasons: MoverReason[]
   upcomingEvents: MarketEvent[]
+  earningsStatus?: string
   marketPreference: MarketPreference
   onOpenDetail: (market: string, ticker: string, name?: string) => void
   onUpgrade?: () => void
@@ -58,7 +59,7 @@ export const HomeDashboard = memo(function HomeDashboard(props: Props) {
       </View>
 
       <ResponsiveGrid>
-        <EventsCard events={props.upcomingEvents} />
+        <EventsCard events={props.upcomingEvents} earningsStatus={props.marketPreference !== 'KR' ? props.earningsStatus : undefined} />
         <AlertTimelineWidget history={forMarket(props.alertHistory, props.marketPreference)} palette={palette} onOpenDetail={props.onOpenDetail} />
       </ResponsiveGrid>
 
