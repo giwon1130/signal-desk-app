@@ -3,6 +3,7 @@ import { Activity, TrendingDown, TrendingUp } from 'lucide-react-native'
 import type { PortfolioSummary } from '../../types'
 import { marketColor, type Palette } from '../../theme'
 import { formatPrice, formatSignedPrice, formatSignedRate } from '../../utils'
+import { PortfolioTotalsSummary } from '../../components/PortfolioTotalsSummary'
 import { Widget } from '../shared'
 
 export function PortfolioWidget({
@@ -26,10 +27,7 @@ export function PortfolioWidget({
       </Widget>
     )
   }
-  const top3 = [...portfolio.positions].sort((a, b) => b.evaluationAmount - a.evaluationAmount).slice(0, 3)
-  const totalValue = portfolio.totalValue || 1 // 0 divide 가드
-  const rate = portfolio.totalProfitRate
-  const rateColor = rate >= 0 ? palette.up : palette.down
+  const top3 = [...portfolio.positions].sort((a, b) => a.market.localeCompare(b.market) || b.evaluationAmount - a.evaluationAmount).slice(0, 3)
 
   return (
     <Widget
@@ -42,31 +40,11 @@ export function PortfolioWidget({
         </Text>
       }
     >
-      <View style={{ gap: 4 }}>
-        <Text style={{ color: palette.inkMuted, fontSize: 10, fontWeight: '700', letterSpacing: 1 }}>
-          평가금액
-        </Text>
-        <Text style={{ color: palette.ink, fontSize: 24, fontWeight: '900', fontVariant: ['tabular-nums'] }}>
-          {formatPrice(portfolio.totalValue, 'KR')}
-        </Text>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          {rate >= 0 ? (
-            <TrendingUp size={12} color={rateColor} strokeWidth={2.5} />
-          ) : (
-            <TrendingDown size={12} color={rateColor} strokeWidth={2.5} />
-          )}
-          <Text style={{ color: rateColor, fontSize: 13, fontWeight: '800', fontVariant: ['tabular-nums'] }}>
-            {formatSignedRate(rate)}
-          </Text>
-          <Text style={{ color: rateColor, fontSize: 12, fontWeight: '700', fontVariant: ['tabular-nums'] }}>
-            ({formatSignedPrice(portfolio.totalProfit, 'KR')})
-          </Text>
-        </View>
-      </View>
-
+      <PortfolioTotalsSummary positions={portfolio.positions} />
       <View style={{ gap: 6, marginTop: 4 }}>
         {top3.map((p) => {
-          const weight = (p.evaluationAmount / totalValue) * 100
+          const sameCurrencyValue = portfolio.positions.filter(row => row.market === p.market).reduce((sum, row) => sum + row.evaluationAmount, 0)
+          const weight = sameCurrencyValue > 0 ? (p.evaluationAmount / sameCurrencyValue) * 100 : 0
           const pColor = marketColor(palette, p.market, p.profitRate)
           return (
             <Pressable
@@ -89,7 +67,7 @@ export function PortfolioWidget({
                   {p.name}
                 </Text>
                 <Text style={{ color: palette.inkMuted, fontSize: 10, fontWeight: '700' }}>
-                  {weight.toFixed(0)}%
+                  {p.market === 'US' ? '달러 자산' : '원화 자산'} 내 {weight.toFixed(0)}%
                 </Text>
                 <Text
                   style={{ color: pColor, fontSize: 12, fontWeight: '800', fontVariant: ['tabular-nums'], minWidth: 58, textAlign: 'right' }}

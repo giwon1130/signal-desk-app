@@ -3,6 +3,8 @@
  */
 import type { RecommendationExecutionLog } from './ai'
 
+export type QuoteInfo = { source: string; observedAt: string; currency: string; session: string; delayMinutes?: number | null }
+
 export type TechnicalSignal = {
   rsi: number | null
   rsiState: string | null
@@ -31,6 +33,7 @@ export type WatchItem = {
   alertBelow?: number | null
   alertAbove?: number | null
   volumeAlert?: boolean
+  quoteInfo?: QuoteInfo | null
 }
 
 export type HoldingPosition = {
@@ -47,13 +50,17 @@ export type HoldingPosition = {
   source: string
   targetPrice?: number | null
   stopLossPrice?: number | null
+  quoteInfo?: QuoteInfo | null
+  changeRate?: number | null
 }
 
 export type PortfolioSummary = {
-  totalCost: number
-  totalValue: number
-  totalProfit: number
-  totalProfitRate: number
+  totalCost: number | null
+  totalValue: number | null
+  totalProfit: number | null
+  totalProfitRate: number | null
+  totalCurrency?: 'KRW' | 'USD' | null
+  currencyTotals?: { currency: 'KRW' | 'USD'; totalCost: number; totalValue: number; totalProfit: number; totalProfitRate: number }[]
   positions: HoldingPosition[]
 }
 
@@ -75,6 +82,8 @@ export type StockSearchResult = {
   price: number
   changeRate: number
   stance: string
+  providerSymbol?: string | null
+  quoteInfo?: QuoteInfo | null
 }
 
 export type SelectedStockSnapshot = {

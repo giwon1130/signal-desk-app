@@ -45,6 +45,23 @@ export type LoadAllDataResult = {
   portfolio: PortfolioResponse['portfolio']
 }
 
+/** Lightweight foreground refresh; never replace a failed response with a zero/empty portfolio. */
+export async function loadQuoteData() {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), 15000)
+  try {
+    const results = await Promise.all(['summary', 'watchlist', 'portfolio'].map(async (section) => {
+      const response = await authedFetch(`${API_BASE_URL}/api/v1/market/${section}`, { signal: controller.signal })
+      if (!response.ok) throw new Error('quote refresh unavailable')
+      const body = await response.json()
+      if (!body.success || !body.data) throw new Error('invalid quote response')
+      return body.data
+    }))
+    return { summary: results[0] as MarketSummaryData, watchlist: results[1].watchlist as WatchItem[],
+      portfolio: results[2].portfolio as PortfolioResponse['portfolio'] }
+  } finally { clearTimeout(timer) }
+}
+
 export async function loadAllData(): Promise<LoadAllDataResult> {
   const [healthResponse, summaryResponse, sectionsResponse, aiResponse, watchlistResponse, portfolioResponse] =
     await Promise.all([
@@ -124,9 +141,9 @@ export async function savePortfolioPosition(payload: {
       market: payload.market,
       ticker: payload.ticker,
       name: payload.name,
-      buyPrice: Math.round(payload.buyPrice),
-      currentPrice: Math.round(payload.currentPrice),
-      quantity: Math.max(1, Math.round(payload.quantity)),
+      buyPrice: payload.buyPrice,
+      currentPrice: payload.currentPrice,
+      quantity: payload.quantity,
       targetPrice: payload.targetPrice ?? null,
       stopLossPrice: payload.stopLossPrice ?? null,
     }),
@@ -152,9 +169,9 @@ export async function importPortfolioPositions(positions: PortfolioImportPositio
     body: JSON.stringify({
       positions: positions.map((position) => ({
         ...position,
-        buyPrice: Math.max(1, Math.round(position.buyPrice)),
-        currentPrice: Math.max(1, Math.round(position.currentPrice)),
-        quantity: Math.max(1, Math.round(position.quantity)),
+        buyPrice: position.buyPrice,
+        currentPrice: position.currentPrice,
+        quantity: position.quantity,
       })),
     }),
   })
@@ -255,7 +272,7 @@ export async function quickAddWatchItem(stock: {
       market: stock.market,
       ticker: stock.ticker,
       name: stock.name,
-      price: Math.round(stock.price),
+      price: stock.price,
       changeRate: stock.changeRate,
       // AI 픽 등 일부 호출지점은 sector 정보가 없어 빈 문자열을 보냄 — 백엔드의 @NotBlank
       // 거절을 피하려 빈 값이면 fallback 문구로 채운다.

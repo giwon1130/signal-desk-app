@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { API_BASE_URL, fetchMoverReasons, fetchTopMovers, loadAllData } from '../api'
+import { AppState, Platform } from 'react-native'
+import { API_BASE_URL, fetchMoverReasons, fetchTopMovers, loadAllData, loadQuoteData } from '../api'
 import { fetchAiPicks, fetchHiddenSignals } from '../api/ai'
 import { fetchRecentDisclosures } from '../api/disclosures'
 import { fetchUpcomingEvents } from '../api/events'
@@ -43,6 +44,7 @@ export function useMarketSnapshot(authToken: string | null, enabled: boolean) {
   const [mediaSummaries, setMediaSummaries] = useState<MediaSummaryItem[]>([])
   const [marketRound, setMarketRound] = useState<MarketRound | null>(null)
   const [marketInsight, setMarketInsight] = useState<MarketInsightData | null>(null)
+  const [usMarketInsight, setUsMarketInsight] = useState<MarketInsightData | null>(null)
   const [upcomingEvents, setUpcomingEvents] = useState<MarketEvent[]>([])
   const [disclosures, setDisclosures] = useState<DisclosureItem[]>([])
   const [aiPicks, setAiPicks] = useState<AiPicksData | null>(null)
@@ -58,8 +60,11 @@ export function useMarketSnapshot(authToken: string | null, enabled: boolean) {
   const requestSeq = useRef(0)
   // 한 번이라도 데이터를 받았는지 — 백그라운드 갱신 실패가 멀쩡한 화면을 전역 에러로 덮지 않게.
   const hasDataRef = useRef(false)
+  const fullFetchInFlight = useRef(false)
+  const quoteRefreshMs = useRef(60_000)
 
   const fetchData = useCallback(async () => {
+    fullFetchInFlight.current = true
     const seq = ++requestSeq.current
     const fresh = <T,>(setter: (v: T) => void) => (v: T) => {
       if (seq === requestSeq.current) setter(v)
@@ -70,6 +75,7 @@ export function useMarketSnapshot(authToken: string | null, enabled: boolean) {
       if (seq !== requestSeq.current) return
       setApiHealth(result.health)
       setSummary(result.summary)
+      quoteRefreshMs.current = result.summary.marketSessions.some((session) => session.phase === 'REGULAR') ? 60_000 : 300_000
       setSections(result.sections)
       setAiRecommendation(result.aiRecommendation)
       setWatchlist(result.watchlist)
@@ -87,6 +93,7 @@ export function useMarketSnapshot(authToken: string | null, enabled: boolean) {
       void fetchRecentMediaSummaries(6).then(fresh(setMediaSummaries)).catch(() => {})
       void fetchActiveMarketRound().then(fresh(setMarketRound)).catch(() => {})
       void fetchMarketInsight().then(fresh(setMarketInsight)).catch(() => {})
+      void fetchMarketInsight('US').then(fresh(setUsMarketInsight)).catch(() => {})
       void fetchUpcomingEvents(14).then(fresh(setUpcomingEvents)).catch(() => {})
       void fetchSystemStatus().then(fresh(setSystemStatus)).catch(() => {})
     } catch {
@@ -97,6 +104,8 @@ export function useMarketSnapshot(authToken: string | null, enabled: boolean) {
         setApiHealth(null)
         setError(`서버에 연결할 수 없습니다.\n${API_BASE_URL}`)
       }
+    } finally {
+      if (seq === requestSeq.current) fullFetchInFlight.current = false
     }
   }, [authToken])
 
@@ -110,6 +119,7 @@ export function useMarketSnapshot(authToken: string | null, enabled: boolean) {
       setWatchlist([]); setPortfolio(null); setAlertHistory([])
       setFortune(null); setTopMovers(null); setMoverReasons([])
       setMediaSummaries([]); setMarketRound(null); setMarketInsight(null); setUpcomingEvents([])
+      setUsMarketInsight(null)
       setDisclosures([]); setAiPicks(null); setHiddenSignals(null)
       setApiHealth(null); setSystemStatus(null)
       setError(''); setLastSyncedAt('')
@@ -118,6 +128,36 @@ export function useMarketSnapshot(authToken: string | null, enabled: boolean) {
     setLoading(true)
     void fetchData().finally(() => setLoading(false))
   }, [fetchData, enabled])
+
+  useEffect(() => {
+    if (!enabled) return
+    let active = true
+    let pending = false
+    let last = Date.now()
+    const tick = async () => {
+      const visible = Platform.OS === 'web' ? typeof document === 'undefined' || document.visibilityState === 'visible' : AppState.currentState === 'active'
+      if (!active || !visible || pending || fullFetchInFlight.current || !hasDataRef.current || Date.now() - last < quoteRefreshMs.current) return
+      pending = true
+      last = Date.now()
+      const seq = requestSeq.current
+      try {
+        const data = await loadQuoteData()
+        if (!active || seq !== requestSeq.current) return
+        setSummary(data.summary); setWatchlist(data.watchlist); setPortfolio(data.portfolio)
+        quoteRefreshMs.current = data.summary.marketSessions.some((session) => session.phase === 'REGULAR') ? 60_000 : 300_000
+        setLastSyncedAt(formatSyncStamp(new Date()))
+      } catch { /* Keep the last dated quote; do not invent zero prices on network failures. */ }
+      finally { pending = false }
+    }
+    const timer = setInterval(() => { void tick() }, 60_000)
+    const listener = AppState.addEventListener('change', (state) => { if (state === 'active') void tick() })
+    const visible = () => { void tick() }
+    if (Platform.OS === 'web' && typeof document !== 'undefined') document.addEventListener('visibilitychange', visible)
+    return () => {
+      active = false; clearInterval(timer); listener.remove()
+      if (Platform.OS === 'web' && typeof document !== 'undefined') document.removeEventListener('visibilitychange', visible)
+    }
+  }, [enabled, authToken])
 
   const refresh = useCallback(async () => {
     setRefreshing(true)
@@ -138,6 +178,7 @@ export function useMarketSnapshot(authToken: string | null, enabled: boolean) {
     mediaSummaries,
     marketRound,
     marketInsight,
+    usMarketInsight,
     upcomingEvents,
     disclosures,
     aiPicks,

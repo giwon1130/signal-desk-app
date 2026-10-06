@@ -1,277 +1,116 @@
 import { useEffect } from 'react'
-import { Platform } from 'react-native'
+import { AppState, Platform } from 'react-native'
 import * as Notifications from 'expo-notifications'
 import * as Device from 'expo-device'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { API_BASE_URL } from '../api/config'
+import { marketReminderSchedule, type TradingCalendar } from '../utils/marketReminderSchedule'
 
-/**
- * 시장 시작 알림 — baby-log 패턴(로컬 알림)으로 구현.
- *
- * - 백엔드 푸시 인프라 없이 디바이스 자체에 매주 평일 반복 예약.
- * - KR 정규장 09:00 KST. US 정규장은 서머타임(EDT) 22:30 / 표준시(EST) 23:30 KST 로 자동 분기.
- * - 사용자가 설정한 "분 전"만큼 앞서 알림.
- * - 주말 제외: WEEKLY 트리거 × 평일 5개로 분리 등록 (DAILY 쓰면 토/일도 울려서 X).
- *   (한국/미국 공휴일은 단말 로컬에서 모르니 그건 그냥 울림 — 추후 캘린더 붙이면 개선.)
- */
+const KR_ENABLED_KEY = 'reminder.krOpen.enabled'
+const US_ENABLED_KEY = 'reminder.usOpen.enabled'
+const MINUTES_BEFORE_KEY = 'reminder.minutesBefore'
+const CALENDAR_KEY = 'reminder.tradingCalendar.v1'
+const PREFIXES = ['reminder.krOpen', 'reminder.usOpen']
+let scheduling: Promise<void> = Promise.resolve()
 
-// ── 설정 키 ─────────────────────────────────────────────
-const KR_ENABLED_KEY      = 'reminder.krOpen.enabled'
-const US_ENABLED_KEY      = 'reminder.usOpen.enabled'
-const MINUTES_BEFORE_KEY  = 'reminder.minutesBefore'
-
-// 알림 식별자 (덮어쓰기 위함). 평일 5개로 쪼개므로 prefix 만 두고 weekday suffix 붙임.
-const KR_OPEN_ID = 'reminder.krOpen'
-const US_OPEN_ID = 'reminder.usOpen'
-
-// expo-notifications 의 WEEKLY trigger 는 1=일요일, 2=월요일, ..., 7=토요일.
-// 평일(월~금) = 2..6
-const WEEKDAYS_MON_TO_FRI = [2, 3, 4, 5, 6] as const
-
-// 과거에 DAILY 로 등록됐던 알림 정리용 — 마이그레이션 시 1회 제거.
-const LEGACY_DAILY_IDS = [KR_OPEN_ID, US_OPEN_ID] as const
-
-// 기본값
-const DEFAULT_MINUTES_BEFORE = 10
-const KR_OPEN_HOUR_KST = 9     // 09:00 KST
-const KR_OPEN_MINUTE   = 0
-const US_OPEN_MINUTE   = 30
-
-/**
- * 미국 동부가 서머타임(EDT)인지 판정.
- * 미국장 09:30 ET → EDT(3~11월) 22:30 KST / EST(겨울) 23:30 KST.
- * Intl 미지원 환경에서는 EST(23시)로 안전하게 fallback.
- */
-function isUsEasternDst(date: Date = new Date()): boolean {
-  try {
-    const tz = new Intl.DateTimeFormat('en-US', {
-      timeZone: 'America/New_York', timeZoneName: 'short',
-    }).formatToParts(date).find((p) => p.type === 'timeZoneName')?.value
-    return tz === 'EDT'
-  } catch {
-    return false
-  }
-}
-
-// 포그라운드에서도 알림이 보이도록 핸들러 설정 (모듈 로드 시 1회)
-// 웹은 expo-notifications 네이티브 바인딩이 없어서 setNotificationHandler 가 throw.
 if (Platform.OS !== 'web') {
   Notifications.setNotificationHandler({
     handleNotification: async () => ({
-      shouldShowAlert: true,
-      shouldPlaySound: true,
-      shouldSetBadge: false,
-      shouldShowBanner: true,
-      shouldShowList: true,
+      shouldShowAlert: true, shouldPlaySound: true, shouldSetBadge: false,
+      shouldShowBanner: true, shouldShowList: true,
     }),
   })
 }
 
-// ── 설정 getter / setter ───────────────────────────────
-export async function getKrOpenEnabled(): Promise<boolean> {
-  const v = await AsyncStorage.getItem(KR_ENABLED_KEY)
-  return v !== 'false'  // 기본 ON
-}
+export async function getKrOpenEnabled() { return (await AsyncStorage.getItem(KR_ENABLED_KEY)) !== 'false' }
+export async function getUsOpenEnabled() { return (await AsyncStorage.getItem(US_ENABLED_KEY)) !== 'false' }
 export async function setKrOpenEnabled(enabled: boolean) {
-  await AsyncStorage.setItem(KR_ENABLED_KEY, String(enabled))
-  if (!enabled) await cancelKrOpenReminder()
-  else await scheduleKrOpenReminder()
-}
-
-export async function getUsOpenEnabled(): Promise<boolean> {
-  const v = await AsyncStorage.getItem(US_ENABLED_KEY)
-  return v !== 'false'  // 기본 ON
+  await AsyncStorage.setItem(KR_ENABLED_KEY, String(enabled)); await rescheduleAll()
 }
 export async function setUsOpenEnabled(enabled: boolean) {
-  await AsyncStorage.setItem(US_ENABLED_KEY, String(enabled))
-  if (!enabled) await cancelUsOpenReminder()
-  else await scheduleUsOpenReminder()
+  await AsyncStorage.setItem(US_ENABLED_KEY, String(enabled)); await rescheduleAll()
 }
-
-export async function getMinutesBefore(): Promise<number> {
-  const v = await AsyncStorage.getItem(MINUTES_BEFORE_KEY)
-  const n = v != null ? parseInt(v, 10) : NaN
-  return Number.isFinite(n) ? n : DEFAULT_MINUTES_BEFORE
+export async function getMinutesBefore() {
+  const value = Number(await AsyncStorage.getItem(MINUTES_BEFORE_KEY))
+  return [5, 10, 15, 30, 60].includes(value) ? value : 10
 }
 export async function setMinutesBefore(minutes: number) {
-  await AsyncStorage.setItem(MINUTES_BEFORE_KEY, String(minutes))
-  // 분 변경 시 켜져 있는 알림 모두 다시 예약
-  await rescheduleAll()
+  await AsyncStorage.setItem(MINUTES_BEFORE_KEY, String(minutes)); await rescheduleAll()
 }
 
-// ── 권한 ───────────────────────────────────────────────
 export async function ensurePermission(): Promise<boolean> {
-  if (Platform.OS === 'web') return false
-  if (!Device.isDevice) return false
-
+  if (Platform.OS === 'web' || !Device.isDevice) return false
   if (Platform.OS === 'android') {
     await Notifications.setNotificationChannelAsync('market-open', {
-      name: '장 시작 알림',
-      importance: Notifications.AndroidImportance.HIGH,
-      sound: 'default',
+      name: '장 시작 알림', importance: Notifications.AndroidImportance.HIGH, sound: 'default',
     })
   }
-
-  const { status: existing } = await Notifications.getPermissionsAsync()
-  if (existing === 'granted') return true
-  const { status } = await Notifications.requestPermissionsAsync()
-  return status === 'granted'
+  if ((await Notifications.getPermissionsAsync()).status === 'granted') return true
+  return (await Notifications.requestPermissionsAsync()).status === 'granted'
 }
 
-// ── 예약 ───────────────────────────────────────────────
-function clampMinute(value: number): number {
-  if (value < 0) return value + 60
-  if (value >= 60) return value - 60
-  return value
-}
-
-/**
- * KST 기준 (요일, 시, 분)을 디바이스 로컬 타임존의 (요일, 시, 분)으로 변환.
- * expo-notifications WEEKLY 트리거는 디바이스 로컬 시간으로 해석되므로,
- * KST 시각을 그대로 넣으면 해외 타임존 기기에서 엉뚱한 시간에 울린다
- * (예: ET 기기에서 "한국장 09:00" 알림이 ET 오전 9시에 발송).
- * 자정을 넘는 변환이면 요일도 함께 시프트된다 (KST 월 09:00 = ET 일 19/20:00).
- * 디바이스 타임존의 DST 전환은 다음 앱 실행(rescheduleAll)에서 보정.
- */
-function kstWeeklyToLocal(kstWeekday: number, kstHour: number, kstMinute: number): {
-  weekday: number; hour: number; minute: number
-} {
-  const now = Date.now()
-  const KST_OFFSET_MS = 9 * 3600_000 // KST = UTC+9 고정 (서머타임 없음)
-  for (let i = 0; i < 7; i++) {
-    const kst = new Date(now + i * 86400_000 + KST_OFFSET_MS)
-    if (kst.getUTCDay() + 1 !== kstWeekday) continue // 1=일 .. 7=토
-    const utcMs = Date.UTC(
-      kst.getUTCFullYear(), kst.getUTCMonth(), kst.getUTCDate(),
-      kstHour, kstMinute,
-    ) - KST_OFFSET_MS
-    const local = new Date(utcMs)
-    return { weekday: local.getDay() + 1, hour: local.getHours(), minute: local.getMinutes() }
-  }
-  return { weekday: kstWeekday, hour: kstHour, minute: kstMinute } // 도달 불가 fallback
-}
-
-async function scheduleWeekdays(opts: {
-  baseIdentifier: string
-  /** KST 기준 시/분 — 내부에서 디바이스 로컬로 변환해 등록한다. */
-  hour: number
-  minute: number
-  title: string
-  body: string
-  channelId?: string
-}) {
+async function cancelPrefix(prefix: string) {
   if (Platform.OS === 'web') return
-  // 1) 과거 DAILY 등록분 제거 (마이그레이션)
-  await Notifications.cancelScheduledNotificationAsync(opts.baseIdentifier).catch(() => {})
-  // 2) 평일 5개 각각 weekday suffix 로 새로 등록 — 동일 ID 면 덮어쓰기
-  for (const weekday of WEEKDAYS_MON_TO_FRI) {
-    const local = kstWeeklyToLocal(weekday, opts.hour, opts.minute)
-    const id = `${opts.baseIdentifier}.${weekday}`
-    await Notifications.cancelScheduledNotificationAsync(id).catch(() => {})
+  const all = await Notifications.getAllScheduledNotificationsAsync()
+  await Promise.all(all.filter((n) => n.identifier === prefix || n.identifier.startsWith(prefix + '.'))
+    .map((n) => Notifications.cancelScheduledNotificationAsync(n.identifier)))
+}
+export async function cancelKrOpenReminder() { await cancelPrefix(PREFIXES[0]) }
+export async function cancelUsOpenReminder() { await cancelPrefix(PREFIXES[1]) }
+export async function scheduleKrOpenReminder() { await rescheduleAll() }
+export async function scheduleUsOpenReminder() { await rescheduleAll() }
+
+async function loadCalendar(): Promise<TradingCalendar | null> {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), 8000)
+  try {
+    const response = await fetch(API_BASE_URL + '/api/v1/market/trading-calendar', { signal: controller.signal })
+    if (!response.ok) throw new Error('calendar unavailable')
+    const body = await response.json()
+    if (!body.success || !Array.isArray(body.data?.sessions) || !body.data?.coverageThrough) throw new Error('invalid calendar')
+    await AsyncStorage.setItem(CALENDAR_KEY, JSON.stringify(body.data))
+    return body.data
+  } catch {
+    try { return JSON.parse((await AsyncStorage.getItem(CALENDAR_KEY)) || 'null') } catch { return null }
+  } finally { clearTimeout(timer) }
+}
+
+async function reschedule() {
+  if (Platform.OS === 'web') return
+  // Remove legacy weekday repeats even when permission/calendar is unavailable.
+  await Promise.all(PREFIXES.map(cancelPrefix))
+  const [KR, US, minutes] = await Promise.all([getKrOpenEnabled(), getUsOpenEnabled(), getMinutesBefore()])
+  if ((!KR && !US) || !(await ensurePermission())) return
+  const calendar = await loadCalendar()
+  if (!calendar) return // Never invent weekday schedules while offline.
+  for (const item of marketReminderSchedule(calendar, { KR, US }, minutes)) {
+    const name = item.market === 'KR' ? '한국장' : '미국장'
     await Notifications.scheduleNotificationAsync({
-      identifier: id,
+      identifier: item.id,
       content: {
-        title: opts.title,
-        body:  opts.body,
+        title: name + ' 시작 안내',
+        body: `${name} 정규장이 ${item.minutesBefore}분 뒤 시작됩니다. 주요 일정과 관심종목을 확인해 주세요.${item.earlyClose ? ' 오늘은 조기 종료일입니다.' : ''}`,
         sound: 'default',
       },
-      trigger: {
-        type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
-        weekday: local.weekday,
-        hour:    local.hour,
-        minute:  local.minute,
-        ...(Platform.OS === 'android' && opts.channelId ? { channelId: opts.channelId } : {}),
-      },
+      trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: new Date(item.at),
+        ...(Platform.OS === 'android' ? { channelId: 'market-open' } : {}) },
     })
   }
 }
 
-async function cancelWeekdays(baseIdentifier: string) {
-  if (Platform.OS === 'web') return
-  await Notifications.cancelScheduledNotificationAsync(baseIdentifier).catch(() => {})
-  for (const weekday of WEEKDAYS_MON_TO_FRI) {
-    await Notifications.cancelScheduledNotificationAsync(`${baseIdentifier}.${weekday}`).catch(() => {})
-  }
+/** Serialize toggle/bootstrap updates so obsolete schedules cannot survive a newer setting. */
+export function rescheduleAll() {
+  scheduling = scheduling.catch(() => {}).then(reschedule)
+  return scheduling
 }
 
-export async function scheduleKrOpenReminder() {
-  const enabled = await getKrOpenEnabled()
-  if (!enabled) return
-  const ok = await ensurePermission()
-  if (!ok) return
-  const minutesBefore = await getMinutesBefore()
-  // 시간/분 보정 (KST 기준 — scheduleWeekdays 가 디바이스 로컬로 변환)
-  let hour   = KR_OPEN_HOUR_KST
-  let minute = KR_OPEN_MINUTE - minutesBefore
-  if (minute < 0) { hour -= 1; minute = clampMinute(minute) }
-  await scheduleWeekdays({
-    baseIdentifier: KR_OPEN_ID,
-    hour, minute,
-    title: '🇰🇷 한국장 곧 시작',
-    body:  `오늘 한국장이 ${minutesBefore}분 뒤 09:00에 열립니다. 시나리오 한 번 점검해 보세요!`,
-    channelId: 'market-open',
-  })
-}
-
-export async function scheduleUsOpenReminder() {
-  const enabled = await getUsOpenEnabled()
-  if (!enabled) return
-  const ok = await ensurePermission()
-  if (!ok) return
-  const minutesBefore = await getMinutesBefore()
-  // 미국장 09:30 ET — 서머타임(EDT)이면 22:30 KST, 아니면 23:30 KST.
-  const dst = isUsEasternDst()
-  const openHourKst = dst ? 22 : 23
-  const openLabel = dst ? '22:30' : '23:30'
-  let hour   = openHourKst
-  let minute = US_OPEN_MINUTE - minutesBefore
-  if (minute < 0) { hour -= 1; minute = clampMinute(minute) }
-  await scheduleWeekdays({
-    baseIdentifier: US_OPEN_ID,
-    hour, minute,
-    title: '🇺🇸 미국장 곧 시작',
-    body:  `미국장이 ${minutesBefore}분 뒤(KST ${openLabel} 기준)에 열립니다. 단타 픽 확인해 보세요!`,
-    channelId: 'market-open',
-  })
-}
-
-export async function cancelKrOpenReminder() {
-  await cancelWeekdays(KR_OPEN_ID)
-}
-export async function cancelUsOpenReminder() {
-  await cancelWeekdays(US_OPEN_ID)
-}
-
-export async function rescheduleAll() {
-  await Promise.all([scheduleKrOpenReminder(), scheduleUsOpenReminder()])
-}
-
-/**
- * 과거 DAILY 트리거로 등록됐던 알림을 일괄 정리.
- * 사용자가 reminder OFF 로 두고 있어도 이전 버전에서 등록된 토/일 알림이 살아있을 수 있어
- * 부팅 시 무조건 한 번 청소.
- */
-async function purgeLegacyDailyReminders() {
-  if (Platform.OS === 'web') return
-  for (const id of LEGACY_DAILY_IDS) {
-    await Notifications.cancelScheduledNotificationAsync(id).catch(() => {})
-  }
-  // 구버전의 로컬 알림 히스토리 저장분 정리 — 기능 제거됨(헤더 종 = 서버 이력으로 일원화).
-  await AsyncStorage.removeItem('reminder.history').catch(() => {})
-}
-
-/** 앱 부팅 시 1회 호출 — 권한 확인 + 레거시 정리 + 켜진 알림들 다시 예약. */
+/** Refresh the next 28 days on launch and foreground; no indefinite weekday repeats. */
 export function useMarketReminderBootstrap(enabled: boolean) {
   useEffect(() => {
-    if (!enabled) return
-    if (Platform.OS === 'web') return
-    void (async () => {
-      try {
-        await purgeLegacyDailyReminders()
-        await ensurePermission()
-        await rescheduleAll()
-      } catch {
-        // 권한 거부/시뮬레이터 등 실패는 조용히 무시
-      }
-    })()
+    if (!enabled || Platform.OS === 'web') return
+    const refresh = () => { void rescheduleAll().catch(() => {}) }
+    refresh()
+    const listener = AppState.addEventListener('change', (state) => { if (state === 'active') refresh() })
+    return () => listener.remove()
   }, [enabled])
 }

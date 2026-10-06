@@ -4,6 +4,7 @@ import { Briefcase, TrendingDown, TrendingUp } from 'lucide-react-native'
 import type { PortfolioSummary } from '../../types'
 import { marketColor, type Palette } from '../../theme'
 import { formatPrice, formatSignedPrice, formatSignedRate } from '../../utils'
+import { PortfolioTotalsSummary } from '../../components/PortfolioTotalsSummary'
 import { EmptyRow, Section } from './Section'
 
 export const HOLDING_CAP = 5
@@ -20,7 +21,7 @@ export function PortfolioSection({ portfolio, onOpenDetail, onGotoStocks, palett
   const topHoldings = useMemo(() => {
     const positions = portfolio?.positions ?? []
     return [...positions]
-      .sort((a, b) => (b.currentPrice * b.quantity) - (a.currentPrice * a.quantity))
+      .sort((a, b) => a.market.localeCompare(b.market) || (b.currentPrice * b.quantity) - (a.currentPrice * a.quantity))
       .slice(0, HOLDING_CAP)
   }, [portfolio])
 
@@ -35,48 +36,7 @@ export function PortfolioSection({ portfolio, onOpenDetail, onGotoStocks, palett
     >
       {portfolio && portfolio.positions.length ? (
         <>
-          <View style={{ paddingHorizontal: 4, paddingVertical: 6, gap: 3 }}>
-            <Text style={{ color: palette.inkMuted, fontSize: 10, fontWeight: '700', letterSpacing: 1 }}>
-              평가금액
-            </Text>
-            <Text
-              style={{
-                color: palette.ink,
-                fontSize: 17,
-                fontWeight: '800',
-                fontVariant: ['tabular-nums'],
-              }}
-            >
-              {formatPrice(portfolio.totalValue, 'KR')}
-            </Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 2 }}>
-              {portfolio.totalProfitRate >= 0 ? (
-                <TrendingUp size={11} color={palette.up} strokeWidth={2.5} />
-              ) : (
-                <TrendingDown size={11} color={palette.down} strokeWidth={2.5} />
-              )}
-              <Text
-                style={{
-                  color: portfolio.totalProfitRate >= 0 ? palette.up : palette.down,
-                  fontSize: 11,
-                  fontWeight: '800',
-                  fontVariant: ['tabular-nums'],
-                }}
-              >
-                {formatSignedRate(portfolio.totalProfitRate)}
-              </Text>
-              <Text
-                style={{
-                  color: portfolio.totalProfit >= 0 ? palette.up : palette.down,
-                  fontSize: 11,
-                  fontWeight: '700',
-                  fontVariant: ['tabular-nums'],
-                }}
-              >
-                ({formatSignedPrice(portfolio.totalProfit, 'KR')})
-              </Text>
-            </View>
-          </View>
+          <PortfolioTotalsSummary positions={portfolio.positions} />
           {topHoldings.length > 0 ? (
             <View style={{ marginTop: 6, gap: 4 }}>
               {topHoldings.map((h) => (

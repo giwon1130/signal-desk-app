@@ -34,7 +34,7 @@ function isStockQuery(text: string): boolean {
 
 function numberFrom(text: string): number | null {
   if (/%/.test(text)) return null
-  const match = text.replace(/\s/g, '').match(/[₩$]?([0-9][0-9,]*(?:\.[0-9]+)?)/)
+  const match = text.match(/[₩$]?\s*([0-9][0-9,]*(?:\.[0-9]+)?)/)
   if (!match) return null
   const parsed = Number(match[1].replace(/,/g, ''))
   return Number.isFinite(parsed) && parsed > 0 ? parsed : null
@@ -42,14 +42,14 @@ function numberFrom(text: string): number | null {
 
 function labelledValue(text: string, labels: string[]): number | null {
   const joined = labels.map((label) => compact(label)).join('|')
-  const match = compact(text).match(
-    new RegExp(`(?:${joined})[:：]?([₩$]?[0-9][0-9,]*(?:\\.[0-9]+)?)`, 'i'),
+  const match = text.match(
+    new RegExp(`(?:${joined})\\s*[:：]?\\s*([₩$]?\\s*[0-9][0-9,]*(?:\\.[0-9]+)?)`, 'i'),
   )
   return match ? numberFrom(match[1]) : null
 }
 
 function valueWithSuffix(text: string, suffix: string): number | null {
-  const match = compact(text).match(new RegExp(`([0-9][0-9,]*(?:\\.[0-9]+)?)${suffix}`, 'i'))
+  const match = text.match(new RegExp(`(?:^|[^0-9.,])([0-9][0-9,]*(?:\\.[0-9]+)?)\\s*${suffix}`, 'i'))
   return match ? numberFrom(match[1]) : null
 }
 
@@ -102,7 +102,7 @@ export function extractPortfolioCandidates(result: OcrResult): PortfolioOcrCandi
       query: line.text,
       sourceTop: line.top,
       buyPrice,
-      quantity: quantity == null ? null : Math.max(1, Math.round(quantity)),
+      quantity,
     }]
   })
 }

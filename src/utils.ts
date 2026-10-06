@@ -1,4 +1,5 @@
 import type { ChartPoint, WatchAlert } from './types'
+import { decimalInput } from './utils/decimalInput'
 
 export function formatSignedRate(value?: number | null) {
   if (value == null) return '-'
@@ -8,11 +9,10 @@ export function formatSignedRate(value?: number | null) {
 /**
  * 가격 입력 파싱 — 소수점("412.43")을 보존해 숫자로. 콤마/통화기호는 제거.
  * 잘못된 입력(점 2개 등)·음수는 0 → 호출부의 falsy 체크에서 저장이 막힌다.
- * 백엔드 가격 필드가 Int 라 저장 직전엔 Math.round 해서 보낸다 (US는 달러 단위 저장).
+ * 음수·잘못된 문자를 임의로 제거하거나 정수로 반올림하지 않는다.
  */
 export function parsePriceInput(text: string): number {
-  const n = Number(text.replace(/[^0-9.]/g, ''))
-  return Number.isFinite(n) && n >= 0 ? n : 0
+  return decimalInput(text)
 }
 
 export function formatCompactNumber(value: number) {

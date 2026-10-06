@@ -19,18 +19,18 @@ export function PriceHero({ base, livePrice, liveChange, isLive }: Props) {
   return (
     <View style={styles.stockDetailHero}>
       <View style={styles.metricLeft}>
-        <Text style={styles.kpiLabel}>현재가</Text>
+        <Text style={styles.kpiLabel}>{base.quoteInfo?.session === 'CLOSE' ? '최근 종가' : base.market === 'US' && !base.quoteInfo ? '기준 시각 미확인' : '현재가'}</Text>
         <Text style={styles.cardNote}>{base.stance || '관찰 대상'}</Text>
       </View>
       <View style={styles.summaryValueBox}>
         <View style={styles.cardTitleRow}>
           <PriceFlash value={isLive ? livePrice : null} upColor={palette.up} downColor={palette.down}>
-            <Text style={styles.stockDetailPrice}>{formatPrice(livePrice, base.market)}</Text>
+            <Text style={styles.stockDetailPrice}>{livePrice > 0 ? formatPrice(livePrice, base.market) : '시세 확인 중'}</Text>
           </PriceFlash>
           {isLive ? <Radio size={12} color="#10b981" strokeWidth={2.5} /> : null}
         </View>
         <Text style={[styles.summaryDelta, { color: marketColor(palette, base.market, liveChange) }]}>
-          {formatSignedRate(liveChange)}
+          {livePrice > 0 ? formatSignedRate(liveChange) : '등락 확인 중'}
         </Text>
       </View>
     </View>

@@ -166,19 +166,19 @@ export function ReminderSettingsModal({ visible, authToken, onClose, isPro = fal
               onToggleAll={(v) => void updatePref({ krEnabled: v, usEnabled: v })}
             >
               <AlertToggleRow compact title="🇰🇷 한국장" hint="09:00~15:30 KST, 거래일에만" value={prefs.krEnabled} disabled={togglesDisabled} onValueChange={(v) => void updatePref({ krEnabled: v })} />
-              <AlertToggleRow compact title="🇺🇸 미국장" hint="22:30~05:00 KST, 거래일에만" value={prefs.usEnabled} disabled={togglesDisabled} onValueChange={(v) => void updatePref({ usEnabled: v })} />
+              <AlertToggleRow compact title="🇺🇸 미국장" hint="미국 정규장에만 · 휴장·조기 종료 반영" value={prefs.usEnabled} disabled={togglesDisabled} onValueChange={(v) => void updatePref({ usEnabled: v })} />
             </AlertGroup>
 
             {/* 장 시작 그룹 (로컬 알림) */}
             <AlertGroup
               title="⏰ 장 시작 알림"
-              subtitle="장 열리기 전 디바이스 알림"
+              subtitle="거래일 기준 최대 28일 예약 · 앱을 열면 갱신됩니다"
               master={krOn || usOn}
               disabled={!hydrated}
               onToggleAll={(v) => { void handleKr(v); void handleUs(v) }}
             >
-              <AlertToggleRow compact title="🇰🇷 한국장 시작" hint="매일 09:00 KST" value={krOn} disabled={!hydrated} onValueChange={(v) => void handleKr(v)} />
-              <AlertToggleRow compact title="🇺🇸 미국장 시작" hint="평일 22:30/23:30 KST (서머타임 자동)" value={usOn} disabled={!hydrated} onValueChange={(v) => void handleUs(v)} />
+              <AlertToggleRow compact title="🇰🇷 한국장 시작" hint="확인된 거래일만 · 휴장일 제외" value={krOn} disabled={!hydrated} onValueChange={(v) => void handleKr(v)} />
+              <AlertToggleRow compact title="🇺🇸 미국장 시작" hint="미 동부 09:30 · 날짜별 서머타임 반영" value={usOn} disabled={!hydrated} onValueChange={(v) => void handleUs(v)} />
               <MinutesBeforePicker value={minutes} options={MINUTES_OPTIONS} onChange={(m) => void handleMinutes(m)} />
             </AlertGroup>
 

@@ -69,7 +69,7 @@ export function InsightCard({ insight, palette }: Props) {
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         <Sparkles size={13} color={palette.purple} strokeWidth={2.5} />
         <Text style={{ color: palette.inkMuted, fontSize: 12, fontWeight: '800', flex: 1 }}>
-          시데 · 오늘의 시장 해설
+          시데 · {assessment?.horizon === 'CURRENT_CONDITIONS_US' ? '미국장' : '한국장'} 시장 해설
         </Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
           <SentimentIcon size={11} color={sentimentColor} strokeWidth={2.5} />

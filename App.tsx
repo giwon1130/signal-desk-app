@@ -77,7 +77,7 @@ function AppShell() {
   const market = useMarketSnapshot(user?.token ?? null, !!user)
   const {
     summary, sections, aiRecommendation, watchlist, portfolio, fortune, topMovers, moverReasons,
-    mediaSummaries, marketRound, marketInsight, upcomingEvents, disclosures, aiPicks, hiddenSignals, alertHistory, apiHealth, systemStatus, lastSyncedAt, loading, refreshing, error, refresh,
+    mediaSummaries, marketRound, marketInsight, usMarketInsight, upcomingEvents, disclosures, aiPicks, hiddenSignals, alertHistory, apiHealth, systemStatus, lastSyncedAt, loading, refreshing, error, refresh,
     fetchData, setLoading, setWatchlist, setPortfolio, setAlertHistory,
   } = market
   const search = useStockSearch()
@@ -353,16 +353,25 @@ function AppShell() {
     const latestAiLog   = (aiRecommendation?.executionLogs ?? []).find(
       (item) => item.market === market && item.ticker === ticker,
     )
-    const base: StockSearchResult = fromSearch ?? {
+    const base: StockSearchResult = fromSearch ? { ...fromSearch } : {
       market,
       ticker,
       // detailFallbackName 은 '' 기본값이라 ?? 로는 ticker 분기에 닿지 않는다 — || 로 빈 문자열도 걸러 빈 타이틀 방지.
       name:       watchItem?.name ?? portfolioPos?.name ?? (detailFallbackName || ticker),
       sector:     watchItem?.sector ?? '—',
       price:      watchItem?.price ?? portfolioPos?.currentPrice ?? 0,
-      changeRate: watchItem?.changeRate ?? 0,
+      changeRate: watchItem?.changeRate ?? portfolioPos?.changeRate ?? 0,
       stance:     watchItem?.stance ?? '관찰 대상',
+      quoteInfo:  watchItem?.quoteInfo ?? portfolioPos?.quoteInfo,
     }
+    // Search results can outlive several quote refreshes while the detail sheet stays open.
+    const freshest = [
+      { price: base.price, changeRate: base.changeRate, quoteInfo: base.quoteInfo },
+      ...(watchItem ? [{ price: watchItem.price, changeRate: watchItem.changeRate, quoteInfo: watchItem.quoteInfo }] : []),
+      ...(portfolioPos ? [{ price: portfolioPos.currentPrice, changeRate: portfolioPos.changeRate ?? base.changeRate, quoteInfo: portfolioPos.quoteInfo }] : []),
+    ].filter((item) => item.quoteInfo && Number.isFinite(Date.parse(item.quoteInfo.observedAt)))
+      .sort((a, b) => Date.parse(b.quoteInfo!.observedAt) - Date.parse(a.quoteInfo!.observedAt))[0]
+    if (freshest) Object.assign(base, freshest)
     return { base, watchItem, portfolioPosition: portfolioPos, latestAiLog }
   }, [detailKey, detailFallbackName, stockResults, watchlist, portfolio?.positions, aiRecommendation?.executionLogs])
 
@@ -520,7 +529,7 @@ function AppShell() {
             watchlist={watchlist}
             aiPicks={filteredAiPicks}
             hiddenSignals={filteredHiddenSignals}
-            marketInsight={marketInsight}
+            marketInsight={marketPreference === 'US' ? usMarketInsight : marketInsight}
             marketPreference={marketPreference}
             onOpenDetail={handleOpenDetail}
             onQuickAddWatch={handleQuickAddWatch}
@@ -532,7 +541,7 @@ function AppShell() {
             hiddenSignals={filteredHiddenSignals}
             summary={summary}
             watchlist={watchlist}
-            marketInsight={marketInsight}
+            marketInsight={marketPreference === 'US' ? usMarketInsight : marketInsight}
             marketPreference={marketPreference}
             refreshing={refreshing}
             onRefresh={refresh}

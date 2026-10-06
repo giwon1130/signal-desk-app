@@ -23,6 +23,8 @@ import { fetchStockMoveContext } from '../api'
 import { MoverContextDetails } from './MoverContextDetails'
 import { useLivePrices } from '../hooks/useLivePrices'
 import { parsePriceInput } from '../utils'
+import { validHoldingInput } from '../utils/decimalInput'
+import { quoteLabel } from '../utils/quoteLabel'
 import { PriceHero } from './stock_detail/PriceHero'
 import { AiContextRow } from './stock_detail/AiContextRow'
 import { WatchToggle } from './stock_detail/WatchToggle'
@@ -86,6 +88,7 @@ export function StockDetailModal({
   const [targetPriceInput, setTargetPriceInput]   = useState('')
   const [stopLossPriceInput, setStopLossPriceInput] = useState('')
   const [portfolioSaving, setPortfolioSaving] = useState(false)
+  const [portfolioInputError, setPortfolioInputError] = useState('')
   const [alertSaving, setAlertSaving]         = useState(false)
   const [seasonalityOpen, setSeasonalityOpen] = useState(false)
   const [toggling, setToggling]             = useState(false)
@@ -116,6 +119,7 @@ export function StockDetailModal({
     setQuantityInput(pos ? String(pos.quantity) : '')
     setTargetPriceInput(pos?.targetPrice ? String(pos.targetPrice) : '')
     setStopLossPriceInput(pos?.stopLossPrice ? String(pos.stopLossPrice) : '')
+    setPortfolioInputError('')
   }, [baseKey, positionId])
 
   // 라이브 시세 (KR만)
@@ -143,12 +147,21 @@ export function StockDetailModal({
   const handleSave = async () => {
     if (!context) return
     // 소수점 보존 파싱 — 기존 [^0-9] 제거 방식은 "412.43" 이 41243(100배)이 되는 버그.
-    const buy = Math.round(parsePriceInput(buyPriceInput))
-    const qty = Number(quantityInput.replace(/[^0-9]/g, ''))
-    if (!buy || !qty) return
+    const buy = parsePriceInput(buyPriceInput)
+    const qty = parsePriceInput(quantityInput)
+    if (!validHoldingInput(context.base.market, buy, qty)) {
+      setPortfolioInputError(context.base.market === 'US' ? '양수인 매수가와 수량을 입력해 주세요. 소수점은 8자리까지 가능합니다.' : '매수가와 수량을 양의 정수로 입력해 주세요.')
+      return
+    }
+    const target = targetPriceInput ? parsePriceInput(targetPriceInput) : null
+    const stopLoss = stopLossPriceInput ? parsePriceInput(stopLossPriceInput) : null
+    if ([target, stopLoss].some((price) => price !== null && !validHoldingInput(context.base.market, price, qty))) {
+      setPortfolioInputError('목표가와 하한 가격을 확인해 주세요. 비워 두면 설정하지 않습니다.')
+      return
+    }
+    if (!(livePrice > 0)) { setPortfolioInputError('시세 확인 후 다시 등록해 주세요.'); return }
+    setPortfolioInputError('')
     setPortfolioSaving(true)
-    const target = targetPriceInput ? Math.round(parsePriceInput(targetPriceInput)) : null
-    const stopLoss = stopLossPriceInput ? Math.round(parsePriceInput(stopLossPriceInput)) : null
     try {
       await onSavePortfolio({
         id: context.portfolioPosition?.id,
@@ -156,7 +169,7 @@ export function StockDetailModal({
         ticker: context.base.ticker,
         name: context.base.name,
         buyPrice: buy,
-        currentPrice: Math.round(livePrice || context.base.price),
+        currentPrice: livePrice || context.base.price,
         quantity: qty,
         targetPrice: target || null,
         stopLossPrice: stopLoss || null,
@@ -316,8 +329,9 @@ export function StockDetailModal({
 
               <AiContextRow latestAiLog={context.latestAiLog} />
 
+              {!!portfolioInputError && <Text style={[styles.cardNote, { color: palette.red }]}>{portfolioInputError}</Text>}
               <Text style={styles.signalModalDisclaimer}>
-                현재가는 KR 시장 기준 라이브 시세이며, 휴장 시에는 마지막 종가가 표시됩니다.
+                {context.base.market === 'US' ? quoteLabel(context.base.quoteInfo) : '국내 시세는 장중 갱신되며, 휴장 중에는 최근 거래 가격이 표시됩니다.'}
               </Text>
             </ScrollView>
           </Pressable>

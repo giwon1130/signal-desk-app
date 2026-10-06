@@ -18,6 +18,7 @@ import { importPortfolioPositions, searchStocks } from '../api'
 import type { StockSearchResult } from '../types'
 import { useTheme } from '../theme'
 import { extractPortfolioCandidates } from '../utils/portfolioOcr'
+import { decimalInput, validHoldingInput } from '../utils/decimalInput'
 import { recognizePortfolioScreenshot } from '../../modules/signal-desk-ocr/src'
 
 type Props = {
@@ -35,7 +36,8 @@ type ImportRow = {
 }
 
 const normalize = (value: string) => value.replace(/[\s().·_-]/g, '').toUpperCase()
-const numeric = (value: string) => Number(value.replace(/,/g, ''))
+const numeric = decimalInput
+const validRow = (row: ImportRow) => row.stock.price > 0 && validHoldingInput(row.stock.market, numeric(row.buyPrice), numeric(row.quantity))
 
 function bestMatch(query: string, stocks: StockSearchResult[]) {
   const normalized = normalize(query)
@@ -140,7 +142,7 @@ export function PortfolioImportModal({ visible, onClose, onImported }: Props) {
   }
 
   const selectedRows = rows.filter((row) =>
-    row.selected && numeric(row.buyPrice) > 0 && numeric(row.quantity) > 0,
+    row.selected && validRow(row),
   )
 
   const save = async () => {
@@ -155,7 +157,7 @@ export function PortfolioImportModal({ visible, onClose, onImported }: Props) {
         ticker: row.stock.ticker,
         name: row.stock.name,
         buyPrice: numeric(row.buyPrice),
-        currentPrice: Math.max(1, row.stock.price || numeric(row.buyPrice)),
+        currentPrice: row.stock.price,
         quantity: numeric(row.quantity),
       })))
       await onImported()
@@ -259,7 +261,7 @@ export function PortfolioImportModal({ visible, onClose, onImported }: Props) {
                 </View>
 
                 {rows.map((row) => {
-                  const valid = numeric(row.buyPrice) > 0 && numeric(row.quantity) > 0
+                  const valid = validRow(row)
                   return (
                     <View key={row.key} style={{
                       padding: 13, borderRadius: 13, gap: 11, backgroundColor: palette.surface,
@@ -299,13 +301,14 @@ export function PortfolioImportModal({ visible, onClose, onImported }: Props) {
                           <TextInput
                             value={row.quantity}
                             onChangeText={(quantity) => updateRow(row.key, { quantity, selected: true })}
-                            keyboardType="number-pad"
+                            keyboardType={row.stock.market === 'US' ? 'decimal-pad' : 'number-pad'}
                             placeholder="직접 입력"
                             placeholderTextColor={palette.inkFaint}
                             style={inputStyle}
                           />
                         </View>
                       </View>
+                      {!valid && <Text style={{ color: palette.orange, fontSize: 11 }}>{row.stock.price > 0 ? '매수가와 수량을 확인해 주세요. 미국 종목은 소수점 입력이 가능합니다.' : '현재 시세가 없어 저장 대상에서 제외됩니다. 잠시 후 다시 조회해 주세요.'}</Text>}
                     </View>
                   )
                 })}

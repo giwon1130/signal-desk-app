@@ -46,7 +46,7 @@ export function EventsCard({ events }: Props) {
       preview={
         next ? (
           <Text style={styles.metaText} numberOfLines={1}>
-            {CATEGORY_ICON[next.category]} {formatDate(next.date)} {next.title}
+            {CATEGORY_ICON[next.category]} {formatDate(next.date)}{next.dateTimezone === 'America/New_York' ? ' ET' : ' KST'} {next.title}
           </Text>
         ) : undefined
       }
@@ -68,10 +68,11 @@ export function EventsCard({ events }: Props) {
                 borderTopColor: palette.border,
               }}
             >
-              <View style={{ width: 48, alignItems: 'center' }}>
+              <View style={{ width: 68, alignItems: 'center' }}>
                 <Text style={{ color: palette.inkFaint, fontSize: 10, fontWeight: '800' }}>
                   {formatDate(event.date)}
                 </Text>
+                <Text style={{ color: palette.inkMuted, fontSize: 9 }}>{event.dateTimezone === 'America/New_York' ? '미 동부 날짜' : '한국 날짜'}</Text>
                 {event.time ? (
                   <Text style={{ color: palette.inkMuted, fontSize: 9, fontWeight: '700' }}>
                     {event.time}

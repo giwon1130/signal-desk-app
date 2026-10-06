@@ -6,6 +6,7 @@ import { useTheme } from '../../theme'
 import type { WatchItem } from '../../types'
 import { formatPrice, parsePriceInput } from '../../utils'
 import { PressableScale } from '../effects'
+import { validHoldingInput } from '../../utils/decimalInput'
 
 type Props = {
   watchItem: WatchItem
@@ -31,10 +32,16 @@ export function WatchAlertForm({ watchItem, onSave, saving, hasPortfolio = false
     watchItem.alertAbove ? String(watchItem.alertAbove) : '',
   )
   const [volumeAlert, setVolumeAlert] = useState(watchItem.volumeAlert ?? false)
+  const [inputError, setInputError] = useState('')
 
   const handleSave = () => {
-    const below = alertBelowInput ? Math.round(parsePriceInput(alertBelowInput)) || null : null
-    const above = alertAboveInput ? Math.round(parsePriceInput(alertAboveInput)) || null : null
+    const below = alertBelowInput ? parsePriceInput(alertBelowInput) : null
+    const above = alertAboveInput ? parsePriceInput(alertAboveInput) : null
+    if ([below, above].some((price) => price !== null && !validHoldingInput(watchItem.market, price, 1))) {
+      setInputError('가격을 확인해 주세요. 미국 종목은 달러 소수점 가격을 입력할 수 있습니다.')
+      return
+    }
+    setInputError('')
     onSave(below, above, volumeAlert)
   }
 
@@ -88,7 +95,7 @@ export function WatchAlertForm({ watchItem, onSave, saving, hasPortfolio = false
                   onChangeText={setAlertBelowInput}
                   placeholder={watchItem.price ? formatPrice(watchItem.price, watchItem.market) : '매수 희망가'}
                   placeholderTextColor={palette.inkMuted}
-                  keyboardType="numeric"
+                  keyboardType="decimal-pad"
                   style={[styles.formInput, { flex: 1 }]}
                 />
                 {watchItem.alertBelow ? (
@@ -110,7 +117,7 @@ export function WatchAlertForm({ watchItem, onSave, saving, hasPortfolio = false
                   onChangeText={setAlertAboveInput}
                   placeholder={watchItem.price ? formatPrice(watchItem.price, watchItem.market) : '목표 매도가'}
                   placeholderTextColor={palette.inkMuted}
-                  keyboardType="numeric"
+                  keyboardType="decimal-pad"
                   style={[styles.formInput, { flex: 1 }]}
                 />
                 {watchItem.alertAbove ? (
@@ -139,6 +146,7 @@ export function WatchAlertForm({ watchItem, onSave, saving, hasPortfolio = false
           </View>
         )}
 
+        {!!inputError && <Text style={{ color: palette.red, fontSize: 12 }}>{inputError}</Text>}
         <PressableScale
           onPress={handleSave}
           disabled={saving}

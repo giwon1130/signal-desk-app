@@ -293,4 +293,7 @@ export type MarketEvent = {
   description: string | null
   importance: EventImportance
   tickers: string[]
+  dateTimezone?: string
+  sourceUrl?: string | null
+  verifiedAt?: string | null
 }

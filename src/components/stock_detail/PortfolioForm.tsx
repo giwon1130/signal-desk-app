@@ -46,7 +46,7 @@ export function PortfolioForm({
         </Text>
       </View>
       <Text style={styles.metaText}>
-        매수가와 수량만 입력하면 손익률·평가금액 자동 계산
+        {base.market === 'US' ? '가격은 달러로 입력합니다. 소수점 보유 수량도 입력할 수 있습니다.' : '가격은 원 단위, 수량은 정수로 입력해 주세요.'}
       </Text>
       <View style={{ flexDirection: 'row', gap: 8 }}>
         <View style={{ flex: 1 }}>
@@ -54,7 +54,7 @@ export function PortfolioForm({
           <TextInput
             value={buyPriceInput}
             onChangeText={onChangeBuyPrice}
-            placeholder="예: 84200"
+            placeholder={base.market === 'US' ? '예: 204.15' : '예: 84200'}
             placeholderTextColor="#94a3b8"
             style={styles.searchInput}
             keyboardType="decimal-pad"
@@ -65,10 +65,10 @@ export function PortfolioForm({
           <TextInput
             value={quantityInput}
             onChangeText={onChangeQuantity}
-            placeholder="예: 10"
+            placeholder={base.market === 'US' ? '예: 0.5' : '예: 10'}
             placeholderTextColor="#94a3b8"
             style={styles.searchInput}
-            keyboardType="number-pad"
+            keyboardType={base.market === 'US' ? 'decimal-pad' : 'number-pad'}
           />
         </View>
       </View>
