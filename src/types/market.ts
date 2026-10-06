@@ -8,6 +8,7 @@ export type SummaryMetric = {
   score: number
   state: string
   note: string
+  polarity?: 'RISK' | 'SUPPORTIVE'
 }
 
 export type AlternativeSignal = {
@@ -33,8 +34,8 @@ export type RiskComponent = {
 }
 
 export type CompositeRiskSignal = {
-  score: number      // 1~10 위험도
-  score100: number   // 0~100 내부 정규화 점수
+  score: number | null
+  score100: number | null
   level: string      // 안정 / 관망 / 주의 / 경계 / 고위험
   headline: string
   components: RiskComponent[]
@@ -42,6 +43,28 @@ export type CompositeRiskSignal = {
   methodology: string
   asOf: string
   personalImpact?: string | null
+  riskLevel?: string | null
+  rulesVersion?: string | null
+}
+
+export type MarketCondition = {
+  market: 'KR' | 'US'
+  asOf: string
+  rulesVersion: string
+  horizon: 'CURRENT_SESSION' | 'LATEST_OBSERVATION'
+  direction: 'UP' | 'DOWN' | 'MIXED' | 'FLAT' | 'UNKNOWN'
+  directionLabel: string
+  riskLevel: string
+  riskLabel: string
+  dataStatus: 'AVAILABLE' | 'PARTIAL' | 'INSUFFICIENT'
+  headline: string
+  summary: string
+  watchPoints: string[]
+  evidence: {
+    id: string; label: string; status: string; detail: string
+    source?: string | null; sourceUrl?: string | null
+    observedAt?: string | null; observationDate?: string | null
+  }[]
 }
 
 export type TradingDayStatus = {
@@ -156,6 +179,7 @@ export type MarketSummaryData = {
   preMarketDirection?: PreMarketDirection
   preMarketForecastStats?: PreMarketForecastStats
   riskWeight?: RiskWeightInfo          // 시장 분위기 가중 프리셋(현재값+PRO여부+선택지)
+  marketConditions?: MarketCondition[]
 }
 
 /** 시장 분위기 가중 프리셋 — 서버 RiskWeightInfo 와 동일. 상세 타입은 api/riskWeight.ts. */
@@ -179,6 +203,10 @@ export type PreMarketDirection = {
   confidence?: 'HIGH' | 'MEDIUM' | 'LOW' | 'INSUFFICIENT' | null
   coverage?: number | null
   inputCount?: number | null
+  status?: string
+  rulesVersion?: string | null
+  nightFutures?: DirectionQuote | null
+  warnings?: string[]
 }
 
 /** 최근 야간 방향성 평가 성과. 방향을 실제로 제시한 날만 집계한다. */
@@ -190,12 +218,17 @@ export type PreMarketForecastStats = {
   lastPredictionDate?: string | null
   lastCorrect?: boolean | null
   lastActualGapRate?: number | null
+  status?: string
+  minimumDisplaySamples?: number
 }
 
 export type DirectionQuote = {
   label: string
   changeRate: number
   value: number
+  observedAt?: string | null
+  source?: string | null
+  isProxy?: boolean
 }
 
 export type TopMover = {

@@ -37,7 +37,7 @@ export function CandleVolumeChart({ points, width }: { points: ChartPoint[]; wid
   if (!points.length) {
     return (
       <View style={styles.emptyChart}>
-        <Text style={styles.metaText}>차트 데이터 없음</Text>
+        <Text style={styles.metaText}>확인된 차트 자료가 없습니다</Text>
       </View>
     )
   }

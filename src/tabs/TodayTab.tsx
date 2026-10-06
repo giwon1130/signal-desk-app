@@ -101,7 +101,7 @@ export const TodayTab = memo(function TodayTab({
   const selectedSessions = (summary?.marketSessions ?? []).filter((session) =>
     (session.market === 'KR' && showKr) || (session.market === 'US' && showUs) || (session.market !== 'KR' && session.market !== 'US'),
   )
-  const isPremarketWindow = showKr && !!summary?.preMarketDirection?.bias && !summary.preMarketDirection.locked
+  const isPremarketWindow = showKr && !!summary?.preMarketDirection && summary.preMarketDirection.status !== 'OUTSIDE_WINDOW'
   const registerSection = useCallback((target: TodayFocusTarget) => (event: { nativeEvent: { layout: { y: number } } }) => {
     sectionOffsets.current[target] = event.nativeEvent.layout.y
   }, [])
@@ -109,15 +109,6 @@ export const TodayTab = memo(function TodayTab({
     const y = sectionOffsets.current[target]
     if (y != null) scrollRef.current?.scrollTo({ y: Math.max(0, y - 10), animated: true })
   }, [])
-
-  // 요약 지표(Fear Meter 글로벌 / KR Heat·Flow Bias KR / US Heat US) 필터.
-  const filteredMetrics = (summary?.marketSummary ?? []).filter((m) => {
-    const label = m.label
-    if (label === 'Fear Meter') return true
-    if (label === 'KR Heat' || label === 'Flow Bias') return showKr
-    if (label === 'US Heat') return showUs
-    return true
-  })
 
   return (
     <ScrollView
@@ -207,9 +198,7 @@ export const TodayTab = memo(function TodayTab({
       <View onLayout={registerSection('mood')}>
         <Entrance index={2}>
           <MarketMoodCard
-            krRisk={summary?.compositeRiskKr ?? summary?.compositeRisk ?? null}
-            usRisk={summary?.compositeRiskUs ?? summary?.compositeRisk ?? null}
-            metrics={filteredMetrics}
+            conditions={summary?.marketConditions}
             marketPreference={marketPreference}
           />
         </Entrance>

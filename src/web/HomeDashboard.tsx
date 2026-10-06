@@ -75,7 +75,7 @@ export const HomeDashboard = memo(function HomeDashboard(props: Props) {
         </Pressable>
         {detailsOpen ? <>
           <ResponsiveGrid>
-            <CompositeRiskWidget summary={props.summary} palette={palette} />
+            <CompositeRiskWidget summary={props.summary} palette={palette} marketPreference={props.marketPreference} />
             <NewsWidget summary={props.summary} palette={palette} marketPreference={props.marketPreference} />
           </ResponsiveGrid>
           {props.marketPreference !== 'US' && props.summary?.preMarketDirection ? (

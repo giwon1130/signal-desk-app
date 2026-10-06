@@ -112,10 +112,10 @@ export function ChartSection({
           <Text style={[styles.legendText, { color: '#6366f1' }]}>MA20</Text>
           <Text style={[styles.legendText, { color: '#10b981' }]}>MA60</Text>
         </View>
-        {activePeriod ? (
+        {activePeriod && activePeriod.points.length > 0 ? (
           <View style={styles.chartStatsRow}>
             <View style={styles.chartStat}>
-              <Text style={styles.kpiLabel}>현재</Text>
+              <Text style={styles.kpiLabel}>최근 종가</Text>
               <Text style={styles.chartStatValue}>{activePeriod.stats.latest.toFixed(2)}</Text>
             </View>
             <View style={styles.chartStat}>

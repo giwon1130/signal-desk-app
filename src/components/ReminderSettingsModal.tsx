@@ -14,9 +14,7 @@ import {
 } from '../hooks/useMarketReminder'
 import { getPushAlertsEnabled, setPushAlertsEnabled } from '../api/pushDevice'
 import { DEFAULT_ALERT_PREFERENCES, getAlertPreferences, updateAlertPreferences, type AlertPreferences } from '../api/alertPreferences'
-import { DEFAULT_RISK_WEIGHT, getRiskWeight, updateRiskWeight, RISK_WEIGHT_DEFAULT, RISK_WEIGHT_MAX, type RiskWeightInfo, type RiskWeightPresetId } from '../api/riskWeight'
 import { AlertToggleRow } from './reminder_parts/AlertToggleRow'
-import { WeightSlider } from './reminder_parts/WeightSlider'
 import { AlertGroup } from './reminder_parts/AlertGroup'
 import { MinutesBeforePicker } from './reminder_parts/MinutesBeforePicker'
 
@@ -33,7 +31,7 @@ type Props = {
 
 const MINUTES_OPTIONS = [5, 10, 15, 30, 60]
 
-export function ReminderSettingsModal({ visible, authToken, onClose, isPro = false, onUpgrade, onRiskWeightChanged }: Props) {
+export function ReminderSettingsModal({ visible, authToken, onClose, isPro = false, onUpgrade }: Props) {
   const styles = useStyles()
   const { palette } = useTheme()
 
@@ -43,68 +41,26 @@ export function ReminderSettingsModal({ visible, authToken, onClose, isPro = fal
   const [minutes, setMinutes] = useState(10)
   const [hydrated, setHydrated] = useState(false)
   const [prefs, setPrefs] = useState<AlertPreferences>(DEFAULT_ALERT_PREFERENCES)
-  const [riskWeight, setRiskWeight] = useState<RiskWeightInfo>(DEFAULT_RISK_WEIGHT)
-  // CUSTOM 슬라이더 로컬 드래프트(라벨→배수). 드래그는 로컬, 손 뗄 때만 저장.
-  const [customDraft, setCustomDraft] = useState<Record<string, number>>({})
 
   // 모달 열릴 때마다 현재 저장값 hydrate
   useEffect(() => {
     if (!visible) return
     void (async () => {
-      const [p, a, b, c, sp, rw] = await Promise.all([
+      const [p, a, b, c, sp] = await Promise.all([
         getPushAlertsEnabled(),
         getKrOpenEnabled(),
         getUsOpenEnabled(),
         getMinutesBefore(),
         authToken ? getAlertPreferences(authToken) : Promise.resolve(prefs),
-        authToken ? getRiskWeight(authToken) : Promise.resolve(DEFAULT_RISK_WEIGHT),
       ])
       setPushOn(p)
       setKrOn(a)
       setUsOn(b)
       setMinutes(c)
       setPrefs(sp)
-      setRiskWeight(rw)
-      setCustomDraft(draftFrom(rw))
       setHydrated(true)
     })()
   }, [visible])
-
-  // 지표 카탈로그 기준 드래프트 — 저장된 customWeights 우선, 없으면 기본 1.0.
-  const draftFrom = (rw: RiskWeightInfo): Record<string, number> => {
-    const d: Record<string, number> = {}
-    rw.factors.forEach((f) => { d[f.id] = rw.customWeights[f.id] ?? RISK_WEIGHT_DEFAULT })
-    return d
-  }
-
-  // 프리셋 칩 변경(PRO) — 낙관적 반영 후 실패 시 롤백. 위험도는 onRiskWeightChanged 로 즉시 새로고침.
-  const handlePreset = async (id: RiskWeightPresetId) => {
-    if (!authToken || id === riskWeight.preset) return
-    const prev = riskWeight
-    const weights = id === 'CUSTOM'
-      ? (Object.keys(customDraft).length ? customDraft : draftFrom(prev))
-      : undefined
-    if (id === 'CUSTOM' && weights) setCustomDraft(weights)
-    setRiskWeight({ ...prev, preset: id })
-    const res = await updateRiskWeight(authToken, id, weights)
-    if (res) {
-      setRiskWeight(res)
-      if (res.preset === 'CUSTOM') setCustomDraft(draftFrom(res))
-      onRiskWeightChanged?.()
-    } else {
-      setRiskWeight(prev)
-    }
-  }
-
-  // 슬라이더 손 뗄 때 — CUSTOM 배수 저장 + 위험도 새로고침.
-  const commitCustom = async (next: Record<string, number>) => {
-    if (!authToken) return
-    const res = await updateRiskWeight(authToken, 'CUSTOM', next)
-    if (res) {
-      setRiskWeight(res)
-      onRiskWeightChanged?.()
-    }
-  }
 
   const updatePref = async (patch: Partial<AlertPreferences>) => {
     // 함수형 업데이트로 최신 prefs 기준 병합 — 빠른 연속 토글 시 stale 클로저로 직전 변경이 덮이는 것 방지.
@@ -230,7 +186,7 @@ export function ReminderSettingsModal({ visible, authToken, onClose, isPro = fal
             <View style={{ borderTopWidth: 1, borderTopColor: palette.border }}>
               <AlertToggleRow
                 title="⚠️ 시장 위험도 알림"
-                hint="합성 위험도 8/10 이상 · 08:32 KST"
+                hint="검증된 자료에서 강한 위험 신호가 확인된 경우 · 08:32 KST"
                 value={prefs.compositeRiskEnabled}
                 disabled={togglesDisabled}
                 onValueChange={(v) => void updatePref({ compositeRiskEnabled: v })}
@@ -282,86 +238,10 @@ export function ReminderSettingsModal({ visible, authToken, onClose, isPro = fal
               ) : null}
             </View>
 
-            {/* 시장 분위기 가중치 (PRO 커스터마이징) */}
-            <View style={{ borderTopWidth: 1, borderTopColor: palette.border, paddingTop: 12, paddingBottom: 4 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
-                <Text style={{ color: palette.ink, fontSize: 13.5, fontWeight: '800' }}>🎚️ 시장 분위기 가중치</Text>
-                {!riskWeight.customizable ? (
-                  <View style={{ backgroundColor: palette.purple ?? '#7c3aed', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 1 }}>
-                    <Text style={{ color: '#fff', fontSize: 9.5, fontWeight: '900' }}>💎 PRO</Text>
-                  </View>
-                ) : null}
-              </View>
-              <Text style={{ color: palette.inkMuted, fontSize: 11, marginBottom: 10 }}>
-                위험도 계산에서 어떤 지표(환율·금리·뉴스 등)를 더 비중 있게 볼지 골라요.
+            <View style={{ borderTopWidth: 1, borderTopColor: palette.border, paddingTop: 12 }}>
+              <Text style={{ color: palette.inkSub, fontSize: 12, lineHeight: 19 }}>
+                시장 분위기는 모든 사용자에게 같은 검증 기준으로 제공됩니다. 이전 개인 가중치 설정은 더 이상 적용하지 않습니다.
               </Text>
-
-              {riskWeight.customizable ? (
-                <>
-                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 7 }}>
-                    {riskWeight.options.map((opt) => {
-                      const selected = opt.id === riskWeight.preset
-                      return (
-                        <Pressable
-                          key={opt.id}
-                          onPress={() => void handlePreset(opt.id as RiskWeightPresetId)}
-                          disabled={!hydrated}
-                          style={({ pressed }) => ({
-                            paddingHorizontal: 12, paddingVertical: 8, borderRadius: 999, borderWidth: 1.5,
-                            borderColor: selected ? (palette.purple ?? '#7c3aed') : palette.border,
-                            backgroundColor: selected ? (palette.purple ?? '#7c3aed') : palette.surface,
-                            opacity: pressed ? 0.75 : 1,
-                          })}
-                        >
-                          <Text style={{ color: selected ? '#fff' : palette.inkSub, fontSize: 12.5, fontWeight: '800' }}>{opt.label}</Text>
-                        </Pressable>
-                      )
-                    })}
-                  </View>
-                  <Text style={{ color: palette.inkFaint, fontSize: 11, marginTop: 8 }}>
-                    {riskWeight.options.find((o) => o.id === riskWeight.preset)?.description ?? ''}
-                  </Text>
-
-                  {/* 직접 설정(CUSTOM) — 지표별 슬라이더 */}
-                  {riskWeight.preset === 'CUSTOM' && riskWeight.factors.length > 0 ? (
-                    <View style={{ marginTop: 14, padding: 12, borderRadius: 12, backgroundColor: palette.surfaceAlt }}>
-                      <Text style={{ color: palette.inkMuted, fontSize: 10.5, marginBottom: 12 }}>
-                        지표별 비중 배수예요. 1.0× = 기본, 0× = 무시, 2.0× = 두 배. (합은 자동 정규화)
-                      </Text>
-                      {riskWeight.factors.map((f) => (
-                        <WeightSlider
-                          key={f.id}
-                          label={f.label}
-                          value={customDraft[f.id] ?? RISK_WEIGHT_DEFAULT}
-                          max={RISK_WEIGHT_MAX}
-                          disabled={!hydrated}
-                          onChange={(v) => setCustomDraft((d) => ({ ...d, [f.id]: v }))}
-                          onCommit={(v) => {
-                            const next = { ...customDraft, [f.id]: v }
-                            setCustomDraft(next)
-                            void commitCustom(next)
-                          }}
-                        />
-                      ))}
-                    </View>
-                  ) : null}
-                </>
-              ) : (
-                <Pressable
-                  onPress={() => onUpgrade?.()}
-                  style={({ pressed }) => ({
-                    flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 10, paddingHorizontal: 12,
-                    borderRadius: 12, borderWidth: 1, borderColor: palette.border, backgroundColor: palette.surfaceAlt,
-                    opacity: pressed ? 0.8 : 1,
-                  })}
-                >
-                  <Lock size={14} color={palette.inkMuted} strokeWidth={2.2} />
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ color: palette.inkSub, fontSize: 12.5, fontWeight: '700' }}>지금은 기본(균형)으로 계산 중</Text>
-                    <Text style={{ color: palette.inkMuted, fontSize: 10.5 }}>💎 PRO 로 업그레이드하면 환율·금리 민감 등으로 조정 가능</Text>
-                  </View>
-                </Pressable>
-              )}
             </View>
 
             <Text style={styles.signalModalDisclaimer}>
