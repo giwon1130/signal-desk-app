@@ -11,6 +11,8 @@ export type MarketInsightData = {
 }
 
 export type MarketEvidenceAssessment = {
+  marketObservation?: MarketObservation | null
+  openingReference?: MarketObservation | null
   rulesVersion: string
   asOf: string
   horizon: string
@@ -33,6 +35,19 @@ export type MarketEvidenceAssessment = {
   }>
   warnings: string[]
   newsEvidence: Array<{ market: string; title: string; source: string; url: string; impact: string; publishedAt?: string | null }>
+}
+
+export type MarketObservation = {
+  market: string
+  tradingDate: string | null
+  phase: 'REGULAR' | 'PREOPEN' | 'AFTER_CLOSE' | 'NON_TRADING_DAY'
+  status: 'INTRADAY' | 'CLOSED' | 'CLOSE_PENDING' | 'UNAVAILABLE'
+  direction: 'UP' | 'DOWN' | 'MIXED' | 'FLAT' | 'UNKNOWN'
+  directionLabel: string
+  headline: string
+  summary: string
+  observedAt: string | null
+  evidenceIds: string[]
 }
 
 export type AiPick = {

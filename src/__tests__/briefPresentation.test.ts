@@ -63,5 +63,21 @@ it.each(['', '검증된 자료가 충분하지 않습니다.', '오늘의 시장
 it('자료 부족은 상승·하락 분류보다 우선한다', () => {
   expect(marketReadingGuide('BEARISH', true)).toContain('자료가 충분하지 않습니다')
   expect(marketReadingGuide('BULLISH')).toContain('모든 종목이 함께 오르지는 않습니다')
-  expect(marketReadingGuide('NEUTRAL')).toContain('서두르지 않아도')
+  expect(marketReadingGuide('NEUTRAL')).toContain('단정하지 마세요')
+})
+
+it('중립은 지수 혼조를 뜻하지 않는다', () => {
+  const result = briefPresentation(brief, now)
+  expect(result.label).toBe('시장 요약')
+  expect(result.guide).not.toContain('엇갈')
+})
+
+it('참고 자료 부족으로 실제 급락 결과를 숨기지 않는다', () => {
+  const result = briefPresentation({ ...brief, sentiment: 'BEARISH', summary: '국내 증시는 큰 폭으로 하락 마감했습니다\n\n코스피 -3.65%입니다. 배경 자료가 부족합니다.' }, now)
+  expect(result.label).toBe('하락 흐름')
+})
+
+it('종가 확인 중과 장전 자료를 구분한다', () => {
+  expect(briefPresentation({ ...brief, summary: '국내 증시는 하락 흐름입니다 · 종가 확인 중\n\n최종 종가는 아직 확인되지 않았습니다.' }, now).label).toBe('종가 확인 중')
+  expect(briefPresentation({ ...brief, source: 'MORNING_BRIEF' }, now).guide).toContain('오늘 국내장 방향이나 매수·매도 신호를 뜻하지 않습니다')
 })

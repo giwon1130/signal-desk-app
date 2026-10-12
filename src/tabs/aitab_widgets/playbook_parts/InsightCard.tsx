@@ -14,12 +14,13 @@ type Props = {
 export function InsightCard({ insight, palette }: Props) {
   const [expandedSnapshot, setExpandedSnapshot] = useState<string | null>(null)
   const assessment = insight.assessment
+  const observation = assessment?.openingReference ?? assessment?.marketObservation
   const snapshotKey = assessment?.asOf ?? insight.headline
   const expanded = expandedSnapshot === snapshotKey
-  const regimeLabel = assessment ? ({
+  const regimeLabel = observation?.directionLabel ?? (assessment ? ({
     INSUFFICIENT_DATA: '판단 보류', RISK_CAUTION: '위험 주의',
     SUPPORTIVE: '우호 조건', PRESSURED: '부담 우세', MIXED: '혼재',
-  }[assessment.regime] ?? '검토 중') : '검증 전'
+  }[assessment.regime] ?? '검토 중') : '검증 전')
   const sentimentColor =
     insight.sentiment === 'BULLISH' ? palette.up :
     insight.sentiment === 'BEARISH' ? palette.down : palette.inkSub
@@ -84,10 +85,12 @@ export function InsightCard({ insight, palette }: Props) {
       <View style={{ backgroundColor: palette.surfaceAlt, borderRadius: 12, padding: 14, gap: 6 }}>
         <Text style={{ color: palette.purple, fontSize: 12, fontWeight: '700' }}>이렇게 살펴보세요</Text>
         <Text style={{ color: palette.inkSub, fontSize: 14, lineHeight: 23 }}>
-          {marketReadingGuide(insight.sentiment, !assessment || assessment.regime === 'INSUFFICIENT_DATA')}
+          {observation?.status === 'CLOSE_PENDING' ? '장 마감 전 시세가 포함되어 있습니다. 최종 종가가 확인되기 전에는 마감 결과로 해석하지 마세요.'
+            : assessment?.openingReference ? '이전 미국 거래일의 결과와 해외 참고 자료입니다. 오늘 국내장 방향을 예측한 내용은 아닙니다.'
+            : marketReadingGuide(insight.sentiment, observation ? observation.direction === 'UNKNOWN' : !assessment || assessment.regime === 'INSUFFICIENT_DATA')}
         </Text>
       </View>
-      {assessment ? <Text style={{ color: palette.inkMuted, fontSize: 12 }}>{analyzedAt} 기준</Text> : null}
+      {assessment ? <Text style={{ color: palette.inkMuted, fontSize: 12 }}>{analyzedAt} 분석 갱신 · 시세 기준 시각은 본문에 표시됩니다</Text> : null}
       <Pressable
         accessibilityRole="button"
         accessibilityState={{ expanded }}
@@ -107,7 +110,7 @@ export function InsightCard({ insight, palette }: Props) {
         <View style={{ gap: 14 }}>
           <Text style={{ color: palette.inkSub, fontSize: 14, lineHeight: 23 }}>{insight.summary}</Text>
           {assessment && strongestFactors.length > 0 ? (
-            <DetailSection title="주요 흐름" palette={palette}>
+            <DetailSection title="참고 지표 · 실제 지수 등락과 별개" palette={palette}>
               {strongestFactors.map((factor) => (
                 <DetailRow key={factor.id} palette={palette} text={`${factor.label}: ${factor.interpretation}`} />
               ))}

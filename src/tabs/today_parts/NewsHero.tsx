@@ -10,7 +10,7 @@ import { useRotatingIndex } from '../../hooks/useRotatingIndex'
 import { useTheme } from '../../theme'
 import type { NewsSentiment } from '../../types'
 import { formatRelativeOrShortTime } from '../../utils'
-import { sentimentArrow, toneColor } from './helpers'
+import { toneColor } from './helpers'
 
 type Props = {
   sentiments: NewsSentiment[]
@@ -69,7 +69,7 @@ export function NewsHero({ sentiments }: Props) {
       {/* ── 헤더: 제목 + 시장별 심리 칩 ── */}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
         <Newspaper size={15} color="#0d9488" strokeWidth={2.6} />
-        <Text style={{ color: palette.ink, fontSize: 14, fontWeight: '900' }}>오늘의 뉴스</Text>
+        <Text style={{ color: palette.ink, fontSize: 14, fontWeight: '900' }}>최근 24시간 뉴스</Text>
         <View style={{ flex: 1 }} />
         {sentiments.map((s) => {
           const accent = s.label === '긍정' ? palette.up : s.label === '부정' ? palette.down : palette.inkMuted
@@ -79,12 +79,13 @@ export function NewsHero({ sentiments }: Props) {
               backgroundColor: palette.surfaceAlt, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 4,
             }}>
               <Text style={{ fontSize: 11, fontWeight: '800', color: palette.inkMuted }}>{s.market === 'KR' ? '🇰🇷' : '🇺🇸'}</Text>
-              <Text style={{ fontSize: 11, fontWeight: '900', color: accent }}>{sentimentArrow(s.label)} {s.label} {s.score}</Text>
+              <Text style={{ fontSize: 11, fontWeight: '900', color: accent }}>표현 {s.label}</Text>
             </View>
           )
         })}
       </View>
 
+      <Text style={{ color: palette.inkMuted, fontSize: 11, lineHeight: 17 }}>기사 제목의 표현 분류입니다. 실제 시장 방향이나 전망 점수가 아닙니다.</Text>
       {/* ── 회전 헤드라인 (내용이 번갈아 보임) ── */}
       {cur ? (
         <View {...swipeResponder.panHandlers}>
