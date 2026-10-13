@@ -4,6 +4,7 @@ import { AlertTriangle, ChevronDown, ChevronUp, Sparkles, TrendingDown, Trending
 import type { MarketInsightData } from '../../../types'
 import type { Palette } from '../../../theme'
 import { marketReadingGuide } from '../../../utils/briefPresentation'
+import { safeEvidenceUrl } from '../../../utils/moverContext'
 
 type Props = {
   insight: MarketInsightData
@@ -82,6 +83,7 @@ export function InsightCard({ insight, palette }: Props) {
       <Text style={{ color: palette.ink, fontSize: 20, fontWeight: '800', lineHeight: 29 }}>
         {insight.headline}
       </Text>
+      <Text style={{ color: palette.inkSub, fontSize: 15, lineHeight: 25 }}>{insight.summary}</Text>
       <View style={{ backgroundColor: palette.surfaceAlt, borderRadius: 12, padding: 14, gap: 6 }}>
         <Text style={{ color: palette.purple, fontSize: 12, fontWeight: '700' }}>이렇게 살펴보세요</Text>
         <Text style={{ color: palette.inkSub, fontSize: 14, lineHeight: 23 }}>
@@ -108,7 +110,20 @@ export function InsightCard({ insight, palette }: Props) {
 
       {expanded ? (
         <View style={{ gap: 14 }}>
-          <Text style={{ color: palette.inkSub, fontSize: 14, lineHeight: 23 }}>{insight.summary}</Text>
+          {assessment?.drivers?.length ? <DetailSection title="보도에서 짚은 배경" palette={palette}>
+            {assessment.drivers.map((driver) => <View key={driver.id} style={{ gap: 4, marginBottom: 8 }}>
+              <DetailRow palette={palette} text={`${driver.label}: ${driver.summary}`} />
+              {driver.sources.map((source) => <Pressable key={source.url} accessibilityRole="link"
+                accessibilityLabel={`${source.source} 관련 보도 열기`} style={{ minHeight: 44, justifyContent: 'center' }}
+                onPress={() => { if (safeEvidenceUrl(source.url)) void Linking.openURL(source.url).catch(() => {}) }}>
+                <Text style={{ color: palette.purple, fontSize: 12, lineHeight: 20 }}>{source.source} · {source.title}</Text>
+                {Number.isFinite(Date.parse(source.publishedAt)) ? <Text style={{ color: palette.inkMuted, fontSize: 11, lineHeight: 18 }}>
+                  {new Date(source.publishedAt).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Seoul' })} KST 보도
+                </Text> : null}
+              </Pressable>)}
+            </View>)}
+            <DetailRow palette={palette} text="당일 기사 제목에 명시된 배경입니다. 기사 전체 분석이나 주가 변동의 원인 확정을 뜻하지 않습니다." />
+          </DetailSection> : null}
           {assessment && strongestFactors.length > 0 ? (
             <DetailSection title="참고 지표 · 실제 지수 등락과 별개" palette={palette}>
               {strongestFactors.map((factor) => (

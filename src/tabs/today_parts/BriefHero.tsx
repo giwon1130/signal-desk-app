@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import { Pressable, Text, View } from 'react-native'
+import { Linking, Pressable, Text, View } from 'react-native'
 import { ChevronDown, ChevronUp, Moon, Sunrise } from 'lucide-react-native'
 import { useTheme } from '../../theme'
 import type { DailyBriefing, MediaSummaryItem } from '../../types'
-import { briefPresentation, selectLatestBrief } from '../../utils/briefPresentation'
+import { briefEvidencePoint, briefPresentation, selectLatestBrief } from '../../utils/briefPresentation'
 import { BriefingDetails } from './BriefingDetails'
 
 type Props = {
@@ -42,6 +42,7 @@ export function BriefHero({ items, briefing, marketPreference = 'BOTH', onTicker
         <View style={{ gap: 8 }}>
           <Text style={{ color: palette.inkMuted, fontSize: 12 }}>{timestamp} 기준</Text>
           <Text accessibilityRole="header" style={{ color: palette.ink, fontSize: 21, fontWeight: '800', lineHeight: 30, letterSpacing: -0.5 }}>{content.headline}</Text>
+          {content.narrative ? <Text style={{ color: palette.inkSub, fontSize: 15, lineHeight: 25 }}>{content.narrative}</Text> : null}
         </View>
         <View style={{ backgroundColor: palette.surfaceAlt, borderRadius: 14, padding: 15, gap: 7 }}>
           <Text style={{ color: palette.brandAccent, fontSize: 12, fontWeight: '800' }}>이렇게 살펴보세요</Text>
@@ -64,11 +65,17 @@ export function BriefHero({ items, briefing, marketPreference = 'BOTH', onTicker
             {expanded ? <ChevronUp size={17} color={palette.inkMuted} /> : <ChevronDown size={17} color={palette.inkMuted} />}
           </Pressable>
           {expanded ? <View style={{ gap: 16, paddingTop: 18 }}>
-            {content.narrative ? <Text style={{ color: palette.inkSub, fontSize: 14, lineHeight: 23 }}>{content.narrative}</Text> : null}
             {content.points.length ? <View style={{ gap: 0 }}>
-              {content.points.map((point, index) => <View key={index} style={{ paddingVertical: 12, borderTopWidth: 1, borderTopColor: palette.borderLight }}>
-                <Text selectable style={{ color: palette.inkMuted, fontSize: 13, lineHeight: 21 }}>{point}</Text>
-              </View>)}
+              {content.points.map((point, index) => {
+                const evidence = briefEvidencePoint(point)
+                return <View key={index} style={{ paddingVertical: 12, borderTopWidth: 1, borderTopColor: palette.borderLight }}>
+                  <Text selectable style={{ color: palette.inkMuted, fontSize: 13, lineHeight: 21 }}>{evidence.text}</Text>
+                  {evidence.url ? <Pressable accessibilityRole="link" accessibilityLabel="관련 보도 원문 열기"
+                    onPress={() => void Linking.openURL(evidence.url!).catch(() => {})} style={{ minHeight: 44, justifyContent: 'center' }}>
+                    <Text style={{ color: palette.brandAccent, fontSize: 13, fontWeight: '700' }}>보도 원문 보기</Text>
+                  </Pressable> : null}
+                </View>
+              })}
             </View> : <Text style={{ color: palette.inkMuted, fontSize: 13 }}>추가로 확인된 상세 근거가 없습니다.</Text>}
             {item.keyTickers.length && onTickerPress ? <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               {item.keyTickers.map((ticker) => <Pressable key={ticker} accessibilityRole="button" accessibilityLabel={ticker + ' 종목 보기'} onPress={() => onTickerPress(ticker)}

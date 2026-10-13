@@ -1,5 +1,5 @@
 import type { MediaSummaryItem } from '../types'
-import { briefPresentation, marketReadingGuide, selectLatestBrief } from '../utils/briefPresentation'
+import { briefEvidencePoint, briefPresentation, marketReadingGuide, selectLatestBrief } from '../utils/briefPresentation'
 
 const now = Date.parse('2026-09-22T07:00:00Z')
 const brief: MediaSummaryItem = {
@@ -7,6 +7,24 @@ const brief: MediaSummaryItem = {
   publishedAt: '2026-09-22T06:40:00Z', summary: '시장의 흐름이 엇갈립니다\n\n확인된 요인만 설명합니다.',
   flowAnalysis: '• 첫 번째 근거\n\n- 두 번째 근거', sentiment: 'NEUTRAL', keyTickers: [], hasTranscript: false,
 }
+
+it('보도 내용과 안전한 출처 링크를 분리하되 표현을 바꾸지 않는다', () => {
+  expect(briefEvidencePoint('관련 보도 · TEST: 외국인 매도 부각 — https://example.com/news?id=1'))
+    .toEqual({ text: '관련 보도 · TEST: 외국인 매도 부각', url: 'https://example.com/news?id=1' })
+  expect(briefEvidencePoint('관련 보도 · TEST · 2026-10-13T06:21:00Z: 외국인 매도 — https://example.com/news?id=1').text)
+    .toMatch(/10\. 13\..*03:21 KST/)
+  for (const url of ['javascript:alert(1)', 'https://user:pass@example.com/a', 'https://']) {
+    expect(briefEvidencePoint(`기사 — ${url}`).url).toBeNull()
+  }
+})
+
+it('주요 배경을 포함한 해설과 상세 근거를 별도로 유지한다', () => {
+  const summary = '코스피 5.46% 급락 · 코스닥 1.43% 하락 마감했습니다\n\n코스피 -5.46%입니다. 당일 보도에서는 외국인 매도세가 부각됐습니다.'
+  const result = briefPresentation({ ...brief, summary }, now)
+  expect(result.headline).toContain('코스피 5.46% 급락')
+  expect(result.narrative).toContain('당일 보도에서는 외국인 매도세')
+  expect(result.points).toEqual(['첫 번째 근거', '두 번째 근거'])
+})
 
 it('뉴스 종합과 유튜브 요약을 브리프로 잘못 선택하지 않는다', () => {
   expect(selectLatestBrief([{ ...brief, source: 'NEWS_DIGEST' }, { ...brief, source: 'YOUTUBE' }])).toBeNull()

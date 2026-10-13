@@ -1,6 +1,18 @@
 import type { MediaSummaryItem } from '../types'
+import { safeEvidenceUrl } from './moverContext'
 
 const BRIEF_SOURCES = new Set(['MORNING_BRIEF', 'MIDDAY_BRIEF', 'CLOSE_BRIEF', 'EVENING_BRIEF'])
+
+export function briefEvidencePoint(point: string) {
+  const match = point.match(/^(.*?)\s+—\s+(https:\/\/\S+)$/)
+  const readableTime = (text: string) => text.replace(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z/g, (value) => {
+    if (!Number.isFinite(Date.parse(value))) return value
+    return new Date(value).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Seoul' }) + ' KST'
+  })
+  return match && safeEvidenceUrl(match[2])
+    ? { text: readableTime(match[1]), url: match[2] }
+    : { text: point, url: null }
+}
 
 export function selectLatestBrief(items: MediaSummaryItem[], market: 'KR' | 'US' | 'BOTH' = 'BOTH') {
   return items.filter((item) => BRIEF_SOURCES.has(item.source)

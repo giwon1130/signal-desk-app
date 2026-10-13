@@ -13,6 +13,12 @@ export type MarketInsightData = {
 export type MarketEvidenceAssessment = {
   marketObservation?: MarketObservation | null
   openingReference?: MarketObservation | null
+  /** 당일 기사에 명시된 배경. 확인된 인과관계나 수급 규모가 아닙니다. */
+  drivers?: Array<{
+    id: string; label: string; summary: string; watchPoint: string
+    kind: 'REPORTED_CONTEXT'; basis: 'HEADLINE'
+    sources: Array<{ title: string; source: string; url: string; publishedAt: string }>
+  }>
   rulesVersion: string
   asOf: string
   horizon: string
