@@ -2,9 +2,15 @@
 
 React Native (Expo) 모바일 앱 + **웹 앱**(RN-Web). Spring Boot 백엔드(`../signal-desk-api`)와 짝.
 
+## 현재 상태 — 서비스 종료 (2026-10-24)
+
+App Store 판매와 백엔드 API 운영을 종료했다. 소스와 개발 기록은 보존하며, 아래 기능·빌드·출시 절차는 운영 당시 기록이다. 사용자 재개 요청 없이 앱 빌드·제출·판매 복원·API 재배포를 하지 않는다.
+
+2026-10-28 GitHub 첫 화면에도 종료 상태를 반영했다. GitHub Pages는 `docs/service-ended.html`과 `public/privacy.html`만 게시한다. Expo 앱 자동 웹 배포와 태그 기반 iOS 릴리스 워크플로우는 중단했다. [현재 운영 안내](docs/운영/배포.md)를 우선한다.
+
 플랫폼별 타깃:
-- **모바일(iOS/Android)**: Today 탭 중심, 빠른 확인용 컴패니언. TestFlight 베타 운영 중(Build #18, 2026-05-22).
-- **웹(desktop)**: 3열 레이어 셸(좌 사이드바 · 메인 · 우 컨텍스트) + 티커 리본 + Cmd+K 팔레트 + AIWorkspace(플레이북/성적표). **현재 라이브 미배포** — 2026-05-26 Railway 서비스 정리, 빌드 소스(`src/web/*`)만 보존.
+- **모바일(iOS/Android)**: Today 탭 중심의 컴패니언 앱을 개발·배포했으며 현재 판매 중단.
+- **웹(desktop)**: 3열 레이어 셸 등 앱 소스(`src/web/*`)는 보존하며 현재 공개 주소는 서비스 종료 안내만 표시.
 
 ## 앱 목적 (반드시 먼저 읽기)
 

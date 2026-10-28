@@ -1,7 +1,13 @@
 # Context
 
-## ⏭ 다음 작업 포커스 — v2.0.0 리팩토링
-현재 앱은 **v1 5탭(today/home/market/stocks/ai)** 그대로 운영 중. 아래 작업들은 전부 출시 완료:
+## 현재 상태 — 서비스 종료
+
+- 2026-10-24 사용자 요청으로 Signal Desk API·Railway Postgres 실행 및 App Store 신규 다운로드를 중단했다. DB 볼륨·소스는 보존했고 API의 GitHub 소스 연결은 해제했다. 사용자 재개 요청 없이 운영을 복원하지 않는다.
+- 2026-10-28 GitHub 안내 갱신: README와 저장소 소개에 종료일 표시, GitHub Pages는 `docs/service-ended.html` + 기존 개인정보처리방침만 게시한다. Node/Expo 빌드·API 호출 없이 정적 파일만 배포한다. iOS 자동 릴리스 워크플로우는 제거하며 개인정보 문의 링크는 유지한다.
+- 아래 v1/v2 계획과 빌드 명령은 과거 개발 기록이다. 이번 GitHub 갱신은 App Store 재출시나 백엔드 재개가 아니다.
+
+## 과거 작업 계획 — v2.0.0 리팩토링 (중단)
+종료 전 앱은 **v1 5탭(today/home/market/stocks/ai)** 구조였으며 아래 작업들을 출시했음:
 TodayTab 재배치 / AI 인사이트 허브(AITab) / Gemini 종합 인사이트 / 주요 이벤트 캘린더.
 
 다음 메이저 작업은 **v1 5탭 → v2 3탭 리팩토링** (아직 시작 전, 드래프트 상태):

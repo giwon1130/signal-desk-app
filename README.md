@@ -1,12 +1,14 @@
-# 시데 (SignalDesk) — 개인 투자 대시보드
+# 시데 (SignalDesk) — 서비스 종료
 
-> 시장·종목·단타 시그널을 한 화면에서. AI 비서, 검증된 콜 구독(리딩), 친구와 모의투자 리그까지.
-> **단일 코드베이스(Expo)로 iOS · Android · Web 동시 운영**, 백엔드는 Kotlin + Spring Boot.
+> **2026년 10월 24일 서비스 운영을 종료했습니다.** App Store 신규 다운로드를 중단했으며, 백엔드 API도 운영하지 않습니다. 기존 설치 앱의 시황·시세 조회, 로그인, 브리프·서버 알림 등 온라인 기능은 제공되지 않습니다.
+>
+> 이 저장소는 소스 코드와 개발 기록 보관용입니다. 아래 기능 설명·스크린샷·빌드 절차는 운영 당시 기록이며, 현재 이용 가능한 서비스를 의미하지 않습니다. 운영 재개나 앱 재출시는 별도로 결정하기 전까지 진행하지 않습니다.
+
+시장·종목·단타 시그널, AI 비서, 리딩, 모의투자 리그를 제공했던 개인 투자 대시보드입니다. Expo 앱과 Kotlin/Spring Boot 백엔드로 개발했습니다.
 
 <p>
-  <a href="https://giwon1130.github.io/signal-desk-app/"><b>🌐 웹 데모 바로가기</b></a> ·
-  📱 iOS TestFlight 베타 운영 중 ·
-  🤖 AI 요약 = Google Gemini
+  <a href="https://giwon1130.github.io/signal-desk-app/"><b>서비스 종료 안내</b></a> ·
+  <a href="https://github.com/giwon1130/signal-desk-api">백엔드 소스</a>
 </p>
 
 ---
@@ -23,7 +25,7 @@
 
 ![웹 데스크톱](docs/screenshots/web.png)
 
-> 모바일은 iOS 시뮬레이터, 웹은 [라이브 데모](https://giwon1130.github.io/signal-desk-app/) 캡쳐. 추가 캡쳐 방법은 [docs/screenshots/CAPTURE.md](docs/screenshots/CAPTURE.md) 참고.
+> 서비스 종료 전 화면입니다. 현재 웹 주소에는 종료 안내만 표시합니다. 추가 캡쳐 방법은 과거 [개발 기록](docs/screenshots/CAPTURE.md)을 참고하세요.
 
 ---
 
@@ -120,7 +122,9 @@
 
 백엔드는 `../signal-desk-api` (Kotlin + Spring Boot). 자동화 에이전트(Claude 등) 용 노트는 [`AGENTS.md`](AGENTS.md).
 
-## 실행
+## 로컬 개발 기록
+
+아래 명령은 보관된 소스를 확인하기 위한 개발 참고입니다. 기본 API 주소는 현재 중지되어 있으며, 실행이 서비스 재개를 뜻하지 않습니다. 과거 운영 키를 재사용하거나 운영 서비스를 자동으로 복원하지 마세요.
 
 ```bash
 npm install
@@ -153,11 +157,13 @@ EXPO_PUBLIC_API_BASE_URL=http://192.168.x.x:8091 npm start
 
 ## 배포
 
-### 웹 (라이브 운영 중)
-**https://giwon1130.github.io/signal-desk-app/** — `main` 브랜치 GitHub Actions 워크플로우로 `expo export -p web` 결과를 GitHub Pages 에 배포. 빌드 소스 `src/web/*`.
+### 웹 (서비스 종료 안내)
+**https://giwon1130.github.io/signal-desk-app/** 에는 API 호출 없는 정적 종료 안내만 제공합니다. GitHub Actions는 종료 안내와 개인정보처리방침만 게시하며 Expo 앱을 빌드·배포하지 않습니다. 기존 웹 앱 소스는 `src/web/*`에 보존합니다.
 
-### 모바일 (TestFlight 베타)
-EAS **로컬 빌드**로 클라우드 비용 없이 빌드 후 자동 제출:
+### 모바일 (판매 중단)
+App Store 앱 `6770443767`은 판매 중단 상태입니다. 태그 기반 iOS 자동 빌드·제출 워크플로우도 제거했습니다. 아래는 과거 빌드 기록이며 현재 실행 절차가 아닙니다.
+
+EAS **로컬 빌드**로 빌드 후 제출했던 명령:
 ```bash
 TMPDIR=$HOME/.eas-build-tmp npx eas build --local -p ios --profile production --output /tmp/sd.ipa
 npx eas submit -p ios --profile production --path /tmp/sd.ipa

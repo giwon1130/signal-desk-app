@@ -1,19 +1,14 @@
-name: Deploy Web (GitHub Pages)
+name: Publish service closure notice
 
-# 리딩 등 PC 작성용 웹 앱 — Expo 웹 export 를 GitHub Pages 로 무료 호스팅.
-# 최초 1회: GitHub 레포 Settings → Pages → Source 를 "GitHub Actions" 로 설정해야 함.
-# 배포 주소: https://giwon1130.github.io/signal-desk-app/
+# 서비스 종료 후에는 API를 호출하지 않는 정적 안내만 게시한다.
+# Expo 앱, 백엔드, iOS 빌드·제출을 실행하지 않는다.
 
 on:
   push:
     branches: [main]
     paths:
-      - 'src/**'
-      - 'public/**'
-      - 'App.tsx'
-      - 'index.ts'
-      - 'app.json'
-      - 'package.json'
+      - 'docs/service-ended.html'
+      - 'public/privacy.html'
       - '.github/workflows/deploy-web.yml'
   workflow_dispatch: {}
 
@@ -36,21 +31,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-
-      - run: npm ci
-
-      - name: Expo web export
-        env:
-          EXPO_PUBLIC_API_BASE_URL: https://signal-desk-api-production.up.railway.app
-        run: npx expo export --platform web --output-dir dist
-
-      - name: SPA fallback + disable Jekyll
-        # _expo 폴더(언더스코어)가 Jekyll 에 삭제되지 않도록 .nojekyll, SPA 라우팅용 404.html.
+      - name: Prepare static closure notice
         run: |
+          mkdir -p dist
+          cp docs/service-ended.html dist/index.html
+          cp public/privacy.html dist/privacy.html
           touch dist/.nojekyll
           cp dist/index.html dist/404.html
 
